@@ -1,8 +1,10 @@
+import { useState, useRef, useEffect } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, Download, CheckCircle, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
 
 /** Returns true if the song has a full-length stream (JioSaavn or custom) vs a 30s Deezer preview */
 function isFullStream(song: Song): boolean {
