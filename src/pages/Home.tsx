@@ -46,8 +46,10 @@ const HomePage = () => {
     try {
       const { tracks } = await deezerApi.getAlbumTracks(albumId);
       if (tracks.length > 0) {
-        setQueue(tracks);
-        play(tracks[0]);
+        // Resolve full JioSaavn streams for all album tracks
+        const resolved = await deezerApi.resolveFullStreams(tracks);
+        setQueue(resolved);
+        play(resolved[0]);
       }
     } catch (e) {
       console.error("Failed to load album tracks", e);
