@@ -79,7 +79,7 @@ const SearchPage = () => {
 
           {chartTracks && chartTracks.length > 0 && (
             <div>
-              <h2 className="text-lg font-display font-semibold text-foreground mb-3">Popular Right Now</h2>
+              <h2 className="text-lg font-display font-semibold text-foreground mb-3">Populaire en ce moment</h2>
               <div className="glass-panel-light rounded-xl p-2">
                 {chartTracks.map((song, i) => (
                   <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
