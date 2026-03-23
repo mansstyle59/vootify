@@ -80,7 +80,7 @@ export function MiniPlayer() {
               <p className="text-xs truncate text-muted-foreground">{currentSong.artist}</p>
             </div>
             <button
-              onClick={() => toggleLike(currentSong.id)}
+              onClick={() => toggleLike(currentSong)}
               className="hidden sm:block ml-2 transition-colors"
             >
               <Heart

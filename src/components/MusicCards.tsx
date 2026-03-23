@@ -70,7 +70,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          toggleLike(song.id);
+          toggleLike(song);
         }}
         className="opacity-0 group-hover:opacity-100 transition-opacity"
       >
