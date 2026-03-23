@@ -64,7 +64,7 @@ function AppContent() {
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/library" element={<LibraryPage />} />
                   <Route path="/radio" element={<RadioPage />} />
-                  <Route path="/infos" element={<InfosPage />} />
+                  
                   <Route path="/add" element={<AddContentPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
