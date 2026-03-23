@@ -1,0 +1,30 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export interface RadioBrowserStation {
+  id: string;
+  name: string;
+  genre: string;
+  coverUrl: string;
+  streamUrl: string;
+  country: string;
+  countryCode: string;
+  votes: number;
+  clicks: number;
+  codec: string;
+  bitrate: number;
+}
+
+async function invoke(body: Record<string, unknown>): Promise<RadioBrowserStation[]> {
+  const { data, error } = await supabase.functions.invoke("radio-browser", { body });
+  if (error) throw new Error(error.message);
+  if (!data?.success) throw new Error(data?.error || "Radio browser error");
+  return data.stations || [];
+}
+
+export const radioBrowserApi = {
+  getTopFrench: (limit = 30) => invoke({ action: "by_country", country: "France", limit }),
+  getTop: (limit = 30) => invoke({ action: "top", limit }),
+  getByTag: (tag: string, limit = 30) => invoke({ action: "by_tag", tag, limit }),
+  getByCountry: (country: string, limit = 30) => invoke({ action: "by_country", country, limit }),
+  search: (query: string, limit = 30) => invoke({ action: "search", query, limit }),
+};
