@@ -106,12 +106,11 @@ export function MiniPlayer() {
 
           <div className="flex items-center gap-4">
             {/* Song info */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={toggleFullScreen}>
               <img
                 src={currentSong.coverUrl}
                 alt={currentSong.title}
-                className={`w-12 h-12 rounded-lg object-cover ${isPlaying ? "animate-spin-slow" : ""}`}
-                style={{ animationDuration: "8s" }}
+                className="w-12 h-12 rounded-lg object-cover"
               />
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate text-foreground">{currentSong.title}</p>
