@@ -73,16 +73,15 @@ function SongForm() {
 }
 
 function AlbumForm() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !form.title.trim() || !form.artist.trim()) return;
+    if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_albums").insert({
-      user_id: user.id,
+      user_id: "anonymous",
       title: form.title.trim(),
       artist: form.artist.trim(),
       cover_url: form.coverUrl.trim() || null,
