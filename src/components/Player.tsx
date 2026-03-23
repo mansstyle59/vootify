@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AudioVisualizer } from "./AudioVisualizer";
+import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 
 /* ── Shared glass styles ── */
 const glassStyle = {
