@@ -52,16 +52,6 @@ function mapDeezerAlbum(a: DeezerAlbum): Album {
   };
 }
 
-function mapDeezerRadio(r: DeezerRadio): RadioStation {
-  return {
-    id: `dz-radio-${r.id}`,
-    name: r.title,
-    genre: "Radio",
-    coverUrl: r.picture_medium || r.picture_big,
-    streamUrl: "",
-    listeners: Math.floor(Math.random() * 20000) + 1000,
-  };
-}
 
 export const deezerApi = {
   async searchTracks(query: string, limit = 25): Promise<Song[]> {
