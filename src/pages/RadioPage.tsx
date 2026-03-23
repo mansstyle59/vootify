@@ -207,10 +207,7 @@ const RadioPage = () => {
     }
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.02 }}
+      <div
         className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
