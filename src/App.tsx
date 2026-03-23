@@ -38,6 +38,7 @@ function AppContent() {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/radio" element={<RadioPage />} />
           <Route path="/add" element={<AddContentPage />} />
+          <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
