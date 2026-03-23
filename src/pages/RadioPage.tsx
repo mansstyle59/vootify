@@ -187,11 +187,7 @@ const RadioPage = () => {
 
     if (isEditing) {
       return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-panel rounded-2xl p-4"
-        >
+        <div className="glass-panel rounded-2xl p-4">
           <div className="space-y-2">
             <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm" />
             <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Genre" className="text-sm" />
