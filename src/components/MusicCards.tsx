@@ -1,0 +1,135 @@
+import { Song, formatDuration } from "@/data/mockData";
+import { usePlayerStore } from "@/stores/playerStore";
+import { Play, Pause, Heart, MoreHorizontal } from "lucide-react";
+import { motion } from "framer-motion";
+
+interface SongCardProps {
+  song: Song;
+  index?: number;
+  showIndex?: boolean;
+}
+
+export function SongCard({ song, index, showIndex }: SongCardProps) {
+  const { currentSong, isPlaying, play, togglePlay, toggleLike, likedSongIds } = usePlayerStore();
+  const isCurrentSong = currentSong?.id === song.id;
+  const liked = likedSongIds.has(song.id);
+
+  const handleClick = () => {
+    if (isCurrentSong) {
+      togglePlay();
+    } else {
+      play(song);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: (index || 0) * 0.05 }}
+      className={`group flex items-center gap-3 px-3 py-2 rounded-lg hover-glass cursor-pointer ${
+        isCurrentSong ? "bg-primary/5" : ""
+      }`}
+      onClick={handleClick}
+    >
+      {showIndex && (
+        <span className="w-6 text-center text-sm text-muted-foreground tabular-nums group-hover:hidden">
+          {(index || 0) + 1}
+        </span>
+      )}
+      {showIndex && (
+        <span className="w-6 text-center hidden group-hover:block">
+          {isCurrentSong && isPlaying ? (
+            <Pause className="w-4 h-4 text-primary mx-auto" />
+          ) : (
+            <Play className="w-4 h-4 text-primary mx-auto" />
+          )}
+        </span>
+      )}
+
+      <div className="relative w-10 h-10 flex-shrink-0">
+        <img src={song.coverUrl} alt={song.title} className="w-full h-full rounded object-cover" />
+        {!showIndex && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            {isCurrentSong && isPlaying ? (
+              <Pause className="w-4 h-4 text-primary" />
+            ) : (
+              <Play className="w-4 h-4 text-primary" />
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
+          {song.title}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+      </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleLike(song.id);
+        }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+      </button>
+
+      <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
+    </motion.div>
+  );
+}
+
+interface ContentCardProps {
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  onClick?: () => void;
+}
+
+export function ContentCard({ title, subtitle, imageUrl, onClick }: ContentCardProps) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.03, y: -4 }}
+      transition={{ type: "spring", stiffness: 300 }}
+      className="glass-panel-light rounded-xl p-3 cursor-pointer group"
+      onClick={onClick}
+    >
+      <div className="relative overflow-hidden rounded-lg mb-3">
+        <img src={imageUrl} alt={title} className="w-full aspect-square object-cover" />
+        <div className="absolute inset-0 bg-background/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <div className="p-3 rounded-full bg-primary text-primary-foreground glow-primary">
+            <Play className="w-5 h-5 ml-0.5" />
+          </div>
+        </div>
+      </div>
+      <h3 className="text-sm font-semibold truncate text-foreground">{title}</h3>
+      <p className="text-xs text-muted-foreground truncate mt-0.5">{subtitle}</p>
+    </motion.div>
+  );
+}
+
+export function SongSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2 animate-pulse">
+      <div className="w-10 h-10 rounded bg-secondary" />
+      <div className="flex-1">
+        <div className="h-3 w-32 bg-secondary rounded mb-1.5" />
+        <div className="h-2.5 w-20 bg-secondary rounded" />
+      </div>
+      <div className="h-3 w-8 bg-secondary rounded" />
+    </div>
+  );
+}
+
+export function CardSkeleton() {
+  return (
+    <div className="glass-panel-light rounded-xl p-3 animate-pulse">
+      <div className="w-full aspect-square rounded-lg bg-secondary mb-3" />
+      <div className="h-3 w-24 bg-secondary rounded mb-1.5" />
+      <div className="h-2.5 w-16 bg-secondary rounded" />
+    </div>
+  );
+}
