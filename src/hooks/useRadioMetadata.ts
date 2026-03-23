@@ -8,7 +8,13 @@ export interface RadioMetadata {
   coverUrl: string;
 }
 
-export function useRadioMetadata(streamUrl: string | undefined, isLive: boolean, isPlaying: boolean) {
+export function useRadioMetadata(
+  streamUrl: string | undefined,
+  isLive: boolean,
+  isPlaying: boolean,
+  stationName?: string,
+  stationCover?: string
+) {
   const [metadata, setMetadata] = useState<RadioMetadata | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -20,7 +26,7 @@ export function useRadioMetadata(streamUrl: string | undefined, isLive: boolean,
     const fetchMeta = async () => {
       try {
         const { data, error } = await supabase.functions.invoke("radio-metadata", {
-          body: { streamUrl },
+          body: { streamUrl, stationName, stationCover },
         });
         if (!error && data?.success && data.nowPlaying) {
           setMetadata({
@@ -41,7 +47,7 @@ export function useRadioMetadata(streamUrl: string | undefined, isLive: boolean,
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [streamUrl, isLive, isPlaying]);
+  }, [streamUrl, isLive, isPlaying, stationName, stationCover]);
 
   useEffect(() => {
     setMetadata(null);
