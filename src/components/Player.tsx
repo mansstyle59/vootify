@@ -148,10 +148,12 @@ export function FullScreenPlayer() {
   const {
     currentSong, isPlaying, progress, shuffle, repeat,
     togglePlay, next, previous, setProgress,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, likedSongIds
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
   } = usePlayerStore();
 
   if (!currentSong) return null;
+
+  const liked = isLiked(currentSong.id);
 
   const liked = likedSongIds.has(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
