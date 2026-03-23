@@ -1,6 +1,6 @@
 import { NavLink as RouterNavLink } from "react-router-dom";
-import { Home, Search, Library, Radio } from "lucide-react";
-import { motion } from "framer-motion";
+import { Home, Search, Library, Radio, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
@@ -10,6 +10,8 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const { user, signOut } = useAuth();
+
   return (
     <aside className="hidden md:flex flex-col w-[240px] min-h-screen glass-panel border-r border-border/50 p-4">
       <div className="mb-8 px-2">
@@ -18,7 +20,7 @@ export function AppSidebar() {
         </h1>
       </div>
 
-      <nav className="flex flex-col gap-1">
+      <nav className="flex flex-col gap-1 flex-1">
         {navItems.map((item) => (
           <RouterNavLink
             key={item.to}
@@ -32,22 +34,31 @@ export function AppSidebar() {
               }`
             }
           >
-            {({ isActive }) => (
-              <>
-                <item.icon className="w-5 h-5" />
-                <span>{item.label}</span>
-                {isActive && (
-                  <motion.div
-                    layoutId="sidebar-active"
-                    className="absolute left-0 w-0.5 h-6 bg-primary rounded-full"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </>
-            )}
+            <item.icon className="w-5 h-5" />
+            <span>{item.label}</span>
           </RouterNavLink>
         ))}
       </nav>
+
+      {user && (
+        <div className="mt-auto pt-4 border-t border-border/50">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold">
+              {(user.email?.[0] || "U").toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-foreground truncate">{user.email}</p>
+            </div>
+            <button
+              onClick={signOut}
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
