@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { offlineCache } from "@/lib/offlineCache";
+import { Song } from "@/data/mockData";
 
-type Tab = "liked" | "playlists" | "recent" | "radios";
+type Tab = "liked" | "playlists" | "recent" | "radios" | "downloads";
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
