@@ -79,4 +79,27 @@ export const deezerApi = {
     album.songs = tracks.map((t: Song) => t.id);
     return { album, tracks };
   },
+
+  /** Search JioSaavn for a full stream URL matching a Deezer track */
+  async resolveFullStream(song: Song): Promise<Song> {
+    if (!song.id.startsWith("dz-")) return song;
+    try {
+      const query = `${song.title} ${song.artist}`;
+      const results = await jiosaavnApi.search(query, 5);
+      if (results.length > 0 && results[0].streamUrl) {
+        return {
+          ...song,
+          streamUrl: results[0].streamUrl,
+        };
+      }
+    } catch (e) {
+      console.error("JioSaavn resolve failed, using Deezer preview:", e);
+    }
+    return song;
+  },
+
+  /** Resolve full streams for an array of Deezer tracks */
+  async resolveFullStreams(songs: Song[]): Promise<Song[]> {
+    return Promise.all(songs.map((s) => deezerApi.resolveFullStream(s)));
+  },
 };
