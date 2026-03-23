@@ -35,7 +35,7 @@ export const musicDb = {
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
-    if (error) throw error;
+    if (error) { console.error("getLikedSongs error:", error); return []; }
     return (data || []).map(rowToSong);
   },
 
