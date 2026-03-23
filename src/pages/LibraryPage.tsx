@@ -238,6 +238,43 @@ const LibraryPage = () => {
             </div>
           )}
 
+          {tab === "downloads" && (
+            <div>
+              {cacheSize > 0 && (
+                <div className="flex items-center gap-2 mb-4 px-1">
+                  <HardDrive className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} · {formatSize(cacheSize)}
+                  </span>
+                </div>
+              )}
+              {cachedSongs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Download className="w-14 h-14 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground">Aucun morceau téléchargé.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Téléchargez des morceaux pour les écouter hors-ligne</p>
+                </div>
+              ) : (
+                <div className="glass-panel-light rounded-xl p-2">
+                  {cachedSongs.map((s, i) => (
+                    <div key={s.id} className="flex items-center group">
+                      <div className="flex-1 min-w-0">
+                        <SongCard song={s} index={i} />
+                      </div>
+                      <button
+                        onClick={() => removeCached(s.id)}
+                        className="p-2 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        title="Supprimer du cache"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === "recent" && (
             <div className="glass-panel-light rounded-xl p-2">
               {recentlyPlayed.length === 0 ? (
