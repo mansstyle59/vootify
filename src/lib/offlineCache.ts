@@ -125,7 +125,7 @@ export const offlineCache = {
             album: m.album,
             duration: m.duration,
             coverUrl: m.coverUrl,
-            streamUrl: "", // will be resolved from cache
+            streamUrl: m.streamUrl || "",
             liked: false,
             cachedAt: m.cachedAt,
           }))
