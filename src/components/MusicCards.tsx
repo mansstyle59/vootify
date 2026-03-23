@@ -93,6 +93,16 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
 
+      {isFullStream(song) ? (
+        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">
+          HD
+        </span>
+      ) : song.streamUrl?.includes("dzcdn.net") ? (
+        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+          30s
+        </span>
+      ) : null}
+
       <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
     </motion.div>
   );
