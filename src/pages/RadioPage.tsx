@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioEnLigneApi, tvRadioZapApi } from "@/lib/radioFrApi";
 import { deezerApi } from "@/lib/deezerApi";
-import { Radio, MapPin, AlertCircle, Music, Globe } from "lucide-react";
+import { usePlayerStore } from "@/stores/playerStore";
+import { Radio, MapPin, AlertCircle, Music, Globe, Play, Pause } from "lucide-react";
+import type { RadioStation } from "@/data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 
 type FilterMode = "all" | "genre" | "region" | "tvradiozap";
