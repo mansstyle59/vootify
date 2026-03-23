@@ -15,6 +15,7 @@ import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
 import RadioPage from "./pages/RadioPage";
 import AddContentPage from "./pages/AddContentPage";
+import PlaylistDetailPage from "./pages/PlaylistDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
