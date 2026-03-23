@@ -123,6 +123,28 @@ const RadioPage = () => {
         </div>
       )}
 
+      {filterMode === "tvradiozap" && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {([
+            { key: "trztop" as TVRZType, label: "Top radios" },
+            { key: "ra" as TVRZType, label: "Toutes les radios" },
+            { key: "trzinfo" as TVRZType, label: "Radios info" },
+          ]).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTvrzType(t.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                tvrzType === t.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/60 text-secondary-foreground hover:bg-secondary"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Station grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
