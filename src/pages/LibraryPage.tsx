@@ -61,9 +61,39 @@ const LibraryPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "downloads", label: "Téléchargés", icon: Download },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "recent", label: "Récents", icon: Clock },
   ];
+
+  // Offline cached songs
+  const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
+  const [cacheSize, setCacheSize] = useState(0);
+
+  useEffect(() => {
+    if (tab !== "downloads") return;
+    const load = async () => {
+      const [songs, size] = await Promise.all([
+        offlineCache.getAllCached(),
+        offlineCache.getCacheSize(),
+      ]);
+      setCachedSongs(songs);
+      setCacheSize(size);
+    };
+    load();
+  }, [tab]);
+
+  const removeCached = async (songId: string) => {
+    await offlineCache.removeCached(songId);
+    setCachedSongs((prev) => prev.filter((s) => s.id !== songId));
+    const size = await offlineCache.getCacheSize();
+    setCacheSize(size);
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  };
 
   const handleCreate = () => {
     if (newName.trim()) {
