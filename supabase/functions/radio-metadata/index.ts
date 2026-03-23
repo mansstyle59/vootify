@@ -7,6 +7,49 @@ const corsHeaders = {
 
 const DEEZER_API = "https://api.deezer.com";
 
+// Known Radio France station mappings: URL pattern → station info
+const RADIO_FRANCE_STATIONS: Record<string, { name: string; logo: string }> = {
+  franceinter: {
+    name: "France Inter",
+    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/a8294b5e-e57b-4b2d-aa3f-54bedbcf1b14/200x200_rf_omm_0000046498_dnc.0000000001.jpg",
+  },
+  franceinfo: {
+    name: "franceinfo",
+    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/8bd4acd4-09bb-4355-88a0-a3a8c39b74a1/200x200_rf_omm_0000046505_dnc.0000000001.jpg",
+  },
+  fip: {
+    name: "FIP",
+    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/0d78dff4-0553-4b1b-80e0-cac4e0060db0/200x200_rf_omm_0000046501_dnc.0000000001.jpg",
+  },
+  francemusique: {
+    name: "France Musique",
+    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/c75f9101-9a24-44c3-8ead-9b0bb3e7c0b5/200x200_rf_omm_0000046503_dnc.0000000001.jpg",
+  },
+  franceculture: {
+    name: "France Culture",
+    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/16f5d072-4a53-42b9-98a3-30b4e4680e52/200x200_rf_omm_0000046500_dnc.0000000001.jpg",
+  },
+  mouv: {
+    name: "Mouv'",
+    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/1ecaa0c0-0b63-432f-8af3-b55daa3b3e46/200x200_rf_omm_0000046504_dnc.0000000001.jpg",
+  },
+};
+
+/**
+ * Detect a Radio France station from a stream URL.
+ * Matches patterns like:
+ *   icecast.radiofrance.fr/franceinter-midfi.mp3
+ *   stream.radiofrance.fr/fip/fip.m3u8
+ */
+function detectRadioFranceStation(url: string): { name: string; logo: string } | null {
+  if (!url.includes("radiofrance.fr")) return null;
+
+  for (const [key, info] of Object.entries(RADIO_FRANCE_STATIONS)) {
+    if (url.includes(key)) return info;
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -59,7 +102,7 @@ serve(async (req) => {
           const metaLength = allBytes[icyMetaInt] * 16;
           if (metaLength > 0 && allBytes.length >= icyMetaInt + 1 + metaLength) {
             const metaBytes = allBytes.slice(icyMetaInt + 1, icyMetaInt + 1 + metaLength);
-            const metaStr = new TextDecoder("utf-8").decode(metaBytes).replace(/\0+$/,  "");
+            const metaStr = new TextDecoder("utf-8").decode(metaBytes).replace(/\0+$/, "");
             const match = metaStr.match(/StreamTitle='([^']*)'/);
             if (match) {
               nowPlaying = match[1].trim();
@@ -80,7 +123,7 @@ serve(async (req) => {
     if (nowPlaying) {
       // Clean up metadata (remove trailing codes like §7413009)
       const cleaned = nowPlaying.replace(/\s*§\d+$/, "").trim();
-      
+
       const parts = cleaned.split(" - ");
       if (parts.length >= 2) {
         artist = parts[0].trim();
@@ -104,6 +147,18 @@ serve(async (req) => {
         } catch (e) {
           console.log("Deezer search error:", e.message);
         }
+      }
+    }
+
+    // ── Fallback: detect Radio France station when ICY metadata is empty ──
+    if (!nowPlaying) {
+      const station = detectRadioFranceStation(streamUrl);
+      if (station) {
+        console.log("Radio France fallback for:", station.name);
+        nowPlaying = `En direct sur ${station.name}`;
+        title = "En direct";
+        artist = station.name;
+        coverUrl = station.logo;
       }
     }
 
