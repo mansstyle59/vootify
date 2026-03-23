@@ -167,12 +167,15 @@ export function FullScreenPlayer() {
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       className="fixed inset-0 z-[100] player-gradient flex flex-col items-center justify-center p-8"
     >
-      <button
-        onClick={toggleFullScreen}
-        className="absolute top-6 right-6 p-2 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Minimize2 className="w-6 h-6" />
-      </button>
+      <div className="absolute top-6 right-6 flex items-center gap-2">
+        <button
+          onClick={toggleFullScreen}
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          title="Réduire"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
 
       <motion.img
         src={currentSong.coverUrl}

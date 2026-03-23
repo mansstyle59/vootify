@@ -112,6 +112,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       repeat: s.repeat === "off" ? "all" : s.repeat === "all" ? "one" : "off",
     })),
   toggleFullScreen: () => set((s) => ({ fullScreen: !s.fullScreen })),
+  closePlayer: () => set({ currentSong: null, isPlaying: false, progress: 0, fullScreen: false, queue: [] }),
 
   toggleLike: (song) => {
     const { userId } = get();
