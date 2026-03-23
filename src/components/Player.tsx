@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
+import { offlineCache } from "@/lib/offlineCache";
 
 /* ── Shared glass styles ── */
 const glassStyle = {
