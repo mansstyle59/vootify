@@ -250,9 +250,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         >
           <h2 className="text-lg font-bold text-foreground truncate">{stationName}</h2>
           <p className="text-sm text-muted-foreground">{currentSong.artist}</p>
-          <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
-            <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
-          </div>
+          {radioMeta?.nowPlaying ? (
+            <div className="pt-1 space-y-0.5">
+              <p className="text-sm font-semibold text-primary truncate">♪ {radioMeta.title || radioMeta.nowPlaying}</p>
+              {radioMeta.artist && (
+                <p className="text-xs text-muted-foreground truncate">{radioMeta.artist}</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+              <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
+            </div>
+          )}
         </div>
       </div>
 
