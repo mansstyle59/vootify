@@ -15,6 +15,24 @@ const RadioPage = () => {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [tvrzType, setTvrzType] = useState<TVRZType>("trztop");
+  const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
+
+  const playStation = (station: RadioStation) => {
+    if (currentSong?.id === station.id) {
+      togglePlay();
+      return;
+    }
+    play({
+      id: station.id,
+      title: station.name,
+      artist: station.genre || "Radio",
+      album: "Radio en direct",
+      duration: 0, // 0 = live stream
+      coverUrl: station.coverUrl,
+      streamUrl: station.streamUrl,
+      liked: false,
+    });
+  };
 
   const queryOptions = filterMode === "genre" && selectedGenre
     ? { genre: selectedGenre }
