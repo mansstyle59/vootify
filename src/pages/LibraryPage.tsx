@@ -301,7 +301,7 @@ const LibraryPage = () => {
                 <div className="glass-panel-light rounded-xl p-2">
                   {cachedSongs.map((s, i) => (
                     <div key={s.id} className="flex items-center group">
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0" onClick={() => { setQueue(cachedSongs); play(s); }}>
                         <SongCard song={s} index={i} />
                       </div>
                       <button

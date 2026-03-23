@@ -80,6 +80,7 @@ export const offlineCache = {
       album: song.album,
       duration: song.duration,
       coverUrl: song.coverUrl,
+      streamUrl: song.streamUrl,
       cachedAt: Date.now(),
     };
     await new Promise<void>((resolve, reject) => {
@@ -124,7 +125,7 @@ export const offlineCache = {
             album: m.album,
             duration: m.duration,
             coverUrl: m.coverUrl,
-            streamUrl: "", // will be resolved from cache
+            streamUrl: m.streamUrl || "",
             liked: false,
             cachedAt: m.cachedAt,
           }))
