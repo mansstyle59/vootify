@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
 import { Heart, ListMusic, Clock, Plus, Trash2 } from "lucide-react";
@@ -10,7 +10,7 @@ const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
-  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue } = usePlayerStore();
+  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs } = usePlayerStore();
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Liked", icon: Heart },
