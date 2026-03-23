@@ -69,16 +69,6 @@ export const deezerApi = {
     return (data.data || []).map(mapDeezerAlbum);
   },
 
-  async getRadioStations(): Promise<RadioStation[]> {
-    const data = await callDeezer({ action: "radio" });
-    return (data.data || []).map(mapDeezerRadio);
-  },
-
-  async getRadioTracks(radioId: string, limit = 25): Promise<Song[]> {
-    const id = radioId.replace("dz-radio-", "");
-    const data = await callDeezer({ action: "radio_tracks", id, limit });
-    return (data.data || []).map(mapTrackToSong);
-  },
 
   async getAlbumTracks(albumId: string): Promise<{ album: Album; tracks: Song[] }> {
     const id = albumId.replace("dz-album-", "");
