@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
+import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { ContentCard, SongCard, CardSkeleton, SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
