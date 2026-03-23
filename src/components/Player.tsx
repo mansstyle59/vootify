@@ -12,7 +12,7 @@ export function MiniPlayer() {
   const {
     currentSong, isPlaying, progress, volume, shuffle, repeat,
     togglePlay, next, previous, setProgress, setVolume,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, likedSongIds
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
   } = usePlayerStore();
 
   const intervalRef = useRef<number | null>(null);
@@ -37,7 +37,7 @@ export function MiniPlayer() {
 
   if (!currentSong) return null;
 
-  const liked = likedSongIds.has(currentSong.id);
+  const liked = isLiked(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
   return (
@@ -80,7 +80,7 @@ export function MiniPlayer() {
               <p className="text-xs truncate text-muted-foreground">{currentSong.artist}</p>
             </div>
             <button
-              onClick={() => toggleLike(currentSong.id)}
+              onClick={() => toggleLike(currentSong)}
               className="hidden sm:block ml-2 transition-colors"
             >
               <Heart
@@ -148,12 +148,12 @@ export function FullScreenPlayer() {
   const {
     currentSong, isPlaying, progress, shuffle, repeat,
     togglePlay, next, previous, setProgress,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, likedSongIds
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
   } = usePlayerStore();
 
   if (!currentSong) return null;
 
-  const liked = likedSongIds.has(currentSong.id);
+  const liked = isLiked(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
   return (
@@ -235,7 +235,7 @@ export function FullScreenPlayer() {
         </button>
       </div>
 
-      <button onClick={() => toggleLike(currentSong.id)} className="mt-6">
+      <button onClick={() => toggleLike(currentSong)} className="mt-6">
         <Heart className={`w-7 h-7 transition-colors ${liked ? "fill-primary text-primary" : "text-muted-foreground hover:text-foreground"}`} />
       </button>
     </motion.div>

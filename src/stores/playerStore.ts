@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Song, songs, defaultPlaylists, Playlist } from "@/data/mockData";
+import { Song, Playlist } from "@/data/mockData";
 
 interface PlayerState {
   currentSong: Song | null;
@@ -10,9 +10,10 @@ interface PlayerState {
   shuffle: boolean;
   repeat: "off" | "all" | "one";
   fullScreen: boolean;
-  likedSongIds: Set<string>;
+  likedSongs: Song[];
   playlists: Playlist[];
-  recentlyPlayed: string[];
+  recentlyPlayed: Song[];
+  playlistSongs: Record<string, Song[]>;
 
   play: (song: Song) => void;
   togglePlay: () => void;
@@ -23,35 +24,35 @@ interface PlayerState {
   toggleShuffle: () => void;
   cycleRepeat: () => void;
   toggleFullScreen: () => void;
-  toggleLike: (songId: string) => void;
+  toggleLike: (song: Song) => void;
+  isLiked: (songId: string) => boolean;
   setQueue: (songs: Song[]) => void;
   createPlaylist: (name: string) => void;
   deletePlaylist: (id: string) => void;
-  addToPlaylist: (playlistId: string, songId: string) => void;
-  removeFromPlaylist: (playlistId: string, songId: string) => void;
+  addSongToPlaylist: (playlistId: string, song: Song) => void;
+  removeSongFromPlaylist: (playlistId: string, songId: string) => void;
 }
-
-const likedIds = new Set(songs.filter((s) => s.liked).map((s) => s.id));
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentSong: null,
-  queue: songs,
+  queue: [],
   isPlaying: false,
   progress: 0,
   volume: 0.8,
   shuffle: false,
   repeat: "off",
   fullScreen: false,
-  likedSongIds: likedIds,
-  playlists: defaultPlaylists,
+  likedSongs: [],
+  playlists: [],
   recentlyPlayed: [],
+  playlistSongs: {},
 
   play: (song) =>
     set((state) => ({
       currentSong: song,
       isPlaying: true,
       progress: 0,
-      recentlyPlayed: [song.id, ...state.recentlyPlayed.filter((id) => id !== song.id)].slice(0, 20),
+      recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     })),
 
   togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
@@ -90,14 +91,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       repeat: s.repeat === "off" ? "all" : s.repeat === "all" ? "one" : "off",
     })),
   toggleFullScreen: () => set((s) => ({ fullScreen: !s.fullScreen })),
-  toggleLike: (songId) =>
+
+  toggleLike: (song) =>
     set((s) => {
-      const next = new Set(s.likedSongIds);
-      if (next.has(songId)) next.delete(songId);
-      else next.add(songId);
-      return { likedSongIds: next };
+      const exists = s.likedSongs.some((ls) => ls.id === song.id);
+      return {
+        likedSongs: exists
+          ? s.likedSongs.filter((ls) => ls.id !== song.id)
+          : [...s.likedSongs, song],
+      };
     }),
+
+  isLiked: (songId) => get().likedSongs.some((s) => s.id === songId),
+
   setQueue: (songs) => set({ queue: songs }),
+
   createPlaylist: (name) =>
     set((s) => ({
       playlists: [
@@ -111,19 +119,34 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         },
       ],
     })),
-  deletePlaylist: (id) => set((s) => ({ playlists: s.playlists.filter((p) => p.id !== id) })),
-  addToPlaylist: (playlistId, songId) =>
+
+  deletePlaylist: (id) =>
+    set((s) => {
+      const { [id]: _, ...rest } = s.playlistSongs;
+      return { playlists: s.playlists.filter((p) => p.id !== id), playlistSongs: rest };
+    }),
+
+  addSongToPlaylist: (playlistId, song) =>
     set((s) => ({
       playlists: s.playlists.map((p) =>
-        p.id === playlistId && !p.songIds.includes(songId)
-          ? { ...p, songIds: [...p.songIds, songId] }
+        p.id === playlistId && !p.songIds.includes(song.id)
+          ? { ...p, songIds: [...p.songIds, song.id] }
           : p
       ),
+      playlistSongs: {
+        ...s.playlistSongs,
+        [playlistId]: [...(s.playlistSongs[playlistId] || []).filter((x) => x.id !== song.id), song],
+      },
     })),
-  removeFromPlaylist: (playlistId, songId) =>
+
+  removeSongFromPlaylist: (playlistId, songId) =>
     set((s) => ({
       playlists: s.playlists.map((p) =>
         p.id === playlistId ? { ...p, songIds: p.songIds.filter((id) => id !== songId) } : p
       ),
+      playlistSongs: {
+        ...s.playlistSongs,
+        [playlistId]: (s.playlistSongs[playlistId] || []).filter((x) => x.id !== songId),
+      },
     })),
 }));

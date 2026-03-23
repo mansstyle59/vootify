@@ -10,9 +10,9 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, index, showIndex }: SongCardProps) {
-  const { currentSong, isPlaying, play, togglePlay, toggleLike, likedSongIds } = usePlayerStore();
+  const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked } = usePlayerStore();
   const isCurrentSong = currentSong?.id === song.id;
-  const liked = likedSongIds.has(song.id);
+  const liked = isLiked(song.id);
 
   const handleClick = () => {
     if (isCurrentSong) {
@@ -70,7 +70,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          toggleLike(song.id);
+          toggleLike(song);
         }}
         className="opacity-0 group-hover:opacity-100 transition-opacity"
       >
