@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fsoundApi } from "@/lib/fsoundApi";
+import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Headphones } from "lucide-react";
+import { Search as SearchIcon, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Song } from "@/data/mockData";
 
@@ -20,20 +20,11 @@ const SearchPage = () => {
     }, 600);
   };
 
-  // Full track search via fsound/JioSaavn
   const { data: results, isLoading } = useQuery({
-    queryKey: ["fsound-search", debouncedQuery],
-    queryFn: () => fsoundApi.searchTracks(debouncedQuery, 20),
+    queryKey: ["deezer-search", debouncedQuery],
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
     enabled: debouncedQuery.length >= 2,
     staleTime: 2 * 60 * 1000,
-  });
-
-  // Popular full tracks for empty state
-  const { data: popularTracks } = useQuery({
-    queryKey: ["fsound-popular-search"],
-    queryFn: () => fsoundApi.getPopularTracks(10),
-    staleTime: 10 * 60 * 1000,
-    enabled: !debouncedQuery,
   });
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
@@ -51,7 +42,7 @@ const SearchPage = () => {
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="Rechercher des chansons, artistes... (écoute complète)"
+          placeholder="Rechercher des chansons, artistes..."
           className="w-full pl-12 pr-10 py-3.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
         />
         {query && (
@@ -64,7 +55,7 @@ const SearchPage = () => {
       {!debouncedQuery ? (
         <div>
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">Parcourir les genres</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {genres.map((genre, i) => (
               <motion.button
                 key={genre}
@@ -78,21 +69,6 @@ const SearchPage = () => {
               </motion.button>
             ))}
           </div>
-
-          {popularTracks && popularTracks.length > 0 && (
-            <div>
-              <h2 className="text-lg font-display font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Headphones className="w-5 h-5 text-primary" /> Populaire — écoute complète
-              </h2>
-              <div className="glass-panel-light rounded-xl p-2">
-                {popularTracks.map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, popularTracks)}>
-                    <SongCard song={song} index={i} showIndex />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         <div>
@@ -103,7 +79,7 @@ const SearchPage = () => {
           ) : results && results.length > 0 ? (
             <>
               <p className="text-sm text-muted-foreground mb-3">
-                {results.length} résultats — écoute complète disponible
+                {results.length} résultats
               </p>
               <div className="glass-panel-light rounded-xl p-2">
                 {results.map((song, i) => (
