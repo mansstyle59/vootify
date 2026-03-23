@@ -129,7 +129,7 @@ const HomePage = () => {
 
       {/* Radio */}
       <section>
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4">Radio Stations</h2>
+        <h2 className="text-xl font-display font-semibold text-foreground mb-4">Stations Radio</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {loadingRadio
             ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)

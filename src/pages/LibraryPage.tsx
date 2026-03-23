@@ -123,7 +123,7 @@ const LibraryPage = () => {
           {tab === "recent" && (
             <div className="glass-panel-light rounded-xl p-2">
               {recentlyPlayed.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">Play something to see it here</p>
+                <p className="text-center text-muted-foreground py-12">Écoutez quelque chose pour le voir ici</p>
               ) : (
                 recentlyPlayed.map((s, i) => <SongCard key={s.id} song={s} index={i} />)
               )}
