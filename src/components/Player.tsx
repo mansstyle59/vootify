@@ -2,7 +2,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Volume2, VolumeX, Heart, Maximize2, Minimize2
+  Volume2, VolumeX, Heart, Maximize2, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
