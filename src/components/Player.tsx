@@ -244,18 +244,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Bottom */}
-      <div className="relative z-10 px-8 pb-10 space-y-4">
-        {/* Volume */}
-        <div className="flex items-center gap-3 max-w-xs mx-auto">
-          <VolumeX className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
-          <input
-            type="range" min={0} max={1} step={0.01} value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="flex-1 accent-foreground h-1"
-          />
-          <Volume2 className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
-        </div>
-
+      <div className="relative z-10 px-8 pb-10">
         {/* Play button */}
         <div className="flex items-center justify-center">
           <button
