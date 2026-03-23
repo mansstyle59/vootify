@@ -251,7 +251,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
           </div>
         </div>
-
+      </div>
 
       {/* Bottom controls */}
       <div className="relative z-10 px-8 pb-10">
