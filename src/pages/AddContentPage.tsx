@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 
 import { Music, Disc3, Radio, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ function SongForm() {
     if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_songs").insert({
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       title: form.title.trim(),
       artist: form.artist.trim(),
       album: form.album.trim() || null,
@@ -81,7 +82,7 @@ function AlbumForm() {
     if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_albums").insert({
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       title: form.title.trim(),
       artist: form.artist.trim(),
       cover_url: form.coverUrl.trim() || null,
@@ -116,7 +117,7 @@ function RadioForm() {
     if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       name: form.name.trim(),
       genre: form.genre.trim() || null,
       cover_url: form.coverUrl.trim() || null,

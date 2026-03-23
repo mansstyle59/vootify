@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, Sparkles, Disc3, Music2, Clock } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 
 const sectionAnim = {
   hidden: { opacity: 0, y: 16 },
@@ -29,7 +30,7 @@ const HomePage = () => {
 
   const { data: recentlyPlayed = [] } = useQuery({
     queryKey: ["recently-played"],
-    queryFn: () => musicDb.getRecentlyPlayed("anonymous", 10),
+    queryFn: () => musicDb.getRecentlyPlayed(ANONYMOUS_USER_ID, 10),
     staleTime: 60 * 1000,
   });
 

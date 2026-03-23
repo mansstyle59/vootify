@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 
 interface PlayerState {
   currentSong: Song | null;
@@ -52,7 +53,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playlists: [],
   recentlyPlayed: [],
   playlistSongs: {},
-  userId: "anonymous",
+  userId: ANONYMOUS_USER_ID,
 
   setUserId: (id) => set({ userId: id }),
 

@@ -7,6 +7,7 @@ import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
@@ -21,7 +22,7 @@ function AppContent() {
   const loadUserData = usePlayerStore((s) => s.loadUserData);
 
   useEffect(() => {
-    loadUserData("anonymous");
+    loadUserData(ANONYMOUS_USER_ID);
   }, [loadUserData]);
 
   return (

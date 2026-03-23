@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Star, TrendingUp, Heart, Pencil, Trash2, X, Check } from "lucide-react";
@@ -42,7 +43,7 @@ const RadioPage = () => {
   const saveStation = async (station: RadioBrowserStation) => {
     const { error } = await supabase.from("custom_radio_stations").upsert({
       id: station.id,
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       name: station.name,
       genre: station.genre,
       cover_url: station.coverUrl,
@@ -95,7 +96,7 @@ const RadioPage = () => {
   const { data: savedIds = new Set<string>() } = useQuery({
     queryKey: ["saved-station-ids"],
     queryFn: async () => {
-      const { data } = await supabase.from("custom_radio_stations").select("id").eq("user_id", "anonymous");
+      const { data } = await supabase.from("custom_radio_stations").select("id").eq("user_id", ANONYMOUS_USER_ID);
       return new Set((data || []).map((r) => r.id));
     },
     staleTime: 2 * 60 * 1000,
