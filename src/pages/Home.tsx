@@ -122,22 +122,6 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Radio */}
-      <section>
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4">Stations Radio</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {loadingRadio
-            ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)
-            : radioStations?.slice(0, 3).map((station) => (
-                <ContentCard
-                  key={station.id}
-                  title={station.name}
-                  subtitle={station.genre}
-                  imageUrl={station.coverUrl}
-                />
-              ))}
-        </div>
-      </section>
     </div>
   );
 };
