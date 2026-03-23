@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
 import RadioPage from "./pages/RadioPage";
+import AddContentPage from "./pages/AddContentPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -63,6 +64,7 @@ function AppContent() {
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/library" element={<LibraryPage />} />
                   <Route path="/radio" element={<RadioPage />} />
+                  <Route path="/add" element={<AddContentPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

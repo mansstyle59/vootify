@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_albums: {
+        Row: {
+          artist: string
+          cover_url: string | null
+          created_at: string
+          id: string
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      custom_radio_stations: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          genre: string | null
+          id: string
+          name: string
+          stream_url: string | null
+          user_id: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          genre?: string | null
+          id?: string
+          name: string
+          stream_url?: string | null
+          user_id: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          genre?: string | null
+          id?: string
+          name?: string
+          stream_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_songs: {
+        Row: {
+          album: string | null
+          artist: string
+          cover_url: string | null
+          created_at: string
+          duration: number
+          id: string
+          stream_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          album?: string | null
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          stream_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          album?: string | null
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          stream_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       liked_songs: {
         Row: {
           album: string | null
