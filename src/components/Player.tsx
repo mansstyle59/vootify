@@ -475,16 +475,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
-            {/* Volume — Apple style with speaker icons */}
-            <div className="flex items-center gap-3 w-full max-w-[260px] md:max-w-[300px]">
-              <VolumeX className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
-              <input
-                type="range" min={0} max={1} step={0.01} value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="flex-1 accent-foreground/60 h-1"
-              />
-              <Volume2 className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
