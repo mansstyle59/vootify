@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { offlineCache } from "@/lib/offlineCache";
+import { Song } from "@/data/mockData";
 
-type Tab = "liked" | "playlists" | "recent" | "radios";
+type Tab = "liked" | "playlists" | "recent" | "radios" | "downloads";
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
@@ -59,9 +61,39 @@ const LibraryPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "downloads", label: "Téléchargés", icon: Download },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "recent", label: "Récents", icon: Clock },
   ];
+
+  // Offline cached songs
+  const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
+  const [cacheSize, setCacheSize] = useState(0);
+
+  useEffect(() => {
+    if (tab !== "downloads") return;
+    const load = async () => {
+      const [songs, size] = await Promise.all([
+        offlineCache.getAllCached(),
+        offlineCache.getCacheSize(),
+      ]);
+      setCachedSongs(songs);
+      setCacheSize(size);
+    };
+    load();
+  }, [tab]);
+
+  const removeCached = async (songId: string) => {
+    await offlineCache.removeCached(songId);
+    setCachedSongs((prev) => prev.filter((s) => s.id !== songId));
+    const size = await offlineCache.getCacheSize();
+    setCacheSize(size);
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  };
 
   const handleCreate = () => {
     if (newName.trim()) {
@@ -200,6 +232,43 @@ const LibraryPage = () => {
                         </div>
                       </div>
                     </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "downloads" && (
+            <div>
+              {cacheSize > 0 && (
+                <div className="flex items-center gap-2 mb-4 px-1">
+                  <HardDrive className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} · {formatSize(cacheSize)}
+                  </span>
+                </div>
+              )}
+              {cachedSongs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Download className="w-14 h-14 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground">Aucun morceau téléchargé.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Téléchargez des morceaux pour les écouter hors-ligne</p>
+                </div>
+              ) : (
+                <div className="glass-panel-light rounded-xl p-2">
+                  {cachedSongs.map((s, i) => (
+                    <div key={s.id} className="flex items-center group">
+                      <div className="flex-1 min-w-0">
+                        <SongCard song={s} index={i} />
+                      </div>
+                      <button
+                        onClick={() => removeCached(s.id)}
+                        className="p-2 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        title="Supprimer du cache"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
