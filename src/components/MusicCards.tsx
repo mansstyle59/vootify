@@ -33,6 +33,20 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!showPlaylistMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowPlaylistMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPlaylistMenu]);
 
   const handleClick = () => {
     if (isCurrentSong) {
