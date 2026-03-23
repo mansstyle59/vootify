@@ -111,6 +111,26 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
 
+      {/* Add to playlist */}
+      {song.duration > 0 && (
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPlaylistMenu(!showPlaylistMenu);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Ajouter à une playlist"
+          >
+            <ListPlus className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+          </button>
+          <AnimatePresence>
+            {showPlaylistMenu && (
+              <AddToPlaylistMenu song={song} onClose={() => setShowPlaylistMenu(false)} />
+            )}
+          </AnimatePresence>
+        </div>
+      )}
       {/* Download / cached indicator */}
       {song.streamUrl && song.duration > 0 && (
         <button
