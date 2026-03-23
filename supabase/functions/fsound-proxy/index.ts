@@ -79,8 +79,53 @@ Deno.serve(async (req) => {
         },
       });
 
-      if (!resp.ok) throw new Error(`FSound API error: ${resp.status}`);
-      const data = await resp.json();
+      if (!resp.ok) {
+        const body = await resp.text();
+        console.error('FSound API non-ok:', resp.status, body.slice(0, 200));
+        throw new Error(`FSound API error: ${resp.status}`);
+      }
+
+      const contentType = resp.headers.get('content-type') || '';
+      const rawText = await resp.text();
+      
+      if (!contentType.includes('application/json') && rawText.trimStart().startsWith('<')) {
+        console.error('FSound returned HTML, falling back to search-only mode');
+        // Fallback: return popular tracks via JioSaavn trending search
+        const fallbackQueries = ['trending hits 2025', 'top hits', 'popular songs'];
+        const fallbackResp = await fetch(
+          `${SAAVN_API}/search/songs?query=${encodeURIComponent(fallbackQueries[0])}&limit=${perPage}`,
+          { headers: { 'User-Agent': 'VOOMusic/1.0' } }
+        );
+        if (!fallbackResp.ok) throw new Error('Fallback search also failed');
+        const fallbackData = await fallbackResp.json();
+        const fallbackResults: SaavnResult[] = fallbackData?.data?.results || [];
+        
+        const songs = fallbackResults.map((r, i) => {
+          const urls = r.downloadUrl || [];
+          const preferred = urls.find(u => u.quality === '160kbps')
+            || urls.find(u => u.quality === '320kbps')
+            || urls[urls.length - 1];
+          const images = r.image || [];
+          const img = images.find(im => im.quality === '500x500') || images[images.length - 1];
+          return {
+            id: `fs-pop-${i}`,
+            title: r.name,
+            artist: r.artists?.primary?.map(a => a.name).join(', ') || '',
+            album: '',
+            duration: r.duration || 0,
+            coverUrl: img?.link || '',
+            streamUrl: preferred?.link || '',
+            plays: 0,
+          };
+        }).filter(s => s.streamUrl);
+
+        return new Response(
+          JSON.stringify({ success: true, tracks: songs }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const data = JSON.parse(rawText);
       const tracks: FsoundTrack[] = data?.pagination?.data || [];
 
       console.log(`Fetched ${tracks.length} popular tracks from fsound.lol`);
