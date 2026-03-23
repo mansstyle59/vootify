@@ -69,7 +69,7 @@ const HomePage = () => {
       {tracksError && (
         <div className="glass-panel-light rounded-xl p-4 mb-8 flex items-center gap-3 text-destructive">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">Failed to load data. Please try refreshing.</p>
+          <p className="text-sm">Erreur de chargement. Essayez de rafraîchir la page.</p>
         </div>
       )}
 
