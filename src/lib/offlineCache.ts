@@ -61,7 +61,7 @@ export const offlineCache = {
       }
     }
 
-    const blob = new Blob(chunks, { type: "audio/mpeg" });
+    const blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
     const db = await openDb();
 
     // Store audio blob
