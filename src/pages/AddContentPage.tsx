@@ -108,16 +108,15 @@ function AlbumForm() {
 }
 
 function RadioForm() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", genre: "", coverUrl: "", streamUrl: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !form.name.trim()) return;
+    if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: user.id,
+      user_id: "anonymous",
       name: form.name.trim(),
       genre: form.genre.trim() || null,
       cover_url: form.coverUrl.trim() || null,
