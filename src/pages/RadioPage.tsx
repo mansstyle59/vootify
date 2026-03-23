@@ -1,20 +1,11 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { radioEnLigneApi, tvRadioZapApi } from "@/lib/radioFrApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, MapPin, AlertCircle, Music, Globe, Play, Pause } from "lucide-react";
+import { Radio, Play, Pause } from "lucide-react";
 import type { RadioStation } from "@/data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 
-type FilterMode = "all" | "genre" | "region" | "tvradiozap";
-type TVRZType = "trztop" | "ra" | "trzinfo";
-
 const RadioPage = () => {
-  const [filterMode, setFilterMode] = useState<FilterMode>("all");
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [tvrzType, setTvrzType] = useState<TVRZType>("trztop");
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   const playStation = (station: RadioStation) => {
@@ -27,145 +18,24 @@ const RadioPage = () => {
       title: station.name,
       artist: station.genre || "Radio",
       album: "Radio en direct",
-      duration: 0, // 0 = live stream
+      duration: 0,
       coverUrl: station.coverUrl,
       streamUrl: station.streamUrl,
       liked: false,
     });
   };
 
-  const queryOptions = filterMode === "genre" && selectedGenre
-    ? { genre: selectedGenre }
-    : filterMode === "region" && selectedRegion
-    ? { region: selectedRegion }
-    : undefined;
-
-  const { data, isLoading: loadingEnLigne, error: errorEnLigne } = useQuery({
-    queryKey: ["radio-en-ligne", filterMode, selectedGenre, selectedRegion],
-    queryFn: () => radioEnLigneApi.getStations(queryOptions),
-    staleTime: 10 * 60 * 1000,
-    enabled: filterMode !== "tvradiozap",
-  });
-
-  const { data: tvrzStations, isLoading: loadingTvrz, error: errorTvrz } = useQuery({
-    queryKey: ["tvradiozap", tvrzType],
-    queryFn: () => tvRadioZapApi.getStations(tvrzType),
-    staleTime: 10 * 60 * 1000,
-    enabled: filterMode === "tvradiozap",
-  });
-
-  // Fallback Deezer
-  const error = filterMode === "tvradiozap" ? errorTvrz : errorEnLigne;
-  const isLoading = filterMode === "tvradiozap" ? loadingTvrz : loadingEnLigne;
-
-  const { data: deezerStations } = useQuery({
-    queryKey: ["deezer-radio-fallback"],
+  const { data: stations = [], isLoading } = useQuery({
+    queryKey: ["deezer-radio"],
     queryFn: () => deezerApi.getRadioStations(),
-    enabled: !!error,
     staleTime: 10 * 60 * 1000,
   });
-
-  const stations = filterMode === "tvradiozap"
-    ? (tvrzStations || (error ? deezerStations : undefined) || [])
-    : (data?.stations || (error ? deezerStations : undefined) || []);
-  const genres = data?.genres || [];
-  const regions = data?.regions || [];
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
       <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">Radio</h1>
-      <p className="text-muted-foreground mb-6">
-        {data ? "Stations live depuis radio-en-ligne.fr" : error ? "Stations Deezer (fallback)" : "Chargement..."}
-      </p>
+      <p className="text-muted-foreground mb-6">Stations radio Deezer</p>
 
-      {error && !deezerStations && (
-        <div className="glass-panel-light rounded-xl p-4 mb-6 flex items-center gap-3 text-destructive">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">Impossible de charger radio-en-ligne.fr. Tentative de fallback Deezer...</p>
-        </div>
-      )}
-
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
-        {[
-          { key: "all" as FilterMode, label: "Toutes", icon: Radio },
-          { key: "genre" as FilterMode, label: "Par genre", icon: Music },
-          { key: "region" as FilterMode, label: "Par région", icon: MapPin },
-          { key: "tvradiozap" as FilterMode, label: "TVRadioZap", icon: Globe },
-        ].map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => { setFilterMode(key); setSelectedGenre(null); setSelectedRegion(null); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              filterMode === key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Genre/region chips */}
-      {filterMode === "genre" && genres.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {genres.map((g) => (
-            <button
-              key={g.slug}
-              onClick={() => setSelectedGenre(g.slug)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                selectedGenre === g.slug
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/60 text-secondary-foreground hover:bg-secondary"
-              }`}
-            >
-              {g.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {filterMode === "region" && regions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {regions.map((r) => (
-            <button
-              key={r.slug}
-              onClick={() => setSelectedRegion(r.slug)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                selectedRegion === r.slug
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/60 text-secondary-foreground hover:bg-secondary"
-              }`}
-            >
-              {r.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {filterMode === "tvradiozap" && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {([
-            { key: "trztop" as TVRZType, label: "Top radios" },
-            { key: "ra" as TVRZType, label: "Toutes les radios" },
-            { key: "trzinfo" as TVRZType, label: "Radios info" },
-          ]).map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTvrzType(t.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                tvrzType === t.key
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/60 text-secondary-foreground hover:bg-secondary"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Station grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 9 }).map((_, i) => (
@@ -183,7 +53,6 @@ const RadioPage = () => {
       ) : stations.length > 0 ? (
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${filterMode}-${selectedGenre}-${selectedRegion}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -235,7 +104,7 @@ const RadioPage = () => {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Radio className="w-16 h-16 text-muted-foreground/40 mb-4" />
           <h2 className="text-xl font-display font-semibold text-foreground mb-2">Aucune station disponible</h2>
-          <p className="text-muted-foreground">Sélectionnez un genre ou une région pour filtrer.</p>
+          <p className="text-muted-foreground">Impossible de charger les stations radio.</p>
         </div>
       )}
     </div>
