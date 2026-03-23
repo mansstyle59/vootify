@@ -150,7 +150,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Fallback: detect Radio France station when ICY metadata is empty ──
+    // ── Fallback 1: detect Radio France station when ICY metadata is empty ──
     if (!nowPlaying) {
       const station = detectRadioFranceStation(streamUrl);
       if (station) {
@@ -160,6 +160,15 @@ serve(async (req) => {
         artist = station.name;
         coverUrl = station.logo;
       }
+    }
+
+    // ── Fallback 2: generic — use station name passed from client ──
+    if (!nowPlaying && stationName) {
+      console.log("Generic fallback for:", stationName);
+      nowPlaying = `En direct sur ${stationName}`;
+      title = "En direct";
+      artist = stationName;
+      coverUrl = stationCover || "";
     }
 
     return new Response(
