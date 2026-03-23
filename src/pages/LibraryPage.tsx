@@ -211,6 +211,24 @@ const LibraryPage = () => {
             </div>
           )}
 
+          {tab === "custom" && (
+            <div className="glass-panel-light rounded-xl p-2">
+              {customSongs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Music className="w-14 h-14 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground">Aucun titre ajouté.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Les titres ajoutés par l'admin apparaissent ici</p>
+                </div>
+              ) : (
+                customSongs.map((s, i) => (
+                  <div key={s.id} onClick={() => { setQueue(customSongs); play(s); }}>
+                    <SongCard song={s} index={i} showIndex />
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
           {tab === "radios" && (
             <div>
               {savedRadios.length === 0 ? (
