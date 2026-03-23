@@ -1,5 +1,5 @@
 import { NavLink as RouterNavLink } from "react-router-dom";
-import { Home, Search, Library, Radio, LogOut, PlusCircle } from "lucide-react";
+import { Home, Search, Library, Radio, LogOut, PlusCircle, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: "/search", icon: Search, label: "Search" },
   { to: "/library", icon: Library, label: "Library" },
   { to: "/radio", icon: Radio, label: "Radio" },
+  { to: "/infos", icon: Info, label: "Infos FR" },
   { to: "/add", icon: PlusCircle, label: "Ajouter" },
 ];
 
