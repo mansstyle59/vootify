@@ -95,6 +95,25 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
 
+      {/* Download / cached indicator */}
+      {song.streamUrl && song.duration > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isCached && !isDownloading) download(song);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
+        >
+          {isCached ? (
+            <CheckCircle className="w-4 h-4 text-primary" />
+          ) : isDownloading ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+          )}
+        </button>
+      )}
       {isFullStream(song) ? (
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">
           HD
