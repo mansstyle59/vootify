@@ -49,17 +49,23 @@ function AppContent() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AdminAuthProvider>
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </AdminAuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AdminAuthProvider>
+          <Sonner />
+          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </AdminAuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
