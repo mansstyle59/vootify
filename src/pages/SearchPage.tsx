@@ -61,7 +61,7 @@ const SearchPage = () => {
 
       {!debouncedQuery ? (
         <div>
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Browse Genres</h2>
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Parcourir les genres</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
             {genres.map((genre, i) => (
               <motion.button
