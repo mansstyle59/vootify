@@ -43,7 +43,7 @@ const RadioPage = () => {
   const saveStation = async (station: RadioBrowserStation) => {
     const { error } = await supabase.from("custom_radio_stations").upsert({
       id: station.id,
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       name: station.name,
       genre: station.genre,
       cover_url: station.coverUrl,
