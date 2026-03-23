@@ -199,9 +199,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       {/* BG glow */}
       <div className="absolute inset-0 overflow-hidden">
         <img
-          src={currentSong.coverUrl}
+          src={radioMeta?.coverUrl || currentSong.coverUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-30"
+          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-30 transition-all duration-1000"
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.5), hsl(0 0% 4% / 0.3), hsl(0 0% 4% / 0.85))" }} />
       </div>
