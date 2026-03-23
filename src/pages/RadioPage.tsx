@@ -183,13 +183,14 @@ const RadioPage = () => {
   const StationCard = ({ station, index }: { station: RadioBrowserStation; index: number }) => {
     const isSaved = savedIds.has(station.id);
     const isEditing = editingId === station.id;
+    const isActive = currentSong?.id === station.id && isPlaying;
 
     if (isEditing) {
       return (
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-panel rounded-xl p-4"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-panel rounded-2xl p-4"
         >
           <div className="space-y-2">
             <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm" />
@@ -211,71 +212,54 @@ const RadioPage = () => {
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.015 }}
-        className="glass-panel rounded-xl p-4 hover-glass cursor-pointer group"
+        transition={{ delay: index * 0.02 }}
+        className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-shrink-0">
-            <img
-              src={station.coverUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&h=100&fit=crop"}
-              alt={station.name}
-              className="w-14 h-14 rounded-xl object-cover bg-secondary"
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&h=100&fit=crop'; }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-background/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-              {currentSong?.id === station.id && isPlaying ? (
-                <Pause className="w-5 h-5 text-primary" />
-              ) : (
-                <Play className="w-5 h-5 text-primary" />
-              )}
+        <div className="relative aspect-square rounded-2xl overflow-hidden mb-2.5 bg-secondary">
+          <img
+            src={station.coverUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
+            alt={station.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
+          />
+          <div className="absolute inset-0 bg-background/0 group-hover:bg-background/30 transition-colors flex items-center justify-center">
+            <div className={`w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg transition-all ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"}`}>
+              {isActive ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
             </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-display font-semibold text-foreground truncate text-sm">{station.name}</h3>
-            <p className="text-xs text-muted-foreground truncate capitalize">{station.genre}</p>
-            <div className="mt-1 flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${currentSong?.id === station.id && isPlaying ? "bg-primary animate-pulse-glow" : "bg-muted-foreground/50"}`} />
-              <span className={`text-[10px] font-medium ${currentSong?.id === station.id && isPlaying ? "text-primary" : "text-muted-foreground"}`}>
-                {currentSong?.id === station.id && isPlaying ? "EN LECTURE" : "LIVE"}
-              </span>
-              {station.bitrate > 0 && (
-                <span className="text-[10px] text-muted-foreground">{station.bitrate}kbps</span>
-              )}
+          {isActive && (
+            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/90 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="text-[10px] font-bold text-white tracking-wider">LIVE</span>
             </div>
-          </div>
-          {/* Action buttons */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          )}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {isCustomTab ? (
               <>
-                <button
-                  onClick={(e) => { e.stopPropagation(); startEdit(station); }}
-                  className="p-2 rounded-full hover:bg-secondary transition-colors"
-                  title="Modifier"
-                >
-                  <Pencil className="w-4 h-4 text-muted-foreground" />
+                <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-1.5 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors">
+                  <Pencil className="w-3.5 h-3.5 text-foreground" />
                 </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); removeStation(station.id); }}
-                  className="p-2 rounded-full hover:bg-destructive/20 transition-colors"
-                  title="Supprimer"
-                >
-                  <Trash2 className="w-4 h-4 text-destructive" />
+                <button onClick={(e) => { e.stopPropagation(); removeStation(station.id); }} className="p-1.5 rounded-full bg-background/60 backdrop-blur-sm hover:bg-destructive/80 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5 text-foreground" />
                 </button>
               </>
             ) : (
-              <button
-                onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-                className="p-2 rounded-full hover:bg-secondary transition-colors"
-                title={isSaved ? "Retirer de ma bibliothèque" : "Ajouter à ma bibliothèque"}
-              >
-                <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+              <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }} className="p-1.5 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors">
+                <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : "text-foreground"}`} />
               </button>
             )}
           </div>
+          {station.bitrate > 0 && (
+            <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-background/60 backdrop-blur-sm">
+              <span className="text-[9px] font-semibold text-foreground">{station.bitrate}kbps</span>
+            </div>
+          )}
         </div>
+        <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
+        <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
       </motion.div>
     );
   };
@@ -283,11 +267,8 @@ const RadioPage = () => {
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
       <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Radio</h1>
-      <p className="text-muted-foreground mb-5 text-sm">
-        Des milliers de stations radio du monde entier
-      </p>
+      <p className="text-muted-foreground mb-5 text-sm">Des milliers de stations radio du monde entier</p>
 
-      {/* Tabs */}
       <div className="flex gap-2 mb-5 flex-wrap">
         {tabs.map((tab) => (
           <button
@@ -305,22 +286,15 @@ const RadioPage = () => {
         ))}
       </div>
 
-      {/* Search bar */}
       {activeTab === "search" && (
         <div className="mb-5 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher une station..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 glass-panel border-border/50"
-            />
+            <Input placeholder="Rechercher une station..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 glass-panel border-border/50" />
           </div>
         </div>
       )}
 
-      {/* Genre chips */}
       {(activeTab === "france" || activeTab === "top") && (
         <div className="flex gap-2 mb-5 flex-wrap">
           {GENRE_TAGS.map((tag) => (
@@ -328,9 +302,7 @@ const RadioPage = () => {
               key={tag}
               onClick={() => setSelectedGenre(selectedGenre === tag ? null : tag)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all capitalize ${
-                selectedGenre === tag
-                  ? "bg-accent text-accent-foreground"
-                  : "glass-panel-light text-muted-foreground hover:text-foreground"
+                selectedGenre === tag ? "bg-accent text-accent-foreground" : "glass-panel-light text-muted-foreground hover:text-foreground"
               }`}
             >
               {tag}
@@ -339,18 +311,13 @@ const RadioPage = () => {
         </div>
       )}
 
-      {/* Stations grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="glass-panel rounded-xl p-4 animate-pulse">
-              <div className="flex gap-4 items-center">
-                <div className="w-14 h-14 rounded-xl bg-secondary" />
-                <div className="flex-1">
-                  <div className="h-4 w-28 bg-secondary rounded mb-2" />
-                  <div className="h-3 w-20 bg-secondary rounded" />
-                </div>
-              </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="aspect-square rounded-2xl bg-secondary mb-2.5" />
+              <div className="h-4 w-3/4 bg-secondary rounded mb-1" />
+              <div className="h-3 w-1/2 bg-secondary rounded" />
             </div>
           ))}
         </div>
@@ -360,7 +327,7 @@ const RadioPage = () => {
             key={`${activeTab}-${selectedGenre}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
           >
             {stations.map((station, i) => (
               <StationCard key={station.id} station={station} index={i} />
