@@ -17,7 +17,7 @@ function getGreeting() {
 }
 
 const DEEZER_PLAYLIST_TITRES_DU_MOMENT = "53362031";
-const DEEZER_PLAYLIST_ACTU_RAP = "1996494362"; // Actu Rap FR
+const DEEZER_PLAYLIST_RAPSTARS = "3272614282"; // Rapstars
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
@@ -29,10 +29,10 @@ const HomePage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Actu Rap
-  const { data: actuRap, isLoading: loadingRap } = useQuery({
-    queryKey: ["deezer-actu-rap"],
-    queryFn: () => deezerApi.getPlaylistTracks(DEEZER_PLAYLIST_ACTU_RAP, 20),
+  // Rapstars
+  const { data: rapstars, isLoading: loadingRap } = useQuery({
+    queryKey: ["deezer-rapstars"],
+    queryFn: () => deezerApi.getPlaylistTracks(DEEZER_PLAYLIST_RAPSTARS, 20),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -130,8 +130,8 @@ const HomePage = () => {
         </div>
       </Section>
 
-      {/* ─── Actu Rap ─── */}
-      <Section title="Actu Rap 🎤">
+      {/* ─── Rapstars ─── */}
+      <Section title="Rapstars ⭐">
         <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 md:px-8 pb-2">
           {loadingRap
             ? Array.from({ length: 8 }).map((_, i) => (
@@ -141,7 +141,7 @@ const HomePage = () => {
                   <div className="h-3 w-20 bg-secondary rounded" />
                 </div>
               ))
-            : actuRap?.map((song, i) => (
+            : rapstars?.map((song, i) => (
                 <CoverCard
                   key={song.id}
                   title={song.title}
@@ -149,7 +149,7 @@ const HomePage = () => {
                   imageUrl={song.coverUrl}
                   index={i}
                   isActive={currentSong?.id === song.id && isPlaying}
-                  onClick={() => handlePlayTrack(song, actuRap)}
+                  onClick={() => handlePlayTrack(song, rapstars)}
                 />
               ))}
         </div>
