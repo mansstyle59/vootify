@@ -35,6 +35,9 @@ const RadioPage = () => {
   });
 
   // Fallback Deezer
+  const error = filterMode === "tvradiozap" ? errorTvrz : errorEnLigne;
+  const isLoading = filterMode === "tvradiozap" ? loadingTvrz : loadingEnLigne;
+
   const { data: deezerStations } = useQuery({
     queryKey: ["deezer-radio-fallback"],
     queryFn: () => deezerApi.getRadioStations(),
@@ -42,7 +45,9 @@ const RadioPage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const stations = data?.stations || (error ? deezerStations : undefined) || [];
+  const stations = filterMode === "tvradiozap"
+    ? (tvrzStations || (error ? deezerStations : undefined) || [])
+    : (data?.stations || (error ? deezerStations : undefined) || []);
   const genres = data?.genres || [];
   const regions = data?.regions || [];
 
