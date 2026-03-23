@@ -237,7 +237,7 @@ export function FullScreenPlayer() {
         </button>
       </div>
 
-      <button onClick={() => toggleLike(currentSong.id)} className="mt-6">
+      <button onClick={() => toggleLike(currentSong)} className="mt-6">
         <Heart className={`w-7 h-7 transition-colors ${liked ? "fill-primary text-primary" : "text-muted-foreground hover:text-foreground"}`} />
       </button>
     </motion.div>
