@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioBrowserApi } from "@/lib/radioBrowserApi";
-import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Music, Search, TrendingUp } from "lucide-react";
 import type { RadioStation } from "@/data/mockData";
@@ -64,17 +63,8 @@ const RadioPage = () => {
     staleTime: 30 * 60 * 1000,
   });
 
-  // Deezer fallback
-  const mainError = filterMode === "top" && topStations.length === 0 && !loadingTop;
-  const { data: deezerStations } = useQuery({
-    queryKey: ["deezer-radio-fallback"],
-    queryFn: () => deezerApi.getRadioStations(),
-    enabled: mainError,
-    staleTime: 10 * 60 * 1000,
-  });
-
   const stations = filterMode === "top"
-    ? (topStations.length > 0 ? topStations : deezerStations || [])
+    ? topStations
     : filterMode === "tag"
     ? tagStations
     : searchStations;

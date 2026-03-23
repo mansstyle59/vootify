@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Song, Album, RadioStation } from "@/data/mockData";
+import type { Song, Album } from "@/data/mockData";
 
 interface DeezerTrack {
   id: number;
@@ -20,12 +20,6 @@ interface DeezerAlbum {
   nb_tracks: number;
 }
 
-interface DeezerRadio {
-  id: number;
-  title: string;
-  picture_medium: string;
-  picture_big: string;
-}
 
 async function callDeezer(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("deezer-proxy", { body });
@@ -58,16 +52,6 @@ function mapDeezerAlbum(a: DeezerAlbum): Album {
   };
 }
 
-function mapDeezerRadio(r: DeezerRadio): RadioStation {
-  return {
-    id: `dz-radio-${r.id}`,
-    name: r.title,
-    genre: "Radio",
-    coverUrl: r.picture_medium || r.picture_big,
-    streamUrl: "",
-    listeners: Math.floor(Math.random() * 20000) + 1000,
-  };
-}
 
 export const deezerApi = {
   async searchTracks(query: string, limit = 25): Promise<Song[]> {
@@ -85,16 +69,6 @@ export const deezerApi = {
     return (data.data || []).map(mapDeezerAlbum);
   },
 
-  async getRadioStations(): Promise<RadioStation[]> {
-    const data = await callDeezer({ action: "radio" });
-    return (data.data || []).map(mapDeezerRadio);
-  },
-
-  async getRadioTracks(radioId: string, limit = 25): Promise<Song[]> {
-    const id = radioId.replace("dz-radio-", "");
-    const data = await callDeezer({ action: "radio_tracks", id, limit });
-    return (data.data || []).map(mapTrackToSong);
-  },
 
   async getAlbumTracks(albumId: string): Promise<{ album: Album; tracks: Song[] }> {
     const id = albumId.replace("dz-album-", "");
