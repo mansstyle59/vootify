@@ -21,9 +21,9 @@ const LibraryPage = () => {
   }, [tab, playlists]);
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "liked", label: "Liked", icon: Heart },
+    { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
-    { key: "recent", label: "Recent", icon: Clock },
+    { key: "recent", label: "Récents", icon: Clock },
   ];
 
   const handleCreate = () => {
