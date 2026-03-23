@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
+import { musicDb } from "@/lib/musicDb";
 
 interface PlayerState {
   currentSong: Song | null;
@@ -11,10 +12,13 @@ interface PlayerState {
   repeat: "off" | "all" | "one";
   fullScreen: boolean;
   likedSongs: Song[];
-  playlists: Playlist[];
+  playlists: Array<{ id: string; name: string; cover_url: string | null; created_at: string }>;
   recentlyPlayed: Song[];
   playlistSongs: Record<string, Song[]>;
+  userId: string | null;
 
+  setUserId: (id: string | null) => void;
+  loadUserData: (userId: string) => Promise<void>;
   play: (song: Song) => void;
   togglePlay: () => void;
   next: () => void;
@@ -31,6 +35,7 @@ interface PlayerState {
   deletePlaylist: (id: string) => void;
   addSongToPlaylist: (playlistId: string, song: Song) => void;
   removeSongFromPlaylist: (playlistId: string, songId: string) => void;
+  loadPlaylistSongs: (playlistId: string) => Promise<void>;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -46,14 +51,35 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playlists: [],
   recentlyPlayed: [],
   playlistSongs: {},
+  userId: null,
 
-  play: (song) =>
+  setUserId: (id) => set({ userId: id }),
+
+  loadUserData: async (userId) => {
+    try {
+      const [liked, playlists, recent] = await Promise.all([
+        musicDb.getLikedSongs(userId),
+        musicDb.getPlaylists(userId),
+        musicDb.getRecentlyPlayed(userId),
+      ]);
+      set({ likedSongs: liked, playlists, recentlyPlayed: recent, userId });
+    } catch (e) {
+      console.error("Failed to load user data:", e);
+    }
+  },
+
+  play: (song) => {
+    const { userId } = get();
     set((state) => ({
       currentSong: song,
       isPlaying: true,
       progress: 0,
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
-    })),
+    }));
+    if (userId) {
+      musicDb.addRecentlyPlayed(userId, song).catch(console.error);
+    }
+  },
 
   togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
@@ -61,12 +87,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { queue, currentSong, shuffle } = get();
     if (!currentSong || queue.length === 0) return;
     const idx = queue.findIndex((s) => s.id === currentSong.id);
-    let nextIdx: number;
-    if (shuffle) {
-      nextIdx = Math.floor(Math.random() * queue.length);
-    } else {
-      nextIdx = (idx + 1) % queue.length;
-    }
+    const nextIdx = shuffle
+      ? Math.floor(Math.random() * queue.length)
+      : (idx + 1) % queue.length;
     get().play(queue[nextIdx]);
   },
 
@@ -74,12 +97,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { queue, currentSong, shuffle } = get();
     if (!currentSong || queue.length === 0) return;
     const idx = queue.findIndex((s) => s.id === currentSong.id);
-    let prevIdx: number;
-    if (shuffle) {
-      prevIdx = Math.floor(Math.random() * queue.length);
-    } else {
-      prevIdx = (idx - 1 + queue.length) % queue.length;
-    }
+    const prevIdx = shuffle
+      ? Math.floor(Math.random() * queue.length)
+      : (idx - 1 + queue.length) % queue.length;
     get().play(queue[prevIdx]);
   },
 
@@ -92,61 +112,89 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     })),
   toggleFullScreen: () => set((s) => ({ fullScreen: !s.fullScreen })),
 
-  toggleLike: (song) =>
-    set((s) => {
-      const exists = s.likedSongs.some((ls) => ls.id === song.id);
-      return {
-        likedSongs: exists
-          ? s.likedSongs.filter((ls) => ls.id !== song.id)
-          : [...s.likedSongs, song],
-      };
-    }),
+  toggleLike: (song) => {
+    const { userId } = get();
+    const exists = get().likedSongs.some((ls) => ls.id === song.id);
+
+    set((s) => ({
+      likedSongs: exists
+        ? s.likedSongs.filter((ls) => ls.id !== song.id)
+        : [...s.likedSongs, song],
+    }));
+
+    if (userId) {
+      if (exists) {
+        musicDb.unlikeSong(userId, song.id).catch(console.error);
+      } else {
+        musicDb.likeSong(userId, song).catch(console.error);
+      }
+    }
+  },
 
   isLiked: (songId) => get().likedSongs.some((s) => s.id === songId),
 
   setQueue: (songs) => set({ queue: songs }),
 
-  createPlaylist: (name) =>
-    set((s) => ({
-      playlists: [
-        ...s.playlists,
-        {
-          id: `p${Date.now()}`,
-          name,
-          coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop",
-          songIds: [],
-          createdAt: new Date().toISOString().split("T")[0],
+  createPlaylist: async (name) => {
+    const { userId } = get();
+    if (!userId) return;
+    try {
+      const pl = await musicDb.createPlaylist(userId, name);
+      set((s) => ({ playlists: [pl, ...s.playlists] }));
+    } catch (e) {
+      console.error("Failed to create playlist:", e);
+    }
+  },
+
+  deletePlaylist: async (id) => {
+    try {
+      await musicDb.deletePlaylist(id);
+      set((s) => {
+        const { [id]: _, ...rest } = s.playlistSongs;
+        return { playlists: s.playlists.filter((p) => p.id !== id), playlistSongs: rest };
+      });
+    } catch (e) {
+      console.error("Failed to delete playlist:", e);
+    }
+  },
+
+  addSongToPlaylist: async (playlistId, song) => {
+    const current = get().playlistSongs[playlistId] || [];
+    try {
+      await musicDb.addSongToPlaylist(playlistId, song, current.length);
+      set((s) => ({
+        playlistSongs: {
+          ...s.playlistSongs,
+          [playlistId]: [...current.filter((x) => x.id !== song.id), song],
         },
-      ],
-    })),
+      }));
+    } catch (e) {
+      console.error("Failed to add song to playlist:", e);
+    }
+  },
 
-  deletePlaylist: (id) =>
-    set((s) => {
-      const { [id]: _, ...rest } = s.playlistSongs;
-      return { playlists: s.playlists.filter((p) => p.id !== id), playlistSongs: rest };
-    }),
+  removeSongFromPlaylist: async (playlistId, songId) => {
+    try {
+      await musicDb.removeSongFromPlaylist(playlistId, songId);
+      set((s) => ({
+        playlistSongs: {
+          ...s.playlistSongs,
+          [playlistId]: (s.playlistSongs[playlistId] || []).filter((x) => x.id !== songId),
+        },
+      }));
+    } catch (e) {
+      console.error("Failed to remove song from playlist:", e);
+    }
+  },
 
-  addSongToPlaylist: (playlistId, song) =>
-    set((s) => ({
-      playlists: s.playlists.map((p) =>
-        p.id === playlistId && !p.songIds.includes(song.id)
-          ? { ...p, songIds: [...p.songIds, song.id] }
-          : p
-      ),
-      playlistSongs: {
-        ...s.playlistSongs,
-        [playlistId]: [...(s.playlistSongs[playlistId] || []).filter((x) => x.id !== song.id), song],
-      },
-    })),
-
-  removeSongFromPlaylist: (playlistId, songId) =>
-    set((s) => ({
-      playlists: s.playlists.map((p) =>
-        p.id === playlistId ? { ...p, songIds: p.songIds.filter((id) => id !== songId) } : p
-      ),
-      playlistSongs: {
-        ...s.playlistSongs,
-        [playlistId]: (s.playlistSongs[playlistId] || []).filter((x) => x.id !== songId),
-      },
-    })),
+  loadPlaylistSongs: async (playlistId) => {
+    try {
+      const songs = await musicDb.getPlaylistSongs(playlistId);
+      set((s) => ({
+        playlistSongs: { ...s.playlistSongs, [playlistId]: songs },
+      }));
+    } catch (e) {
+      console.error("Failed to load playlist songs:", e);
+    }
+  },
 }));
