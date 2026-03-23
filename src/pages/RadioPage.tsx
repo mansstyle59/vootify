@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { radioEnLigneApi } from "@/lib/radioFrApi";
+import { radioEnLigneApi, tvRadioZapApi } from "@/lib/radioFrApi";
 import { deezerApi } from "@/lib/deezerApi";
-import { Radio, MapPin, AlertCircle, Music } from "lucide-react";
+import { Radio, MapPin, AlertCircle, Music, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type FilterMode = "all" | "genre" | "region";
