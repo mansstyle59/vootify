@@ -151,7 +151,7 @@ export function FullScreenPlayer() {
   const {
     currentSong, isPlaying, progress, shuffle, repeat,
     togglePlay, next, previous, setProgress,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer
   } = usePlayerStore();
 
   if (!currentSong) return null;
