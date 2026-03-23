@@ -187,11 +187,7 @@ const RadioPage = () => {
 
     if (isEditing) {
       return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-panel rounded-2xl p-4"
-        >
+        <div className="glass-panel rounded-2xl p-4">
           <div className="space-y-2">
             <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm" />
             <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Genre" className="text-sm" />
@@ -206,15 +202,12 @@ const RadioPage = () => {
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       );
     }
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.02 }}
+      <div
         className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
@@ -260,7 +253,7 @@ const RadioPage = () => {
         </div>
         <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
         <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
-      </motion.div>
+      </div>
     );
   };
 
