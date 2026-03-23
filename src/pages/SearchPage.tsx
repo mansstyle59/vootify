@@ -1,13 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song } from "@/data/mockData";
-
-const [selectedArtistFilter, setSelectedArtistFilter] = "PLACEHOLDER"; // removed, handled below
 
 const RECENT_SEARCHES_KEY = "voo-recent-searches";
 const MAX_RECENT = 8;
@@ -39,10 +37,12 @@ const SearchPage = () => {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches());
+  const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const { play, setQueue } = usePlayerStore();
 
   const handleChange = useCallback((value: string) => {
     setQuery(value);
+    setArtistFilter(null);
     clearTimeout((window as any).__searchTimeout);
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value.trim());
@@ -52,9 +52,9 @@ const SearchPage = () => {
   const handleBubbleClick = (term: string) => {
     setQuery(term);
     setDebouncedQuery(term);
+    setArtistFilter(null);
   };
 
-  // Save search when results come in
   const { data: results, isLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
     queryFn: () => jiosaavnApi.search(debouncedQuery, 20),
@@ -68,6 +68,34 @@ const SearchPage = () => {
       setRecentSearches(getRecentSearches());
     }
   }, [debouncedQuery, results]);
+
+  // Extract unique artists from results
+  const uniqueArtists = useMemo(() => {
+    if (!results || results.length === 0) return [];
+    const artistCount = new Map<string, number>();
+    results.forEach((song) => {
+      // Split combined artists and count each
+      const artists = song.artist.split(", ");
+      artists.forEach((a) => {
+        const name = a.trim();
+        if (name && name !== "Artiste inconnu") {
+          artistCount.set(name, (artistCount.get(name) || 0) + 1);
+        }
+      });
+    });
+    // Sort by frequency, return top artists
+    return Array.from(artistCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name]) => name);
+  }, [results]);
+
+  // Filter results by selected artist
+  const filteredResults = useMemo(() => {
+    if (!results) return [];
+    if (!artistFilter) return results;
+    return results.filter((song) => song.artist.includes(artistFilter));
+  }, [results, artistFilter]);
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
     setQueue(allSongs);
@@ -94,7 +122,7 @@ const SearchPage = () => {
           className="w-full pl-12 pr-10 py-3.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
         />
         {query && (
-          <button onClick={() => { setQuery(""); setDebouncedQuery(""); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+          <button onClick={() => { setQuery(""); setDebouncedQuery(""); setArtistFilter(null); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -185,12 +213,48 @@ const SearchPage = () => {
             </div>
           ) : results && results.length > 0 ? (
             <>
+              {/* Artist filter bubbles */}
+              {uniqueArtists.length > 1 && (
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Artistes</span>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                    <button
+                      onClick={() => setArtistFilter(null)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        !artistFilter
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary/80 border border-border text-foreground hover:bg-primary/15"
+                      }`}
+                    >
+                      Tous
+                    </button>
+                    {uniqueArtists.map((artist) => (
+                      <button
+                        key={artist}
+                        onClick={() => setArtistFilter(artistFilter === artist ? null : artist)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          artistFilter === artist
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary/80 border border-border text-foreground hover:bg-primary/15"
+                        }`}
+                      >
+                        {artist}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <p className="text-sm text-muted-foreground mb-3">
-                {results.length} résultats pour « {debouncedQuery} »
+                {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
+                {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
               </p>
               <div className="glass-panel-light rounded-xl p-2">
-                {results.map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, results)}>
+                {filteredResults.map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
                     <SongCard song={song} index={i} />
                   </div>
                 ))}
