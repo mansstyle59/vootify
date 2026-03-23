@@ -37,7 +37,7 @@ export function MiniPlayer() {
 
   if (!currentSong) return null;
 
-  const liked = likedSongIds.has(currentSong.id);
+  const liked = isLiked(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
   return (
