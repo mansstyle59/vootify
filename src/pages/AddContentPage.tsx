@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 
 import { Music, Disc3, Radio, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
