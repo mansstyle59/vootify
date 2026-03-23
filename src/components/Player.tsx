@@ -252,9 +252,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Visualizer */}
-        <AudioVisualizer isPlaying={isPlaying} />
-      </div>
 
       {/* Bottom controls */}
       <div className="relative z-10 px-8 pb-10">
