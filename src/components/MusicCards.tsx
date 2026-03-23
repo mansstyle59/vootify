@@ -1,7 +1,8 @@
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart } from "lucide-react";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useOfflineCache } from "@/hooks/useOfflineCache";
 
 /** Returns true if the song has a full-length stream (JioSaavn or custom) vs a 30s Deezer preview */
 function isFullStream(song: Song): boolean {
@@ -29,6 +30,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
   const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked } = usePlayerStore();
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
+  const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
 
   const handleClick = () => {
     if (isCurrentSong) {
@@ -93,6 +95,25 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
 
+      {/* Download / cached indicator */}
+      {song.streamUrl && song.duration > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isCached && !isDownloading) download(song);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
+        >
+          {isCached ? (
+            <CheckCircle className="w-4 h-4 text-primary" />
+          ) : isDownloading ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+          )}
+        </button>
+      )}
       {isFullStream(song) ? (
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">
           HD
