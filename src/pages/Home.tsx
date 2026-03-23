@@ -96,7 +96,7 @@ const HomePage = () => {
       {/* Trending Tracks */}
       <section className="mb-10">
         <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" /> Trending Now
+          <TrendingUp className="w-5 h-5 text-primary" /> Tendances du moment
         </h2>
         <div className="glass-panel-light rounded-xl p-2">
           {loadingTracks
