@@ -20,10 +20,18 @@ const RadioPage = () => {
     ? { region: selectedRegion }
     : undefined;
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading: loadingEnLigne, error: errorEnLigne } = useQuery({
     queryKey: ["radio-en-ligne", filterMode, selectedGenre, selectedRegion],
     queryFn: () => radioEnLigneApi.getStations(queryOptions),
     staleTime: 10 * 60 * 1000,
+    enabled: filterMode !== "tvradiozap",
+  });
+
+  const { data: tvrzStations, isLoading: loadingTvrz, error: errorTvrz } = useQuery({
+    queryKey: ["tvradiozap", tvrzType],
+    queryFn: () => tvRadioZapApi.getStations(tvrzType),
+    staleTime: 10 * 60 * 1000,
+    enabled: filterMode === "tvradiozap",
   });
 
   // Fallback Deezer
