@@ -137,6 +137,9 @@ export function MiniPlayer() {
             <button onClick={toggleFullScreen} className="p-1.5 text-muted-foreground hover:text-foreground">
               <Maximize2 className="w-4 h-4" />
             </button>
+            <button onClick={closePlayer} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Fermer le lecteur">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
