@@ -109,6 +109,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   setProgress: (p) => set({ progress: p }),
+  seekTo: (time) => set({ progress: time, _seekTime: time }),
   setVolume: (v) => set({ volume: v }),
   toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle })),
   cycleRepeat: () =>
