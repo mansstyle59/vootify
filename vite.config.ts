@@ -59,6 +59,34 @@ export default defineConfig(({ mode }) => ({
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
+          {
+            // Cache album/song cover images from JioSaavn CDN
+            urlPattern: /^https:\/\/c\.saavncdn\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "saavn-covers",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            // Cache Deezer CDN images
+            urlPattern: /^https:\/\/cdns-images\.dzcdn\.net\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "deezer-covers",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            // Cache Supabase API calls (liked songs, playlists, etc.) with NetworkFirst
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-api",
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+              networkTimeoutSeconds: 5,
+            },
+          },
         ],
       },
     }),
