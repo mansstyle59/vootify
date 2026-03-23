@@ -18,8 +18,8 @@ const HomePage = () => {
   const { play, setQueue } = usePlayerStore();
 
   const { data: chartTracks, isLoading: loadingTracks } = useQuery({
-    queryKey: ["deezer-chart-tracks"],
-    queryFn: () => deezerApi.getChartTracks(20),
+    queryKey: ["jiosaavn-chart-tracks"],
+    queryFn: () => jiosaavnApi.getCharts(20),
     staleTime: 10 * 60 * 1000,
   });
 
