@@ -185,6 +185,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const liked = isLiked(currentSong.id);
   const stationName = currentSong.title;
   const genre = currentSong.album || "Radio";
+  const radioMeta = useRadioMetadata(currentSong.streamUrl, true, isPlaying);
 
   return (
     <motion.div
