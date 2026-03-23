@@ -196,11 +196,7 @@ const RadioPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.02 }}
                 className="glass-panel rounded-xl p-4 hover-glass cursor-pointer group"
-                onClick={() => {
-                  if (station.streamUrl) {
-                    window.open(station.streamUrl, '_blank');
-                  }
-                }}
+                onClick={() => playStation(station)}
               >
                 <div className="flex gap-4 items-center">
                   <div className="relative flex-shrink-0">
@@ -213,15 +209,21 @@ const RadioPage = () => {
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-background/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Radio className="w-5 h-5 text-primary" />
+                      {currentSong?.id === station.id && isPlaying ? (
+                        <Pause className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Play className="w-5 h-5 text-primary" />
+                      )}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-semibold text-foreground truncate">{station.name}</h3>
                     <p className="text-xs text-muted-foreground truncate">{station.genre}</p>
                     <div className="mt-1.5 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
-                      <span className="text-[10px] text-primary font-medium">LIVE</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${currentSong?.id === station.id && isPlaying ? "bg-primary animate-pulse-glow" : "bg-muted-foreground/50"}`} />
+                      <span className={`text-[10px] font-medium ${currentSong?.id === station.id && isPlaying ? "text-primary" : "text-muted-foreground"}`}>
+                        {currentSong?.id === station.id && isPlaying ? "EN LECTURE" : "LIVE"}
+                      </span>
                     </div>
                   </div>
                 </div>
