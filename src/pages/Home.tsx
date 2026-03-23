@@ -21,11 +21,6 @@ const HomePage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: radioStations, isLoading: loadingRadio } = useQuery({
-    queryKey: ["deezer-radio"],
-    queryFn: () => deezerApi.getRadioStations(),
-    staleTime: 10 * 60 * 1000,
-  });
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
     setQueue(allSongs);
