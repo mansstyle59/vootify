@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioBrowserApi } from "@/lib/radioBrowserApi";
+import { radioEnLigneApi } from "@/lib/radioEnLigneApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, Play, Pause, Music, Search, TrendingUp } from "lucide-react";
+import { Radio, Play, Pause, Music, Search, TrendingUp, Globe } from "lucide-react";
 import type { RadioStation } from "@/data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 
-type FilterMode = "top" | "tag" | "search";
+type FilterMode = "top" | "rel" | "tag" | "search";
 
 const RadioPage = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>("top");
@@ -63,13 +64,23 @@ const RadioPage = () => {
     staleTime: 30 * 60 * 1000,
   });
 
+  // radio-en-ligne.fr scraped stations
+  const { data: relStations = [], isLoading: loadingRel } = useQuery({
+    queryKey: ["radio-en-ligne"],
+    queryFn: () => radioEnLigneApi.getStations(),
+    staleTime: 15 * 60 * 1000,
+    enabled: filterMode === "rel",
+  });
+
   const stations = filterMode === "top"
     ? topStations
+    : filterMode === "rel"
+    ? relStations
     : filterMode === "tag"
     ? tagStations
     : searchStations;
 
-  const isLoading = filterMode === "top" ? loadingTop : filterMode === "tag" ? loadingTag : loadingSearch;
+  const isLoading = filterMode === "top" ? loadingTop : filterMode === "rel" ? loadingRel : filterMode === "tag" ? loadingTag : loadingSearch;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +123,7 @@ const RadioPage = () => {
       <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
         {[
           { key: "top" as FilterMode, label: "Top France", icon: TrendingUp },
+          { key: "rel" as FilterMode, label: "radio-en-ligne.fr", icon: Globe },
           { key: "tag" as FilterMode, label: "Par genre", icon: Music },
         ].map(({ key, label, icon: Icon }) => (
           <button
