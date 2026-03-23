@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
-import { fsoundApi } from "@/lib/fsoundApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { ContentCard, SongCard, CardSkeleton, SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { TrendingUp, Sparkles, Disc3, Music2, Clock, AlertCircle, Headphones } from "lucide-react";
+import { TrendingUp, Sparkles, Disc3, Music2, Clock } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 
@@ -16,10 +15,9 @@ const sectionAnim = {
 const HomePage = () => {
   const { play, setQueue } = usePlayerStore();
 
-  // Full tracks from FSound/JioSaavn
-  const { data: fullTracks, isLoading: loadingFull } = useQuery({
-    queryKey: ["fsound-popular"],
-    queryFn: () => fsoundApi.getPopularTracks(20),
+  const { data: chartTracks, isLoading: loadingTracks } = useQuery({
+    queryKey: ["deezer-chart-tracks"],
+    queryFn: () => deezerApi.getChartTracks(20),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -63,13 +61,13 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
         <div className="relative z-10">
           <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Musique complète en streaming
+            <Sparkles className="w-4 h-4" /> Musique en streaming
           </p>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-2">
             Bienvenue sur VOO Music
           </h1>
           <p className="text-muted-foreground max-w-md">
-            Écoutez des morceaux complets, explorez les tendances et découvrez de nouveaux artistes.
+            Explorez les tendances et découvrez de nouveaux artistes.
           </p>
         </div>
       </motion.div>
@@ -105,26 +103,26 @@ const HomePage = () => {
         </motion.section>
       )}
 
-      {/* Full Tracks - Tendances */}
+      {/* Tendances */}
       <motion.section variants={sectionAnim} initial="hidden" animate="show">
         <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Headphones className="w-5 h-5 text-primary" /> Titres complets populaires
+          <TrendingUp className="w-5 h-5 text-primary" /> Tendances
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
           <div className="glass-panel-light rounded-xl p-2">
-            {loadingFull
+            {loadingTracks
               ? Array.from({ length: 5 }).map((_, i) => <SongSkeleton key={i} />)
-              : fullTracks?.slice(0, 5).map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, fullTracks)}>
+              : chartTracks?.slice(0, 5).map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
                     <SongCard song={song} index={i} showIndex />
                   </div>
                 ))}
           </div>
           <div className="glass-panel-light rounded-xl p-2 mt-4 md:mt-0">
-            {loadingFull
+            {loadingTracks
               ? Array.from({ length: 5 }).map((_, i) => <SongSkeleton key={i} />)
-              : fullTracks?.slice(5, 10).map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, fullTracks)}>
+              : chartTracks?.slice(5, 10).map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
                     <SongCard song={song} index={i + 5} showIndex />
                   </div>
                 ))}
@@ -151,22 +149,6 @@ const HomePage = () => {
               ))}
         </div>
       </motion.section>
-
-      {/* More full tracks */}
-      {fullTracks && fullTracks.length > 10 && (
-        <motion.section variants={sectionAnim} initial="hidden" animate="show">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-accent" /> Encore plus de titres
-          </h2>
-          <div className="glass-panel-light rounded-xl p-2">
-            {fullTracks.slice(10, 20).map((song, i) => (
-              <div key={song.id} onClick={() => handlePlayTrack(song, fullTracks)}>
-                <SongCard song={song} index={i + 10} showIndex />
-              </div>
-            ))}
-          </div>
-        </motion.section>
-      )}
 
       {/* More Albums */}
       {chartAlbums && chartAlbums.length > 6 && (
