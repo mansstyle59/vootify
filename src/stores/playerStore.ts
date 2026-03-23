@@ -52,7 +52,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playlists: [],
   recentlyPlayed: [],
   playlistSongs: {},
-  userId: null,
+  userId: "anonymous",
 
   setUserId: (id) => set({ userId: id }),
 
