@@ -100,7 +100,7 @@ const LibraryPage = () => {
                     <div key={p.id} className="relative group">
                       <ContentCard
                         title={p.name}
-                        subtitle={`${(playlistSongs[p.id] || []).length} songs`}
+                        subtitle={`${(playlistSongs[p.id] || []).length} titres`}
                         imageUrl={p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
                         onClick={() => {
                           const pSongs = playlistSongs[p.id] || [];
