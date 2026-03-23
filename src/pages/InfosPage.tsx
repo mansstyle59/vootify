@@ -124,7 +124,7 @@ const InfosPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-panel rounded-2xl p-6 md:p-10 mb-8 relative overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-red-500/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
         <div className="relative z-10">
           <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" /> Tendances musicales
