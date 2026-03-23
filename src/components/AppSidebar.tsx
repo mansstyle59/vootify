@@ -3,9 +3,9 @@ import { Home, Search, Library, Radio, LogOut, PlusCircle, Info } from "lucide-r
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { to: "/", icon: Home, label: "Home" },
-  { to: "/search", icon: Search, label: "Search" },
-  { to: "/library", icon: Library, label: "Library" },
+  { to: "/", icon: Home, label: "Accueil" },
+  { to: "/search", icon: Search, label: "Recherche" },
+  { to: "/library", icon: Library, label: "Bibliothèque" },
   { to: "/radio", icon: Radio, label: "Radio" },
   { to: "/infos", icon: Info, label: "Infos FR" },
   { to: "/add", icon: PlusCircle, label: "Ajouter" },

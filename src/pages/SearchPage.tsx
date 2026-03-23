@@ -105,7 +105,7 @@ const SearchPage = () => {
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-12">No results found for "{debouncedQuery}"</p>
+            <p className="text-center text-muted-foreground py-12">Aucun résultat trouvé pour « {debouncedQuery} »</p>
           )}
         </div>
       )}

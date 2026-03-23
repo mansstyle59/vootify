@@ -55,13 +55,13 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
         <div className="relative z-10">
           <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Powered by Deezer
+            <Sparkles className="w-4 h-4" /> Propulsé par Deezer
           </p>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-2">
-            Discover New Music
+            Découvrez de nouvelles musiques
           </h1>
           <p className="text-muted-foreground max-w-md">
-            Explore trending tracks, top albums, and radio stations.
+            Explorez les titres tendances, les meilleurs albums et les stations radio.
           </p>
         </div>
       </motion.div>
