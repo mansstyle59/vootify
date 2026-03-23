@@ -29,10 +29,10 @@ const HomePage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Actu Rap
-  const { data: actuRap, isLoading: loadingRap } = useQuery({
-    queryKey: ["deezer-actu-rap"],
-    queryFn: () => deezerApi.getPlaylistTracks(DEEZER_PLAYLIST_ACTU_RAP, 20),
+  // Rapstars
+  const { data: rapstars, isLoading: loadingRap } = useQuery({
+    queryKey: ["deezer-rapstars"],
+    queryFn: () => deezerApi.getPlaylistTracks(DEEZER_PLAYLIST_RAPSTARS, 20),
     staleTime: 10 * 60 * 1000,
   });
 
