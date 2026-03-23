@@ -76,7 +76,7 @@ const HomePage = () => {
       {/* Chart Albums */}
       <section className="mb-10">
         <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" /> Top Albums
+          <Sparkles className="w-5 h-5 text-primary" /> Meilleurs Albums
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {loadingAlbums
