@@ -14,7 +14,188 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      liked_songs: {
+        Row: {
+          album: string | null
+          artist: string
+          cover_url: string | null
+          created_at: string
+          duration: number
+          id: string
+          song_id: string
+          stream_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          album?: string | null
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          song_id: string
+          stream_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          album?: string | null
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          song_id?: string
+          stream_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      playlist_songs: {
+        Row: {
+          album: string | null
+          artist: string
+          cover_url: string | null
+          created_at: string
+          duration: number
+          id: string
+          playlist_id: string
+          position: number
+          song_id: string
+          stream_url: string | null
+          title: string
+        }
+        Insert: {
+          album?: string | null
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          playlist_id: string
+          position?: number
+          song_id: string
+          stream_url?: string | null
+          title: string
+        }
+        Update: {
+          album?: string | null
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          playlist_id?: string
+          position?: number
+          song_id?: string
+          stream_url?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_songs_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playlists: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recently_played: {
+        Row: {
+          album: string | null
+          artist: string
+          cover_url: string | null
+          duration: number
+          id: string
+          played_at: string
+          song_id: string
+          stream_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          album?: string | null
+          artist: string
+          cover_url?: string | null
+          duration?: number
+          id?: string
+          played_at?: string
+          song_id: string
+          stream_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          album?: string | null
+          artist?: string
+          cover_url?: string | null
+          duration?: number
+          id?: string
+          played_at?: string
+          song_id?: string
+          stream_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
