@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { deezerApi } from "@/lib/deezerApi";
+import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { Search as SearchIcon, X } from "lucide-react";
