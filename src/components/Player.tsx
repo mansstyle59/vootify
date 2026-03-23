@@ -16,7 +16,8 @@ export function MiniPlayer() {
   const {
     currentSong, isPlaying, progress, volume, shuffle, repeat,
     togglePlay, next, previous, setProgress, setVolume,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer,
+    _seekTime
   } = usePlayerStore();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -45,6 +46,14 @@ export function MiniPlayer() {
     const t = Math.floor(audioRef.current.currentTime);
     if (t !== progress) setProgress(t);
   }, [progress, setProgress]);
+
+  // React to seek requests from fullscreen player
+  useEffect(() => {
+    if (_seekTime !== null && audioRef.current) {
+      audioRef.current.currentTime = _seekTime;
+      usePlayerStore.setState({ _seekTime: null });
+    }
+  }, [_seekTime]);
 
   const handleEnded = useCallback(() => {
     const { repeat } = usePlayerStore.getState();
@@ -270,7 +279,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
 function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, progress, shuffle, repeat, queue, volume,
-    togglePlay, next, previous, setProgress, setVolume,
+    togglePlay, next, previous, seekTo: storeSeekTo, setVolume,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue
   } = usePlayerStore();
 
@@ -281,11 +290,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const liked = isLiked(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
-  const seekTo = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = (e.clientX - rect.left) / rect.width;
     const time = Math.max(0, Math.min(Math.floor(pct * currentSong.duration), currentSong.duration));
-    setProgress(time);
+    storeSeekTo(time);
   };
 
   return (
@@ -435,7 +444,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             <div className="w-full max-w-[280px] md:max-w-[340px] mb-4">
               <div
                 className="h-[4px] bg-foreground/10 rounded-full cursor-pointer relative group"
-                onClick={seekTo}
+                onClick={handleSeek}
               >
                 <div
                   className="h-full bg-foreground/80 rounded-full relative transition-all duration-150"

@@ -17,6 +17,7 @@ interface PlayerState {
   recentlyPlayed: Song[];
   playlistSongs: Record<string, Song[]>;
   userId: string | null;
+  _seekTime: number | null;
 
   setUserId: (id: string | null) => void;
   loadUserData: (userId: string) => Promise<void>;
@@ -25,6 +26,7 @@ interface PlayerState {
   next: () => void;
   previous: () => void;
   setProgress: (p: number) => void;
+  seekTo: (time: number) => void;
   setVolume: (v: number) => void;
   toggleShuffle: () => void;
   cycleRepeat: () => void;
@@ -54,6 +56,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   recentlyPlayed: [],
   playlistSongs: {},
   userId: ANONYMOUS_USER_ID,
+  _seekTime: null,
 
   setUserId: (id) => set({ userId: id }),
 
@@ -106,6 +109,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   setProgress: (p) => set({ progress: p }),
+  seekTo: (time) => set({ progress: time, _seekTime: time }),
   setVolume: (v) => set({ volume: v }),
   toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle })),
   cycleRepeat: () =>
