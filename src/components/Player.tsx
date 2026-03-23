@@ -157,6 +157,12 @@ export function MiniPlayer() {
                   <SkipForward className="w-5 h-5 fill-current" />
                 </button>
               )}
+              <button
+                onClick={closePlayer}
+                className="p-2 text-muted-foreground active:scale-90 transition-transform"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
