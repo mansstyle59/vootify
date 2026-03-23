@@ -33,13 +33,13 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
               src="/pwa-icon-512.png"
               alt="VOO Music"
               className="w-28 h-28 rounded-3xl"
-              style={{ boxShadow: "0 20px 60px -10px rgba(162, 56, 255, 0.3)" }}
+              style={{ boxShadow: "0 20px 60px -10px rgba(29, 185, 84, 0.4)" }}
             />
             <motion.h1
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-2xl font-display font-bold bg-gradient-to-r from-[hsl(275,100%,60%)] via-[hsl(330,85%,55%)] to-[hsl(15,100%,60%)] bg-clip-text text-transparent"
+              className="text-2xl font-display font-bold text-[#1DB954]"
             >
               VOO Music
             </motion.h1>
