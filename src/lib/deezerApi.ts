@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Song, Album, RadioStation } from "@/data/mockData";
+import type { Song, Album } from "@/data/mockData";
 
 interface DeezerTrack {
   id: number;
