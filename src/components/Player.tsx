@@ -157,6 +157,12 @@ export function MiniPlayer() {
 
             <div className="flex items-center gap-0.5">
               <button
+                onClick={() => toggleLike(currentSong)}
+                className="p-2 active:scale-90 transition-transform"
+              >
+                <Heart className={`w-4 h-4 ${isLiked(currentSong.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+              </button>
+              <button
                 onClick={togglePlay}
                 className="p-2 text-foreground active:scale-90 transition-transform"
               >
