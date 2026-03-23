@@ -2,7 +2,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Volume2, VolumeX, Heart, Maximize2, Minimize2
+  Volume2, VolumeX, Heart, Maximize2, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
@@ -12,7 +12,7 @@ export function MiniPlayer() {
   const {
     currentSong, isPlaying, progress, volume, shuffle, repeat,
     togglePlay, next, previous, setProgress, setVolume,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer
   } = usePlayerStore();
 
   const intervalRef = useRef<number | null>(null);
@@ -137,6 +137,9 @@ export function MiniPlayer() {
             <button onClick={toggleFullScreen} className="p-1.5 text-muted-foreground hover:text-foreground">
               <Maximize2 className="w-4 h-4" />
             </button>
+            <button onClick={closePlayer} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Fermer le lecteur">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -148,7 +151,7 @@ export function FullScreenPlayer() {
   const {
     currentSong, isPlaying, progress, shuffle, repeat,
     togglePlay, next, previous, setProgress,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer
   } = usePlayerStore();
 
   if (!currentSong) return null;
@@ -164,12 +167,15 @@ export function FullScreenPlayer() {
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       className="fixed inset-0 z-[100] player-gradient flex flex-col items-center justify-center p-8"
     >
-      <button
-        onClick={toggleFullScreen}
-        className="absolute top-6 right-6 p-2 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Minimize2 className="w-6 h-6" />
-      </button>
+      <div className="absolute top-6 right-6 flex items-center gap-2">
+        <button
+          onClick={toggleFullScreen}
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          title="Réduire"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
 
       <motion.img
         src={currentSong.coverUrl}
