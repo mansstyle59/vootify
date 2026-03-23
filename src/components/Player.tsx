@@ -444,7 +444,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             <div className="w-full max-w-[280px] md:max-w-[340px] mb-4">
               <div
                 className="h-[4px] bg-foreground/10 rounded-full cursor-pointer relative group"
-                onClick={seekTo}
+                onClick={handleSeek}
               >
                 <div
                   className="h-full bg-foreground/80 rounded-full relative transition-all duration-150"
