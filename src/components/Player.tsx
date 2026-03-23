@@ -273,21 +273,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Bottom controls */}
-      <div className="relative z-10 px-8 pb-10">
-        <div className="flex items-center justify-center">
-          <button
-            onClick={togglePlay}
-            className="p-5 rounded-full active:scale-95 transition-transform"
-            style={{
-              ...glassStyle,
-              background: "linear-gradient(135deg, hsl(0 0% 100% / 0.15), hsl(0 0% 100% / 0.05))",
-            }}
-          >
-            {isPlaying ? <Pause className="w-8 h-8 text-foreground" /> : <Play className="w-8 h-8 text-foreground ml-0.5" />}
-          </button>
-        </div>
-      </div>
     </motion.div>
   );
 }
