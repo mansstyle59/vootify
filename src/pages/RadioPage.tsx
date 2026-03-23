@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Star, TrendingUp, Heart, Pencil, Trash2, X, Check } from "lucide-react";
