@@ -5,7 +5,8 @@ import { deezerApi } from "@/lib/deezerApi";
 import { Radio, MapPin, AlertCircle, Music, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type FilterMode = "all" | "genre" | "region";
+type FilterMode = "all" | "genre" | "region" | "tvradiozap";
+type TVRZType = "trztop" | "ra" | "trzinfo";
 
 const RadioPage = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
