@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RadioMetadata {
+export interface RadioMetadata {
   nowPlaying: string;
   title: string;
   artist: string;
+  coverUrl: string;
 }
 
 export function useRadioMetadata(streamUrl: string | undefined, isLive: boolean, isPlaying: boolean) {
@@ -22,7 +23,12 @@ export function useRadioMetadata(streamUrl: string | undefined, isLive: boolean,
           body: { streamUrl },
         });
         if (!error && data?.success && data.nowPlaying) {
-          setMetadata({ nowPlaying: data.nowPlaying, title: data.title, artist: data.artist });
+          setMetadata({
+            nowPlaying: data.nowPlaying,
+            title: data.title,
+            artist: data.artist,
+            coverUrl: data.coverUrl || "",
+          });
         }
       } catch {
         // silent fail
@@ -30,14 +36,13 @@ export function useRadioMetadata(streamUrl: string | undefined, isLive: boolean,
     };
 
     fetchMeta();
-    intervalRef.current = setInterval(fetchMeta, 30000); // poll every 30s
+    intervalRef.current = setInterval(fetchMeta, 30000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [streamUrl, isLive, isPlaying]);
 
-  // Reset when stream changes
   useEffect(() => {
     setMetadata(null);
   }, [streamUrl]);
