@@ -20,12 +20,6 @@ interface DeezerAlbum {
   nb_tracks: number;
 }
 
-interface DeezerRadio {
-  id: number;
-  title: string;
-  picture_medium: string;
-  picture_big: string;
-}
 
 async function callDeezer(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("deezer-proxy", { body });
