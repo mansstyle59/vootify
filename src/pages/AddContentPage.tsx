@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+
 import { Music, Disc3, Radio, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,16 +34,15 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
 }
 
 function SongForm() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", album: "", duration: "", coverUrl: "", streamUrl: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !form.title.trim() || !form.artist.trim()) return;
+    if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_songs").insert({
-      user_id: user.id,
+      user_id: "anonymous",
       title: form.title.trim(),
       artist: form.artist.trim(),
       album: form.album.trim() || null,
@@ -74,16 +73,15 @@ function SongForm() {
 }
 
 function AlbumForm() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !form.title.trim() || !form.artist.trim()) return;
+    if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_albums").insert({
-      user_id: user.id,
+      user_id: "anonymous",
       title: form.title.trim(),
       artist: form.artist.trim(),
       cover_url: form.coverUrl.trim() || null,
@@ -110,16 +108,15 @@ function AlbumForm() {
 }
 
 function RadioForm() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", genre: "", coverUrl: "", streamUrl: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !form.name.trim()) return;
+    if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: user.id,
+      user_id: "anonymous",
       name: form.name.trim(),
       genre: form.genre.trim() || null,
       cover_url: form.coverUrl.trim() || null,
