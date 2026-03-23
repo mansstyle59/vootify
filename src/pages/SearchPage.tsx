@@ -17,7 +17,7 @@ const SearchPage = () => {
     clearTimeout((window as any).__searchTimeout);
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value);
-    }, 600);
+    }, 400);
   };
 
   const { data: results, isLoading } = useQuery({

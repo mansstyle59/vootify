@@ -44,7 +44,11 @@ function getBestDownloadUrl(urls?: Array<{ url: string; quality: string }>): str
 }
 
 function mapSong(song: JioSaavnSong): Song {
-  const artistName = song.artists?.primary?.[0]?.name || "Artiste inconnu";
+  // Combine all primary artists for better display
+  const primaryArtists = song.artists?.primary || [];
+  const artistName = primaryArtists.length > 0
+    ? primaryArtists.map((a) => a.name).join(", ")
+    : "Artiste inconnu";
   return {
     id: `js-${song.id}`,
     title: song.name,
