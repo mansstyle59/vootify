@@ -33,6 +33,8 @@ const HomePage = () => {
     queryKey: ["recently-played"],
     queryFn: () => musicDb.getRecentlyPlayed(ANONYMOUS_USER_ID, 10),
     staleTime: 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
