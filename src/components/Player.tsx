@@ -113,10 +113,7 @@ export function MiniPlayer() {
               className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
               onClick={toggleFullScreen}
             >
-              <motion.img
-                key={currentSong.id}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
+              <img
                 src={currentSong.coverUrl}
                 alt={currentSong.title}
                 className="w-11 h-11 rounded-xl object-cover shadow-lg"
