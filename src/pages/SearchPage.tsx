@@ -7,6 +7,8 @@ import { Search as SearchIcon, X, Clock, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song } from "@/data/mockData";
 
+const [selectedArtistFilter, setSelectedArtistFilter] = "PLACEHOLDER"; // removed, handled below
+
 const RECENT_SEARCHES_KEY = "voo-recent-searches";
 const MAX_RECENT = 8;
 
