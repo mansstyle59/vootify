@@ -47,15 +47,24 @@ export function MiniPlayer() {
   useEffect(() => {
     if (!audioRef.current || !currentSong) return;
     const audio = audioRef.current;
-    if (audio.src !== currentSong.streamUrl && currentSong.streamUrl) {
-      audio.src = currentSong.streamUrl;
-      audio.load();
-    }
-    if (isPlaying) {
-      audio.play().catch(console.error);
-    } else {
-      audio.pause();
-    }
+
+    const loadAndPlay = async () => {
+      // Try offline cache first
+      const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
+      const srcToUse = cachedUrl || currentSong.streamUrl;
+
+      if (srcToUse && audio.src !== srcToUse) {
+        audio.src = srcToUse;
+        audio.load();
+      }
+      if (isPlaying) {
+        audio.play().catch(console.error);
+      } else {
+        audio.pause();
+      }
+    };
+
+    loadAndPlay();
   }, [isPlaying, currentSong]);
 
   const handleTimeUpdate = useCallback(() => {
