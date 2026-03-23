@@ -77,7 +77,7 @@ const LibraryPage = () => {
                 onClick={() => setShowCreate(!showCreate)}
                 className="flex items-center gap-2 mb-4 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm"
               >
-                <Plus className="w-4 h-4" /> New Playlist
+                <Plus className="w-4 h-4" /> Nouvelle Playlist
               </button>
               {showCreate && (
                 <div className="flex gap-2 mb-4">
