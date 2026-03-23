@@ -83,7 +83,7 @@ export function MiniPlayer() {
   }, [next]);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying);
+  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   if (!currentSong) return null;
 
@@ -181,7 +181,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked
   } = usePlayerStore();
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying);
+  const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
