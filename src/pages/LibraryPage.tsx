@@ -1,20 +1,16 @@
 import { useState } from "react";
-import { songs } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, Disc, ListMusic, Clock, Plus, Trash2 } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type Tab = "liked" | "albums" | "playlists" | "recent";
+type Tab = "liked" | "playlists" | "recent";
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
-  const { likedSongIds, playlists, recentlyPlayed, createPlaylist, deletePlaylist, play, setQueue } = usePlayerStore();
-
-  const likedSongs = songs.filter((s) => likedSongIds.has(s.id));
-  const recentSongs = recentlyPlayed.map((id) => songs.find((s) => s.id === id)).filter(Boolean) as typeof songs;
+  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue } = usePlayerStore();
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Liked", icon: Heart },
@@ -60,7 +56,7 @@ const LibraryPage = () => {
           {tab === "liked" && (
             <div className="glass-panel-light rounded-xl p-2">
               {likedSongs.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">No liked songs yet</p>
+                <p className="text-center text-muted-foreground py-12">No liked songs yet. Like songs while browsing!</p>
               ) : (
                 likedSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)
               )}
@@ -99,7 +95,7 @@ const LibraryPage = () => {
                         subtitle={`${p.songIds.length} songs`}
                         imageUrl={p.coverUrl}
                         onClick={() => {
-                          const pSongs = p.songIds.map((id) => songs.find((s) => s.id === id)).filter(Boolean) as typeof songs;
+                          const pSongs = playlistSongs[p.id] || [];
                           if (pSongs.length) { setQueue(pSongs); play(pSongs[0]); }
                         }}
                       />
@@ -118,10 +114,10 @@ const LibraryPage = () => {
 
           {tab === "recent" && (
             <div className="glass-panel-light rounded-xl p-2">
-              {recentSongs.length === 0 ? (
+              {recentlyPlayed.length === 0 ? (
                 <p className="text-center text-muted-foreground py-12">Play something to see it here</p>
               ) : (
-                recentSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} />)
+                recentlyPlayed.map((s, i) => <SongCard key={s.id} song={s} index={i} />)
               )}
             </div>
           )}
