@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AudioVisualizer } from "./AudioVisualizer";
+import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 
 /* ── Shared glass styles ── */
 const glassStyle = {
@@ -84,6 +85,7 @@ export function MiniPlayer() {
   if (!currentSong) return null;
 
   const isLive = currentSong.duration === 0;
+  const radioMeta = useRadioMetadata(currentSong.streamUrl, isLive, isPlaying);
   const progressPct = !isLive && currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
   return (
@@ -128,10 +130,10 @@ export function MiniPlayer() {
               />
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
-                  {currentSong.title}
+                  {isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
                 </p>
                 <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
-                  {currentSong.artist}
+                  {isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
                   {isLive && (
                     <span className="ml-1.5 inline-flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -183,6 +185,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const liked = isLiked(currentSong.id);
   const stationName = currentSong.title;
   const genre = currentSong.album || "Radio";
+  const radioMeta = useRadioMetadata(currentSong.streamUrl, true, isPlaying);
 
   return (
     <motion.div
@@ -247,9 +250,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         >
           <h2 className="text-lg font-bold text-foreground truncate">{stationName}</h2>
           <p className="text-sm text-muted-foreground">{currentSong.artist}</p>
-          <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
-            <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
-          </div>
+          {radioMeta?.nowPlaying ? (
+            <div className="pt-1 space-y-0.5">
+              <p className="text-sm font-semibold text-primary truncate">♪ {radioMeta.title || radioMeta.nowPlaying}</p>
+              {radioMeta.artist && (
+                <p className="text-xs text-muted-foreground truncate">{radioMeta.artist}</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+              <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
+            </div>
+          )}
         </div>
       </div>
 
