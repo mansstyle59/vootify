@@ -64,7 +64,7 @@ const LibraryPage = () => {
           {tab === "liked" && (
             <div className="glass-panel-light rounded-xl p-2">
               {likedSongs.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">No liked songs yet. Like songs while browsing!</p>
+                <p className="text-center text-muted-foreground py-12">Pas encore de titres aimés. Likez des chansons en naviguant !</p>
               ) : (
                 likedSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)
               )}
