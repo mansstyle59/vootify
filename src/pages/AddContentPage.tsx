@@ -117,7 +117,7 @@ function RadioForm() {
     if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       name: form.name.trim(),
       genre: form.genre.trim() || null,
       cover_url: form.coverUrl.trim() || null,

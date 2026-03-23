@@ -30,7 +30,7 @@ const HomePage = () => {
 
   const { data: recentlyPlayed = [] } = useQuery({
     queryKey: ["recently-played"],
-    queryFn: () => musicDb.getRecentlyPlayed("anonymous", 10),
+    queryFn: () => musicDb.getRecentlyPlayed(ANONYMOUS_USER_ID, 10),
     staleTime: 60 * 1000,
   });
 

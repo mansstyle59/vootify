@@ -96,7 +96,7 @@ const RadioPage = () => {
   const { data: savedIds = new Set<string>() } = useQuery({
     queryKey: ["saved-station-ids"],
     queryFn: async () => {
-      const { data } = await supabase.from("custom_radio_stations").select("id").eq("user_id", "anonymous");
+      const { data } = await supabase.from("custom_radio_stations").select("id").eq("user_id", ANONYMOUS_USER_ID);
       return new Set((data || []).map((r) => r.id));
     },
     staleTime: 2 * 60 * 1000,
