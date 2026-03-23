@@ -1,15 +1,11 @@
 import { songs, albums, radioStations } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { ContentCard, SongCard } from "@/components/MusicCards";
+import { ContentCard, SongCard, CardSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { TrendingUp, Clock, Sparkles } from "lucide-react";
+import { TrendingUp, Sparkles, Music } from "lucide-react";
 
 const HomePage = () => {
   const { play, setQueue } = usePlayerStore();
-
-  const featuredAlbums = albums.slice(0, 4);
-  const trendingSongs = songs.slice(0, 6);
-  const recentMixes = albums.slice(4, 8);
 
   const handleAlbumPlay = (albumId: string) => {
     const album = albums.find((a) => a.id === albumId);
@@ -20,6 +16,8 @@ const HomePage = () => {
       play(albumSongs[0]);
     }
   };
+
+  const isEmpty = songs.length === 0 && albums.length === 0 && radioStations.length === 0;
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
@@ -32,7 +30,7 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
         <div className="relative z-10">
           <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Featured Today
+            <Sparkles className="w-4 h-4" /> Welcome
           </p>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-2">
             Discover New Music
@@ -43,68 +41,65 @@ const HomePage = () => {
         </div>
       </motion.div>
 
-      {/* Featured Albums */}
-      <section className="mb-10">
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" /> Featured Albums
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {featuredAlbums.map((album) => (
-            <ContentCard
-              key={album.id}
-              title={album.title}
-              subtitle={album.artist}
-              imageUrl={album.coverUrl}
-              onClick={() => handleAlbumPlay(album.id)}
-            />
-          ))}
+      {isEmpty ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Music className="w-16 h-16 text-muted-foreground/40 mb-4" />
+          <h2 className="text-xl font-display font-semibold text-foreground mb-2">No music yet</h2>
+          <p className="text-muted-foreground max-w-sm">
+            Connect a data source to start discovering and playing music.
+          </p>
         </div>
-      </section>
+      ) : (
+        <>
+          {albums.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" /> Featured Albums
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {albums.slice(0, 4).map((album) => (
+                  <ContentCard
+                    key={album.id}
+                    title={album.title}
+                    subtitle={album.artist}
+                    imageUrl={album.coverUrl}
+                    onClick={() => handleAlbumPlay(album.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {/* Trending */}
-      <section className="mb-10">
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" /> Trending Now
-        </h2>
-        <div className="glass-panel-light rounded-xl p-2">
-          {trendingSongs.map((song, i) => (
-            <SongCard key={song.id} song={song} index={i} showIndex />
-          ))}
-        </div>
-      </section>
+          {songs.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" /> Trending Now
+              </h2>
+              <div className="glass-panel-light rounded-xl p-2">
+                {songs.slice(0, 6).map((song, i) => (
+                  <SongCard key={song.id} song={song} index={i} showIndex />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {/* More Albums */}
-      <section className="mb-10">
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-primary" /> New Releases
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {recentMixes.map((album) => (
-            <ContentCard
-              key={album.id}
-              title={album.title}
-              subtitle={album.artist}
-              imageUrl={album.coverUrl}
-              onClick={() => handleAlbumPlay(album.id)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Quick Radio */}
-      <section>
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4">Popular Radio</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {radioStations.slice(0, 3).map((station) => (
-            <ContentCard
-              key={station.id}
-              title={station.name}
-              subtitle={`${station.genre} • ${(station.listeners / 1000).toFixed(1)}k listeners`}
-              imageUrl={station.coverUrl}
-            />
-          ))}
-        </div>
-      </section>
+          {radioStations.length > 0 && (
+            <section>
+              <h2 className="text-xl font-display font-semibold text-foreground mb-4">Popular Radio</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {radioStations.slice(0, 3).map((station) => (
+                  <ContentCard
+                    key={station.id}
+                    title={station.name}
+                    subtitle={`${station.genre} • ${(station.listeners / 1000).toFixed(1)}k listeners`}
+                    imageUrl={station.coverUrl}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 };
