@@ -202,7 +202,7 @@ const RadioPage = () => {
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       );
     }
 
