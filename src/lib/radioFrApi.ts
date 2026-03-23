@@ -76,3 +76,37 @@ export const radioFrApi = {
     return stations;
   },
 };
+
+// --- TVRadioZap scraper ---
+interface TVRZStation {
+  id: string;
+  name: string;
+  category: string;
+  genre: string;
+  country: string;
+  logoUrl: string;
+  siteUrl: string;
+  notes: string;
+}
+
+function mapTVRZToRadioStation(s: TVRZStation): RadioStation {
+  return {
+    id: s.id,
+    name: s.name,
+    genre: s.genre || s.category || "Radio",
+    coverUrl: s.logoUrl,
+    streamUrl: s.siteUrl,
+    listeners: 0,
+  };
+}
+
+export const tvRadioZapApi = {
+  async getStations(type = "trztop"): Promise<RadioStation[]> {
+    const { data, error } = await supabase.functions.invoke("tvradiozap-scraper", {
+      body: { type },
+    });
+    if (error) throw new Error(error.message);
+    if (!data?.success) throw new Error(data?.error || "Failed to scrape TVRadioZap");
+    return (data.stations || []).map(mapTVRZToRadioStation);
+  },
+};

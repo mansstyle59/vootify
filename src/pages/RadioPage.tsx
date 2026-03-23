@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { radioEnLigneApi } from "@/lib/radioFrApi";
+import { radioEnLigneApi, tvRadioZapApi } from "@/lib/radioFrApi";
 import { deezerApi } from "@/lib/deezerApi";
-import { Radio, MapPin, AlertCircle, Music } from "lucide-react";
+import { Radio, MapPin, AlertCircle, Music, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type FilterMode = "all" | "genre" | "region";
+type FilterMode = "all" | "genre" | "region" | "tvradiozap";
+type TVRZType = "trztop" | "ra" | "trzinfo";
 
 const RadioPage = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [tvrzType, setTvrzType] = useState<TVRZType>("trztop");
 
   const queryOptions = filterMode === "genre" && selectedGenre
     ? { genre: selectedGenre }
@@ -18,13 +20,24 @@ const RadioPage = () => {
     ? { region: selectedRegion }
     : undefined;
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading: loadingEnLigne, error: errorEnLigne } = useQuery({
     queryKey: ["radio-en-ligne", filterMode, selectedGenre, selectedRegion],
     queryFn: () => radioEnLigneApi.getStations(queryOptions),
     staleTime: 10 * 60 * 1000,
+    enabled: filterMode !== "tvradiozap",
+  });
+
+  const { data: tvrzStations, isLoading: loadingTvrz, error: errorTvrz } = useQuery({
+    queryKey: ["tvradiozap", tvrzType],
+    queryFn: () => tvRadioZapApi.getStations(tvrzType),
+    staleTime: 10 * 60 * 1000,
+    enabled: filterMode === "tvradiozap",
   });
 
   // Fallback Deezer
+  const error = filterMode === "tvradiozap" ? errorTvrz : errorEnLigne;
+  const isLoading = filterMode === "tvradiozap" ? loadingTvrz : loadingEnLigne;
+
   const { data: deezerStations } = useQuery({
     queryKey: ["deezer-radio-fallback"],
     queryFn: () => deezerApi.getRadioStations(),
@@ -32,7 +45,9 @@ const RadioPage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const stations = data?.stations || (error ? deezerStations : undefined) || [];
+  const stations = filterMode === "tvradiozap"
+    ? (tvrzStations || (error ? deezerStations : undefined) || [])
+    : (data?.stations || (error ? deezerStations : undefined) || []);
   const genres = data?.genres || [];
   const regions = data?.regions || [];
 
@@ -56,6 +71,7 @@ const RadioPage = () => {
           { key: "all" as FilterMode, label: "Toutes", icon: Radio },
           { key: "genre" as FilterMode, label: "Par genre", icon: Music },
           { key: "region" as FilterMode, label: "Par région", icon: MapPin },
+          { key: "tvradiozap" as FilterMode, label: "TVRadioZap", icon: Globe },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -102,6 +118,28 @@ const RadioPage = () => {
               }`}
             >
               {r.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {filterMode === "tvradiozap" && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {([
+            { key: "trztop" as TVRZType, label: "Top radios" },
+            { key: "ra" as TVRZType, label: "Toutes les radios" },
+            { key: "trzinfo" as TVRZType, label: "Radios info" },
+          ]).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTvrzType(t.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                tvrzType === t.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/60 text-secondary-foreground hover:bg-secondary"
+              }`}
+            >
+              {t.label}
             </button>
           ))}
         </div>
