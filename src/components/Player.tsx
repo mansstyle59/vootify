@@ -2,15 +2,30 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Volume2, VolumeX, Heart, X, Radio, ChevronDown, ListMusic,
-  Ellipsis
+  Heart, ChevronDown, ListMusic
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AudioVisualizer } from "./AudioVisualizer";
 
+/* ── Shared glass styles ── */
+const glassStyle = {
+  background: "linear-gradient(135deg, hsl(0 0% 100% / 0.08), hsl(0 0% 100% / 0.03))",
+  backdropFilter: "blur(60px) saturate(1.6)",
+  WebkitBackdropFilter: "blur(60px) saturate(1.6)",
+  border: "1px solid hsl(0 0% 100% / 0.1)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.1), inset 0 -1px 0 hsl(0 0% 0% / 0.1)",
+};
+
+const glassButtonStyle = {
+  background: "hsl(0 0% 100% / 0.08)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  border: "1px solid hsl(0 0% 100% / 0.1)",
+};
+
 /* ─────────────────────────────────────────────
-   Mini Player — Apple Music style
+   Mini Player — Liquid Glass
    ───────────────────────────────────────────── */
 export function MiniPlayer() {
   const {
@@ -47,7 +62,6 @@ export function MiniPlayer() {
     if (t !== progress) setProgress(t);
   }, [progress, setProgress]);
 
-  // React to seek requests from fullscreen player
   useEffect(() => {
     if (_seekTime !== null && audioRef.current) {
       audioRef.current.currentTime = _seekTime;
@@ -69,7 +83,6 @@ export function MiniPlayer() {
 
   if (!currentSong) return null;
 
-  const liked = isLiked(currentSong.id);
   const isLive = currentSong.duration === 0;
   const progressPct = !isLive && currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
@@ -90,16 +103,11 @@ export function MiniPlayer() {
       >
         <div
           className="rounded-2xl overflow-hidden"
-          style={{
-            background: "hsl(240 8% 14% / 0.85)",
-            backdropFilter: "blur(40px) saturate(1.8)",
-            WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-            boxShadow: "0 -2px 20px rgba(0,0,0,0.3), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
-          }}
+          style={glassStyle}
         >
-          {/* Thin progress line at top — Apple style */}
+          {/* Progress line */}
           {!isLive && (
-            <div className="h-[3px] w-full bg-secondary/40">
+            <div className="h-[3px] w-full" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
               <div
                 className="h-full bg-primary transition-all duration-300"
                 style={{ width: `${progressPct}%` }}
@@ -108,7 +116,6 @@ export function MiniPlayer() {
           )}
 
           <div className="flex items-center gap-3 px-3 py-2.5">
-            {/* Cover + Info — tappable */}
             <div
               className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
               onClick={toggleFullScreen}
@@ -116,7 +123,8 @@ export function MiniPlayer() {
               <img
                 src={currentSong.coverUrl}
                 alt={currentSong.title}
-                className="w-11 h-11 rounded-xl object-cover shadow-lg"
+                className="w-11 h-11 rounded-xl object-cover"
+                style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}
               />
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
@@ -126,15 +134,14 @@ export function MiniPlayer() {
                   {currentSong.artist}
                   {isLive && (
                     <span className="ml-1.5 inline-flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-                      <span className="text-destructive font-semibold text-[10px]">LIVE</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                      <span className="text-primary font-semibold text-[10px]">LIVE</span>
                     </span>
                   )}
                 </p>
               </div>
             </div>
 
-            {/* Compact controls */}
             <div className="flex items-center gap-0.5">
               <button
                 onClick={togglePlay}
@@ -159,19 +166,17 @@ export function MiniPlayer() {
 }
 
 /* ─────────────────────────────────────────────
-   Radio Fullscreen Player — Apple Music Radio
+   Radio Fullscreen Player — Liquid Glass
    ───────────────────────────────────────────── */
 function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
-    currentSong, isPlaying, volume, togglePlay, setVolume, toggleLike, isLiked
+    currentSong, isPlaying, togglePlay, toggleLike, isLiked
   } = usePlayerStore();
 
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
   const stationName = currentSong.title;
   const genre = currentSong.album || "Radio";
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <motion.div
@@ -180,62 +185,64 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
       className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: "hsl(240, 10%, 5%)" }}
+      style={{ background: "hsl(0 0% 4%)" }}
     >
-      {/* BG glow from cover */}
+      {/* BG glow */}
       <div className="absolute inset-0 overflow-hidden">
         <img
           src={currentSong.coverUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[100px] opacity-25"
+          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/90" />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.5), hsl(0 0% 4% / 0.3), hsl(0 0% 4% / 0.85))" }} />
       </div>
 
       {/* Drag handle */}
       <div className="relative z-10 flex justify-center pt-3 pb-1">
-        <div className="w-9 h-1 rounded-full bg-muted-foreground/30" />
+        <div className="w-9 h-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.2)" }} />
       </div>
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-5 py-2">
-        <button onClick={onClose} className="p-1 -ml-1">
-          <ChevronDown className="w-7 h-7 text-foreground/80" />
+        <button onClick={onClose} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
+          <ChevronDown className="w-5 h-5 text-foreground/80" />
         </button>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-          <span className="text-[11px] font-bold text-destructive tracking-widest uppercase">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={glassButtonStyle}>
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          <span className="text-[10px] font-bold text-primary tracking-widest uppercase">
             EN DIRECT
           </span>
         </div>
-        <button onClick={() => toggleLike(currentSong)} className="p-1 -mr-1">
-          <Heart className={`w-6 h-6 ${liked ? "fill-primary text-primary" : "text-foreground/60"}`} />
+        <button onClick={() => toggleLike(currentSong)} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
+          <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/60"}`} />
         </button>
       </div>
 
       {/* Main */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 gap-5">
-        {/* Station artwork */}
-        <motion.div
-          animate={isPlaying ? { scale: [1, 1.03, 1] } : { scale: 0.95 }}
-          transition={isPlaying ? { duration: 4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.5 }}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 gap-6">
+        {/* Cover in glass card */}
+        <div
+          className="p-3 rounded-3xl"
+          style={glassStyle}
         >
-          <div className="w-56 h-56 md:w-72 md:h-72 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="w-52 h-52 md:w-64 md:h-64 rounded-2xl overflow-hidden">
             <img
               src={currentSong.coverUrl}
               alt={stationName}
               className="w-full h-full object-cover"
             />
           </div>
-        </motion.div>
+        </div>
 
-        {/* Station info */}
-        <div className="text-center w-full max-w-xs space-y-2">
-          <h2 className="text-xl font-display font-bold text-foreground truncate">{stationName}</h2>
+        {/* Station info in glass card */}
+        <div
+          className="text-center w-full max-w-xs px-5 py-4 rounded-2xl space-y-2"
+          style={glassStyle}
+        >
+          <h2 className="text-lg font-bold text-foreground truncate">{stationName}</h2>
           <p className="text-sm text-muted-foreground">{currentSong.artist}</p>
-          <div className="flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
-            <span className="px-2.5 py-1 rounded-full bg-secondary/40">{genre}</span>
-            <span className="px-2.5 py-1 rounded-full bg-secondary/40">{timeStr}</span>
+          <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+            <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
           </div>
         </div>
 
@@ -243,15 +250,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         <AudioVisualizer isPlaying={isPlaying} />
       </div>
 
-      {/* Bottom */}
+      {/* Bottom controls */}
       <div className="relative z-10 px-8 pb-10">
-        {/* Play button */}
         <div className="flex items-center justify-center">
           <button
             onClick={togglePlay}
-            className="p-4 rounded-full bg-foreground text-background active:scale-95 transition-transform"
+            className="p-5 rounded-full active:scale-95 transition-transform"
+            style={{
+              ...glassStyle,
+              background: "linear-gradient(135deg, hsl(0 0% 100% / 0.15), hsl(0 0% 100% / 0.05))",
+            }}
           >
-            {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-0.5" />}
+            {isPlaying ? <Pause className="w-8 h-8 text-foreground" /> : <Play className="w-8 h-8 text-foreground ml-0.5" />}
           </button>
         </div>
       </div>
@@ -260,12 +270,12 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
 }
 
 /* ─────────────────────────────────────────────
-   Music Fullscreen Player — Apple Music style
+   Music Fullscreen Player — Liquid Glass
    ───────────────────────────────────────────── */
 function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const {
-    currentSong, isPlaying, progress, shuffle, repeat, queue, volume,
-    togglePlay, next, previous, seekTo: storeSeekTo, setVolume,
+    currentSong, isPlaying, progress, shuffle, repeat, queue,
+    togglePlay, next, previous, seekTo: storeSeekTo,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue
   } = usePlayerStore();
 
@@ -290,48 +300,40 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
-      style={{ background: "hsl(240, 10%, 5%)" }}
+      style={{ background: "hsl(0 0% 4%)" }}
     >
-      {/* Dynamic blurred BG from cover */}
+      {/* Dynamic blurred BG */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.img
-          key={currentSong.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ duration: 1 }}
+        <img
           src={currentSong.coverUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[100px]"
+          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-35"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/80" />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.4), hsl(0 0% 4% / 0.2), hsl(0 0% 4% / 0.75))" }} />
       </div>
 
       {/* Drag handle */}
       <div className="relative z-10 flex justify-center pt-3 pb-1">
-        <div className="w-9 h-1 rounded-full bg-muted-foreground/30" />
+        <div className="w-9 h-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.2)" }} />
       </div>
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-5 py-2">
-        <button onClick={onClose} className="p-1 -ml-1">
-          <ChevronDown className="w-7 h-7 text-foreground/80" />
+        <button onClick={onClose} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
+          <ChevronDown className="w-5 h-5 text-foreground/80" />
         </button>
-        <motion.p
-          key={currentSong.album || "album"}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-[11px] font-semibold text-foreground/50 tracking-widest uppercase truncate max-w-[50%] text-center"
-        >
-          {currentSong.album || "En lecture"}
-        </motion.p>
-        <button onClick={() => setShowQueue(!showQueue)} className="p-1 -mr-1">
-          <ListMusic className={`w-6 h-6 ${showQueue ? "text-primary" : "text-foreground/60"}`} />
+        <div className="px-3 py-1.5 rounded-full" style={glassButtonStyle}>
+          <p className="text-[10px] font-semibold text-foreground/60 tracking-widest uppercase truncate max-w-[40vw] text-center">
+            {currentSong.album || "En lecture"}
+          </p>
+        </div>
+        <button onClick={() => setShowQueue(!showQueue)} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
+          <ListMusic className={`w-5 h-5 ${showQueue ? "text-primary" : "text-foreground/60"}`} />
         </button>
       </div>
 
       <AnimatePresence mode="wait">
         {showQueue ? (
-          /* Queue view */
           <motion.div
             key="queue"
             initial={{ opacity: 0, y: 30 }}
@@ -339,21 +341,20 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             exit={{ opacity: 0, y: -20 }}
             className="relative z-10 flex-1 overflow-y-auto px-5 pb-4 scrollbar-hide"
           >
-            <h3 className="text-base font-display font-semibold text-foreground mb-3 sticky top-0 pt-2 pb-2"
-                style={{ background: "linear-gradient(to bottom, hsl(240 10% 5% / 0.9) 80%, transparent)" }}
+            <h3 className="text-base font-semibold text-foreground mb-3 sticky top-0 pt-2 pb-2"
+                style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.9) 80%, transparent)" }}
             >
               File d'attente
             </h3>
-            <div className="space-y-0.5">
-              {queue.map((song, i) => {
+            <div className="space-y-1">
+              {queue.map((song) => {
                 const isCurrent = song.id === currentSong.id;
                 return (
                   <button
                     key={song.id}
                     onClick={() => { play(song); setQueue(queue); }}
-                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${
-                      isCurrent ? "bg-primary/10" : "active:bg-secondary/30"
-                    }`}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors"
+                    style={isCurrent ? { ...glassButtonStyle, background: "hsl(var(--primary) / 0.12)" } : {}}
                   >
                     <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
@@ -369,7 +370,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             </div>
           </motion.div>
         ) : (
-          /* Now playing view */
           <motion.div
             key="player"
             initial={{ opacity: 0, y: 30 }}
@@ -377,59 +377,42 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             exit={{ opacity: 0, y: -20 }}
             className="relative z-10 flex-1 flex flex-col items-center justify-center px-8"
           >
-            {/* Cover — Apple's large rounded square with shadow */}
-            <motion.div
-              animate={isPlaying ? { scale: 1 } : { scale: 0.88 }}
-              transition={{ type: "spring", stiffness: 200, damping: 25 }}
-              className="w-full max-w-[280px] md:max-w-[340px] aspect-square mb-8"
+            {/* Cover in glass frame */}
+            <div
+              className="p-2.5 rounded-3xl mb-8 w-full max-w-[290px] md:max-w-[350px]"
+              style={glassStyle}
             >
-              <motion.img
-                key={currentSong.id}
-                initial={{ opacity: 0.5, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
+              <img
                 src={currentSong.coverUrl}
                 alt={currentSong.title}
-                className="w-full h-full rounded-2xl object-cover"
-                style={{
-                  boxShadow: "0 20px 60px -10px rgba(0,0,0,0.6), 0 8px 20px -5px rgba(0,0,0,0.3)",
-                }}
+                className="w-full aspect-square rounded-2xl object-cover"
               />
-            </motion.div>
+            </div>
 
-            {/* Title + Artist + Like — Apple layout */}
-            <div className="w-full max-w-[280px] md:max-w-[340px] flex items-start justify-between gap-3 mb-6">
+            {/* Title + Artist + Like */}
+            <div className="w-full max-w-[280px] md:max-w-[340px] flex items-start justify-between gap-3 mb-5">
               <div className="min-w-0 flex-1">
-                <motion.h2
-                  key={currentSong.id + "-t"}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="text-xl font-bold text-foreground truncate leading-tight"
-                >
+                <h2 className="text-xl font-bold text-foreground truncate leading-tight">
                   {currentSong.title}
-                </motion.h2>
-                <motion.p
-                  key={currentSong.id + "-a"}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 }}
-                  className="text-base text-primary truncate mt-0.5"
-                >
+                </h2>
+                <p className="text-base text-primary truncate mt-0.5">
                   {currentSong.artist}
-                </motion.p>
+                </p>
               </div>
               <button
                 onClick={() => toggleLike(currentSong)}
-                className="mt-1 active:scale-90 transition-transform"
+                className="mt-1 p-2 rounded-full active:scale-90 transition-transform"
+                style={glassButtonStyle}
               >
-                <Heart className={`w-6 h-6 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
+                <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
               </button>
             </div>
 
-            {/* Progress bar — Apple thin style */}
-            <div className="w-full max-w-[280px] md:max-w-[340px] mb-4">
+            {/* Progress bar */}
+            <div className="w-full max-w-[280px] md:max-w-[340px] mb-5">
               <div
-                className="h-[4px] bg-foreground/10 rounded-full cursor-pointer relative group"
+                className="h-[5px] rounded-full cursor-pointer relative group"
+                style={{ background: "hsl(0 0% 100% / 0.1)" }}
                 onClick={handleSeek}
               >
                 <div
@@ -445,26 +428,33 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Transport controls */}
-            <div className="flex items-center justify-between w-full max-w-[260px] md:max-w-[300px] mb-6">
+            {/* Transport controls in glass pill */}
+            <div
+              className="flex items-center justify-between w-full max-w-[280px] md:max-w-[320px] px-5 py-3 rounded-2xl"
+              style={glassStyle}
+            >
               <button onClick={toggleShuffle} className="active:scale-90 transition-transform">
                 <Shuffle className={`w-[18px] h-[18px] ${shuffle ? "text-primary" : "text-foreground/40"}`} />
               </button>
               <button onClick={previous} className="active:scale-90 transition-transform">
-                <SkipBack className="w-8 h-8 text-foreground fill-current" />
+                <SkipBack className="w-7 h-7 text-foreground fill-current" />
               </button>
               <button
                 onClick={togglePlay}
-                className="active:scale-90 transition-transform"
+                className="p-3 rounded-full active:scale-90 transition-transform"
+                style={{
+                  background: "hsl(0 0% 100% / 0.12)",
+                  border: "1px solid hsl(0 0% 100% / 0.15)",
+                }}
               >
                 {isPlaying ? (
-                  <Pause className="w-12 h-12 text-foreground fill-current" />
+                  <Pause className="w-8 h-8 text-foreground fill-current" />
                 ) : (
-                  <Play className="w-12 h-12 text-foreground fill-current ml-1" />
+                  <Play className="w-8 h-8 text-foreground fill-current ml-0.5" />
                 )}
               </button>
               <button onClick={next} className="active:scale-90 transition-transform">
-                <SkipForward className="w-8 h-8 text-foreground fill-current" />
+                <SkipForward className="w-7 h-7 text-foreground fill-current" />
               </button>
               <button onClick={cycleRepeat} className="active:scale-90 transition-transform">
                 {repeat === "one" ? (
@@ -474,12 +464,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 )}
               </button>
             </div>
-
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Safe area bottom padding */}
       <div className="relative z-10 h-8" />
     </motion.div>
   );
