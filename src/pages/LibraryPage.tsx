@@ -12,6 +12,14 @@ const LibraryPage = () => {
   const [newName, setNewName] = useState("");
   const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs } = usePlayerStore();
 
+  useEffect(() => {
+    if (tab === "playlists") {
+      playlists.forEach((p) => {
+        if (!playlistSongs[p.id]) loadPlaylistSongs(p.id);
+      });
+    }
+  }, [tab, playlists]);
+
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Liked", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
