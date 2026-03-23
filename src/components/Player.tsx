@@ -199,9 +199,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       {/* BG glow */}
       <div className="absolute inset-0 overflow-hidden">
         <img
-          src={currentSong.coverUrl}
+          src={radioMeta?.coverUrl || currentSong.coverUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-30"
+          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-30 transition-all duration-1000"
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.5), hsl(0 0% 4% / 0.3), hsl(0 0% 4% / 0.85))" }} />
       </div>
@@ -236,9 +236,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         >
           <div className="w-52 h-52 md:w-64 md:h-64 rounded-2xl overflow-hidden relative">
             <img
-              src={currentSong.coverUrl}
+              src={radioMeta?.coverUrl || currentSong.coverUrl}
               alt={stationName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-all duration-500"
             />
             {/* Play/Pause overlay centered on cover */}
             <button
