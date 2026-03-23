@@ -7,7 +7,8 @@ import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { SplashScreen } from "@/components/SplashScreen";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
@@ -48,17 +49,23 @@ function AppContent() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AdminAuthProvider>
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </AdminAuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AdminAuthProvider>
+          <Sonner />
+          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </AdminAuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
