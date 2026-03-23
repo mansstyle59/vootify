@@ -7,6 +7,7 @@ const navItems = [
   { to: "/search", icon: Search, label: "Search" },
   { to: "/library", icon: Library, label: "Library" },
   { to: "/radio", icon: Radio, label: "Radio" },
+  { to: "/infos", icon: Info, label: "Infos FR" },
   { to: "/add", icon: PlusCircle, label: "Ajouter" },
 ];
 

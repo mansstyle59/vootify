@@ -49,6 +49,15 @@ Deno.serve(async (req) => {
       case 'genre':
         url = `${DEEZER_API}/genre`;
         break;
+      case 'editorial':
+        url = `${DEEZER_API}/editorial/0`;
+        break;
+      case 'playlist':
+        url = `${DEEZER_API}/playlist/${id}`;
+        break;
+      case 'chart_artists':
+        url = `${DEEZER_API}/chart/0/artists?limit=${limit || 25}`;
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
