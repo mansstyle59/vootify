@@ -1,5 +1,5 @@
 import { NavLink as RouterNavLink } from "react-router-dom";
-import { Home, Search, Library, Radio, LogOut, PlusCircle, Info } from "lucide-react";
+import { Home, Search, Library, Radio, LogOut, PlusCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
