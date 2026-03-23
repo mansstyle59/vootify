@@ -85,7 +85,7 @@ export function MiniPlayer() {
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed bottom-0 md:bottom-0 left-0 right-0 z-50 md:mb-0 mb-14"
+        className="fixed bottom-0 md:bottom-0 left-0 right-0 z-50 md:mb-0 mb-[4.5rem]"
       >
         <div className="glass-panel border-t border-border/50 px-4 py-3">
           {/* Progress bar */}
