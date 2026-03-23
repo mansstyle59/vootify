@@ -36,7 +36,7 @@ const LibraryPage = () => {
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">Your Library</h1>
+      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">Votre Bibliothèque</h1>
 
       <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
         {tabs.map(({ key, label, icon: Icon }) => (
