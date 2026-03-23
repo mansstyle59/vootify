@@ -28,6 +28,7 @@ interface PlayerState {
   toggleShuffle: () => void;
   cycleRepeat: () => void;
   toggleFullScreen: () => void;
+  closePlayer: () => void;
   toggleLike: (song: Song) => void;
   isLiked: (songId: string) => boolean;
   setQueue: (songs: Song[]) => void;
