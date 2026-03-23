@@ -230,9 +230,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           <div className="flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
             <span className="px-2.5 py-1 rounded-full bg-secondary/40">{genre}</span>
             <span className="px-2.5 py-1 rounded-full bg-secondary/40">{timeStr}</span>
-            <span className="px-2.5 py-1 rounded-full bg-destructive/15 text-destructive flex items-center gap-1">
-              <Radio className="w-3 h-3" /> RDS
-            </span>
           </div>
         </div>
 
