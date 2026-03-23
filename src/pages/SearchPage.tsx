@@ -49,7 +49,7 @@ const SearchPage = () => {
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="Search songs, artists..."
+          placeholder="Rechercher des chansons, artistes..."
           className="w-full pl-12 pr-10 py-3.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
         />
         {query && (
