@@ -70,6 +70,12 @@ export const deezerApi = {
     return (data.data || []).map(mapDeezerAlbum);
   },
 
+  async getPlaylistTracks(playlistId: string, limit = 30): Promise<Song[]> {
+    const data = await callDeezer({ action: "playlist", id: playlistId });
+    const tracks = data.tracks?.data || [];
+    return tracks.slice(0, limit).map(mapTrackToSong);
+  },
+
 
   async getAlbumTracks(albumId: string): Promise<{ album: Album; tracks: Song[] }> {
     const id = albumId.replace("dz-album-", "");
