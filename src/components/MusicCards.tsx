@@ -1,8 +1,10 @@
+import { useState, useRef, useEffect } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, Download, CheckCircle, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
 
 /** Returns true if the song has a full-length stream (JioSaavn or custom) vs a 30s Deezer preview */
 function isFullStream(song: Song): boolean {
@@ -31,6 +33,20 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!showPlaylistMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowPlaylistMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPlaylistMenu]);
 
   const handleClick = () => {
     if (isCurrentSong) {
@@ -95,6 +111,26 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
 
+      {/* Add to playlist */}
+      {song.duration > 0 && (
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPlaylistMenu(!showPlaylistMenu);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Ajouter à une playlist"
+          >
+            <ListPlus className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+          </button>
+          <AnimatePresence>
+            {showPlaylistMenu && (
+              <AddToPlaylistMenu song={song} onClose={() => setShowPlaylistMenu(false)} />
+            )}
+          </AnimatePresence>
+        </div>
+      )}
       {/* Download / cached indicator */}
       {song.streamUrl && song.duration > 0 && (
         <button

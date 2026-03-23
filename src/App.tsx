@@ -15,6 +15,7 @@ import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
 import RadioPage from "./pages/RadioPage";
 import AddContentPage from "./pages/AddContentPage";
+import PlaylistDetailPage from "./pages/PlaylistDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ function AppContent() {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/radio" element={<RadioPage />} />
           <Route path="/add" element={<AddContentPage />} />
+          <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

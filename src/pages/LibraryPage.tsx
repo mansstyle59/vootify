@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
@@ -12,6 +13,7 @@ const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const navigate = useNavigate();
   const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   useEffect(() => {
@@ -137,10 +139,7 @@ const LibraryPage = () => {
                         title={p.name}
                         subtitle={`${(playlistSongs[p.id] || []).length} titres`}
                         imageUrl={p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
-                        onClick={() => {
-                          const pSongs = playlistSongs[p.id] || [];
-                          if (pSongs.length) { setQueue(pSongs); play(pSongs[0]); }
-                        }}
+                        onClick={() => navigate(`/playlist/${p.id}`)}
                       />
                       <button
                         onClick={() => deletePlaylist(p.id)}
