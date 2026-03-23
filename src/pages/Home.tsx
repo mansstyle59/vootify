@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
+import { fsoundApi } from "@/lib/fsoundApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { ContentCard, SongCard, CardSkeleton, SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { TrendingUp, Sparkles, Disc3, Music2, Clock, AlertCircle } from "lucide-react";
+import { TrendingUp, Sparkles, Disc3, Music2, Clock, AlertCircle, Headphones } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 
@@ -15,10 +16,11 @@ const sectionAnim = {
 const HomePage = () => {
   const { play, setQueue } = usePlayerStore();
 
-  const { data: chartTracks, isLoading: loadingTracks, error: tracksError } = useQuery({
-    queryKey: ["deezer-chart-tracks"],
-    queryFn: () => deezerApi.getChartTracks(20),
-    staleTime: 5 * 60 * 1000,
+  // Full tracks from FSound/JioSaavn
+  const { data: fullTracks, isLoading: loadingFull } = useQuery({
+    queryKey: ["fsound-popular"],
+    queryFn: () => fsoundApi.getPopularTracks(20),
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: chartAlbums, isLoading: loadingAlbums } = useQuery({
@@ -61,23 +63,16 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
         <div className="relative z-10">
           <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Propulsé par Deezer
+            <Sparkles className="w-4 h-4" /> Musique complète en streaming
           </p>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-2">
             Bienvenue sur VOO Music
           </h1>
           <p className="text-muted-foreground max-w-md">
-            Explorez les titres tendances, les meilleurs albums et les stations radio.
+            Écoutez des morceaux complets, explorez les tendances et découvrez de nouveaux artistes.
           </p>
         </div>
       </motion.div>
-
-      {tracksError && (
-        <div className="glass-panel-light rounded-xl p-4 flex items-center gap-3 text-destructive">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">Erreur de chargement. Essayez de rafraîchir la page.</p>
-        </div>
-      )}
 
       {/* Recently Played */}
       {recentlyPlayed.length > 0 && (
@@ -95,11 +90,7 @@ const HomePage = () => {
                 onClick={() => handlePlayTrack(song, recentlyPlayed)}
               >
                 <div className="relative overflow-hidden rounded-lg mb-2">
-                  <img
-                    src={song.coverUrl}
-                    alt={song.title}
-                    className="w-full aspect-square object-cover"
-                  />
+                  <img src={song.coverUrl} alt={song.title} className="w-full aspect-square object-cover" />
                   <div className="absolute inset-0 bg-background/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                     <div className="p-2.5 rounded-full bg-primary text-primary-foreground glow-primary">
                       <Music2 className="w-4 h-4" />
@@ -113,6 +104,33 @@ const HomePage = () => {
           </div>
         </motion.section>
       )}
+
+      {/* Full Tracks - Tendances */}
+      <motion.section variants={sectionAnim} initial="hidden" animate="show">
+        <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Headphones className="w-5 h-5 text-primary" /> Titres complets populaires
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <div className="glass-panel-light rounded-xl p-2">
+            {loadingFull
+              ? Array.from({ length: 5 }).map((_, i) => <SongSkeleton key={i} />)
+              : fullTracks?.slice(0, 5).map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, fullTracks)}>
+                    <SongCard song={song} index={i} showIndex />
+                  </div>
+                ))}
+          </div>
+          <div className="glass-panel-light rounded-xl p-2 mt-4 md:mt-0">
+            {loadingFull
+              ? Array.from({ length: 5 }).map((_, i) => <SongSkeleton key={i} />)
+              : fullTracks?.slice(5, 10).map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, fullTracks)}>
+                    <SongCard song={song} index={i + 5} showIndex />
+                  </div>
+                ))}
+          </div>
+        </div>
+      </motion.section>
 
       {/* Top Albums */}
       <motion.section variants={sectionAnim} initial="hidden" animate="show">
@@ -134,32 +152,21 @@ const HomePage = () => {
         </div>
       </motion.section>
 
-      {/* Trending Tracks — split into 2 columns on desktop */}
-      <motion.section variants={sectionAnim} initial="hidden" animate="show">
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" /> Tendances du moment
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+      {/* More full tracks */}
+      {fullTracks && fullTracks.length > 10 && (
+        <motion.section variants={sectionAnim} initial="hidden" animate="show">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-accent" /> Encore plus de titres
+          </h2>
           <div className="glass-panel-light rounded-xl p-2">
-            {loadingTracks
-              ? Array.from({ length: 5 }).map((_, i) => <SongSkeleton key={i} />)
-              : chartTracks?.slice(0, 5).map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
-                    <SongCard song={song} index={i} showIndex />
-                  </div>
-                ))}
+            {fullTracks.slice(10, 20).map((song, i) => (
+              <div key={song.id} onClick={() => handlePlayTrack(song, fullTracks)}>
+                <SongCard song={song} index={i + 10} showIndex />
+              </div>
+            ))}
           </div>
-          <div className="glass-panel-light rounded-xl p-2 mt-4 md:mt-0">
-            {loadingTracks
-              ? Array.from({ length: 5 }).map((_, i) => <SongSkeleton key={i} />)
-              : chartTracks?.slice(5, 10).map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
-                    <SongCard song={song} index={i + 5} showIndex />
-                  </div>
-                ))}
-          </div>
-        </div>
-      </motion.section>
+        </motion.section>
+      )}
 
       {/* More Albums */}
       {chartAlbums && chartAlbums.length > 6 && (

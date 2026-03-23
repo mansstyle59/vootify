@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { deezerApi } from "@/lib/deezerApi";
+import { fsoundApi } from "@/lib/fsoundApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { SongCard, ContentCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X } from "lucide-react";
+import { SongCard, SongSkeleton } from "@/components/MusicCards";
+import { Search as SearchIcon, X, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Song } from "@/data/mockData";
 
@@ -12,26 +12,28 @@ const SearchPage = () => {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const { play, setQueue } = usePlayerStore();
 
-  // Simple debounce via timeout
   const handleChange = (value: string) => {
     setQuery(value);
     clearTimeout((window as any).__searchTimeout);
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value);
-    }, 400);
+    }, 600);
   };
 
+  // Full track search via fsound/JioSaavn
   const { data: results, isLoading } = useQuery({
-    queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
+    queryKey: ["fsound-search", debouncedQuery],
+    queryFn: () => fsoundApi.searchTracks(debouncedQuery, 20),
     enabled: debouncedQuery.length >= 2,
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: chartTracks } = useQuery({
-    queryKey: ["deezer-chart-search"],
-    queryFn: () => deezerApi.getChartTracks(10),
-    staleTime: 5 * 60 * 1000,
+  // Popular full tracks for empty state
+  const { data: popularTracks } = useQuery({
+    queryKey: ["fsound-popular-search"],
+    queryFn: () => fsoundApi.getPopularTracks(10),
+    staleTime: 10 * 60 * 1000,
+    enabled: !debouncedQuery,
   });
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
@@ -39,7 +41,7 @@ const SearchPage = () => {
     play(song);
   };
 
-  const genres = ["Pop", "Rock", "Hip Hop", "Electronic", "Jazz", "Classical", "R&B", "Reggae"];
+  const genres = ["Pop", "Rock", "Hip Hop", "Electronic", "Jazz", "R&B", "Reggaeton", "Français"];
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
@@ -49,7 +51,7 @@ const SearchPage = () => {
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="Rechercher des chansons, artistes..."
+          placeholder="Rechercher des chansons, artistes... (écoute complète)"
           className="w-full pl-12 pr-10 py-3.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
         />
         {query && (
@@ -77,12 +79,14 @@ const SearchPage = () => {
             ))}
           </div>
 
-          {chartTracks && chartTracks.length > 0 && (
+          {popularTracks && popularTracks.length > 0 && (
             <div>
-              <h2 className="text-lg font-display font-semibold text-foreground mb-3">Populaire en ce moment</h2>
+              <h2 className="text-lg font-display font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Headphones className="w-5 h-5 text-primary" /> Populaire — écoute complète
+              </h2>
               <div className="glass-panel-light rounded-xl p-2">
-                {chartTracks.map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
+                {popularTracks.map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, popularTracks)}>
                     <SongCard song={song} index={i} showIndex />
                   </div>
                 ))}
@@ -97,13 +101,18 @@ const SearchPage = () => {
               {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
             </div>
           ) : results && results.length > 0 ? (
-            <div className="glass-panel-light rounded-xl p-2">
-              {results.map((song, i) => (
-                <div key={song.id} onClick={() => handlePlayTrack(song, results)}>
-                  <SongCard song={song} index={i} />
-                </div>
-              ))}
-            </div>
+            <>
+              <p className="text-sm text-muted-foreground mb-3">
+                {results.length} résultats — écoute complète disponible
+              </p>
+              <div className="glass-panel-light rounded-xl p-2">
+                {results.map((song, i) => (
+                  <div key={song.id} onClick={() => handlePlayTrack(song, results)}>
+                    <SongCard song={song} index={i} />
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <p className="text-center text-muted-foreground py-12">Aucun résultat trouvé pour « {debouncedQuery} »</p>
           )}
