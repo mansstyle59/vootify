@@ -17,7 +17,7 @@ function getGreeting() {
 }
 
 const DEEZER_PLAYLIST_TITRES_DU_MOMENT = "53362031";
-const DEEZER_PLAYLIST_ACTU_RAP = "1996494362"; // Actu Rap FR
+const DEEZER_PLAYLIST_RAPSTARS = "3272614282"; // Rapstars
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
