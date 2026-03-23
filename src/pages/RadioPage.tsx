@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioBrowserApi } from "@/lib/radioBrowserApi";
-import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Music, Search, TrendingUp } from "lucide-react";
 import type { RadioStation } from "@/data/mockData";
