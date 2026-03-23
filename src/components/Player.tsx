@@ -130,10 +130,10 @@ export function MiniPlayer() {
               />
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
-                  {currentSong.title}
+                  {isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
                 </p>
                 <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
-                  {currentSong.artist}
+                  {isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
                   {isLive && (
                     <span className="ml-1.5 inline-flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
