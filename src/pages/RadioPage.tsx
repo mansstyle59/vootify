@@ -12,6 +12,7 @@ const RadioPage = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [tvrzType, setTvrzType] = useState<TVRZType>("trztop");
 
   const queryOptions = filterMode === "genre" && selectedGenre
     ? { genre: selectedGenre }
