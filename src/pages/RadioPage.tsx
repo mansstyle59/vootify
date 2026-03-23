@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioEnLigneApi, tvRadioZapApi } from "@/lib/radioFrApi";
 import { deezerApi } from "@/lib/deezerApi";
-import { Radio, MapPin, AlertCircle, Music, Globe } from "lucide-react";
+import { usePlayerStore } from "@/stores/playerStore";
+import { Radio, MapPin, AlertCircle, Music, Globe, Play, Pause } from "lucide-react";
+import type { RadioStation } from "@/data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 
 type FilterMode = "all" | "genre" | "region" | "tvradiozap";
@@ -13,6 +15,24 @@ const RadioPage = () => {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [tvrzType, setTvrzType] = useState<TVRZType>("trztop");
+  const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
+
+  const playStation = (station: RadioStation) => {
+    if (currentSong?.id === station.id) {
+      togglePlay();
+      return;
+    }
+    play({
+      id: station.id,
+      title: station.name,
+      artist: station.genre || "Radio",
+      album: "Radio en direct",
+      duration: 0, // 0 = live stream
+      coverUrl: station.coverUrl,
+      streamUrl: station.streamUrl,
+      liked: false,
+    });
+  };
 
   const queryOptions = filterMode === "genre" && selectedGenre
     ? { genre: selectedGenre }
@@ -176,11 +196,7 @@ const RadioPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.02 }}
                 className="glass-panel rounded-xl p-4 hover-glass cursor-pointer group"
-                onClick={() => {
-                  if (station.streamUrl) {
-                    window.open(station.streamUrl, '_blank');
-                  }
-                }}
+                onClick={() => playStation(station)}
               >
                 <div className="flex gap-4 items-center">
                   <div className="relative flex-shrink-0">
@@ -193,15 +209,21 @@ const RadioPage = () => {
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-background/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Radio className="w-5 h-5 text-primary" />
+                      {currentSong?.id === station.id && isPlaying ? (
+                        <Pause className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Play className="w-5 h-5 text-primary" />
+                      )}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-semibold text-foreground truncate">{station.name}</h3>
                     <p className="text-xs text-muted-foreground truncate">{station.genre}</p>
                     <div className="mt-1.5 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
-                      <span className="text-[10px] text-primary font-medium">LIVE</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${currentSong?.id === station.id && isPlaying ? "bg-primary animate-pulse-glow" : "bg-muted-foreground/50"}`} />
+                      <span className={`text-[10px] font-medium ${currentSong?.id === station.id && isPlaying ? "text-primary" : "text-muted-foreground"}`}>
+                        {currentSong?.id === station.id && isPlaying ? "EN LECTURE" : "LIVE"}
+                      </span>
                     </div>
                   </div>
                 </div>
