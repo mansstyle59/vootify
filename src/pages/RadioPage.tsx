@@ -71,6 +71,7 @@ const RadioPage = () => {
           { key: "all" as FilterMode, label: "Toutes", icon: Radio },
           { key: "genre" as FilterMode, label: "Par genre", icon: Music },
           { key: "region" as FilterMode, label: "Par région", icon: MapPin },
+          { key: "tvradiozap" as FilterMode, label: "TVRadioZap", icon: Globe },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
