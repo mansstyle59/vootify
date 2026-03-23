@@ -123,7 +123,7 @@ const RadioPage = () => {
       <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
         {[
           { key: "top" as FilterMode, label: "Top France", icon: TrendingUp },
-          { key: "rel" as FilterMode, label: "radio-en-ligne.fr", icon: Globe },
+          { key: "rel" as FilterMode, label: "ecouterradioenligne.com", icon: Globe },
           { key: "tag" as FilterMode, label: "Par genre", icon: Music },
         ].map(({ key, label, icon: Icon }) => (
           <button
