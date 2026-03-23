@@ -64,13 +64,23 @@ const RadioPage = () => {
     staleTime: 30 * 60 * 1000,
   });
 
+  // radio-en-ligne.fr scraped stations
+  const { data: relStations = [], isLoading: loadingRel } = useQuery({
+    queryKey: ["radio-en-ligne"],
+    queryFn: () => radioEnLigneApi.getStations(),
+    staleTime: 15 * 60 * 1000,
+    enabled: filterMode === "rel",
+  });
+
   const stations = filterMode === "top"
     ? topStations
+    : filterMode === "rel"
+    ? relStations
     : filterMode === "tag"
     ? tagStations
     : searchStations;
 
-  const isLoading = filterMode === "top" ? loadingTop : filterMode === "tag" ? loadingTag : loadingSearch;
+  const isLoading = filterMode === "top" ? loadingTop : filterMode === "rel" ? loadingRel : filterMode === "tag" ? loadingTag : loadingSearch;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
