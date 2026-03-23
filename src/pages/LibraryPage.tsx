@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2 } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type Tab = "liked" | "playlists" | "recent";
+type Tab = "liked" | "playlists" | "recent" | "radios";
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
-  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs } = usePlayerStore();
+  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   useEffect(() => {
     if (tab === "playlists") {
@@ -20,9 +22,42 @@ const LibraryPage = () => {
     }
   }, [tab, playlists]);
 
+  // Saved radio stations
+  const { data: savedRadios = [] } = useQuery({
+    queryKey: ["custom-radio-stations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_radio_stations")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: tab === "radios",
+  });
+
+  const playStation = (station: typeof savedRadios[0]) => {
+    if (currentSong?.id === station.id) {
+      togglePlay();
+      return;
+    }
+    play({
+      id: station.id,
+      title: station.name,
+      artist: station.genre || "Radio",
+      album: "Radio en direct",
+      duration: 0,
+      coverUrl: station.cover_url || "",
+      streamUrl: station.stream_url || "",
+      liked: false,
+    });
+  };
+
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "radios", label: "Radios", icon: Radio },
     { key: "recent", label: "Récents", icon: Clock },
   ];
 
@@ -114,6 +149,58 @@ const LibraryPage = () => {
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "radios" && (
+            <div>
+              {savedRadios.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Radio className="w-14 h-14 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground">Aucune station sauvegardée. Ajoutez-en depuis la page Radio avec le ❤️.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {savedRadios.map((station, i) => (
+                    <motion.div
+                      key={station.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.02 }}
+                      className="glass-panel rounded-xl p-4 hover-glass cursor-pointer group"
+                      onClick={() => playStation(station)}
+                    >
+                      <div className="flex gap-4 items-center">
+                        <div className="relative flex-shrink-0">
+                          <img
+                            src={station.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&h=100&fit=crop"}
+                            alt={station.name}
+                            className="w-14 h-14 rounded-xl object-cover bg-secondary"
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&h=100&fit=crop'; }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                            {currentSong?.id === station.id && isPlaying ? (
+                              <Pause className="w-5 h-5 text-primary" />
+                            ) : (
+                              <Play className="w-5 h-5 text-primary" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-display font-semibold text-foreground truncate text-sm">{station.name}</h3>
+                          <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
+                          <div className="mt-1 flex items-center gap-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${currentSong?.id === station.id && isPlaying ? "bg-primary animate-pulse-glow" : "bg-muted-foreground/50"}`} />
+                            <span className={`text-[10px] font-medium ${currentSong?.id === station.id && isPlaying ? "text-primary" : "text-muted-foreground"}`}>
+                              {currentSong?.id === station.id && isPlaying ? "EN LECTURE" : "LIVE"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
