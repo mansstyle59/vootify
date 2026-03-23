@@ -1,7 +1,23 @@
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, MoreHorizontal } from "lucide-react";
+import { Play, Pause, Heart } from "lucide-react";
 import { motion } from "framer-motion";
+
+/** Returns true if the song has a full-length stream (JioSaavn or custom) vs a 30s Deezer preview */
+function isFullStream(song: Song): boolean {
+  if (!song.streamUrl) return false;
+  // Deezer previews come from cdn-preview-X.dzcdn.net
+  if (song.streamUrl.includes("dzcdn.net")) return false;
+  // JioSaavn or other full streams
+  if (song.streamUrl.includes("saavn") || song.streamUrl.includes("jiosaavn")) return true;
+  // If it's a js- prefixed song, it's full
+  if (song.id.startsWith("js-")) return true;
+  // Custom songs with stream URLs are full
+  if (song.id.startsWith("custom-")) return true;
+  // dz- prefix but non-deezer stream = resolved via JioSaavn
+  if (song.id.startsWith("dz-") && !song.streamUrl.includes("dzcdn.net")) return true;
+  return false;
+}
 
 interface SongCardProps {
   song: Song;
