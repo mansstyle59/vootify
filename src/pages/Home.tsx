@@ -112,7 +112,7 @@ const HomePage = () => {
       {/* More Albums */}
       {chartAlbums && chartAlbums.length > 4 && (
         <section className="mb-10">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">More Albums</h2>
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Plus d'albums</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {chartAlbums.slice(4, 8).map((album) => (
               <ContentCard
