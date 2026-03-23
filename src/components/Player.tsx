@@ -83,7 +83,7 @@ export function MiniPlayer() {
   }, [next]);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying);
+  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   if (!currentSong) return null;
 
