@@ -135,7 +135,7 @@ export const musicDb = {
       .eq("user_id", userId)
       .order("played_at", { ascending: false })
       .limit(limit);
-    if (error) throw error;
+    if (error) { console.error("getRecentlyPlayed error:", error); return []; }
     return (data || []).map((r) => ({ ...rowToSong(r), liked: false }));
   },
 };
