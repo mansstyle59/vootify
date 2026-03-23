@@ -279,7 +279,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
 function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, progress, shuffle, repeat, queue, volume,
-    togglePlay, next, previous, setProgress, setVolume,
+    togglePlay, next, previous, seekTo: storeSeekTo, setVolume,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue
   } = usePlayerStore();
 
@@ -290,11 +290,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const liked = isLiked(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
-  const seekTo = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = (e.clientX - rect.left) / rect.width;
     const time = Math.max(0, Math.min(Math.floor(pct * currentSong.duration), currentSong.duration));
-    setProgress(time);
+    storeSeekTo(time);
   };
 
   return (
