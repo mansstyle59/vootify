@@ -231,15 +231,23 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 gap-6">
         {/* Cover in glass card */}
         <div
-          className="p-3 rounded-3xl"
+          className="p-3 rounded-3xl relative"
           style={glassStyle}
         >
-          <div className="w-52 h-52 md:w-64 md:h-64 rounded-2xl overflow-hidden">
+          <div className="w-52 h-52 md:w-64 md:h-64 rounded-2xl overflow-hidden relative">
             <img
               src={currentSong.coverUrl}
               alt={stationName}
               className="w-full h-full object-cover"
             />
+            {/* Play/Pause overlay centered on cover */}
+            <button
+              onClick={togglePlay}
+              className="absolute inset-0 flex items-center justify-center active:scale-95 transition-transform"
+              style={{ background: "hsl(0 0% 0% / 0.3)" }}
+            >
+              {isPlaying ? <Pause className="w-14 h-14 text-white" /> : <Play className="w-14 h-14 text-white ml-1" />}
+            </button>
           </div>
         </div>
 
@@ -265,21 +273,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Bottom controls */}
-      <div className="relative z-10 px-8 pb-10">
-        <div className="flex items-center justify-center">
-          <button
-            onClick={togglePlay}
-            className="p-5 rounded-full active:scale-95 transition-transform"
-            style={{
-              ...glassStyle,
-              background: "linear-gradient(135deg, hsl(0 0% 100% / 0.15), hsl(0 0% 100% / 0.05))",
-            }}
-          >
-            {isPlaying ? <Pause className="w-8 h-8 text-foreground" /> : <Play className="w-8 h-8 text-foreground ml-0.5" />}
-          </button>
-        </div>
-      </div>
     </motion.div>
   );
 }
