@@ -253,7 +253,7 @@ const RadioPage = () => {
         </div>
         <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
         <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
-      </motion.div>
+      </div>
     );
   };
 
