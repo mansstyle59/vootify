@@ -2,7 +2,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic
+  Heart, ChevronDown, ListMusic, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
@@ -157,6 +157,12 @@ export function MiniPlayer() {
                   <SkipForward className="w-5 h-5 fill-current" />
                 </button>
               )}
+              <button
+                onClick={closePlayer}
+                className="p-2 text-muted-foreground active:scale-90 transition-transform"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
