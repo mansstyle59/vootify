@@ -64,10 +64,10 @@ const RadioPage = () => {
     staleTime: 30 * 60 * 1000,
   });
 
-  // radio-en-ligne.fr scraped stations
+  // ecouterradioenligne.com scraped stations
   const { data: relStations = [], isLoading: loadingRel } = useQuery({
-    queryKey: ["radio-en-ligne"],
-    queryFn: () => radioEnLigneApi.getStations(),
+    queryKey: ["ecouterradio"],
+    queryFn: () => ecouterRadioApi.getStations(),
     staleTime: 15 * 60 * 1000,
     enabled: filterMode === "rel",
   });
