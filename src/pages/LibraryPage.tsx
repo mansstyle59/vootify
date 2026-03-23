@@ -61,10 +61,35 @@ const LibraryPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "custom", label: "Mes titres", icon: Music },
     { key: "downloads", label: "Téléchargés", icon: Download },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "recent", label: "Récents", icon: Clock },
   ];
+
+  // Custom songs from database
+  const { data: customSongs = [], refetch: refetchCustom } = useQuery({
+    queryKey: ["custom-songs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((s: any): Song => ({
+        id: `custom-${s.id}`,
+        title: s.title,
+        artist: s.artist,
+        album: s.album || "",
+        duration: s.duration,
+        coverUrl: s.cover_url || "",
+        streamUrl: s.stream_url || "",
+        liked: false,
+      }));
+    },
+    staleTime: 60 * 1000,
+    enabled: tab === "custom",
+  });
 
   // Offline cached songs
   const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
