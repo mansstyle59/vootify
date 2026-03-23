@@ -21,9 +21,9 @@ const LibraryPage = () => {
   }, [tab, playlists]);
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "liked", label: "Liked", icon: Heart },
+    { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
-    { key: "recent", label: "Recent", icon: Clock },
+    { key: "recent", label: "Récents", icon: Clock },
   ];
 
   const handleCreate = () => {
@@ -36,7 +36,7 @@ const LibraryPage = () => {
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">Your Library</h1>
+      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">Votre Bibliothèque</h1>
 
       <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
         {tabs.map(({ key, label, icon: Icon }) => (
@@ -64,7 +64,7 @@ const LibraryPage = () => {
           {tab === "liked" && (
             <div className="glass-panel-light rounded-xl p-2">
               {likedSongs.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">No liked songs yet. Like songs while browsing!</p>
+                <p className="text-center text-muted-foreground py-12">Pas encore de titres aimés. Likez des chansons en naviguant !</p>
               ) : (
                 likedSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)
               )}
@@ -77,7 +77,7 @@ const LibraryPage = () => {
                 onClick={() => setShowCreate(!showCreate)}
                 className="flex items-center gap-2 mb-4 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm"
               >
-                <Plus className="w-4 h-4" /> New Playlist
+                <Plus className="w-4 h-4" /> Nouvelle Playlist
               </button>
               {showCreate && (
                 <div className="flex gap-2 mb-4">
@@ -85,22 +85,22 @@ const LibraryPage = () => {
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                    placeholder="Playlist name..."
+                    placeholder="Nom de la playlist..."
                     className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     autoFocus
                   />
-                  <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Create</button>
+                  <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Créer</button>
                 </div>
               )}
               {playlists.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">No playlists yet</p>
+                <p className="text-center text-muted-foreground py-12">Pas encore de playlists</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {playlists.map((p) => (
                     <div key={p.id} className="relative group">
                       <ContentCard
                         title={p.name}
-                        subtitle={`${(playlistSongs[p.id] || []).length} songs`}
+                        subtitle={`${(playlistSongs[p.id] || []).length} titres`}
                         imageUrl={p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
                         onClick={() => {
                           const pSongs = playlistSongs[p.id] || [];
@@ -123,7 +123,7 @@ const LibraryPage = () => {
           {tab === "recent" && (
             <div className="glass-panel-light rounded-xl p-2">
               {recentlyPlayed.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">Play something to see it here</p>
+                <p className="text-center text-muted-foreground py-12">Écoutez quelque chose pour le voir ici</p>
               ) : (
                 recentlyPlayed.map((s, i) => <SongCard key={s.id} song={s} index={i} />)
               )}

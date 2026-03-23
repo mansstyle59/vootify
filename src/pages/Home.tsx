@@ -55,13 +55,13 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
         <div className="relative z-10">
           <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Powered by Deezer
+            <Sparkles className="w-4 h-4" /> Propulsé par Deezer
           </p>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-2">
-            Discover New Music
+            Découvrez de nouvelles musiques
           </h1>
           <p className="text-muted-foreground max-w-md">
-            Explore trending tracks, top albums, and radio stations.
+            Explorez les titres tendances, les meilleurs albums et les stations radio.
           </p>
         </div>
       </motion.div>
@@ -69,14 +69,14 @@ const HomePage = () => {
       {tracksError && (
         <div className="glass-panel-light rounded-xl p-4 mb-8 flex items-center gap-3 text-destructive">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">Failed to load data. Please try refreshing.</p>
+          <p className="text-sm">Erreur de chargement. Essayez de rafraîchir la page.</p>
         </div>
       )}
 
       {/* Chart Albums */}
       <section className="mb-10">
         <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" /> Top Albums
+          <Sparkles className="w-5 h-5 text-primary" /> Meilleurs Albums
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {loadingAlbums
@@ -96,7 +96,7 @@ const HomePage = () => {
       {/* Trending Tracks */}
       <section className="mb-10">
         <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" /> Trending Now
+          <TrendingUp className="w-5 h-5 text-primary" /> Tendances du moment
         </h2>
         <div className="glass-panel-light rounded-xl p-2">
           {loadingTracks
@@ -112,7 +112,7 @@ const HomePage = () => {
       {/* More Albums */}
       {chartAlbums && chartAlbums.length > 4 && (
         <section className="mb-10">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">More Albums</h2>
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Plus d'albums</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {chartAlbums.slice(4, 8).map((album) => (
               <ContentCard
@@ -129,7 +129,7 @@ const HomePage = () => {
 
       {/* Radio */}
       <section>
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4">Radio Stations</h2>
+        <h2 className="text-xl font-display font-semibold text-foreground mb-4">Stations Radio</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {loadingRadio
             ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)

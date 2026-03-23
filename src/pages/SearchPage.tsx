@@ -49,7 +49,7 @@ const SearchPage = () => {
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="Search songs, artists..."
+          placeholder="Rechercher des chansons, artistes..."
           className="w-full pl-12 pr-10 py-3.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
         />
         {query && (
@@ -61,7 +61,7 @@ const SearchPage = () => {
 
       {!debouncedQuery ? (
         <div>
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Browse Genres</h2>
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Parcourir les genres</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
             {genres.map((genre, i) => (
               <motion.button
@@ -79,7 +79,7 @@ const SearchPage = () => {
 
           {chartTracks && chartTracks.length > 0 && (
             <div>
-              <h2 className="text-lg font-display font-semibold text-foreground mb-3">Popular Right Now</h2>
+              <h2 className="text-lg font-display font-semibold text-foreground mb-3">Populaire en ce moment</h2>
               <div className="glass-panel-light rounded-xl p-2">
                 {chartTracks.map((song, i) => (
                   <div key={song.id} onClick={() => handlePlayTrack(song, chartTracks)}>
@@ -105,7 +105,7 @@ const SearchPage = () => {
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-12">No results found for "{debouncedQuery}"</p>
+            <p className="text-center text-muted-foreground py-12">Aucun résultat trouvé pour « {debouncedQuery} »</p>
           )}
         </div>
       )}
