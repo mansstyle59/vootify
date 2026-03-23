@@ -141,7 +141,6 @@ const LibraryPage = () => {
                         imageUrl={p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
                         onClick={() => navigate(`/playlist/${p.id}`)}
                       />
-                      />
                       <button
                         onClick={() => deletePlaylist(p.id)}
                         className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
