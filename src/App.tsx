@@ -6,6 +6,7 @@ import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
@@ -17,6 +18,11 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
+  const loadUserData = usePlayerStore((s) => s.loadUserData);
+
+  useEffect(() => {
+    loadUserData("anonymous");
+  }, [loadUserData]);
 
   return (
     <div className="min-h-screen flex w-full">
