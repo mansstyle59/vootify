@@ -43,7 +43,7 @@ function SongForm() {
     if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_songs").insert({
-      user_id: "anonymous",
+      user_id: ANONYMOUS_USER_ID,
       title: form.title.trim(),
       artist: form.artist.trim(),
       album: form.album.trim() || null,
