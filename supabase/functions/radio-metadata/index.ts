@@ -56,7 +56,7 @@ serve(async (req) => {
   }
 
   try {
-    const { streamUrl } = await req.json();
+    const { streamUrl, stationName, stationCover } = await req.json();
     if (!streamUrl) {
       return new Response(JSON.stringify({ success: false, error: "No streamUrl" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
