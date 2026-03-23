@@ -12,7 +12,7 @@ export function MiniPlayer() {
   const {
     currentSong, isPlaying, progress, volume, shuffle, repeat,
     togglePlay, next, previous, setProgress, setVolume,
-    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked
+    toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer
   } = usePlayerStore();
 
   const intervalRef = useRef<number | null>(null);
