@@ -13,6 +13,7 @@ const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("liked");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const navigate = useNavigate();
   const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   useEffect(() => {
