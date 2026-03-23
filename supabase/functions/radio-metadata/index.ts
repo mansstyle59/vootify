@@ -11,27 +11,27 @@ const DEEZER_API = "https://api.deezer.com";
 const RADIO_FRANCE_STATIONS: Record<string, { name: string; logo: string }> = {
   franceinter: {
     name: "France Inter",
-    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/a8294b5e-e57b-4b2d-aa3f-54bedbcf1b14/200x200_rf_omm_0000046498_dnc.0000000001.jpg",
+    logo: "/radio-logos/france-inter.png",
   },
   franceinfo: {
     name: "franceinfo",
-    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/8bd4acd4-09bb-4355-88a0-a3a8c39b74a1/200x200_rf_omm_0000046505_dnc.0000000001.jpg",
+    logo: "/radio-logos/franceinfo.png",
   },
   fip: {
     name: "FIP",
-    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/0d78dff4-0553-4b1b-80e0-cac4e0060db0/200x200_rf_omm_0000046501_dnc.0000000001.jpg",
+    logo: "/radio-logos/fip.png",
   },
   francemusique: {
     name: "France Musique",
-    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/c75f9101-9a24-44c3-8ead-9b0bb3e7c0b5/200x200_rf_omm_0000046503_dnc.0000000001.jpg",
+    logo: "/radio-logos/france-musique.png",
   },
   franceculture: {
     name: "France Culture",
-    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/16f5d072-4a53-42b9-98a3-30b4e4680e52/200x200_rf_omm_0000046500_dnc.0000000001.jpg",
+    logo: "/radio-logos/france-culture.png",
   },
   mouv: {
     name: "Mouv'",
-    logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/1ecaa0c0-0b63-432f-8af3-b55daa3b3e46/200x200_rf_omm_0000046504_dnc.0000000001.jpg",
+    logo: "/radio-logos/mouv.png",
   },
 };
 
