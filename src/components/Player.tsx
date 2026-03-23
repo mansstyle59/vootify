@@ -47,6 +47,14 @@ export function MiniPlayer() {
     if (t !== progress) setProgress(t);
   }, [progress, setProgress]);
 
+  // React to seek requests from fullscreen player
+  useEffect(() => {
+    if (_seekTime !== null && audioRef.current) {
+      audioRef.current.currentTime = _seekTime;
+      usePlayerStore.setState({ _seekTime: null });
+    }
+  }, [_seekTime]);
+
   const handleEnded = useCallback(() => {
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
