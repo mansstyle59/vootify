@@ -8,6 +8,7 @@ import { Radio, Play, Pause, Search, Star, TrendingUp, Heart, Pencil, Trash2, X,
 import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 
 type TabKey = "france" | "top" | "custom" | "search";
