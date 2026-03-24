@@ -34,7 +34,7 @@ const RadioPage = () => {
       artist: station.genre || "Radio",
       album: "Radio en direct",
       duration: 0,
-      coverUrl: station.coverUrl,
+      coverUrl: getStationLogo(station.name, station.coverUrl),
       streamUrl: station.streamUrl,
       liked: false,
     });
