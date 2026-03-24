@@ -5,6 +5,7 @@ import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Star, TrendingUp, Heart, Pencil, Trash2, X, Check } from "lucide-react";
+import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
