@@ -400,7 +400,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="relative z-10 flex-1 flex flex-col items-center justify-center px-8"
+            className="relative z-10 flex-1 flex flex-col items-center justify-end px-8 pb-8"
           >
             {/* Cover in glass frame */}
             <div
