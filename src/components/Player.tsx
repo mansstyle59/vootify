@@ -80,6 +80,9 @@ export function MiniPlayer() {
     }
   }, [_seekTime]);
 
+  const isLive = currentSong ? currentSong.duration === 0 : false;
+  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
+
   // ── Media Session API: lock screen metadata ──
   useEffect(() => {
     if (!currentSong || !("mediaSession" in navigator)) return;
@@ -128,9 +131,6 @@ export function MiniPlayer() {
       next();
     }
   }, [next]);
-
-  const isLive = currentSong ? currentSong.duration === 0 : false;
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   if (!currentSong) return null;
 
