@@ -4,6 +4,7 @@ import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut } from "lucide-react";
+import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -139,7 +140,7 @@ function SongForm() {
       <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required />
       <FieldInput label="Album" value={form.album} onChange={(v) => setForm({ ...form, album: v })} placeholder="Nom de l'album (optionnel)" />
       <FieldInput label="Durée (secondes)" value={form.duration} onChange={(v) => setForm({ ...form, duration: v })} placeholder="180" type="number" />
-      <FieldInput label="URL de la pochette" value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} placeholder="https://..." />
+      <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
       <FieldInput label="URL du flux audio" value={form.streamUrl} onChange={(v) => setForm({ ...form, streamUrl: v })} placeholder="https://..." />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
@@ -175,7 +176,7 @@ function AlbumForm() {
       <FieldInput label="Titre" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Nom de l'album" required />
       <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required />
       <FieldInput label="Année" value={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2025" type="number" />
-      <FieldInput label="URL de la pochette" value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} placeholder="https://..." />
+      <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
         Ajouter l'album
@@ -209,7 +210,7 @@ function RadioForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <FieldInput label="Nom de la station" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="France Inter" required />
       <FieldInput label="Genre" value={form.genre} onChange={(v) => setForm({ ...form, genre: v })} placeholder="Pop, Jazz, Info..." />
-      <FieldInput label="URL du logo" value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} placeholder="https://..." />
+      <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
       <FieldInput label="URL du flux audio" value={form.streamUrl} onChange={(v) => setForm({ ...form, streamUrl: v })} placeholder="https://..." />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
