@@ -4,6 +4,7 @@ import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut } from "lucide-react";
+import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
