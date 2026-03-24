@@ -194,7 +194,7 @@ const RadioPage = () => {
             <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm" />
             <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Genre" className="text-sm" />
             <Input value={editForm.streamUrl} onChange={(e) => setEditForm((f) => ({ ...f, streamUrl: e.target.value }))} placeholder="URL du flux" className="text-sm" />
-            <Input value={editForm.coverUrl} onChange={(e) => setEditForm((f) => ({ ...f, coverUrl: e.target.value }))} placeholder="URL du logo" className="text-sm" />
+            <CoverImagePicker value={editForm.coverUrl} onChange={(v) => setEditForm((f) => ({ ...f, coverUrl: v }))} />
             <div className="flex gap-2 pt-1">
               <button onClick={saveEdit} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium">
                 <Check className="w-3 h-3" /> Enregistrer
