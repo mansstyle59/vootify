@@ -80,6 +80,43 @@ export function MiniPlayer() {
     }
   }, [_seekTime]);
 
+  // ── Media Session API: lock screen metadata ──
+  useEffect(() => {
+    if (!currentSong || !("mediaSession" in navigator)) return;
+
+    const title = isLive && radioMeta?.title ? radioMeta.title : currentSong.title;
+    const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
+    const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title,
+      artist,
+      album: currentSong.album || "",
+      artwork: artwork
+        ? [
+            { src: artwork, sizes: "96x96", type: "image/png" },
+            { src: artwork, sizes: "128x128", type: "image/png" },
+            { src: artwork, sizes: "192x192", type: "image/png" },
+            { src: artwork, sizes: "256x256", type: "image/png" },
+            { src: artwork, sizes: "384x384", type: "image/png" },
+            { src: artwork, sizes: "512x512", type: "image/png" },
+          ]
+        : [],
+    });
+
+    navigator.mediaSession.setActionHandler("play", () => togglePlay());
+    navigator.mediaSession.setActionHandler("pause", () => togglePlay());
+    navigator.mediaSession.setActionHandler("previoustrack", () => previous());
+    navigator.mediaSession.setActionHandler("nexttrack", () => next());
+
+    return () => {
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("previoustrack", null);
+      navigator.mediaSession.setActionHandler("nexttrack", null);
+    };
+  }, [currentSong, isLive, radioMeta, togglePlay, next, previous]);
+
   const handleEnded = useCallback(() => {
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
