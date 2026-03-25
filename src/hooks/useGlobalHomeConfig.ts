@@ -24,23 +24,20 @@ export function useGlobalHomeConfig() {
 
       if (!data || !data.sections) return DEFAULT_SECTIONS;
 
-      const saved = data.sections as unknown as HomeSection[];
-      // Merge with defaults in case new built-in sections were added
-      const savedIds = new Set(saved.map((s) => s.id));
-      return [
-        ...saved,
-        ...DEFAULT_SECTIONS.filter((d) => !savedIds.has(d.id)),
-      ];
+      if (!Array.isArray(data.sections)) return DEFAULT_SECTIONS;
+
+      return data.sections as unknown as HomeSection[];
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const saveMutation = useMutation({
     mutationFn: async (newSections: HomeSection[]) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Upsert: delete existing and insert new
       const { data: existing } = await supabase
         .from("home_config")
         .select("id")
@@ -59,8 +56,21 @@ export function useGlobalHomeConfig() {
           .insert({ sections: newSections as any, updated_by: user.id });
         if (error) throw error;
       }
+
+      return newSections;
     },
-    onSuccess: () => {
+    onMutate: async (newSections) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = queryClient.getQueryData<HomeSection[]>(QUERY_KEY);
+      queryClient.setQueryData<HomeSection[]>(QUERY_KEY, newSections);
+      return { previous };
+    },
+    onError: (_error, _newSections, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData<HomeSection[]>(QUERY_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
