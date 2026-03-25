@@ -145,18 +145,18 @@ const SearchPage = () => {
     return items.slice(0, 6);
   }, [suggestions]);
 
-  // JioSaavn results
+  // JioSaavn results (increased limit for better precision)
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, 20),
+    queryFn: () => jiosaavnApi.search(debouncedQuery, 30),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results
+  // Deezer results (increased limit for better precision)
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, 30),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
@@ -171,6 +171,19 @@ const SearchPage = () => {
 
   const isLoading = jsLoading || dzLoading;
 
+  /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
+  const normalize = useCallback((s: string) =>
+    s.toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .replace(/\[.*?\]/g, "")
+      .replace(/\bfeat\.?\s*/gi, "")
+      .replace(/\bft\.?\s*/gi, "")
+      .replace(/[''`]/g, "'")
+      .replace(/[^a-z0-9\s']/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  , []);
+
   const mergedResults = useMemo(() => {
     if (source === "jiosaavn") return jsResults || [];
     if (source === "deezer") return dzResults || [];
@@ -178,12 +191,14 @@ const SearchPage = () => {
     const dz = dzResults || [];
     const seen = new Set<string>();
     const merged: Song[] = [];
+
+    // JioSaavn first (full streams), then Deezer (30s previews)
     for (const song of [...js, ...dz]) {
-      const key = `${song.title.toLowerCase().trim()}::${song.artist.toLowerCase().trim()}`;
+      const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
     }
     return merged;
-  }, [jsResults, dzResults, source]);
+  }, [jsResults, dzResults, source, normalize]);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && mergedResults.length > 0) {

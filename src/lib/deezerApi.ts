@@ -90,13 +90,40 @@ export const deezerApi = {
   async resolveFullStream(song: Song): Promise<Song> {
     if (!song.id.startsWith("dz-")) return song;
     try {
-      const query = `${song.title} ${song.artist}`;
-      const results = await jiosaavnApi.search(query, 5);
-      if (results.length > 0 && results[0].streamUrl) {
-        return {
-          ...song,
-          streamUrl: results[0].streamUrl,
-        };
+      // Use "artist title" for more precise matching
+      const query = `${song.artist.split(",")[0].trim()} ${song.title}`;
+      const results = await jiosaavnApi.search(query, 8);
+
+      // Find best match by comparing normalized titles
+      const norm = (s: string) =>
+        s.toLowerCase()
+          .replace(/\(.*?\)/g, "")
+          .replace(/\[.*?\]/g, "")
+          .replace(/\bfeat\.?\s*/gi, "")
+          .replace(/\bft\.?\s*/gi, "")
+          .replace(/[^a-z0-9\s]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+      const targetTitle = norm(song.title);
+      const targetArtist = norm(song.artist.split(",")[0]);
+
+      const match = results.find((r) => {
+        const t = norm(r.title);
+        const a = norm(r.artist.split(",")[0]);
+        // Title must be similar and artist must share keywords
+        return (t.includes(targetTitle) || targetTitle.includes(t)) &&
+               (a.includes(targetArtist) || targetArtist.includes(a));
+      });
+
+      if (match?.streamUrl) {
+        return { ...song, streamUrl: match.streamUrl };
+      }
+
+      // Fallback: first result with stream
+      const fallback = results.find((r) => r.streamUrl);
+      if (fallback?.streamUrl) {
+        return { ...song, streamUrl: fallback.streamUrl };
       }
     } catch (e) {
       console.error("JioSaavn resolve failed, using Deezer preview:", e);
