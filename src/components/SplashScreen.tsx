@@ -5,10 +5,11 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    // Faster splash: wait for DOM to be interactive then dismiss quickly
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onFinish, 600);
-    }, 2000);
+      setTimeout(onFinish, 400);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [onFinish]);
 

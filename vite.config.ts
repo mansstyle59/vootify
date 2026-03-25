@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["pwa-icon-192.png", "pwa-icon-512.png"],
+      includeAssets: ["pwa-icon-192.png", "pwa-icon-512.png", "placeholder.svg"],
       manifest: {
         name: "Vootify",
         short_name: "Vootify",
@@ -50,7 +50,26 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "google-fonts-stylesheets",
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-webfonts",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
             handler: "CacheFirst",
@@ -60,31 +79,39 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
-            // Cache album/song cover images from JioSaavn CDN
             urlPattern: /^https:\/\/c\.saavncdn\.com\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "saavn-covers",
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // Cache Deezer CDN images
             urlPattern: /^https:\/\/cdns-images\.dzcdn\.net\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "deezer-covers",
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // Cache Supabase API calls (liked songs, playlists, etc.) with NetworkFirst
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-functions",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 3,
+            },
+          },
+          {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "supabase-api",
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
-              networkTimeoutSeconds: 5,
+              networkTimeoutSeconds: 3,
             },
           },
         ],
