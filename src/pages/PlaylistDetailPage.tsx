@@ -186,6 +186,25 @@ const PlaylistDetailPage = () => {
         </button>
       </div>
 
+      {/* Download progress bar */}
+      {downloading && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${dlProgress.total > 0 ? (dlProgress.done / dlProgress.total) * 100 : 0}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+              {dlProgress.done}/{dlProgress.total}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Song list */}
       <div className="px-4">
         {songs.length === 0 ? (
