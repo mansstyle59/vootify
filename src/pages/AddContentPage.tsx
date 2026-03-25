@@ -160,22 +160,49 @@ function SongForm() {
 function AlbumForm() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
+  const [tracks, setTracks] = useState<UploadedTrack[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
-    const { error } = await supabase.from("custom_albums").insert({
+
+    // Create the album
+    const { data: album, error } = await supabase.from("custom_albums").insert({
       user_id: ANONYMOUS_USER_ID,
       title: form.title.trim(),
       artist: form.artist.trim(),
       cover_url: form.coverUrl.trim() || null,
       year: parseInt(form.year) || null,
-    });
+    }).select("id").single();
+
+    if (error) { toast.error("Erreur: " + error.message); setLoading(false); return; }
+
+    // Create songs for each uploaded track
+    if (tracks.length > 0 && album) {
+      const songInserts = tracks.map((t) => ({
+        user_id: ANONYMOUS_USER_ID,
+        title: t.title,
+        artist: t.artist || form.artist.trim(),
+        album: form.title.trim(),
+        duration: t.duration,
+        cover_url: form.coverUrl.trim() || null,
+        stream_url: t.streamUrl,
+      }));
+
+      const { error: songsError } = await supabase.from("custom_songs").insert(songInserts);
+      if (songsError) {
+        toast.error("Album créé mais erreur sur les pistes: " + songsError.message);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(false);
-    if (error) { toast.error("Erreur: " + error.message); return; }
-    toast.success("Album ajouté !");
+    const trackCount = tracks.length;
+    toast.success(`Album ajouté${trackCount > 0 ? ` avec ${trackCount} piste${trackCount > 1 ? "s" : ""}` : ""} !`);
     setForm({ title: "", artist: "", coverUrl: "", year: "" });
+    setTracks([]);
   };
 
   return (
@@ -184,6 +211,10 @@ function AlbumForm() {
       <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required />
       <FieldInput label="Année" value={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2025" type="number" />
       <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
+      <AlbumFolderPicker
+        albumArtist={form.artist}
+        onTracksUploaded={setTracks}
+      />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
         Ajouter l'album
