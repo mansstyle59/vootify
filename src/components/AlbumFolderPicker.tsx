@@ -31,8 +31,14 @@ function isAudioFile(name: string): boolean {
 function cleanTitle(fileName: string): string {
   // Strip path prefixes (zip entries can have folder paths)
   let name = fileName.split("/").pop() || fileName;
+  // Remove file extension
   name = name.replace(/\.[^.]+$/, "");
+  // Remove leading track numbers: "01 - ", "1. ", "01.", "03 ", etc.
   name = name.replace(/^\d{1,3}[\s.\-_]+/, "");
+  // Remove Greek/special letter prefixes: "Π. ", "Σ. ", "Θ. ", etc.
+  name = name.replace(/^[A-ZΑ-Ωa-zα-ω]{1,2}[\s.\-_]+/, "");
+  // Remove leading/trailing whitespace and dashes
+  name = name.replace(/^[\s\-_]+|[\s\-_]+$/g, "");
   return name.trim();
 }
 
