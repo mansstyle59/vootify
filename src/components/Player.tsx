@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2
+  Download, Check, Loader2, AlertTriangle
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence } from "framer-motion";
@@ -68,10 +68,11 @@ export function MiniPlayer() {
 
       if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
         try {
+          const originalPreview = songToPlay.streamUrl;
           const resolved = await deezerApi.resolveFullStream(songToPlay);
           if (resolved.streamUrl !== songToPlay.streamUrl) {
             songToPlay = resolved;
-            usePlayerStore.setState({ currentSong: resolved });
+            usePlayerStore.setState({ currentSong: resolved, originalStreamUrl: originalPreview });
           }
         } catch (e) {
           console.error("Failed to resolve full stream:", e);
