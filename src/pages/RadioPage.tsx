@@ -14,7 +14,7 @@ import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 import { useRef, useEffect } from "react";
 
-type TabKey = "france" | "top" | "custom" | "search";
+
 
 /* ── Marquee for long text ── */
 function MarqueeText({ text, className }: { text: string; className?: string }) {
