@@ -10,6 +10,7 @@ import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { deezerApi } from "@/lib/deezerApi";
+import { useDominantColor } from "@/hooks/useDominantColor";
 
 /* ── Shared glass styles ── */
 const glassStyle = {
