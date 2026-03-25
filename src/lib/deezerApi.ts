@@ -215,12 +215,14 @@ export const deezerApi = {
       if (customSongs && customSongs.length > 0) {
         let bestCustom: typeof customSongs[0] | null = null;
         let bestScore = 0;
+        let bestTitleScore = 0;
 
         for (const c of customSongs) {
           const ct = norm(c.title);
           const ca = norm(c.artist.split(",")[0]);
+          const titleScore = matchScore(ct, targetTitle);
           let score = 0;
-          score += matchScore(ct, targetTitle) * 2;
+          score += titleScore * 2;
           score += matchScore(ca, targetArtist) * 1.5;
           if (c.duration > 0 && targetDuration > 0) {
             const diff = Math.abs(c.duration - targetDuration);
@@ -229,11 +231,13 @@ export const deezerApi = {
           }
           if (score > bestScore) {
             bestScore = score;
+            bestTitleScore = titleScore;
             bestCustom = c;
           }
         }
 
-        if (bestCustom?.stream_url && bestScore >= 80) {
+        // Require a meaningful title match (>= 50) to avoid artist-only matches
+        if (bestCustom?.stream_url && bestScore >= 80 && bestTitleScore >= 50) {
           console.log("Resolved via admin custom song (priority):", bestCustom.title, `(score: ${bestScore})`);
           const resolved = {
             ...song,
