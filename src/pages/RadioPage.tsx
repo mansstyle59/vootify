@@ -342,7 +342,7 @@ const RadioPage = () => {
         className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
-        <div className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 ring-2 transition-all duration-300 ${
+        <div className={`relative aspect-square rounded-xl overflow-hidden mb-1.5 ring-2 transition-all duration-300 ${
           isActive ? "ring-primary shadow-lg shadow-primary/20" : "ring-transparent"
         }`}>
           <img
@@ -357,7 +357,7 @@ const RadioPage = () => {
 
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className={`w-12 h-12 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-xl transition-all duration-300 ${
+            <div className={`w-10 h-10 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-xl transition-all duration-300 ${
               isActivePlaying ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
             }`}>
               {isActivePlaying ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
@@ -412,17 +412,17 @@ const RadioPage = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
             )}
             {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`font-semibold text-sm ${isActive ? "text-primary" : "text-foreground"}`} />
+            <MarqueeText text={station.name} className={`font-semibold text-xs ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {nowPlayingText ? (
             <div className="mt-0.5 space-y-0">
-              <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-xs text-primary/90 font-semibold" />
+              <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-[10px] text-primary/90 font-semibold" />
               {radioMetadata?.artist && (
                 <MarqueeText text={radioMetadata.artist} className="text-[11px] text-muted-foreground" />
               )}
             </div>
           ) : (
-            <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize mt-0.5" />
+            <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize mt-0.5" />
           )}
         </div>
       </div>
