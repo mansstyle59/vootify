@@ -505,6 +505,7 @@ const SearchPage = () => {
             >
               <Trash2 className="w-3 h-3" />
               Vider cache HD
+            </button>
             {resolveProgress && (
               <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-1.5 animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin" />
