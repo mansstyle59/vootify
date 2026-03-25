@@ -308,13 +308,20 @@ const HomePage = () => {
               <button
                 key={key}
                 onClick={() => setTopGenre(key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                className={`relative px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${
                   topGenre === key
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    ? "text-primary-foreground"
                     : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
                 }`}
               >
-                {label}
+                {topGenre === key && (
+                  <motion.div
+                    layoutId="topTabIndicator"
+                    className="absolute inset-0 bg-primary rounded-full shadow-md shadow-primary/25"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{label}</span>
               </button>
             ))}
           </div>
