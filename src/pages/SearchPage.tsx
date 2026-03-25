@@ -145,18 +145,18 @@ const SearchPage = () => {
     return items.slice(0, 6);
   }, [suggestions]);
 
-  // JioSaavn results
+  // JioSaavn results (increased limit for better precision)
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, 20),
+    queryFn: () => jiosaavnApi.search(debouncedQuery, 30),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results
+  // Deezer results (increased limit for better precision)
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, 30),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
