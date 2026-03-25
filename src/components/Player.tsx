@@ -99,6 +99,8 @@ export function MiniPlayer() {
   }, [_seekTime]);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
+  const coverForColor = isLive ? (radioMeta?.coverUrl || currentSong?.coverUrl) : currentSong?.coverUrl;
+  const miniDominantColor = useDominantColor(coverForColor);
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   // ── Media Session API: lock screen metadata ──
