@@ -86,7 +86,8 @@ const LibraryPage = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []).map((s: any): Song => ({
+      const songs = (data || []).map((s: any): Song & { _dbId: string } => ({
+        _dbId: s.id,
         id: `custom-${s.id}`,
         title: s.title,
         artist: s.artist,
@@ -96,6 +97,34 @@ const LibraryPage = () => {
         streamUrl: s.stream_url || "",
         liked: false,
       }));
+
+      // Auto-fix missing durations in background
+      const toFix = songs.filter((s) => !s.duration && s.streamUrl);
+      if (toFix.length > 0) {
+        Promise.all(
+          toFix.map((s) =>
+            new Promise<void>((resolve) => {
+              const audio = new Audio();
+              audio.preload = "metadata";
+              audio.src = s.streamUrl;
+              audio.addEventListener("loadedmetadata", () => {
+                const dur = audio.duration && isFinite(audio.duration) ? Math.round(audio.duration) : 0;
+                if (dur > 0) {
+                  s.duration = dur;
+                  supabase.from("custom_songs").update({ duration: dur }).eq("id", s._dbId).then(() => {});
+                }
+                resolve();
+              }, { once: true });
+              audio.addEventListener("error", () => resolve(), { once: true });
+              setTimeout(() => resolve(), 5000);
+            })
+          )
+        ).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+        });
+      }
+
+      return songs as Song[];
     },
     staleTime: 60 * 1000,
     enabled: tab === "custom" && !!user,
