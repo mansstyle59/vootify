@@ -6,7 +6,7 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
 
