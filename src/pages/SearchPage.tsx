@@ -63,6 +63,7 @@ const SearchPage = () => {
 
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [hdOnly, setHdOnly] = useState(false);
+  const [customOnly, setCustomOnly] = useState(false);
   const [resolveProgress, setResolveProgress] = useState<{ resolved: number; total: number } | null>(null);
   const [dzPage, setDzPage] = useState(1);
   const [allDzResults, setAllDzResults] = useState<Song[]>([]);
@@ -383,10 +384,11 @@ const SearchPage = () => {
   const filteredResults = useMemo(() => {
     if (!mergedResults) return [];
     let results = mergedResults;
+    if (customOnly) results = results.filter((s) => s.id.startsWith("custom-") || s.resolvedViaCustom);
     if (hdOnly) results = results.filter(isFullStream);
     if (artistFilter) results = results.filter((song) => song.artist.includes(artistFilter));
     return results;
-  }, [mergedResults, artistFilter, hdOnly]);
+  }, [mergedResults, artistFilter, hdOnly, customOnly]);
 
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
@@ -495,6 +497,16 @@ const SearchPage = () => {
               }`}
             >
               HD uniquement
+            </button>
+            <button
+              onClick={() => setCustomOnly(!customOnly)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                customOnly
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              Custom uniquement
             </button>
             <button
               onClick={() => {
