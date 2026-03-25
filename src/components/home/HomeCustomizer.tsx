@@ -292,17 +292,15 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                       <Pencil className="w-3.5 h-3.5 text-primary/70" />
                     </button>
                   )}
-                  {isCustom(section) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSection(section.id);
-                      }}
-                      className="p-1.5 rounded-lg transition-all duration-200 hover:bg-destructive/20 active:scale-90"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSection(section.id);
+                    }}
+                    className="p-1.5 rounded-lg transition-all duration-200 hover:bg-destructive/20 active:scale-90"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
