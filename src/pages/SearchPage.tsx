@@ -212,6 +212,8 @@ const SearchPage = () => {
     return merged;
   }, [jsAlbumResults, dzAlbumResults, source, normalize]);
 
+  const isLoading = jsLoading || dzLoading;
+
   const mergedResults = useMemo(() => {
     if (source === "jiosaavn") return jsResults || [];
     if (source === "deezer") return dzResults || [];
