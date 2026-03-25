@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 import { formatDuration } from "@/data/mockData";
 
 const AlbumDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   const isJioSaavn = id?.startsWith("js-album-");
@@ -31,8 +36,45 @@ const AlbumDetailPage = () => {
 
   const album = data?.album;
   const tracks = data?.tracks || [];
-
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
+
+  // Check if album is saved in library
+  const { data: isSaved = false } = useQuery({
+    queryKey: ["saved-album", id, user?.id],
+    queryFn: async () => {
+      if (!user || !id) return false;
+      const { count } = await supabase
+        .from("custom_albums")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("id", id);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!user && !!id,
+  });
+
+  const toggleSave = useMutation({
+    mutationFn: async () => {
+      if (!user || !album || !id) return;
+      if (isSaved) {
+        await supabase.from("custom_albums").delete().eq("id", id).eq("user_id", user.id);
+      } else {
+        await supabase.from("custom_albums").insert({
+          id,
+          user_id: user.id,
+          title: album.title,
+          artist: album.artist,
+          cover_url: album.coverUrl,
+          year: album.year,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-album", id] });
+      toast.success(isSaved ? "Album retiré de la bibliothèque" : "Album sauvegardé !");
+    },
+    onError: () => toast.error("Erreur lors de la sauvegarde"),
+  });
 
   const handlePlay = async (song: Song) => {
     if (currentSong?.id === song.id) {
@@ -134,7 +176,7 @@ const AlbumDetailPage = () => {
       </div>
 
       {/* Actions */}
-      <div className="px-4 md:px-8 flex gap-2 mb-5 mt-2">
+      <div className="px-4 md:px-8 flex items-center gap-2 mb-5 mt-2">
         <button
           onClick={playAll}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
@@ -149,6 +191,20 @@ const AlbumDetailPage = () => {
           <Shuffle className="w-4 h-4" />
           Aléatoire
         </button>
+        {user && (
+          <button
+            onClick={() => toggleSave.mutate()}
+            disabled={toggleSave.isPending}
+            className={`ml-auto flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+              isSaved
+                ? "bg-primary/15 text-primary border border-primary/30"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            }`}
+          >
+            {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+            {isSaved ? "Sauvegardé" : "Sauvegarder"}
+          </button>
+        )}
       </div>
 
       {/* Track list */}
