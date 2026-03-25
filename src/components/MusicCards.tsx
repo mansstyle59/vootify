@@ -6,20 +6,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
 
-/** Returns true if the song has a full-length stream (JioSaavn or custom) vs a 30s Deezer preview */
-function isFullStream(song: Song): boolean {
-  if (!song.streamUrl) return false;
-  // Deezer previews come from cdn-preview-X.dzcdn.net
-  if (song.streamUrl.includes("dzcdn.net")) return false;
-  // JioSaavn or other full streams
-  if (song.streamUrl.includes("saavn") || song.streamUrl.includes("jiosaavn")) return true;
-  // If it's a js- prefixed song, it's full
-  if (song.id.startsWith("js-")) return true;
-  // Custom songs with stream URLs are full
-  if (song.id.startsWith("custom-")) return true;
-  // dz- prefix but non-deezer stream = resolved via JioSaavn
-  if (song.id.startsWith("dz-") && !song.streamUrl.includes("dzcdn.net")) return true;
-  return false;
+/** Determine the source badge type for a song */
+function getSongSourceType(song: Song): "custom" | "hd" | "no-hd" | null {
+  // Custom admin songs always show Custom
+  if (song.id.startsWith("custom-")) return "custom";
+  // Resolved via custom_songs table
+  if (song.resolvedViaCustom) return "custom";
+  // Deezer songs
+  if (song.id.startsWith("dz-")) {
+    if (!song.streamUrl) return "no-hd";
+    // Still a 30s preview
+    if (song.streamUrl.includes("dzcdn.net")) return "no-hd";
+    // Resolved to full stream via JioSaavn
+    return "hd";
+  }
+  // JioSaavn songs are always full
+  if (song.id.startsWith("js-")) return "hd";
+  return null;
 }
 
 interface SongCardProps {
@@ -150,23 +153,30 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
           )}
         </button>
       )}
-      {isCached ? (
-        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent/15 text-accent-foreground border border-accent/20" title="Disponible hors-ligne">
-          Local
-        </span>
-      ) : song.resolvedViaCustom ? (
-        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary" title="Résolu via morceau custom admin">
-          Custom
-        </span>
-      ) : isFullStream(song) ? (
-        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20" title="Flux complet haute qualité">
-          HD
-        </span>
-      ) : song.id.startsWith("dz-") ? (
-        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/20" title="Aucun flux HD disponible">
-          No HD
-        </span>
-      ) : null}
+      {(() => {
+        if (isCached) return (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent/15 text-accent-foreground border border-accent/20" title="Disponible hors-ligne">
+            Local
+          </span>
+        );
+        const sourceType = getSongSourceType(song);
+        if (sourceType === "custom") return (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary" title="Morceau custom admin">
+            Custom
+          </span>
+        );
+        if (sourceType === "hd") return (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20" title="Flux complet haute qualité">
+            HD
+          </span>
+        );
+        if (sourceType === "no-hd") return (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/20" title="Aucun flux HD disponible">
+            No HD
+          </span>
+        );
+        return null;
+      })()}
 
       <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
     </motion.div>
