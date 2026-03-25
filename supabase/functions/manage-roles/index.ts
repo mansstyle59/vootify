@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify the caller is an admin using their JWT
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -35,7 +34,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check caller is admin using service role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: isAdmin } = await adminClient.rpc("has_role", {
       _user_id: user.id,
@@ -50,12 +48,22 @@ Deno.serve(async (req) => {
 
     const { action, target_user_id, role } = await req.json();
 
+    const logAction = async (details: Record<string, unknown> = {}) => {
+      await adminClient.from("admin_logs").insert({
+        admin_id: user.id,
+        action,
+        target_user_id,
+        details,
+      });
+    };
+
     if (action === "promote") {
       const { error } = await adminClient.from("user_roles").insert({
         user_id: target_user_id,
         role: role || "admin",
       });
       if (error) throw error;
+      await logAction({ role: role || "admin" });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -68,17 +76,25 @@ Deno.serve(async (req) => {
         .eq("user_id", target_user_id)
         .eq("role", role || "admin");
       if (error) throw error;
+      await logAction({ role: role || "admin" });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (action === "delete_user") {
-      // Delete profile and auth user
+      // Get user info before deletion for the log
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", target_user_id)
+        .single();
+
       await adminClient.from("profiles").delete().eq("user_id", target_user_id);
       await adminClient.from("user_roles").delete().eq("user_id", target_user_id);
       const { error } = await adminClient.auth.admin.deleteUser(target_user_id);
       if (error) throw error;
+      await logAction({ deleted_user_name: profile?.display_name || "inconnu" });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
