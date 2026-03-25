@@ -134,6 +134,8 @@ const HomePage = () => {
     [activeSections]
   );
 
+  const sectionTitle = (s: HomeSection) => `${s.label} ${s.emoji}`;
+
   const renderSection = (section: HomeSection) => {
     // Custom Deezer playlist
     if (section.deezerPlaylistId && section.visible) {
@@ -141,7 +143,7 @@ const HomePage = () => {
         <CustomPlaylistSection
           key={section.id}
           playlistId={section.deezerPlaylistId}
-          label={section.label}
+          label={sectionTitle(section)}
           onPlayTrack={handlePlayTrack}
         />
       );
@@ -150,7 +152,7 @@ const HomePage = () => {
     switch (section.id) {
       case "pourVous":
         return personalizedMix.length >= 4 && isVisible("pourVous") ? (
-          <Section key="pourVous" title="Pour vous 💫">
+          <Section key="pourVous" title={sectionTitle(section)}>
             <HorizontalScroll>
               {personalizedMix.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, personalizedMix)} />
@@ -161,7 +163,7 @@ const HomePage = () => {
 
       case "coupsDeCœur":
         return likedSongs.length > 0 && isVisible("coupsDeCœur") ? (
-          <Section key="coupsDeCœur" title="Vos coups de cœur ❤️">
+          <Section key="coupsDeCœur" title={sectionTitle(section)}>
             <HorizontalScroll>
               {likedSongs.slice(0, 20).map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, likedSongs)} />
@@ -172,7 +174,7 @@ const HomePage = () => {
 
       case "titresDuMoment":
         return isVisible("titresDuMoment") ? (
-          <Section key="titresDuMoment" title="Les titres du moment 🔥">
+          <Section key="titresDuMoment" title={sectionTitle(section)}>
             <HorizontalScroll>
               {loadingTitres ? <CoverSkeleton /> : titresDuMoment?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, titresDuMoment)} />
@@ -183,7 +185,7 @@ const HomePage = () => {
 
       case "popHits":
         return isVisible("popHits") ? (
-          <Section key="popHits" title="Pop Hits 🎤">
+          <Section key="popHits" title={sectionTitle(section)}>
             <HorizontalScroll>
               {loadingPop ? <CoverSkeleton /> : popHits?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, popHits)} />
@@ -194,7 +196,7 @@ const HomePage = () => {
 
       case "rapstars":
         return isVisible("rapstars") ? (
-          <Section key="rapstars" title="Rapstars ⭐">
+          <Section key="rapstars" title={sectionTitle(section)}>
             <HorizontalScroll>
               {loadingRap ? <CoverSkeleton /> : rapstars?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, rapstars)} />
@@ -205,7 +207,7 @@ const HomePage = () => {
 
       case "chillVibes":
         return isVisible("chillVibes") ? (
-          <Section key="chillVibes" title="Chill & Détente 🌙">
+          <Section key="chillVibes" title={sectionTitle(section)}>
             <HorizontalScroll>
               {loadingChill ? <CoverSkeleton /> : chillVibes?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, chillVibes)} />
@@ -216,7 +218,7 @@ const HomePage = () => {
 
       case "afrobeats":
         return isVisible("afrobeats") ? (
-          <Section key="afrobeats" title="Afrobeats 🌍">
+          <Section key="afrobeats" title={sectionTitle(section)}>
             <HorizontalScroll>
               {loadingAfro ? <CoverSkeleton /> : afrobeats?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, afrobeats)} />
@@ -227,7 +229,7 @@ const HomePage = () => {
 
       case "top10":
         return isVisible("top10") ? (
-          <Section key="top10" title="Top 10 🏆">
+          <Section key="top10" title={sectionTitle(section)}>
             <div className="px-4 md:px-8">
               <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-hide pb-1">
                 {TOP_TABS.map(({ key, label }) => (
