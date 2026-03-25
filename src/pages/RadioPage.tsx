@@ -79,9 +79,7 @@ function NowPlayingHero({
   const dominantColor = useDominantColor(coverUrl);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className="relative rounded-2xl overflow-hidden mx-4 md:mx-8 mb-5"
       style={{ minHeight: 140 }}
     >
@@ -152,7 +150,7 @@ function NowPlayingHero({
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -303,12 +301,9 @@ const RadioPage = () => {
     const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
 
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -8 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.02 }}
+      <div
         onClick={() => playStation(station)}
-        className={`group flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+        className={`group flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors duration-150 ${
           isActive ? "bg-primary/10" : "hover:bg-secondary/60"
         }`}
       >
@@ -409,10 +404,7 @@ const RadioPage = () => {
     }
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.03 }}
+      <div
         className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
@@ -422,7 +414,7 @@ const RadioPage = () => {
           <img
             src={displayCover}
             alt={station.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
           />
 
