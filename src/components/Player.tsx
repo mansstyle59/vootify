@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2, AlertTriangle
+  Download, Check, Loader2, AlertTriangle, WifiOff
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,6 +46,7 @@ export function MiniPlayer() {
   const crossfadeRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
+  const [playingFromCache, setPlayingFromCache] = useState(false);
 
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
@@ -106,6 +107,7 @@ export function MiniPlayer() {
         }
       }
 
+      setPlayingFromCache(!!cachedUrl);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
 
       if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
@@ -370,6 +372,12 @@ export function MiniPlayer() {
                       <span className="ml-1.5 inline-flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         <span className="text-primary font-semibold text-[10px]">LIVE</span>
+                      </span>
+                    )}
+                    {!isLive && playingFromCache && (
+                      <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                        <WifiOff className="w-2.5 h-2.5" />
+                        <span className="font-semibold text-[10px]">OFFLINE</span>
                       </span>
                     )}
                   </motion.p>
