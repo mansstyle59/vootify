@@ -222,7 +222,7 @@ function TrackRow({ track, index, onUpdate, onRemove }: {
   );
 }
 
-
+const AlbumFolderPicker = ({ onTracksUploaded, albumArtist = "", className = "" }: AlbumFolderPickerProps) => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
