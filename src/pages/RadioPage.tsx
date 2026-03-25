@@ -6,7 +6,6 @@ import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, X, Check, Waves, LayoutGrid, List, Volume2 } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
-import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { useDominantColor } from "@/hooks/useDominantColor";
@@ -45,21 +44,13 @@ type ViewMode = "grid" | "list";
 
 const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news", "talk"];
 
-// Equalizer animation for active station
-const EqBar = ({ delay }: { delay: number }) => (
-  <motion.div
-    className="w-[3px] rounded-full bg-primary"
-    animate={{ height: ["40%", "100%", "60%", "90%", "40%"] }}
-    transition={{ duration: 1.2, repeat: Infinity, delay, ease: "easeInOut" }}
-  />
-);
-
+// Simple equalizer indicator for active station
 const LiveEqualizer = () => (
   <div className="flex items-end gap-[2px] h-4">
-    <EqBar delay={0} />
-    <EqBar delay={0.2} />
-    <EqBar delay={0.4} />
-    <EqBar delay={0.1} />
+    <div className="w-[3px] rounded-full bg-primary h-2" />
+    <div className="w-[3px] rounded-full bg-primary h-3" />
+    <div className="w-[3px] rounded-full bg-primary h-2.5" />
+    <div className="w-[3px] rounded-full bg-primary h-3.5" />
   </div>
 );
 
@@ -98,19 +89,12 @@ function NowPlayingHero({
       <div className="relative z-10 flex items-center gap-4 p-4 md:p-5">
         {/* Cover */}
         <button onClick={onTogglePlay} className="relative flex-shrink-0 active:scale-95 transition-transform">
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={coverUrl}
+          <img
               src={coverUrl}
               alt={station.name}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.4 }}
               className="w-24 h-24 md:w-28 md:h-28 rounded-xl object-cover"
               style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.5)" }}
             />
-          </AnimatePresence>
           <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/20">
             {isPlaying ? (
               <Pause className="w-8 h-8 text-white drop-shadow-lg" />
@@ -142,13 +126,9 @@ function NowPlayingHero({
         </div>
       </div>
 
-      {/* Animated bar at bottom */}
+      {/* Static bar at bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: "hsl(0 0% 100% / 0.1)" }}>
-        <motion.div
-          className="h-full bg-primary"
-          animate={{ width: ["15%", "70%", "40%", "90%", "25%"] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <div className="h-full bg-primary" style={{ width: "60%" }} />
       </div>
     </div>
   );
@@ -282,13 +262,9 @@ const RadioPage = () => {
             <MarqueeText text={station.name} className={`text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {isActive && radioMetadata?.title ? (
-            <motion.div
-              key={radioMetadata.title}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
+            <div>
               <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-xs text-primary/80 font-medium" />
-            </motion.div>
+            </div>
           ) : (
             <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize" />
           )}
@@ -359,7 +335,7 @@ const RadioPage = () => {
               <X className="w-3.5 h-3.5" /> Annuler
             </button>
           </div>
-        </motion.div>
+        </div>
       );
     }
 
@@ -441,17 +417,12 @@ const RadioPage = () => {
             <MarqueeText text={station.name} className={`font-semibold text-sm ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {nowPlayingText ? (
-            <motion.div
-              key={nowPlayingText}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-0.5 space-y-0"
-            >
+            <div className="mt-0.5 space-y-0">
               <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-xs text-primary/90 font-semibold" />
               {radioMetadata?.artist && (
                 <MarqueeText text={radioMetadata.artist} className="text-[11px] text-muted-foreground" />
               )}
-            </motion.div>
+            </div>
           ) : (
             <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize mt-0.5" />
           )}
@@ -481,16 +452,14 @@ const RadioPage = () => {
       </div>
 
       {/* Now Playing Hero */}
-      <AnimatePresence>
-        {showNowPlaying && (
-          <NowPlayingHero
-            station={{ id: currentSong.id, name: currentSong.title, coverUrl: getStationLogo(currentSong.title, currentSong.coverUrl), artist: currentSong.artist }}
-            radioMetadata={radioMetadata}
-            isPlaying={isPlaying}
-            onTogglePlay={togglePlay}
-          />
-        )}
-      </AnimatePresence>
+      {showNowPlaying && (
+        <NowPlayingHero
+          station={{ id: currentSong.id, name: currentSong.title, coverUrl: getStationLogo(currentSong.title, currentSong.coverUrl), artist: currentSong.artist }}
+          radioMetadata={radioMetadata}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+        />
+      )}
 
       <div className="px-4 md:px-8">
         {/* Search + View toggle */}
@@ -555,33 +524,19 @@ const RadioPage = () => {
             </div>
           )
         ) : stations.length > 0 ? (
-          <AnimatePresence mode="wait">
-            {viewMode === "grid" ? (
-              <motion.div
-                key={`grid-${searchQuery}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5"
-              >
+          {viewMode === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {stations.map((station, i) => (
                   <StationCard key={station.id} station={station} index={i} />
                 ))}
-              </motion.div>
+              </div>
             ) : (
-              <motion.div
-                key={`list-${searchQuery}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-0.5"
-              >
+              <div className="space-y-0.5">
                 {stations.map((station, i) => (
                   <StationListItem key={station.id} station={station} index={i} />
                 ))}
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-full bg-secondary/60 flex items-center justify-center mb-5">
