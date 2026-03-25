@@ -2,38 +2,29 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileAudio, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import { extractID3 } from "@/lib/id3Utils";
+
+export interface AudioFileMetadata {
+  title?: string;
+  artist?: string;
+  album?: string;
+  coverUrl?: string;
+}
 
 interface AudioFilePickerProps {
   value: string;
   onChange: (url: string) => void;
   onDurationDetected?: (seconds: number) => void;
+  onMetadataExtracted?: (meta: AudioFileMetadata) => void;
   className?: string;
 }
 
 const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
 
-const AudioFilePicker = ({ value, onChange, onDurationDetected, className = "" }: AudioFilePickerProps) => {
+const AudioFilePicker = ({ value, onChange, onDurationDetected, onMetadataExtracted, className = "" }: AudioFilePickerProps) => {
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const detectDuration = (file: File): Promise<number> => {
-    return new Promise((resolve) => {
-      const url = URL.createObjectURL(file);
-      const audio = new Audio();
-      audio.preload = "metadata";
-      audio.onloadedmetadata = () => {
-        const dur = Math.round(audio.duration);
-        URL.revokeObjectURL(url);
-        resolve(dur);
-      };
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(0);
-      };
-      audio.src = url;
-    });
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,13 +38,21 @@ const AudioFilePicker = ({ value, onChange, onDurationDetected, className = "" }
     setUploading(true);
     setFileName(file.name);
 
-    // Detect duration from file
-    const duration = await detectDuration(file);
-    if (duration > 0 && onDurationDetected) {
-      onDurationDetected(duration);
+    // Extract ID3 metadata
+    const id3 = await extractID3(file, file.name);
+    if (id3.duration && id3.duration > 0 && onDurationDetected) {
+      onDurationDetected(id3.duration);
+    }
+    if (onMetadataExtracted) {
+      onMetadataExtracted({
+        title: id3.title,
+        artist: id3.artist,
+        album: id3.album,
+        coverUrl: id3.coverUrl,
+      });
     }
 
-    // Upload to Supabase storage
+    // Upload audio to storage
     const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
