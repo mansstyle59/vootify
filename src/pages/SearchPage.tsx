@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
@@ -50,120 +50,87 @@ type SearchSource = "all" | "jiosaavn" | "deezer";
 const SearchPage = () => {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [suggestQuery, setSuggestQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches());
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [source, setSource] = useState<SearchSource>("all");
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Fast autocomplete query (200ms debounce, lightweight)
+  const { data: suggestions } = useQuery({
+    queryKey: ["autocomplete", suggestQuery],
+    queryFn: () => jiosaavnApi.search(suggestQuery, 5),
+    enabled: suggestQuery.length >= 2 && showSuggestions,
+    staleTime: 60 * 1000,
+  });
 
   const handleChange = useCallback((value: string) => {
     setQuery(value);
     setArtistFilter(null);
+    setShowSuggestions(true);
+
+    // Fast debounce for suggestions
+    clearTimeout((window as any).__suggestTimeout);
+    (window as any).__suggestTimeout = setTimeout(() => {
+      setSuggestQuery(value.trim());
+    }, 200);
+
+    // Normal debounce for full search
     clearTimeout((window as any).__searchTimeout);
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value.trim());
     }, 400);
   }, []);
 
-  const handleBubbleClick = (term: string) => {
+  const commitSearch = useCallback((term: string) => {
     setQuery(term);
     setDebouncedQuery(term);
+    setSuggestQuery("");
+    setShowSuggestions(false);
     setArtistFilter(null);
+    inputRef.current?.blur();
+  }, []);
+
+  const handleBubbleClick = (term: string) => {
+    commitSearch(term);
   };
 
-  // JioSaavn results
-  const { data: jsResults, isLoading: jsLoading } = useQuery({
-    queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, 20),
-    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
-    staleTime: 2 * 60 * 1000,
-  });
+  // Unique suggestion artists + titles for autocomplete
+  const autocompleteSuggestions = useMemo(() => {
+    if (!suggestions || suggestions.length === 0) return [];
+    const items: { type: "song" | "artist"; label: string; sub?: string; coverUrl?: string; song?: Song }[] = [];
 
-  // Deezer results
-  const { data: dzResults, isLoading: dzLoading } = useQuery({
-    queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
-    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const isLoading = jsLoading || dzLoading;
-
-  // Merge and deduplicate results
-  const mergedResults = useMemo(() => {
-    if (source === "jiosaavn") return jsResults || [];
-    if (source === "deezer") return dzResults || [];
-    
-    const js = jsResults || [];
-    const dz = dzResults || [];
-    // Interleave: JioSaavn first (full streams), then Deezer
-    const seen = new Set<string>();
-    const merged: Song[] = [];
-    
-    for (const song of [...js, ...dz]) {
-      // Deduplicate by normalized title+artist
-      const key = `${song.title.toLowerCase().trim()}::${song.artist.toLowerCase().trim()}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(song);
+    // Extract unique artists
+    const seenArtists = new Set<string>();
+    suggestions.forEach((song) => {
+      const artist = song.artist.split(",")[0].trim();
+      if (artist && !seenArtists.has(artist.toLowerCase())) {
+        seenArtists.add(artist.toLowerCase());
+        items.push({ type: "artist", label: artist, coverUrl: song.coverUrl });
       }
-    }
-    return merged;
-  }, [jsResults, dzResults, source]);
-
-  useEffect(() => {
-    if (debouncedQuery.length >= 2 && mergedResults.length > 0) {
-      saveRecentSearch(debouncedQuery);
-      setRecentSearches(getRecentSearches());
-    }
-  }, [debouncedQuery, mergedResults]);
-
-  // Extract unique artists from results
-  const uniqueArtists = useMemo(() => {
-    if (!mergedResults || mergedResults.length === 0) return [];
-    const artistCount = new Map<string, number>();
-    mergedResults.forEach((song) => {
-      const artists = song.artist.split(", ");
-      artists.forEach((a) => {
-        const name = a.trim();
-        if (name && name !== "Artiste inconnu") {
-          artistCount.set(name, (artistCount.get(name) || 0) + 1);
-        }
-      });
     });
-    return Array.from(artistCount.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([name]) => name);
-  }, [mergedResults]);
 
-  const filteredResults = useMemo(() => {
-    if (!mergedResults) return [];
-    if (!artistFilter) return mergedResults;
-    return mergedResults.filter((song) => song.artist.includes(artistFilter));
-  }, [mergedResults, artistFilter]);
+    // Add songs
+    suggestions.slice(0, 4).forEach((song) => {
+      items.push({ type: "song", label: song.title, sub: song.artist, coverUrl: song.coverUrl, song });
+    });
 
-  const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
-    if (currentSong?.id === song.id) {
-      togglePlay();
-      return;
-    }
-    // Resolve full stream for Deezer tracks
-    const resolved = song.id.startsWith("dz-")
-      ? await deezerApi.resolveFullStream(song)
-      : song;
-    setQueue(allSongs);
-    play(resolved);
-  };
-
-  const handleRemoveRecent = (term: string) => {
-    removeRecentSearch(term);
-    setRecentSearches(getRecentSearches());
-  };
-
-  const clearAllRecent = () => {
-    localStorage.setItem(RECENT_SEARCHES_KEY, "[]");
-    setRecentSearches([]);
-  };
+    return items.slice(0, 6);
+  }, [suggestions]);
 
   return (
     <div className="pb-32 max-w-7xl mx-auto">
@@ -173,22 +140,78 @@ const SearchPage = () => {
         <p className="text-sm text-muted-foreground mb-5">Trouvez vos artistes et morceaux préférés</p>
       </div>
 
-      {/* Search bar */}
-      <div className="px-4 md:px-8 mb-4">
+      {/* Search bar with autocomplete */}
+      <div className="px-4 md:px-8 mb-4" ref={searchRef}>
         <div className="relative">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
           <input
+            ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => handleChange(e.target.value)}
+            onFocus={() => query.length >= 2 && setShowSuggestions(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                commitSearch(query.trim());
+              }
+              if (e.key === "Escape") {
+                setShowSuggestions(false);
+              }
+            }}
             placeholder="Titres, artistes, albums..."
             className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
           />
           {query && (
-            <button onClick={() => { setQuery(""); setDebouncedQuery(""); setArtistFilter(null); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <button onClick={() => { setQuery(""); setDebouncedQuery(""); setSuggestQuery(""); setArtistFilter(null); setShowSuggestions(false); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10">
               <X className="w-4 h-4" />
             </button>
           )}
+
+          {/* Autocomplete dropdown */}
+          <AnimatePresence>
+            {showSuggestions && query.length >= 2 && autocompleteSuggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-0 right-0 top-full mt-1.5 rounded-xl bg-card border border-border shadow-xl overflow-hidden z-50"
+              >
+                {autocompleteSuggestions.map((item, i) => (
+                  <button
+                    key={`${item.type}-${item.label}-${i}`}
+                    onClick={() => {
+                      if (item.type === "artist") {
+                        commitSearch(item.label);
+                      } else if (item.song) {
+                        commitSearch(item.label);
+                      }
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-secondary/60 transition-colors"
+                  >
+                    {item.coverUrl ? (
+                      <img
+                        src={item.coverUrl}
+                        alt=""
+                        className={`w-9 h-9 object-cover flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-md"}`}
+                      />
+                    ) : (
+                      <div className={`w-9 h-9 bg-muted flex items-center justify-center flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-md"}`}>
+                        {item.type === "artist" ? <User className="w-4 h-4 text-muted-foreground" /> : <Music className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{item.label}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {item.type === "artist" ? "Artiste" : item.sub}
+                      </p>
+                    </div>
+                    <SearchIcon className="w-3.5 h-3.5 text-muted-foreground/50 flex-shrink-0" />
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
