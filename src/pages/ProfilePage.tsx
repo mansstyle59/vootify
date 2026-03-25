@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, ArrowLeft, Loader2, Check, LogOut } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -218,9 +220,19 @@ const ProfilePage = () => {
             Sauvegarder
           </button>
 
+          {isAdmin && (
+            <button
+              onClick={() => navigate("/admin")}
+              className="w-full py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors flex items-center justify-center gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              Administration
+            </button>
+          )}
+
           <button
             onClick={async () => { await signOut(); navigate("/"); }}
-            className="w-full py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-secondary border border-border text-muted-foreground font-medium text-sm hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
           >
             <LogOut className="w-4 h-4" />
             Se déconnecter
