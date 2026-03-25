@@ -303,7 +303,18 @@ const RadioPage = () => {
             {isActivePlaying && <LiveEqualizer />}
             <h3 className={`text-sm font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
           </div>
-          <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
+          {isActive && radioMetadata?.title ? (
+            <motion.p
+              key={radioMetadata.title}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs text-primary/80 truncate font-medium"
+            >
+              ♪ {radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}{radioMetadata.title}
+            </motion.p>
+          ) : (
+            <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
+          )}
         </div>
 
         {/* Meta badges */}
