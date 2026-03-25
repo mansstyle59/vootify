@@ -32,7 +32,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // If "remember me" was unchecked, sign out when the browser/PWA closes
+    const handleBeforeUnload = () => {
+      const remember = localStorage.getItem("vootify_remember_me");
+      if (remember === "false") {
+        supabase.auth.signOut();
+        localStorage.removeItem("vootify_remember_me");
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
