@@ -204,14 +204,17 @@ const SearchPage = () => {
   const isLoading = jsLoading || dzLoading;
 
   const mergedResults = useMemo(() => {
+    const filterFullStreams = (songs: Song[]) =>
+      songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"));
+
     if (source === "jiosaavn") return jsResults || [];
-    if (source === "deezer") return dzResults || [];
+    if (source === "deezer") return filterFullStreams(dzResults || []);
     const js = jsResults || [];
-    const dz = dzResults || [];
+    const dz = filterFullStreams(dzResults || []);
     const seen = new Set<string>();
     const merged: Song[] = [];
 
-    // JioSaavn first (full streams), then Deezer (30s previews)
+    // JioSaavn first (full streams), then Deezer (only full streams)
     for (const song of [...js, ...dz]) {
       const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
