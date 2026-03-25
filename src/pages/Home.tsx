@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
@@ -259,7 +260,12 @@ const HomePage = () => {
           }}
           onSave={async (newSections) => {
             setLocalSections(newSections);
-            await saveConfig(newSections);
+            try {
+              await saveConfig(newSections);
+              toast.success("Personnalisation sauvegardée ✨");
+            } catch (err) {
+              toast.error("Erreur lors de la sauvegarde");
+            }
             setLocalSections(null);
           }}
           current={activeSections}
