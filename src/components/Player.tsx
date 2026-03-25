@@ -462,6 +462,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const [showQueue, setShowQueue] = useState(false);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const [isSeeking, setIsSeeking] = useState(false);
 
   if (!currentSong) return null;
 
@@ -483,12 +484,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const handleTouchSeek = (e: React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    setIsSeeking(true);
     seekFromX(e.touches[0].clientX);
   };
 
   const handleTouchMoveSeek = (e: React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();
     seekFromX(e.touches[0].clientX);
+  };
+
+  const handleTouchEndSeek = () => {
+    setIsSeeking(false);
   };
 
   return (
@@ -632,13 +638,23 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 onClick={handleSeek}
                 onTouchStart={handleTouchSeek}
                 onTouchMove={handleTouchMoveSeek}
+                onTouchEnd={handleTouchEndSeek}
+                onMouseDown={() => setIsSeeking(true)}
+                onMouseUp={() => setIsSeeking(false)}
+                onMouseLeave={() => setIsSeeking(false)}
               >
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[4px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
                   <div
                     className="h-full rounded-full relative transition-all duration-150"
                     style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
                   >
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[7px] h-[7px] rounded-full bg-foreground shadow-sm shadow-black/30" />
+                    <div
+                      className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm shadow-black/30 transition-all duration-150"
+                      style={{
+                        width: isSeeking ? 14 : 7,
+                        height: isSeeking ? 14 : 7,
+                      }}
+                    />
                   </div>
                 </div>
               </div>
