@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
