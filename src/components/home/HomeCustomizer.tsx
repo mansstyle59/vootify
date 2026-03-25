@@ -263,48 +263,24 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                 >
                   <div className="relative">
                     <button
+                      ref={(el) => { emojiButtonRefs.current[section.id] = el; }}
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEmojiPickerId(emojiPickerId === section.id ? null : section.id);
+                        if (emojiPickerId === section.id) {
+                          setEmojiPickerId(null);
+                          setEmojiPickerPos(null);
+                        } else {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setEmojiPickerPos({ top: rect.bottom + 4, left: rect.left });
+                          setEmojiPickerId(section.id);
+                        }
                       }}
                       className="text-base select-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary/80 transition-colors"
                       title="Changer l'emoji"
                     >
                       {section.emoji}
                     </button>
-                    <AnimatePresence>
-                      {emojiPickerId === section.id && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.9, y: -4 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute left-0 top-full mt-1 z-[60] w-[220px] p-2 rounded-xl bg-background border border-border shadow-xl"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="grid grid-cols-8 gap-0.5">
-                            {EMOJI_PALETTE.map((emoji) => (
-                              <button
-                                key={emoji}
-                                type="button"
-                                onClick={() => {
-                                  setSections((prev) =>
-                                    prev.map((s) => (s.id === section.id ? { ...s, emoji } : s))
-                                  );
-                                  setEmojiPickerId(null);
-                                }}
-                                className={`w-7 h-7 flex items-center justify-center rounded-md text-sm hover:bg-primary/15 transition-colors ${
-                                  section.emoji === emoji ? "bg-primary/20 ring-1 ring-primary/40" : ""
-                                }`}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                   {editingId === section.id ? (
                     <div className="flex-1 flex items-center gap-1.5">
