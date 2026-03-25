@@ -191,6 +191,7 @@ export const deezerApi = {
             ...song,
             streamUrl: customMatch.stream_url,
             coverUrl: customMatch.cover_url || song.coverUrl,
+            resolvedViaCustom: true,
           };
         }
       }
