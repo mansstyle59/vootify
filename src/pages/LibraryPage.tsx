@@ -178,9 +178,17 @@ const LibraryPage = () => {
 
   return (
     <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Votre Bibliothèque</h1>
+      {isOffline && (
+        <div className="flex items-center gap-2 px-3 py-2 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <p className="text-xs text-amber-400 font-medium">Mode hors-ligne — seuls les morceaux téléchargés sont disponibles</p>
+        </div>
+      )}
+      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
+        {isOffline ? "Mode Hors-ligne" : "Votre Bibliothèque"}
+      </h1>
       <p className="text-sm text-muted-foreground mb-5">
-        {isGuest ? "Vos morceaux téléchargés sont disponibles hors-ligne" : "Vos morceaux, playlists et stations sauvegardés"}
+        {isOffline ? "Écoutez vos morceaux téléchargés sans connexion" : offlineMode ? "Vos morceaux téléchargés sont disponibles hors-ligne" : "Vos morceaux, playlists et stations sauvegardés"}
       </p>
 
       <div className="flex gap-1.5 mb-5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
