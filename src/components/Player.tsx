@@ -2,7 +2,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, X
+  Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
@@ -425,7 +425,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
-      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
+      className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
       style={{ background: bgColor, transition: "background 1s ease-in-out" }}
     >
       {/* Dynamic blurred BG */}
@@ -436,32 +436,30 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             src={currentSong.coverUrl}
             alt=""
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
+            animate={{ opacity: 0.25 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
           />
         </AnimatePresence>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.4), hsl(0 0% 4% / 0.2), hsl(0 0% 4% / 0.75))" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(0 0% 0% / 0.3) 60%, hsl(0 0% 0% / 0.6) 100%)" }} />
       </div>
 
-      {/* Drag handle */}
-      <div className="relative z-10 flex justify-center pt-3 pb-1">
-        <div className="w-9 h-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.2)" }} />
-      </div>
-
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-5 py-2">
-        <button onClick={onClose} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
-          <ChevronDown className="w-5 h-5 text-foreground/80" />
+      {/* Top bar - Spotify style */}
+      <div className="relative z-10 flex items-center justify-between px-5 pt-[env(safe-area-inset-top,40px)] pb-2">
+        <button onClick={onClose} className="p-1 active:scale-90 transition-transform">
+          <ChevronDown className="w-7 h-7 text-foreground" />
         </button>
-        <div className="px-3 py-1.5 rounded-full" style={glassButtonStyle}>
-          <p className="text-[10px] font-semibold text-foreground/60 tracking-widest uppercase truncate max-w-[40vw] text-center">
-            {currentSong.album || "En lecture"}
+        <div className="flex-1 text-center px-4">
+          <p className="text-[11px] font-medium text-foreground/60 tracking-wider uppercase">
+            En lecture depuis
+          </p>
+          <p className="text-[12px] font-bold text-foreground truncate">
+            {currentSong.album || "Ma bibliothèque"}
           </p>
         </div>
-        <button onClick={() => setShowQueue(!showQueue)} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
-          <ListMusic className={`w-5 h-5 ${showQueue ? "text-primary" : "text-foreground/60"}`} />
+        <button onClick={() => setShowQueue(!showQueue)} className="p-1 active:scale-90 transition-transform">
+          <MoreHorizontal className="w-6 h-6 text-foreground" />
         </button>
       </div>
 
@@ -475,7 +473,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             className="relative z-10 flex-1 overflow-y-auto px-5 pb-4 scrollbar-hide"
           >
             <h3 className="text-base font-semibold text-foreground mb-3 sticky top-0 pt-2 pb-2"
-                style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.9) 80%, transparent)" }}
+                style={{ background: `${bgColor}ee` }}
             >
               File d'attente
             </h3>
@@ -486,17 +484,16 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   <button
                     key={song.id}
                     onClick={() => { play(song); setQueue(queue); }}
-                    className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors"
-                    style={isCurrent ? { ...glassButtonStyle, background: "hsl(var(--primary) / 0.12)" } : {}}
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${isCurrent ? "bg-white/10" : "hover:bg-white/5"}`}
                   >
                     <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
                       <p className={`text-[13px] truncate ${isCurrent ? "text-primary font-semibold" : "text-foreground"}`}>
                         {song.title}
                       </p>
-                      <p className="text-[11px] text-muted-foreground truncate">{song.artist}</p>
+                      <p className="text-[11px] text-foreground/50 truncate">{song.artist}</p>
                     </div>
-                    <span className="text-[11px] text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
+                    <span className="text-[11px] text-foreground/40 tabular-nums">{formatDuration(song.duration)}</span>
                   </button>
                 );
               })}
@@ -508,100 +505,107 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="relative z-10 flex-1 flex flex-col items-center justify-end px-6 pb-6"
+            className="relative z-10 flex-1 flex flex-col px-7 pb-8"
           >
-            {/* Cover in glass frame */}
-            <div
-              className="p-2 rounded-3xl mb-5 w-full max-w-[240px] md:max-w-[300px]"
-              style={glassStyle}
-            >
-              <img
-                src={currentSong.coverUrl}
-                alt={currentSong.title}
-                className="w-full aspect-square rounded-2xl object-cover"
-              />
+            {/* Cover art - large, Spotify style */}
+            <div className="flex-1 flex items-center justify-center py-4">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentSong.coverUrl}
+                  src={currentSong.coverUrl}
+                  alt={currentSong.title}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.92 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="w-full max-w-[340px] aspect-square rounded-xl object-cover"
+                  style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+                />
+              </AnimatePresence>
             </div>
 
             {/* Title + Artist + Like */}
-            <div className="w-full max-w-[280px] md:max-w-[340px] flex items-start justify-between gap-3 mb-5">
+            <div className="flex items-center justify-between gap-3 mb-6">
               <div className="min-w-0 flex-1">
-                <h2 className="text-xl font-bold text-foreground truncate leading-tight">
+                <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                   {currentSong.title}
                 </h2>
-                <p className="text-base text-primary truncate mt-0.5">
+                <p className="text-[15px] text-foreground/60 truncate mt-0.5">
                   {currentSong.artist}
                 </p>
               </div>
               <button
                 onClick={() => toggleLike(currentSong)}
-                className="mt-1 p-2 rounded-full active:scale-90 transition-transform"
-                style={glassButtonStyle}
+                className="p-1 active:scale-90 transition-transform"
               >
-                <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
+                <PlusCircle className={`w-7 h-7 ${liked ? "text-primary" : "text-foreground/40"}`} />
               </button>
             </div>
 
-            {/* Progress bar */}
-            <div className="w-full max-w-[280px] md:max-w-[340px] mb-5">
+            {/* Progress bar - Spotify style */}
+            <div className="mb-5">
               <div
-                className="h-[5px] rounded-full cursor-pointer relative group"
-                style={{ background: "hsl(0 0% 100% / 0.1)" }}
+                className="h-[4px] rounded-full cursor-pointer relative group"
+                style={{ background: "hsl(0 0% 100% / 0.15)" }}
                 onClick={handleSeek}
               >
                 <div
-                  className="h-full bg-foreground/80 rounded-full relative transition-all duration-150"
-                  style={{ width: `${progressPct}%` }}
+                  className="h-full rounded-full relative transition-all duration-150"
+                  style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
                 >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity shadow-md" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
                 </div>
               </div>
-              <div className="flex justify-between mt-1.5 text-[10px] text-muted-foreground tabular-nums">
+              <div className="flex justify-between mt-1.5 text-[11px] text-foreground/50 tabular-nums font-medium">
                 <span>{formatDuration(progress)}</span>
                 <span>-{formatDuration(Math.max(0, currentSong.duration - progress))}</span>
               </div>
             </div>
 
-            {/* Transport controls in glass pill */}
-            <div
-              className="flex items-center justify-between w-full max-w-[280px] md:max-w-[320px] px-5 py-3 rounded-2xl"
-              style={glassStyle}
-            >
+            {/* Transport controls - Spotify flat style */}
+            <div className="flex items-center justify-between w-full mb-6">
               <button onClick={toggleShuffle} className="active:scale-90 transition-transform">
-                <Shuffle className={`w-[18px] h-[18px] ${shuffle ? "text-primary" : "text-foreground/40"}`} />
+                <Shuffle className={`w-5 h-5 ${shuffle ? "text-primary" : "text-foreground/50"}`} />
               </button>
               <button onClick={previous} className="active:scale-90 transition-transform">
-                <SkipBack className="w-7 h-7 text-foreground fill-current" />
+                <SkipBack className="w-8 h-8 text-foreground fill-current" />
               </button>
               <button
                 onClick={togglePlay}
-                className="p-3 rounded-full active:scale-90 transition-transform"
-                style={{
-                  background: "hsl(0 0% 100% / 0.12)",
-                  border: "1px solid hsl(0 0% 100% / 0.15)",
-                }}
+                className="w-16 h-16 rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
               >
                 {isPlaying ? (
-                  <Pause className="w-8 h-8 text-foreground fill-current" />
+                  <Pause className="w-8 h-8 text-background fill-current" />
                 ) : (
-                  <Play className="w-8 h-8 text-foreground fill-current ml-0.5" />
+                  <Play className="w-8 h-8 text-background fill-current ml-1" />
                 )}
               </button>
               <button onClick={next} className="active:scale-90 transition-transform">
-                <SkipForward className="w-7 h-7 text-foreground fill-current" />
+                <SkipForward className="w-8 h-8 text-foreground fill-current" />
               </button>
               <button onClick={cycleRepeat} className="active:scale-90 transition-transform">
                 {repeat === "one" ? (
-                  <Repeat1 className="w-[18px] h-[18px] text-primary" />
+                  <Repeat1 className="w-5 h-5 text-primary" />
                 ) : (
-                  <Repeat className={`w-[18px] h-[18px] ${repeat === "all" ? "text-primary" : "text-foreground/40"}`} />
+                  <Repeat className={`w-5 h-5 ${repeat === "all" ? "text-primary" : "text-foreground/50"}`} />
                 )}
+              </button>
+            </div>
+
+            {/* Bottom actions */}
+            <div className="flex items-center justify-between">
+              <button className="p-1 active:scale-90 transition-transform">
+                <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
+                  onClick={() => toggleLike(currentSong)}
+                />
+              </button>
+              <button onClick={() => setShowQueue(true)} className="p-1 active:scale-90 transition-transform">
+                <ListMusic className="w-5 h-5 text-foreground/50" />
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="relative z-10 h-4" />
     </motion.div>
   );
 }
