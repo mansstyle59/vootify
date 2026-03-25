@@ -524,7 +524,7 @@ const RadioPage = () => {
             </div>
           )
         ) : stations.length > 0 ? (
-          {viewMode === "grid" ? (
+          viewMode === "grid" ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {stations.map((station, i) => (
                   <StationCard key={station.id} station={station} index={i} />
@@ -536,7 +536,7 @@ const RadioPage = () => {
                   <StationListItem key={station.id} station={station} index={i} />
                 ))}
               </div>
-            )}
+            )
         ) : (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-full bg-secondary/60 flex items-center justify-center mb-5">
