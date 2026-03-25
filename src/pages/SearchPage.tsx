@@ -157,6 +157,7 @@ const SearchPage = () => {
 
   const PAGE_SIZE = 50;
 
+  // Check if a song has a full stream (not just a 30s preview)
   const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
 
   // JioSaavn results (page 1)
