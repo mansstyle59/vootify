@@ -95,6 +95,22 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     setSections((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
+  const startEditing = useCallback((section: HomeSection) => {
+    setEditingId(section.id);
+    setEditingLabel(section.label);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  }, []);
+
+  const confirmEditing = useCallback(() => {
+    if (editingId && editingLabel.trim()) {
+      setSections((prev) =>
+        prev.map((s) => (s.id === editingId ? { ...s, label: editingLabel.trim() } : s))
+      );
+    }
+    setEditingId(null);
+    setEditingLabel("");
+  }, [editingId, editingLabel]);
+
   const handleSave = () => {
     saveSections(sections);
     onSave(sections);
