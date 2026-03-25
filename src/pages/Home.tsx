@@ -257,30 +257,8 @@ const HomePage = () => {
     }
   };
 
-  const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
-
   return (
-    <div
-      ref={scrollRef}
-      className="pb-40 max-w-7xl mx-auto relative overflow-y-auto"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {/* Pull-to-refresh indicator */}
-      <div
-        className="flex items-center justify-center overflow-hidden transition-all"
-        style={{ height: pullDistance > 0 || isRefreshing ? `${Math.max(pullDistance, isRefreshing ? 48 : 0)}px` : "0px" }}
-      >
-        <div
-          className={`w-7 h-7 rounded-full border-[2.5px] border-primary/30 border-t-primary ${isRefreshing ? "animate-spin" : ""}`}
-          style={{
-            transform: `rotate(${pullProgress * 360}deg)`,
-            opacity: pullProgress,
-            transition: isRefreshing ? "none" : "transform 0.1s",
-          }}
-        />
-      </div>
+    <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto">
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
       {activeSections.map((s) => renderSection(s))}
