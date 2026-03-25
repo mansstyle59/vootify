@@ -171,9 +171,9 @@ export function MiniPlayer() {
               onClick={toggleFullScreen}
             >
               <img
-                src={currentSong.coverUrl}
+                src={isLive && radioMeta?.coverUrl ? radioMeta.coverUrl : currentSong.coverUrl}
                 alt={currentSong.title}
-                className="w-11 h-11 rounded-xl object-cover"
+                className="w-11 h-11 rounded-xl object-cover transition-all duration-500"
                 style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}
               />
               <div className="min-w-0">
