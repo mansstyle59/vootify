@@ -63,6 +63,7 @@ const SearchPage = () => {
     }
   }, [userId]);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
+  const [hdOnly, setHdOnly] = useState(false);
   const [source, setSource] = useState<SearchSource>("all");
   const [jsPage, setJsPage] = useState(1);
   const [dzPage, setDzPage] = useState(1);
