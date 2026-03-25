@@ -389,11 +389,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
+  const dominantColor = useDominantColor(currentSong?.coverUrl);
 
   if (!currentSong) return null;
 
   const liked = isLiked(currentSong.id);
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
+  const bgColor = dominantColor || "hsl(0 0% 4%)";
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -408,8 +410,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
-      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
-      style={{ background: "hsl(0 0% 4%)" }}
+      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden transition-colors duration-700"
+      style={{ background: bgColor }}
     >
       {/* Dynamic blurred BG */}
       <div className="absolute inset-0 overflow-hidden">
