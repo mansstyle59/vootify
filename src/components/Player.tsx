@@ -294,15 +294,21 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
-      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden transition-colors duration-700"
-      style={{ background: bgColor }}
+      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
+      style={{ background: bgColor, transition: "background 1s ease-in-out" }}
     >
       {/* BG glow */}
       <div className="absolute inset-0 overflow-hidden">
-        <img
-          src={radioMeta?.coverUrl || currentSong.coverUrl}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-30 transition-all duration-1000"
+        <AnimatePresence mode="popLayout">
+          <motion.img
+            key={radioMeta?.coverUrl || currentSong.coverUrl}
+            src={radioMeta?.coverUrl || currentSong.coverUrl}
+            alt=""
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.5), hsl(0 0% 4% / 0.3), hsl(0 0% 4% / 0.85))" }} />
       </div>
@@ -410,14 +416,20 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
-      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden transition-colors duration-700"
-      style={{ background: bgColor }}
+      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
+      style={{ background: bgColor, transition: "background 1s ease-in-out" }}
     >
       {/* Dynamic blurred BG */}
       <div className="absolute inset-0 overflow-hidden">
-        <img
-          src={currentSong.coverUrl}
-          alt=""
+        <AnimatePresence mode="popLayout">
+          <motion.img
+            key={currentSong.coverUrl}
+            src={currentSong.coverUrl}
+            alt=""
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-35"
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.4), hsl(0 0% 4% / 0.2), hsl(0 0% 4% / 0.75))" }} />
