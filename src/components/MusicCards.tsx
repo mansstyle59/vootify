@@ -138,7 +138,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
             e.stopPropagation();
             if (!isCached && !isDownloading) download(song);
           }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          className={isCached || isDownloading ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity"}
           title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
         >
           {isCached ? (
