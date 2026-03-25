@@ -39,10 +39,13 @@ const PlaylistDetailPage = () => {
   };
 
   const [downloading, setDownloading] = useState(false);
+  const [dlProgress, setDlProgress] = useState({ done: 0, total: 0 });
 
   const handleDownloadAll = async () => {
     if (songs.length === 0) return;
     setDownloading(true);
+    const total = songs.length;
+    setDlProgress({ done: 0, total });
     let done = 0;
     for (const song of songs) {
       try {
@@ -51,8 +54,10 @@ const PlaylistDetailPage = () => {
           await offlineCache.cacheSong(song);
         }
         done++;
-        toast.info(`Téléchargement ${done}/${songs.length}...`);
+        setDlProgress({ done, total });
       } catch {
+        done++;
+        setDlProgress({ done, total });
         toast.error(`Échec : ${song.title}`);
       }
     }
@@ -180,6 +185,25 @@ const PlaylistDetailPage = () => {
           <Download className={`w-4 h-4 ${downloading ? "animate-bounce" : ""}`} /> {downloading ? "..." : "Télécharger"}
         </button>
       </div>
+
+      {/* Download progress bar */}
+      {downloading && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${dlProgress.total > 0 ? (dlProgress.done / dlProgress.total) * 100 : 0}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+              {dlProgress.done}/{dlProgress.total}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Song list */}
       <div className="px-4">
