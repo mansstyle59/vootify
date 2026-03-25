@@ -233,13 +233,41 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                   }}
                 >
                   <span className="text-base">{section.emoji}</span>
-                  <span
-                    className={`flex-1 text-sm font-medium truncate ${
-                      section.visible ? "text-foreground" : "text-muted-foreground line-through"
-                    }`}
-                  >
-                    {section.label}
-                  </span>
+                  {editingId === section.id ? (
+                    <div className="flex-1 flex items-center gap-1.5">
+                      <input
+                        ref={editInputRef}
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") confirmEditing();
+                          if (e.key === "Escape") { setEditingId(null); setEditingLabel(""); }
+                        }}
+                        onBlur={confirmEditing}
+                        className="flex-1 h-7 px-2 rounded-md border border-primary/50 bg-secondary/50 text-sm font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      className={`flex-1 text-sm font-medium truncate ${
+                        section.visible ? "text-foreground" : "text-muted-foreground line-through"
+                      }`}
+                    >
+                      {section.label}
+                    </span>
+                  )}
+                  {isCustom(section) && editingId !== section.id && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditing(section);
+                      }}
+                      className="p-1.5 rounded-lg transition-colors hover:bg-primary/10"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-primary/70" />
+                    </button>
+                  )}
                   {isCustom(section) && (
                     <button
                       onClick={(e) => {
