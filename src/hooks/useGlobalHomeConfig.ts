@@ -33,10 +33,11 @@ export function useGlobalHomeConfig() {
 
   const saveMutation = useMutation({
     mutationFn: async (newSections: HomeSection[]) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Upsert: delete existing and insert new
       const { data: existing } = await supabase
         .from("home_config")
         .select("id")
@@ -55,8 +56,21 @@ export function useGlobalHomeConfig() {
           .insert({ sections: newSections as any, updated_by: user.id });
         if (error) throw error;
       }
+
+      return newSections;
     },
-    onSuccess: () => {
+    onMutate: async (newSections) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = queryClient.getQueryData<HomeSection[]>(QUERY_KEY);
+      queryClient.setQueryData<HomeSection[]>(QUERY_KEY, newSections);
+      return { previous };
+    },
+    onError: (_error, _newSections, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData<HomeSection[]>(QUERY_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
