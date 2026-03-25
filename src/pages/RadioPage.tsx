@@ -264,19 +264,19 @@ const RadioPage = () => {
       <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Radio</h1>
       <p className="text-sm text-muted-foreground mb-5">Des milliers de stations radio du monde entier</p>
 
-      <div className="flex gap-2 mb-5 overflow-x-auto scrollbar-hide">
-        {tabs.map((tab) => (
+      <div className="flex gap-1.5 mb-5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+        {tabs.map((t) => (
           <button
-            key={tab.key}
-            onClick={() => { setActiveTab(tab.key); setSelectedGenre(null); }}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              activeTab === tab.key && !selectedGenre
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            key={t.key}
+            onClick={() => { setActiveTab(t.key); setSelectedGenre(null); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+              activeTab === t.key && !selectedGenre
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
             }`}
           >
-            {tab.icon}
-            {tab.label}
+            {t.icon}
+            {t.label}
           </button>
         ))}
       </div>
