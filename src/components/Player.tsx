@@ -67,40 +67,45 @@ export function MiniPlayer() {
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
 
-      if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
-        try {
-          const originalPreview = songToPlay.streamUrl;
-          const resolved = await deezerApi.resolveFullStream(songToPlay);
-          if (resolved.streamUrl !== songToPlay.streamUrl) {
-            songToPlay = resolved;
-            usePlayerStore.setState({ currentSong: resolved, originalStreamUrl: originalPreview });
-          }
-        } catch (e) {
-          console.error("Failed to resolve full stream:", e);
-        }
-      }
-
-      // Fallback: if song has no stream URL (e.g. custom song without file), search JioSaavn
-      if (!songToPlay.streamUrl) {
-        try {
-          const mainArtist = songToPlay.artist.split(",")[0].trim();
-          const query = `${mainArtist} ${songToPlay.title}`;
-          const results = await jiosaavnApi.search(query, 5);
-          const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-          const targetTitle = norm(songToPlay.title);
-          const bestMatch = results.find((r) => r.streamUrl && norm(r.title).includes(targetTitle))
-            || results.find((r) => !!r.streamUrl);
-          if (bestMatch?.streamUrl) {
-            console.log("Custom song resolved via JioSaavn:", bestMatch.title);
-            songToPlay = { ...songToPlay, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || songToPlay.coverUrl };
-            usePlayerStore.setState({ currentSong: songToPlay });
-          }
-        } catch (e) {
-          console.error("JioSaavn fallback failed:", e);
-        }
-      }
-
+      // PRIORITY: check offline cache first — essential for airplane mode
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
+
+      if (!cachedUrl) {
+        // Only attempt network resolution if not cached
+        if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
+          try {
+            const originalPreview = songToPlay.streamUrl;
+            const resolved = await deezerApi.resolveFullStream(songToPlay);
+            if (resolved.streamUrl !== songToPlay.streamUrl) {
+              songToPlay = resolved;
+              usePlayerStore.setState({ currentSong: resolved, originalStreamUrl: originalPreview });
+            }
+          } catch (e) {
+            console.error("Failed to resolve full stream:", e);
+          }
+        }
+
+        // Fallback: if song has no stream URL (e.g. custom song without file), search JioSaavn
+        if (!songToPlay.streamUrl) {
+          try {
+            const mainArtist = songToPlay.artist.split(",")[0].trim();
+            const query = `${mainArtist} ${songToPlay.title}`;
+            const results = await jiosaavnApi.search(query, 5);
+            const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+            const targetTitle = norm(songToPlay.title);
+            const bestMatch = results.find((r) => r.streamUrl && norm(r.title).includes(targetTitle))
+              || results.find((r) => !!r.streamUrl);
+            if (bestMatch?.streamUrl) {
+              console.log("Custom song resolved via JioSaavn:", bestMatch.title);
+              songToPlay = { ...songToPlay, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || songToPlay.coverUrl };
+              usePlayerStore.setState({ currentSong: songToPlay });
+            }
+          } catch (e) {
+            console.error("JioSaavn fallback failed:", e);
+          }
+        }
+      }
+
       const srcToUse = cachedUrl || songToPlay.streamUrl;
 
       if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
