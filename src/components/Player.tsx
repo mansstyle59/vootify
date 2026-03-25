@@ -170,25 +170,51 @@ export function MiniPlayer() {
               className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
               onClick={toggleFullScreen}
             >
-              <img
-                src={isLive && radioMeta?.coverUrl ? radioMeta.coverUrl : currentSong.coverUrl}
-                alt={currentSong.title}
-                className="w-11 h-11 rounded-xl object-cover transition-all duration-500"
-                style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}
-              />
+              <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={isLive && radioMeta?.coverUrl ? radioMeta.coverUrl : currentSong.coverUrl}
+                    src={isLive && radioMeta?.coverUrl ? radioMeta.coverUrl : currentSong.coverUrl}
+                    alt={currentSong.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    initial={{ opacity: 0, scale: 1.15 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  />
+                </AnimatePresence>
+              </div>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
-                  {isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
-                </p>
-                <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
-                  {isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
-                  {isLive && (
-                    <span className="ml-1.5 inline-flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      <span className="text-primary font-semibold text-[10px]">LIVE</span>
-                    </span>
-                  )}
-                </p>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-[13px] font-semibold truncate text-foreground leading-tight"
+                  >
+                    {isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
+                  </motion.p>
+                </AnimatePresence>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25, delay: 0.05 }}
+                    className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5"
+                  >
+                    {isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
+                    {isLive && (
+                      <span className="ml-1.5 inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <span className="text-primary font-semibold text-[10px]">LIVE</span>
+                      </span>
+                    )}
+                  </motion.p>
+                </AnimatePresence>
               </div>
             </div>
 
