@@ -82,24 +82,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   }, []);
 
   const removeSection = useCallback((id: string) => {
-    setSections((prev) => {
-      const el = document.querySelector(`[data-section-id="${id}"]`);
-      if (el) {
-        el.animate(
-          [
-            { transform: "translateX(0)", opacity: 1, height: el.clientHeight + "px" },
-            { transform: "translateX(100%)", opacity: 0, height: el.clientHeight + "px" },
-            { transform: "translateX(100%)", opacity: 0, height: "0px", padding: "0", margin: "0" },
-          ],
-          { duration: 300, easing: "ease-out" }
-        );
-      }
-      // Delay state update to let animation play
-      return prev;
-    });
-    setTimeout(() => {
-      setSections((prev) => prev.filter((s) => s.id !== id));
-    }, 280);
+    setSections((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
   const startEditing = useCallback((section: HomeSection) => {
@@ -119,7 +102,11 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   }, [editingId, editingLabel]);
 
   const handleSave = async () => {
-    await onSave(sections);
+    const finalSections = editingId && editingLabel.trim()
+      ? sections.map((s) => (s.id === editingId ? { ...s, label: editingLabel.trim() } : s))
+      : sections;
+
+    await onSave(finalSections);
     onClose();
   };
 
