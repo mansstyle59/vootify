@@ -19,6 +19,8 @@ const LibraryPage = () => {
   const navigate = useNavigate();
   const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
+  const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
+
   useEffect(() => {
     if (tab === "playlists") {
       playlists.forEach((p) => {
@@ -26,6 +28,24 @@ const LibraryPage = () => {
       });
     }
   }, [tab, playlists]);
+
+  // Count cached songs per playlist
+  useEffect(() => {
+    if (tab !== "playlists") return;
+    const countCached = async () => {
+      const counts: Record<string, number> = {};
+      for (const p of playlists) {
+        const songs = playlistSongs[p.id] || [];
+        let count = 0;
+        for (const s of songs) {
+          if (await offlineCache.isCached(s.id)) count++;
+        }
+        counts[p.id] = count;
+      }
+      setPlaylistCachedCounts(counts);
+    };
+    countCached();
+  }, [tab, playlists, playlistSongs]);
 
   // Saved radio stations
   const { data: savedRadios = [] } = useQuery({
