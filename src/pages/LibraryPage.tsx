@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -22,7 +22,20 @@ const LibraryPage = () => {
   const [newName, setNewName] = useState("");
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay, clearRecentlyPlayed } = usePlayerStore();
+  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay, clearRecentlyPlayed, loadUserData, userId } = usePlayerStore();
+  const queryClient = useQueryClient();
+
+  // Refresh data when app returns to foreground
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        queryClient.invalidateQueries();
+        if (userId) loadUserData(userId);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [queryClient, userId, loadUserData]);
 
   const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
 
