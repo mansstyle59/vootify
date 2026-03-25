@@ -18,8 +18,17 @@ const PlaylistDetailPage = () => {
   const playlist = playlists.find((p) => p.id === id);
   const songs: Song[] = id ? playlistSongs[id] || [] : [];
 
+  const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
+
+  // Check which songs are cached offline
+  useEffect(() => {
+    if (songs.length === 0) return;
+    Promise.all(songs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
+      (ids) => setCachedIds(new Set(ids.filter(Boolean) as string[]))
+    );
+  }, [songs]);
 
   useEffect(() => {
     if (id) loadPlaylistSongs(id);
