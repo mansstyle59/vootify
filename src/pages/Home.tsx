@@ -323,6 +323,7 @@ const HomePage = () => {
             transition: isRefreshing ? "none" : "transform 0.1s",
           }}
         />
+      </div>
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
       {activeSections.map((s) => renderSection(s))}
