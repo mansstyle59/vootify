@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, ArrowLeft, Loader2, Check, LogOut } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
