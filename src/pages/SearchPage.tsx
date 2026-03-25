@@ -346,13 +346,13 @@ const SearchPage = () => {
         // Boost French/Belgian artists
         const mainArtist = ar.split(",")[0].trim();
         if (frenchArtists.has(mainArtist)) score += 15;
-        if (song.streamUrl) score += 5;
+        // Boost songs with full streams (not 30s previews)
+        if (isFullStream(song)) score += 20;
+        else if (song.streamUrl) score += 5;
         return score;
       };
       return scoreRelevance(b) - scoreRelevance(a);
     });
-
-    return merged;
 
     return merged;
   }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
