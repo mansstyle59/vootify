@@ -4,30 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
+import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
-
-const RECENT_SEARCHES_KEY = "voo-recent-searches";
-const MAX_RECENT = 8;
-
-function getRecentSearches(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]");
-  } catch { return []; }
-}
-
-function saveRecentSearch(q: string) {
-  const recent = getRecentSearches().filter((r) => r !== q);
-  recent.unshift(q);
-  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)));
-}
-
-function removeRecentSearch(q: string) {
-  const recent = getRecentSearches().filter((r) => r !== q);
-  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent));
-}
 
 const trendingSuggestions = [
   "Ninho", "Aya Nakamura", "Jul", "Damso", "Rihanna",
@@ -72,7 +53,15 @@ const SearchPage = () => {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [suggestQuery, setSuggestQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches());
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const userId = usePlayerStore((s) => s.userId);
+
+  // Load search history from DB
+  useEffect(() => {
+    if (userId) {
+      musicDb.getSearchHistory(userId).then(setRecentSearches).catch(console.error);
+    }
+  }, [userId]);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [source, setSource] = useState<SearchSource>("all");
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
@@ -231,11 +220,12 @@ const SearchPage = () => {
   }, [jsResults, dzResults, source, normalize]);
 
   useEffect(() => {
-    if (debouncedQuery.length >= 2 && mergedResults.length > 0) {
-      saveRecentSearch(debouncedQuery);
-      setRecentSearches(getRecentSearches());
+    if (debouncedQuery.length >= 2 && mergedResults.length > 0 && userId) {
+      musicDb.saveSearchQuery(userId, debouncedQuery).then(() => {
+        musicDb.getSearchHistory(userId).then(setRecentSearches);
+      });
     }
-  }, [debouncedQuery, mergedResults]);
+  }, [debouncedQuery, mergedResults, userId]);
 
   const uniqueArtists = useMemo(() => {
     if (!mergedResults || mergedResults.length === 0) return [];
@@ -263,13 +253,17 @@ const SearchPage = () => {
   };
 
   const handleRemoveRecent = (term: string) => {
-    removeRecentSearch(term);
-    setRecentSearches(getRecentSearches());
+    if (userId) {
+      musicDb.removeSearchQuery(userId, term).then(() => {
+        musicDb.getSearchHistory(userId).then(setRecentSearches);
+      });
+    }
   };
 
   const clearAllRecent = () => {
-    localStorage.setItem(RECENT_SEARCHES_KEY, "[]");
-    setRecentSearches([]);
+    if (userId) {
+      musicDb.clearSearchHistory(userId).then(() => setRecentSearches([]));
+    }
   };
 
   return (

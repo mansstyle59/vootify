@@ -25,24 +25,14 @@ export const DEFAULT_SECTIONS: HomeSection[] = [
 
 const STORAGE_KEY = "home-sections-config";
 
+/** @deprecated Use useGlobalHomeConfig instead */
 export function loadSections(): HomeSection[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_SECTIONS;
-    const saved: HomeSection[] = JSON.parse(raw);
-    const savedIds = new Set(saved.map((s) => s.id));
-    const merged = [
-      ...saved,
-      ...DEFAULT_SECTIONS.filter((d) => !savedIds.has(d.id)),
-    ];
-    return merged;
-  } catch {
-    return DEFAULT_SECTIONS;
-  }
+  return DEFAULT_SECTIONS;
 }
 
-export function saveSections(sections: HomeSection[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
+/** @deprecated Config is now saved to DB via useGlobalHomeConfig */
+export function saveSections(_sections: HomeSection[]) {
+  // no-op: config is now DB-driven
 }
 
 function extractPlaylistId(input: string): string | null {

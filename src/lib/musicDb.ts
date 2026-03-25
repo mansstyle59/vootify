@@ -145,4 +145,43 @@ export const musicDb = {
     if (error) { console.error("getRecentlyPlayed error:", error); return []; }
     return (data || []).map((r) => ({ ...rowToSong(r), liked: false }));
   },
+
+  // Search history
+  async getSearchHistory(userId: string, limit = 8): Promise<string[]> {
+    const { data, error } = await supabase
+      .from("search_history")
+      .select("query")
+      .eq("user_id", userId)
+      .order("searched_at", { ascending: false })
+      .limit(limit);
+    if (error) { console.error("getSearchHistory error:", error); return []; }
+    return (data || []).map((r) => r.query);
+  },
+
+  async saveSearchQuery(userId: string, query: string): Promise<void> {
+    const { error } = await supabase
+      .from("search_history")
+      .upsert(
+        { user_id: userId, query, searched_at: new Date().toISOString() },
+        { onConflict: "user_id,query" }
+      );
+    if (error) console.error("saveSearchQuery error:", error);
+  },
+
+  async removeSearchQuery(userId: string, query: string): Promise<void> {
+    const { error } = await supabase
+      .from("search_history")
+      .delete()
+      .eq("user_id", userId)
+      .eq("query", query);
+    if (error) console.error("removeSearchQuery error:", error);
+  },
+
+  async clearSearchHistory(userId: string): Promise<void> {
+    const { error } = await supabase
+      .from("search_history")
+      .delete()
+      .eq("user_id", userId);
+    if (error) console.error("clearSearchHistory error:", error);
+  },
 };
