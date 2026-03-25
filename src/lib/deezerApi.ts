@@ -81,6 +81,26 @@ export const deezerApi = {
     return tracks.slice(0, limit).map(mapTrackToSong);
   },
 
+  async getPlaylistInfo(playlistId: string): Promise<{ id: string; title: string; picture: string }> {
+    const data = await callDeezer({ action: "playlist", id: playlistId });
+    return {
+      id: String(data.id),
+      title: data.title || "Playlist",
+      picture: data.picture_medium || data.picture_big || data.picture || "",
+    };
+  },
+
+  async searchPlaylists(query: string, limit = 10): Promise<{ id: string; title: string; picture: string; nb_tracks: number; user: string }[]> {
+    const data = await callDeezer({ action: "search_playlists", query, limit });
+    return (data.data || []).map((p: any) => ({
+      id: String(p.id),
+      title: p.title,
+      picture: p.picture_medium || p.picture_big || p.picture || "",
+      nb_tracks: p.nb_tracks || 0,
+      user: p.user?.name || "",
+    }));
+  },
+
 
   async getAlbumTracks(albumId: string): Promise<{ album: Album; tracks: Song[] }> {
     const id = albumId.replace("dz-album-", "");
