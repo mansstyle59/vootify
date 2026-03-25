@@ -122,6 +122,13 @@ export const musicDb = {
 
   // Recently played
   async addRecentlyPlayed(userId: string, song: Song) {
+    // Remove previous entry for same song to avoid duplicates
+    await supabase
+      .from("recently_played")
+      .delete()
+      .eq("user_id", userId)
+      .eq("song_id", song.id);
+
     const { error } = await supabase
       .from("recently_played")
       .insert(songToRow(song, userId));
