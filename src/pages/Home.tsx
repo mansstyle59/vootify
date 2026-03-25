@@ -11,8 +11,10 @@ import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { TopChartCard } from "@/components/home/TopChartCard";
-import { HomeCustomizer, loadSections, type HomeSection } from "@/components/home/HomeCustomizer";
+import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomizer";
 import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
+import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
@@ -33,10 +35,13 @@ const TOP_TABS: { key: TopGenre; label: string }[] = [
 ];
 
 const HomePage = () => {
-  const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
-  const [topGenre, setTopGenre] = useState<TopGenre>("all");
-  const [sections, setSections] = useState<HomeSection[]>(loadSections);
+  const { isAdmin } = useAdminAuth();
+  const { sections, saveConfig } = useGlobalHomeConfig();
+  const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
   const [showCustomizer, setShowCustomizer] = useState(false);
+
+  // Use local override while customizer is open, otherwise DB config
+  const activeSections = localSections ?? sections;
 
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
     queryKey: ["deezer-titres-du-moment"],
