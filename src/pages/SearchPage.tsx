@@ -219,8 +219,40 @@ const SearchPage = () => {
       const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
     }
+
+    // Rank by relevance to query
+    const q = normalize(debouncedQuery);
+    const qWords = q.split(" ").filter(Boolean);
+
+    merged.sort((a, b) => {
+      const scoreRelevance = (song: Song) => {
+        const t = normalize(song.title);
+        const ar = normalize(song.artist);
+        let score = 0;
+        // Exact title match
+        if (t === q) score += 100;
+        // Title starts with query
+        else if (t.startsWith(q)) score += 80;
+        // Title contains query
+        else if (t.includes(q)) score += 60;
+        // Artist exact match
+        if (ar === q) score += 90;
+        else if (ar.startsWith(q)) score += 70;
+        else if (ar.includes(q)) score += 50;
+        // Word-level matching
+        for (const w of qWords) {
+          if (t.includes(w)) score += 10;
+          if (ar.includes(w)) score += 8;
+        }
+        // Prefer songs with streams
+        if (song.streamUrl) score += 5;
+        return score;
+      };
+      return scoreRelevance(b) - scoreRelevance(a);
+    });
+
     return merged;
-  }, [jsResults, dzResults, source, normalize]);
+  }, [jsResults, dzResults, source, normalize, debouncedQuery]);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && mergedResults.length > 0 && userId) {
