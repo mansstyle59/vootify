@@ -496,6 +496,15 @@ const SearchPage = () => {
             >
               HD uniquement
             </button>
+            <button
+              onClick={() => {
+                hdCache.clear();
+                toast.success("Cache HD vidé");
+              }}
+              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground hover:bg-destructive/20 hover:text-destructive transition-all flex items-center gap-1"
+            >
+              <Trash2 className="w-3 h-3" />
+              Vider cache HD
             {resolveProgress && (
               <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-1.5 animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin" />
