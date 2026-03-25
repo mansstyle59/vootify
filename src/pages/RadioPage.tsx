@@ -168,7 +168,7 @@ const RadioPage = () => {
   const stations = getStations();
   const isCustomTab = activeTab === "custom";
 
-  const StationCard = ({ station, index }: { station: RadioBrowserStation; index: number }) => {
+  const StationCard = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
     const isSaved = savedIds.has(station.id);
     const isEditing = editingId === station.id;
     const isActive = currentSong?.id === station.id;
@@ -218,19 +218,12 @@ const RadioPage = () => {
         <div className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 ring-2 transition-all duration-300 ${
           isActive ? "ring-primary shadow-lg shadow-primary/20" : "ring-transparent"
         }`}>
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={displayCover}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              src={displayCover}
-              alt={station.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
-            />
-          </AnimatePresence>
+          <img
+            src={displayCover}
+            alt={station.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
+          />
 
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -246,14 +239,10 @@ const RadioPage = () => {
 
           {/* Live badge with equalizer */}
           {isActivePlaying && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/90 backdrop-blur-md"
-            >
+            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/90 backdrop-blur-md">
               <LiveEqualizer />
               <span className="text-[10px] font-bold text-white tracking-widest uppercase">Live</span>
-            </motion.div>
+            </div>
           )}
 
           {/* Action buttons */}
@@ -306,7 +295,7 @@ const RadioPage = () => {
         </div>
       </motion.div>
     );
-  };
+  }, [savedIds, editingId, currentSong?.id, isPlaying, radioMetadata, editForm, isCustomTab]);
 
   return (
     <div className="pb-40 max-w-7xl mx-auto">
