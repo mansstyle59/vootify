@@ -65,7 +65,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   recentlyPlayed: [],
   playlistSongs: {},
   userId: ANONYMOUS_USER_ID,
-  crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "true"),
+  crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "false"),
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "12"),
   _seekTime: null,
   originalStreamUrl: null,
