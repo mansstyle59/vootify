@@ -5,11 +5,7 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { Play, Pause } from "lucide-react";
 import type { Song } from "@/data/mockData";
-import { musicDb } from "@/lib/musicDb";
-import { ANONYMOUS_USER_ID } from "@/lib/constants";
-import { useAuth } from "@/hooks/useAuth";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
@@ -36,8 +32,6 @@ const TOP_TABS: { key: TopGenre; label: string }[] = [
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
-  const { user } = useAuth();
-  const userId = user?.id || ANONYMOUS_USER_ID;
   const [topGenre, setTopGenre] = useState<TopGenre>("all");
 
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
