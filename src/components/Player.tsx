@@ -305,7 +305,7 @@ export function MiniPlayer() {
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
         className="fixed left-0 right-0 z-50 md:bottom-0 px-2 pb-1"
-        style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
+        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div
           className="rounded-2xl overflow-hidden"
