@@ -149,7 +149,7 @@ export function MiniPlayer() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="fixed bottom-0 left-0 right-0 z-50 mb-[4.5rem] md:mb-0 px-2"
+        className="fixed bottom-[4rem] left-0 right-0 z-50 md:bottom-0 px-2 pb-1"
       >
         <div
           className="rounded-2xl overflow-hidden"
@@ -247,7 +247,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
-      className="fixed inset-0 z-[100] flex flex-col"
+      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
       style={{ background: "hsl(0 0% 4%)" }}
     >
       {/* BG glow */}
@@ -288,7 +288,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           className="p-3 rounded-3xl relative"
           style={glassStyle}
         >
-          <div className="w-52 h-52 md:w-64 md:h-64 rounded-2xl overflow-hidden relative">
+          <div className="w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden relative">
             <img
               src={radioMeta?.coverUrl || currentSong.coverUrl}
               alt={stationName}
@@ -361,7 +361,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
-      className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
+      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
       style={{ background: "hsl(0 0% 4%)" }}
     >
       {/* Dynamic blurred BG */}
@@ -437,11 +437,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="relative z-10 flex-1 flex flex-col items-center justify-end px-8 pb-8"
+            className="relative z-10 flex-1 flex flex-col items-center justify-end px-6 pb-6"
           >
             {/* Cover in glass frame */}
             <div
-              className="p-2.5 rounded-3xl mb-8 w-full max-w-[290px] md:max-w-[350px]"
+              className="p-2 rounded-3xl mb-5 w-full max-w-[240px] md:max-w-[300px]"
               style={glassStyle}
             >
               <img
@@ -530,7 +530,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 h-8" />
+      <div className="relative z-10 h-4" />
     </motion.div>
   );
 }
