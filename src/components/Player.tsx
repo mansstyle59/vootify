@@ -171,8 +171,9 @@ export function MiniPlayer() {
   const handleTimeUpdate = useCallback(() => {
     if (!audioRef.current) return;
     const audio = audioRef.current;
-    const t = Math.floor(audio.currentTime);
-    if (t !== progress) setProgress(t);
+    const t = audio.currentTime;
+    // Use fractional time for smooth progress
+    setProgress(t);
 
     // Preemptive crossfade: start next track before current ends
     const { crossfadeEnabled, crossfadeDuration, repeat } = usePlayerStore.getState();
@@ -202,7 +203,7 @@ export function MiniPlayer() {
       // Trigger next song (crossfade logic in the main effect will handle fade-in)
       next();
     }
-  }, [progress, setProgress, volume, next]);
+  }, [setProgress, volume, next]);
 
   // Reset preemptive trigger when song changes
   useEffect(() => {
@@ -434,7 +435,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
   const stationName = currentSong.title;
-  const genre = currentSong.album || "Radio";
+  const genre = currentSong.artist || "Radio";
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
   return (
@@ -450,93 +451,129 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       onDragEnd={(_, info) => {
         if (info.offset.y > 80 || info.velocity.y > 300) onClose();
       }}
-      className="fixed inset-x-0 bottom-0 top-[12vh] z-[100] flex flex-col rounded-t-3xl overflow-hidden"
+      className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
       style={{ background: bgColor, transition: "background 1s ease-in-out", touchAction: "pan-x" }}
     >
-      {/* BG glow */}
+      {/* Dynamic blurred BG */}
       <div className="absolute inset-0 overflow-hidden">
         <AnimatePresence mode="popLayout">
           <motion.img
-            key={radioMeta?.coverUrl || currentSong.coverUrl}
-            src={radioMeta?.coverUrl || currentSong.coverUrl}
+            key={coverUrl}
+            src={coverUrl}
             alt=""
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
+            animate={{ opacity: 0.25 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
           />
         </AnimatePresence>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.5), hsl(0 0% 4% / 0.3), hsl(0 0% 4% / 0.85))" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(0 0% 0% / 0.3) 60%, hsl(0 0% 0% / 0.6) 100%)" }} />
       </div>
 
       {/* Drag handle */}
       <div className="relative z-10 flex justify-center pb-1" style={{ paddingTop: "calc(env(safe-area-inset-top, 12px) + 8px)" }}>
-        <div className="w-9 h-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.2)" }} />
+        <div className="w-10 h-1 rounded-full bg-foreground/20" />
       </div>
 
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-5 py-2">
-        <button onClick={onClose} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
-          <ChevronDown className="w-5 h-5 text-foreground/80" />
+      {/* Top bar — matches music player style */}
+      <div className="relative z-10 flex items-center justify-between px-5 pb-2">
+        <button onClick={onClose} className="p-1 active:scale-90 transition-transform">
+          <ChevronDown className="w-7 h-7 text-foreground" />
         </button>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={glassButtonStyle}>
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-[10px] font-bold text-primary tracking-widest uppercase">
-            EN DIRECT
-          </span>
+        <div className="flex-1 text-center px-4">
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[11px] font-bold text-primary tracking-widest uppercase">EN DIRECT</span>
+          </div>
+          <p className="text-[12px] font-bold text-foreground truncate">{stationName}</p>
         </div>
-        <button onClick={() => toggleLike(currentSong)} className="p-2 rounded-full active:scale-90 transition-transform" style={glassButtonStyle}>
-          <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/60"}`} />
+        <button onClick={() => {}} className="p-1 active:scale-90 transition-transform">
+          <MoreHorizontal className="w-6 h-6 text-foreground" />
         </button>
       </div>
 
-      {/* Main */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 gap-6">
-        {/* Cover in glass card */}
-        <div
-          className="p-3 rounded-3xl relative"
-          style={glassStyle}
-        >
-          <div className="w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden relative">
-            <img
-              src={radioMeta?.coverUrl || currentSong.coverUrl}
+      {/* Main content */}
+      <div className="relative z-10 flex-1 flex flex-col px-7 pb-8">
+        {/* Cover art — large, matching music player */}
+        <div className="flex-1 flex items-center justify-center py-4">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={coverUrl}
+              src={coverUrl}
               alt={stationName}
-              className="w-full h-full object-cover transition-all duration-500"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="w-full max-w-[340px] aspect-square rounded-xl object-cover"
+              style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
             />
-            {/* Play/Pause overlay centered on cover */}
-            <button
-              onClick={togglePlay}
-              className="absolute inset-0 flex items-center justify-center active:scale-95 transition-transform"
-              style={{ background: "hsl(0 0% 0% / 0.3)" }}
-            >
-              {isPlaying ? <Pause className="w-14 h-14 text-white" /> : <Play className="w-14 h-14 text-white ml-1" />}
-            </button>
+          </AnimatePresence>
+        </div>
+
+        {/* Title + Artist + Like */}
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
+              {radioMeta?.title || stationName}
+            </h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-[15px] text-foreground/60 truncate">
+                {radioMeta?.artist || genre}
+              </p>
+              <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                LIVE
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => toggleLike(currentSong)}
+            className="p-1 active:scale-90 transition-transform"
+          >
+            <PlusCircle className={`w-7 h-7 ${liked ? "text-primary" : "text-foreground/40"}`} />
+          </button>
+        </div>
+
+        {/* Animated live indicator bar */}
+        <div className="mb-5">
+          <div className="h-[4px] rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              animate={{ width: ["20%", "80%", "45%", "95%", "30%"] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+          <div className="flex justify-center mt-2">
+            <span className="text-[11px] text-foreground/50 font-medium">Diffusion en direct</span>
           </div>
         </div>
 
-        {/* Station info in glass card */}
-        <div
-          className="text-center w-full max-w-xs px-5 py-4 rounded-2xl space-y-2"
-          style={glassStyle}
-        >
-          <h2 className="text-lg font-bold text-foreground truncate">{stationName}</h2>
-          <p className="text-sm text-muted-foreground">{currentSong.artist}</p>
-          {radioMeta?.nowPlaying ? (
-            <div className="pt-1 space-y-0.5">
-              <p className="text-sm font-semibold text-primary truncate">♪ {radioMeta.title || radioMeta.nowPlaying}</p>
-              {radioMeta.artist && (
-                <p className="text-xs text-muted-foreground truncate">{radioMeta.artist}</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
-              <span className="px-2.5 py-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.08)" }}>{genre}</span>
-            </div>
-          )}
+        {/* Transport — large play/pause centered, matching music player */}
+        <div className="flex items-center justify-center w-full mb-6">
+          <button
+            onClick={togglePlay}
+            className="w-16 h-16 rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+          >
+            {isPlaying ? (
+              <Pause className="w-8 h-8 text-background fill-current" />
+            ) : (
+              <Play className="w-8 h-8 text-background fill-current ml-1" />
+            )}
+          </button>
+        </div>
+
+        {/* Bottom actions */}
+        <div className="flex items-center justify-between">
+          <button className="p-1 active:scale-90 transition-transform">
+            <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
+              onClick={() => toggleLike(currentSong)}
+            />
+          </button>
+          <div />
+          <div />
         </div>
       </div>
-
     </motion.div>
   );
 }
@@ -747,7 +784,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
-            {/* Progress bar - Spotify style */}
+            {/* Progress bar - Spotify style, smooth */}
             <div className="mb-5">
               <div
                 ref={progressBarRef}
@@ -763,22 +800,23 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               >
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[4px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
                   <div
-                    className="h-full rounded-full relative transition-all duration-150"
-                    style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
+                    className="h-full rounded-full relative"
+                    style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)", transition: isSeeking ? "none" : "width 0.3s linear" }}
                   >
                     <div
-                      className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm shadow-black/30 transition-all duration-150"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm shadow-black/30"
                       style={{
                         width: isSeeking ? 14 : 7,
                         height: isSeeking ? 14 : 7,
+                        transition: "width 0.15s, height 0.15s",
                       }}
                     />
                   </div>
                 </div>
               </div>
               <div className="flex justify-between mt-1.5 text-[11px] text-foreground/50 tabular-nums font-medium">
-                <span>{formatDuration(progress)}</span>
-                <span>-{formatDuration(Math.max(0, currentSong.duration - progress))}</span>
+                <span>{formatDuration(Math.floor(progress))}</span>
+                <span>-{formatDuration(Math.max(0, currentSong.duration - Math.floor(progress)))}</span>
               </div>
             </div>
 
