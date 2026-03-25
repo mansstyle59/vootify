@@ -73,8 +73,8 @@ function mapAlbum(album: JioSaavnAlbum): Album {
 }
 
 export const jiosaavnApi = {
-  async search(query: string, limit = 20): Promise<Song[]> {
-    const data = await callJioSaavn({ action: "search", query, limit });
+  async search(query: string, limit = 20, page = 1): Promise<Song[]> {
+    const data = await callJioSaavn({ action: "search", query, limit, page });
     const results = data?.results || data || [];
     return (Array.isArray(results) ? results : []).map(mapSong);
   },
