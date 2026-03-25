@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
 import { FolderUp, FileArchive, Loader2, X, FileAudio, Check } from "lucide-react";
 import { toast } from "sonner";
+import { extractID3 } from "@/lib/id3Utils";
 
 export interface UploadedTrack {
   fileName: string;
