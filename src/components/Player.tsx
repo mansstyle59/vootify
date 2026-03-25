@@ -2,8 +2,10 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3
+  Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
+  Download, Check, Loader2
 } from "lucide-react";
+import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AudioVisualizer } from "./AudioVisualizer";
