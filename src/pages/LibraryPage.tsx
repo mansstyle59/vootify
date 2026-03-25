@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
 import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music } from "lucide-react";
+import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
@@ -52,7 +53,7 @@ const LibraryPage = () => {
       artist: station.genre || "Radio",
       album: "Radio en direct",
       duration: 0,
-      coverUrl: station.cover_url || "",
+      coverUrl: getStationLogo(station.name, station.cover_url || ""),
       streamUrl: station.stream_url || "",
       liked: false,
     });
