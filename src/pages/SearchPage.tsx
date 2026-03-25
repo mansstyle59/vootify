@@ -111,7 +111,6 @@ const SearchPage = () => {
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value.trim());
       setJsPage(1); setDzPage(1);
-      setAllJsResults([]); setAllDzResults([]);
       setHasMoreJs(true); setHasMoreDz(true);
     }, 400);
   }, []);
@@ -123,7 +122,6 @@ const SearchPage = () => {
     setShowSuggestions(false);
     setArtistFilter(null);
     setJsPage(1); setDzPage(1);
-    setAllJsResults([]); setAllDzResults([]);
     setHasMoreJs(true); setHasMoreDz(true);
     inputRef.current?.blur();
   }, []);
@@ -176,20 +174,28 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Accumulate results from initial + extra pages
+  // Accumulate extra page results (page 2+)
+  const [extraJsResults, setExtraJsResults] = useState<Song[]>([]);
+  const [extraDzResults, setExtraDzResults] = useState<Song[]>([]);
+
+  // Reset extra results when query changes
   useEffect(() => {
-    if (jsResults) {
-      setAllJsResults(jsResults);
-      setHasMoreJs(jsResults.length >= PAGE_SIZE);
-    }
-  }, [jsResults]);
+    setExtraJsResults([]);
+    setExtraDzResults([]);
+  }, [debouncedQuery]);
+
+  // Combine page-1 query data with extra pages
+  useEffect(() => {
+    const js = [...(jsResults || []), ...extraJsResults];
+    setAllJsResults(js);
+    setHasMoreJs((jsResults?.length || 0) >= PAGE_SIZE || extraJsResults.length > 0);
+  }, [jsResults, extraJsResults]);
 
   useEffect(() => {
-    if (dzResults) {
-      setAllDzResults(dzResults);
-      setHasMoreDz(dzResults.length >= PAGE_SIZE);
-    }
-  }, [dzResults]);
+    const dz = [...(dzResults || []), ...extraDzResults];
+    setAllDzResults(dz);
+    setHasMoreDz((dzResults?.length || 0) >= PAGE_SIZE || extraDzResults.length > 0);
+  }, [dzResults, extraDzResults]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !debouncedQuery) return;
@@ -204,7 +210,7 @@ const SearchPage = () => {
         const nextPage = jsPage + 1;
         promises.push(
           jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
-            setAllJsResults((prev) => [...prev, ...res.filter(isFullStream)]);
+            setExtraJsResults((prev) => [...prev, ...res]);
             setHasMoreJs(res.length >= PAGE_SIZE);
             setJsPage(nextPage);
           })
@@ -215,7 +221,7 @@ const SearchPage = () => {
         const offset = dzPage * PAGE_SIZE;
         promises.push(
           deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
-            setAllDzResults((prev) => [...prev, ...res]);
+            setExtraDzResults((prev) => [...prev, ...res]);
             setHasMoreDz(res.length >= PAGE_SIZE);
             setDzPage(nextPage);
           })
