@@ -40,6 +40,7 @@ interface PlayerState {
   addSongToPlaylist: (playlistId: string, song: Song) => void;
   removeSongFromPlaylist: (playlistId: string, songId: string) => void;
   loadPlaylistSongs: (playlistId: string) => Promise<void>;
+  clearRecentlyPlayed: () => Promise<void>;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -203,5 +204,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch (e) {
       console.error("Failed to load playlist songs:", e);
     }
+  },
+
+  clearRecentlyPlayed: async () => {
+    const userId = get().userId;
+    if (!userId) return;
+    set({ recentlyPlayed: [] });
+    await musicDb.clearRecentlyPlayed(userId);
   },
 }));
