@@ -496,7 +496,7 @@ const RadioPage = () => {
             <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize mt-0.5" />
           )}
         </div>
-      </motion.div>
+      </div>
     );
   }, [savedIds, editingId, currentSong?.id, isPlaying, radioMetadata, editForm, isCustomTab]);
 
