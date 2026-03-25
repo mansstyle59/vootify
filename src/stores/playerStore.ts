@@ -103,6 +103,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentSong: song,
       isPlaying: true,
       progress: 0,
+      originalStreamUrl: null,
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     }));
     if (userId) {
