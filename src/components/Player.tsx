@@ -289,6 +289,68 @@ export function MiniPlayer() {
 
   const progressPct = !isLive && currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
 
+  // ── Radio bubble mini-player ──
+  if (isLive) {
+    const bubbleCover = radioMeta?.coverUrl || currentSong.coverUrl;
+    return (
+      <>
+        <audio
+          ref={audioRef}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleEnded}
+          onError={handleAudioError}
+          preload="auto"
+        />
+        <audio ref={crossfadeRef} preload="auto" />
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="fixed right-3 z-50"
+          style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div
+            className="relative w-14 h-14 rounded-full overflow-hidden cursor-pointer shadow-xl active:scale-90 transition-transform"
+            onClick={toggleFullScreen}
+            style={{
+              boxShadow: miniDominantColor
+                ? `0 4px 20px ${miniDominantColor}80, 0 0 0 2px hsl(0 0% 100% / 0.15)`
+                : "0 4px 20px rgba(0,0,0,0.5), 0 0 0 2px hsl(0 0% 100% / 0.15)",
+            }}
+          >
+            <img
+              src={bubbleCover}
+              alt={currentSong.title}
+              className="w-full h-full object-cover"
+            />
+            {/* Play/Pause overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <button
+                onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                className="text-white"
+              >
+                {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+              </button>
+            </div>
+            {/* Live pulse ring */}
+            {isPlaying && (
+              <div className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-30 pointer-events-none" />
+            )}
+          </div>
+          {/* Close button */}
+          <button
+            onClick={closePlayer}
+            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-secondary flex items-center justify-center border border-border shadow-md"
+          >
+            <X className="w-3 h-3 text-muted-foreground" />
+          </button>
+        </motion.div>
+      </>
+    );
+  }
+
+  // ── Standard music mini-player ──
   return (
     <>
       <audio
@@ -318,14 +380,12 @@ export function MiniPlayer() {
           }}
         >
           {/* Progress line */}
-          {!isLive && (
-            <div className="h-[3px] w-full" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
-              <div
-                className="h-full bg-primary transition-all duration-300"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          )}
+          <div className="h-[3px] w-full" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
 
           <div className="flex items-center gap-3 px-3 py-2.5">
             <div
@@ -333,56 +393,25 @@ export function MiniPlayer() {
               onClick={toggleFullScreen}
             >
               <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={isLive && radioMeta?.coverUrl ? radioMeta.coverUrl : currentSong.coverUrl}
-                    src={isLive && radioMeta?.coverUrl ? radioMeta.coverUrl : currentSong.coverUrl}
-                    alt={currentSong.title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    initial={{ opacity: 0, scale: 1.15 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  />
-                </AnimatePresence>
+                <img
+                  src={currentSong.coverUrl}
+                  alt={currentSong.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="min-w-0">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-[13px] font-semibold truncate text-foreground leading-tight"
-                  >
-                    {isLive && radioMeta?.title ? radioMeta.title : currentSong.title}
-                  </motion.p>
-                </AnimatePresence>
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.25, delay: 0.05 }}
-                    className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5"
-                  >
-                    {isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist}
-                    {isLive && (
-                      <span className="ml-1.5 inline-flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-primary font-semibold text-[10px]">LIVE</span>
-                      </span>
-                    )}
-                    {!isLive && playingFromCache && (
-                      <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
-                        <WifiOff className="w-2.5 h-2.5" />
-                        <span className="font-semibold text-[10px]">OFFLINE</span>
-                      </span>
-                    )}
-                  </motion.p>
-                </AnimatePresence>
+                <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
+                  {currentSong.title}
+                </p>
+                <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
+                  {currentSong.artist}
+                  {playingFromCache && (
+                    <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                      <WifiOff className="w-2.5 h-2.5" />
+                      <span className="font-semibold text-[10px]">OFFLINE</span>
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
 
@@ -399,14 +428,12 @@ export function MiniPlayer() {
               >
                 {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-0.5" />}
               </button>
-              {!isLive && (
-                <button
-                  onClick={next}
-                  className="p-2 text-foreground active:scale-90 transition-transform"
-                >
-                  <SkipForward className="w-5 h-5 fill-current" />
-                </button>
-              )}
+              <button
+                onClick={next}
+                className="p-2 text-foreground active:scale-90 transition-transform"
+              >
+                <SkipForward className="w-5 h-5 fill-current" />
+              </button>
               <button
                 onClick={closePlayer}
                 className="p-2 text-muted-foreground active:scale-90 transition-transform"
