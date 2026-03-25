@@ -235,12 +235,19 @@ export const deezerApi = {
 
         if (bestCustom?.stream_url && bestScore >= 80) {
           console.log("Resolved via admin custom song (priority):", bestCustom.title, `(score: ${bestScore})`);
-          return {
+          const resolved = {
             ...song,
             streamUrl: bestCustom.stream_url,
             coverUrl: bestCustom.cover_url || song.coverUrl,
             resolvedViaCustom: true,
           };
+          hdCache.set(song.id, {
+            streamUrl: resolved.streamUrl,
+            coverUrl: bestCustom.cover_url || undefined,
+            resolvedViaCustom: true,
+            ts: Date.now(),
+          });
+          return resolved;
         }
       }
     } catch (e) {
