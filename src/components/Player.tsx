@@ -535,19 +535,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Animated live indicator bar */}
-        <div className="mb-5">
-          <div className="h-[4px] rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
-            <motion.div
-              className="h-full rounded-full bg-primary"
-              animate={{ width: ["20%", "80%", "45%", "95%", "30%"] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
-          <div className="flex justify-center mt-2">
-            <span className="text-[11px] text-foreground/50 font-medium">Diffusion en direct</span>
-          </div>
-        </div>
 
         {/* Transport — large play/pause centered, matching music player */}
         <div className="flex items-center justify-center w-full mb-6">
