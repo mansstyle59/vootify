@@ -133,35 +133,19 @@ const LibraryPage = () => {
     { key: "downloads", label: "Téléchargés", icon: Download },
   ];
 
-  // Auth gate — all hooks are above
-  if (!authLoading && !user) {
-    return (
-      <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Votre Bibliothèque</h1>
-        <p className="text-sm text-muted-foreground mb-8">Connectez-vous pour accéder à votre bibliothèque privée</p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center py-16 text-center"
-        >
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
-            <LogIn className="w-9 h-9 text-primary" />
-          </div>
-          <h2 className="text-lg font-semibold text-foreground mb-2">Connexion requise</h2>
-          <p className="text-sm text-muted-foreground max-w-xs mb-6">
-            Vos morceaux aimés, playlists et historique sont sauvegardés sur votre compte.
-          </p>
-          <button
-            onClick={() => navigate("/auth")}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
-          >
-            <LogIn className="w-4 h-4" />
-            Se connecter
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
+  // Auth gate — show only downloads tab when not logged in
+  const isGuest = !authLoading && !user;
+
+  // Auto-switch to downloads tab for guests
+  useEffect(() => {
+    if (isGuest && tab !== "downloads") {
+      setTab("downloads");
+    }
+  }, [isGuest]);
+
+  const visibleTabs = isGuest
+    ? tabs.filter((t) => t.key === "downloads")
+    : tabs;
 
   return (
     <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
