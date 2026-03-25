@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
@@ -221,6 +222,7 @@ const SearchPage = () => {
     setResolveProgress({ resolved: 0, total });
 
     const resolveInBackground = async () => {
+      let upgradedCount = 0;
       for (let i = 0; i < previewTracks.length; i += 4) {
         if (controller.signal.aborted) return;
         const batch = previewTracks.slice(i, i + 4);
@@ -233,15 +235,19 @@ const SearchPage = () => {
         setResolveProgress({ resolved: resolvedCount, total });
 
         const resolvedMap = new Map(resolved.filter((r, idx) => r.streamUrl !== batch[idx].streamUrl).map((r) => [r.id, r]));
+        upgradedCount += resolvedMap.size;
         if (resolvedMap.size > 0) {
           setAllDzResults((prev) =>
             prev.map((s) => resolvedMap.get(s.id) || s)
           );
         }
       }
-      // Done — clear after a short delay
+      // Done — show toast and clear progress
       if (!controller.signal.aborted) {
-        setTimeout(() => setResolveProgress(null), 2000);
+        if (upgradedCount > 0) {
+          toast.success(`${upgradedCount}/${total} morceaux upgradés en HD`);
+        }
+        setTimeout(() => setResolveProgress(null), 1500);
       }
     };
 
