@@ -126,10 +126,6 @@ function NowPlayingHero({
         </div>
       </div>
 
-      {/* Static bar at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: "hsl(0 0% 100% / 0.1)" }}>
-        <div className="h-full bg-primary" style={{ width: "60%" }} />
-      </div>
     </div>
   );
 }
