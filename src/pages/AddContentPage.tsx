@@ -229,7 +229,7 @@ function AlbumForm() {
       <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
       <AlbumFolderPicker
         albumArtist={form.artist}
-        onTracksUploaded={setTracks}
+        onTracksUploaded={handleTracksUploaded}
       />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
