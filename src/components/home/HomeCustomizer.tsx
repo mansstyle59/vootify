@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music } from "lucide-react";
+import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music, Pencil, Check } from "lucide-react";
 import { deezerApi } from "@/lib/deezerApi";
 
 export interface HomeSection {
@@ -76,7 +76,10 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const [searching, setSearching] = useState(false);
   const [addingById, setAddingById] = useState(false);
   const [playlistInput, setPlaylistInput] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) setSections(current);
@@ -91,6 +94,22 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const removeSection = useCallback((id: string) => {
     setSections((prev) => prev.filter((s) => s.id !== id));
   }, []);
+
+  const startEditing = useCallback((section: HomeSection) => {
+    setEditingId(section.id);
+    setEditingLabel(section.label);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  }, []);
+
+  const confirmEditing = useCallback(() => {
+    if (editingId && editingLabel.trim()) {
+      setSections((prev) =>
+        prev.map((s) => (s.id === editingId ? { ...s, label: editingLabel.trim() } : s))
+      );
+    }
+    setEditingId(null);
+    setEditingLabel("");
+  }, [editingId, editingLabel]);
 
   const handleSave = () => {
     saveSections(sections);
@@ -214,13 +233,41 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                   }}
                 >
                   <span className="text-base">{section.emoji}</span>
-                  <span
-                    className={`flex-1 text-sm font-medium truncate ${
-                      section.visible ? "text-foreground" : "text-muted-foreground line-through"
-                    }`}
-                  >
-                    {section.label}
-                  </span>
+                  {editingId === section.id ? (
+                    <div className="flex-1 flex items-center gap-1.5">
+                      <input
+                        ref={editInputRef}
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") confirmEditing();
+                          if (e.key === "Escape") { setEditingId(null); setEditingLabel(""); }
+                        }}
+                        onBlur={confirmEditing}
+                        className="flex-1 h-7 px-2 rounded-md border border-primary/50 bg-secondary/50 text-sm font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      className={`flex-1 text-sm font-medium truncate ${
+                        section.visible ? "text-foreground" : "text-muted-foreground line-through"
+                      }`}
+                    >
+                      {section.label}
+                    </span>
+                  )}
+                  {isCustom(section) && editingId !== section.id && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditing(section);
+                      }}
+                      className="p-1.5 rounded-lg transition-colors hover:bg-primary/10"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-primary/70" />
+                    </button>
+                  )}
                   {isCustom(section) && (
                     <button
                       onClick={(e) => {
