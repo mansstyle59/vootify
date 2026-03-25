@@ -6,7 +6,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Song } from "@/data/mockData";
+import type { Song, Album } from "@/data/mockData";
 
 const RECENT_SEARCHES_KEY = "voo-recent-searches";
 const MAX_RECENT = 8;
@@ -412,12 +412,27 @@ const SearchPage = () => {
             exit={{ opacity: 0 }}
             className="px-4 md:px-8"
           >
-            {isLoading ? (
+            {isLoading && (!albumResults || albumResults.length === 0) ? (
               <div className="rounded-xl bg-secondary/30 overflow-hidden">
                 {Array.from({ length: 8 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
-            ) : filteredResults.length > 0 ? (
+            ) : (
               <>
+                {/* Albums section */}
+                {albumResults && albumResults.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Disc3 className="w-4 h-4 text-primary" />
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Albums</h2>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                      {albumResults.map((album) => (
+                        <AlbumCard key={album.id} album={album} onClick={() => handleBubbleClick(`${album.title} ${album.artist}`)} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Artist filter bubbles */}
                 {uniqueArtists.length > 1 && (
                   <div className="mb-4">
@@ -453,28 +468,32 @@ const SearchPage = () => {
                   </div>
                 )}
 
-                <p className="text-sm text-muted-foreground mb-3">
-                  {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
-                  {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
-                </p>
-                <div className="rounded-xl bg-secondary/30 overflow-hidden">
-                  {filteredResults.map((song, i) => (
-                    <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
-                      <SongCard song={song} index={i} />
+                {filteredResults.length > 0 ? (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
+                      {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
+                    </p>
+                    <div className="rounded-xl bg-secondary/30 overflow-hidden">
+                      {filteredResults.map((song, i) => (
+                        <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
+                          <SongCard song={song} index={i} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                ) : !albumResults?.length && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16"
+                  >
+                    <SearchIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucun résultat pour « <span className="text-foreground font-medium">{debouncedQuery}</span> »</p>
+                    <p className="text-sm text-muted-foreground/60 mt-1">Essayez un autre terme ou vérifiez l'orthographe</p>
+                  </motion.div>
+                )}
               </>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-16"
-              >
-                <SearchIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                <p className="text-muted-foreground">Aucun résultat pour « <span className="text-foreground font-medium">{debouncedQuery}</span> »</p>
-                <p className="text-sm text-muted-foreground/60 mt-1">Essayez un autre terme ou vérifiez l'orthographe</p>
-              </motion.div>
             )}
           </motion.div>
         )}
