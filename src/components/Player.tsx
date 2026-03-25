@@ -309,7 +309,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
-        />
+          />
+        </AnimatePresence>
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.5), hsl(0 0% 4% / 0.3), hsl(0 0% 4% / 0.85))" }} />
       </div>
 
@@ -430,8 +431,9 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             animate={{ opacity: 0.3 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px] opacity-35"
-        />
+            className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
+          />
+        </AnimatePresence>
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(0 0% 4% / 0.4), hsl(0 0% 4% / 0.2), hsl(0 0% 4% / 0.75))" }} />
       </div>
 
