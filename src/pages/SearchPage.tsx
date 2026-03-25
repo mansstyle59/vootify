@@ -111,7 +111,6 @@ const SearchPage = () => {
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value.trim());
       setJsPage(1); setDzPage(1);
-      setAllJsResults([]); setAllDzResults([]);
       setHasMoreJs(true); setHasMoreDz(true);
     }, 400);
   }, []);
