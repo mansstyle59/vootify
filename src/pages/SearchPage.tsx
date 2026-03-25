@@ -206,7 +206,7 @@ const SearchPage = () => {
     setRecentSearches([]);
   };
 
-
+  return (
     <div className="pb-32 max-w-7xl mx-auto">
       {/* Header */}
       <div className="px-4 md:px-8 pt-6 pb-2">
