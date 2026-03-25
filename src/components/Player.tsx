@@ -244,6 +244,18 @@ export function MiniPlayer() {
     }
   }, [next]);
 
+  const handleAudioError = useCallback(async () => {
+    if (!audioRef.current || !currentSong) return;
+    // Try local cache fallback
+    const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
+    if (cachedUrl && audioRef.current.src !== cachedUrl) {
+      console.warn("Stream error, falling back to local cache for:", currentSong.title);
+      audioRef.current.src = cachedUrl;
+      audioRef.current.load();
+      audioRef.current.play().catch(console.error);
+    }
+  }, [currentSong]);
+
   if (!currentSong) return null;
 
   const progressPct = !isLive && currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
@@ -254,6 +266,7 @@ export function MiniPlayer() {
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
+        onError={handleAudioError}
         preload="auto"
       />
       <audio ref={crossfadeRef} preload="auto" />
