@@ -208,7 +208,7 @@ const SearchPage = () => {
 
     const previewTracks = allDzResults.filter(
       (s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
-    );
+    ).slice(0, 20);
     if (previewTracks.length === 0) {
       setResolveProgress(null);
       return;
