@@ -262,17 +262,17 @@ const RadioPage = () => {
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
       <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Radio</h1>
-      <p className="text-muted-foreground mb-5 text-sm">Des milliers de stations radio du monde entier</p>
+      <p className="text-sm text-muted-foreground mb-5">Des milliers de stations radio du monde entier</p>
 
-      <div className="flex gap-2 mb-5 flex-wrap">
+      <div className="flex gap-2 mb-5 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => { setActiveTab(tab.key); setSelectedGenre(null); }}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               activeTab === tab.key && !selectedGenre
                 ? "bg-primary text-primary-foreground"
-                : "glass-panel text-muted-foreground hover:text-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
             {tab.icon}
@@ -297,7 +297,7 @@ const RadioPage = () => {
               key={tag}
               onClick={() => setSelectedGenre(selectedGenre === tag ? null : tag)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all capitalize ${
-                selectedGenre === tag ? "bg-accent text-accent-foreground" : "glass-panel-light text-muted-foreground hover:text-foreground"
+                selectedGenre === tag ? "bg-primary text-primary-foreground" : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
               }`}
             >
               {tag}
