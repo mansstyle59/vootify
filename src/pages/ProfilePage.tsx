@@ -14,6 +14,7 @@ import { toast } from "sonner";
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration } = usePlayerStore();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -241,20 +242,20 @@ const ProfilePage = () => {
                 <p className="text-xs text-muted-foreground">Transition fluide entre les pistes</p>
               </div>
               <Switch
-                checked={usePlayerStore.getState().crossfadeEnabled}
-                onCheckedChange={(checked) => usePlayerStore.getState().setCrossfadeEnabled(checked)}
+                checked={crossfadeEnabled}
+                onCheckedChange={setCrossfadeEnabled}
               />
             </div>
 
-            {usePlayerStore.getState().crossfadeEnabled && (
+            {crossfadeEnabled && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium text-foreground">Durée du crossfade</p>
-                  <span className="text-sm font-mono text-primary">{usePlayerStore.getState().crossfadeDuration}s</span>
+                  <span className="text-sm font-mono text-primary">{crossfadeDuration}s</span>
                 </div>
                 <Slider
-                  value={[usePlayerStore.getState().crossfadeDuration]}
-                  onValueChange={([val]) => usePlayerStore.getState().setCrossfadeDuration(val)}
+                  value={[crossfadeDuration]}
+                  onValueChange={([val]) => setCrossfadeDuration(val)}
                   min={1}
                   max={8}
                   step={1}
