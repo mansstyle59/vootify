@@ -12,6 +12,7 @@ import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScr
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { TopChartCard } from "@/components/home/TopChartCard";
 import { HomeCustomizer, loadSections, type HomeSection } from "@/components/home/HomeCustomizer";
+import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
@@ -113,8 +114,20 @@ const HomePage = () => {
     [sections]
   );
 
-  const renderSection = (sectionId: string) => {
-    switch (sectionId) {
+  const renderSection = (section: HomeSection) => {
+    // Custom Deezer playlist
+    if (section.deezerPlaylistId && section.visible) {
+      return (
+        <CustomPlaylistSection
+          key={section.id}
+          playlistId={section.deezerPlaylistId}
+          label={section.label}
+          onPlayTrack={handlePlayTrack}
+        />
+      );
+    }
+
+    switch (section.id) {
       case "pourVous":
         return personalizedMix.length >= 4 && isVisible("pourVous") ? (
           <Section key="pourVous" title="Pour vous 💫">
@@ -228,7 +241,7 @@ const HomePage = () => {
     <div className="pb-32 max-w-7xl mx-auto">
       <HeroBanner onCustomize={() => setShowCustomizer(true)} />
 
-      {sections.map((s) => renderSection(s.id))}
+      {sections.map((s) => renderSection(s))}
 
       <HomeCustomizer
         open={showCustomizer}
