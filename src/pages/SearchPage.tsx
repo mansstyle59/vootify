@@ -141,18 +141,18 @@ const SearchPage = () => {
     return items.slice(0, 6);
   }, [suggestions]);
 
-  // JioSaavn results (increased limit for better precision)
+  // JioSaavn results
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, 30),
+    queryFn: () => jiosaavnApi.search(debouncedQuery, 50),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results (increased limit for better precision)
+  // Deezer results
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 30),
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, 50),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
@@ -173,7 +173,7 @@ const SearchPage = () => {
   // Album results (JioSaavn)
   const { data: jsAlbumResults } = useQuery({
     queryKey: ["album-search-js", debouncedQuery],
-    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 10),
+    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 15),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
@@ -181,7 +181,7 @@ const SearchPage = () => {
   // Album results (Deezer)
   const { data: dzAlbumResults } = useQuery({
     queryKey: ["album-search-dz", debouncedQuery],
-    queryFn: () => deezerApi.searchAlbums(debouncedQuery, 10),
+    queryFn: () => deezerApi.searchAlbums(debouncedQuery, 15),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
@@ -219,8 +219,40 @@ const SearchPage = () => {
       const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
     }
+
+    // Rank by relevance to query
+    const q = normalize(debouncedQuery);
+    const qWords = q.split(" ").filter(Boolean);
+
+    merged.sort((a, b) => {
+      const scoreRelevance = (song: Song) => {
+        const t = normalize(song.title);
+        const ar = normalize(song.artist);
+        let score = 0;
+        // Exact title match
+        if (t === q) score += 100;
+        // Title starts with query
+        else if (t.startsWith(q)) score += 80;
+        // Title contains query
+        else if (t.includes(q)) score += 60;
+        // Artist exact match
+        if (ar === q) score += 90;
+        else if (ar.startsWith(q)) score += 70;
+        else if (ar.includes(q)) score += 50;
+        // Word-level matching
+        for (const w of qWords) {
+          if (t.includes(w)) score += 10;
+          if (ar.includes(w)) score += 8;
+        }
+        // Prefer songs with streams
+        if (song.streamUrl) score += 5;
+        return score;
+      };
+      return scoreRelevance(b) - scoreRelevance(a);
+    });
+
     return merged;
-  }, [jsResults, dzResults, source, normalize]);
+  }, [jsResults, dzResults, source, normalize, debouncedQuery]);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && mergedResults.length > 0 && userId) {
