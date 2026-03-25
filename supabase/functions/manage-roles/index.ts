@@ -58,10 +58,10 @@ Deno.serve(async (req) => {
     };
 
     if (action === "promote") {
-      const { error } = await adminClient.from("user_roles").insert({
+      const { error } = await adminClient.from("user_roles").upsert({
         user_id: target_user_id,
         role: role || "admin",
-      });
+      }, { onConflict: "user_id,role" });
       if (error) throw error;
       await logAction({ role: role || "admin" });
       return new Response(JSON.stringify({ success: true }), {
