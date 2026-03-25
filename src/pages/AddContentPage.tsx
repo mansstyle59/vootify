@@ -5,6 +5,8 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
+import AudioFilePicker from "@/components/AudioFilePicker";
+import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
