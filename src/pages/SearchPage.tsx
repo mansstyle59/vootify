@@ -296,10 +296,10 @@ const SearchPage = () => {
   const isLoading = jsLoading || dzLoading;
 
   const mergedResults = useMemo(() => {
-    if (source === "jiosaavn") return allJsResults.filter(isFullStream);
+    if (source === "jiosaavn") return allJsResults;
     if (source === "deezer") return allDzResults;
-    // Prioritize JioSaavn (full streams), add Deezer as extra results
-    const js = allJsResults.filter(isFullStream);
+    // Merge both sources, JioSaavn first (full streams), then Deezer (resolved at play)
+    const js = allJsResults;
     const dz = allDzResults;
     const seen = new Set<string>();
     const merged: Song[] = [];
