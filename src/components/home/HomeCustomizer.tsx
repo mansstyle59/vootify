@@ -82,7 +82,10 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   }, []);
 
   const removeSection = useCallback((id: string) => {
-    setSections((prev) => prev.filter((s) => s.id !== id));
+    setSections((prev) => {
+      const next = prev.filter((s) => s.id !== id);
+      return [...next]; // new array reference to force Reorder re-sync
+    });
   }, []);
 
   const startEditing = useCallback((section: HomeSection) => {
@@ -209,6 +212,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
 
             {/* Reorderable list */}
             <Reorder.Group
+              key={sections.map(s => s.id).join(',')}
               axis="y"
               values={sections}
               onReorder={setSections}
