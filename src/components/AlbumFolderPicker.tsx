@@ -152,7 +152,77 @@ async function uploadAndProcessFiles(
   return uploaded;
 }
 
-const AlbumFolderPicker = ({ onTracksUploaded, albumArtist = "", className = "" }: AlbumFolderPickerProps) => {
+function TrackRow({ track, index, onUpdate, onRemove }: {
+  track: UploadedTrack;
+  index: number;
+  onUpdate: (field: "title" | "artist", value: string) => void;
+  onRemove: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(track.title);
+  const [artist, setArtist] = useState(track.artist);
+
+  const save = () => {
+    if (title.trim()) onUpdate("title", title.trim());
+    if (artist.trim()) onUpdate("artist", artist.trim());
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-1 px-2.5 py-2 rounded-lg bg-secondary/60 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="text-muted-foreground w-5 text-right shrink-0">{index + 1}</span>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="flex-1 bg-background/80 border border-border rounded px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Titre"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && save()}
+          />
+        </div>
+        <div className="flex items-center gap-1.5 pl-[26px]">
+          <input
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
+            className="flex-1 bg-background/80 border border-border rounded px-2 py-1 text-muted-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Artiste"
+            onKeyDown={(e) => e.key === "Enter" && save()}
+          />
+          <button type="button" onClick={save} className="p-1 text-primary hover:bg-primary/10 rounded">
+            <Check className="w-3 h-3" />
+          </button>
+          <button type="button" onClick={() => setEditing(false)} className="p-1 text-muted-foreground hover:text-foreground rounded">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-secondary/40 text-xs group">
+      <span className="text-muted-foreground w-5 text-right shrink-0">{index + 1}</span>
+      <FileAudio className="w-3.5 h-3.5 text-primary shrink-0" />
+      <div className="flex-1 min-w-0">
+        <span className="truncate block text-foreground">{track.title}</span>
+        <span className="truncate block text-muted-foreground text-[10px]">{track.artist}</span>
+      </div>
+      <span className="text-muted-foreground shrink-0">
+        {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, "0")}
+      </span>
+      <button type="button" onClick={() => setEditing(true)} className="p-0.5 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+        <Pencil className="w-3 h-3" />
+      </button>
+      <button type="button" onClick={onRemove} className="p-0.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
+
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
