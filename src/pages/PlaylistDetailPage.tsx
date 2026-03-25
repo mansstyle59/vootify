@@ -71,6 +71,7 @@ const PlaylistDetailPage = () => {
       }
     }
     setDownloading(false);
+    setCachedIds(new Set(songs.map((s) => s.id)));
     toast.success("Tous les morceaux ont été téléchargés !");
   };
 
