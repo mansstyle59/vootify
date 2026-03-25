@@ -157,6 +157,8 @@ const SearchPage = () => {
 
   const PAGE_SIZE = 50;
 
+  const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
+
   // JioSaavn results (page 1)
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
@@ -165,10 +167,21 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results (page 1)
+  // Deezer results (page 1) — resolve to full streams
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
+    queryFn: async () => {
+      const raw = await deezerApi.searchTracks(debouncedQuery, PAGE_SIZE);
+      // Resolve full streams in parallel (batch of 6 to avoid overwhelming)
+      const resolved: Song[] = [];
+      for (let i = 0; i < raw.length; i += 6) {
+        const batch = raw.slice(i, i + 6);
+        const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
+        resolved.push(...results);
+      }
+      // Only keep songs with full streams
+      return resolved.filter(isFullStream);
+    },
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
@@ -176,7 +189,7 @@ const SearchPage = () => {
   // Accumulate results from initial + extra pages
   useEffect(() => {
     if (jsResults) {
-      setAllJsResults(jsResults);
+      setAllJsResults(jsResults.filter(isFullStream));
       setHasMoreJs(jsResults.length >= PAGE_SIZE);
     }
   }, [jsResults]);
@@ -184,7 +197,7 @@ const SearchPage = () => {
   useEffect(() => {
     if (dzResults) {
       setAllDzResults(dzResults);
-      setHasMoreDz(dzResults.length >= PAGE_SIZE);
+      setHasMoreDz(dzResults.length >= PAGE_SIZE / 2);
     }
   }, [dzResults]);
 
@@ -201,7 +214,7 @@ const SearchPage = () => {
         const nextPage = jsPage + 1;
         promises.push(
           jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
-            setAllJsResults((prev) => [...prev, ...res]);
+            setAllJsResults((prev) => [...prev, ...res.filter(isFullStream)]);
             setHasMoreJs(res.length >= PAGE_SIZE);
             setJsPage(nextPage);
           })
@@ -211,9 +224,17 @@ const SearchPage = () => {
         const nextPage = dzPage + 1;
         const offset = dzPage * PAGE_SIZE;
         promises.push(
-          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
-            setAllDzResults((prev) => [...prev, ...res]);
-            setHasMoreDz(res.length >= PAGE_SIZE);
+          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then(async (raw) => {
+            // Resolve full streams for Deezer tracks
+            const resolved: Song[] = [];
+            for (let i = 0; i < raw.length; i += 6) {
+              const batch = raw.slice(i, i + 6);
+              const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
+              resolved.push(...results);
+            }
+            const full = resolved.filter(isFullStream);
+            setAllDzResults((prev) => [...prev, ...full]);
+            setHasMoreDz(raw.length >= PAGE_SIZE);
             setDzPage(nextPage);
           })
         );
@@ -288,13 +309,13 @@ const SearchPage = () => {
   const isLoading = jsLoading || dzLoading;
 
   const mergedResults = useMemo(() => {
-    const filterFullStreams = (songs: Song[]) =>
-      songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"));
+    // All results should already be full streams, but double-check
+    const onlyFull = (songs: Song[]) => songs.filter(isFullStream);
 
-    if (source === "jiosaavn") return allJsResults;
-    if (source === "deezer") return filterFullStreams(allDzResults);
-    const js = allJsResults;
-    const dz = filterFullStreams(allDzResults);
+    if (source === "jiosaavn") return onlyFull(allJsResults);
+    if (source === "deezer") return onlyFull(allDzResults);
+    const js = onlyFull(allJsResults);
+    const dz = onlyFull(allDzResults);
     const seen = new Set<string>();
     const merged: Song[] = [];
 
@@ -302,6 +323,21 @@ const SearchPage = () => {
       const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
     }
+
+    // French/Belgian popular artists for priority boost
+    const frenchArtists = new Set([
+      "ninho", "aya nakamura", "jul", "damso", "gims", "maitre gims",
+      "tayc", "sdm", "werenoi", "plk", "gazo", "tiakola", "angele",
+      "stromae", "nekfeu", "orelsan", "booba", "pnl", "lacrim",
+      "soprano", "dadju", "vegedream", "lomepal", "vald", "hamza",
+      "romeo elvis", "dua lipa", "sch", "koba lad", "niska", "mhd",
+      "amir", "slimane", "vitaa", "kendji girac", "louane", "zaho",
+      "lartiste", "djadja", "dinah", "heuss lenfoire", "rim k", "soolking",
+      "fally ipupa", "gael faye", "pierre de maere", "clara luciani",
+      "pomme", "juliette armanet", "bigflo et oli", "keen v", "black m",
+      "maitre gims", "mika", "calogero", "christophe mae", "m pokora",
+      "patrick bruel", "jean jacques goldman", "francis cabrel",
+    ]);
 
     // Rank by relevance to query
     const q = normalize(debouncedQuery);
@@ -322,11 +358,16 @@ const SearchPage = () => {
           if (t.includes(w)) score += 10;
           if (ar.includes(w)) score += 8;
         }
+        // Boost French/Belgian artists
+        const mainArtist = ar.split(",")[0].trim();
+        if (frenchArtists.has(mainArtist)) score += 15;
         if (song.streamUrl) score += 5;
         return score;
       };
       return scoreRelevance(b) - scoreRelevance(a);
     });
+
+    return merged;
 
     return merged;
   }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
