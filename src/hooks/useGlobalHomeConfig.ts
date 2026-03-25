@@ -24,13 +24,9 @@ export function useGlobalHomeConfig() {
 
       if (!data || !data.sections) return DEFAULT_SECTIONS;
 
-      const saved = data.sections as unknown as HomeSection[];
-      // Merge with defaults in case new built-in sections were added
-      const savedIds = new Set(saved.map((s) => s.id));
-      return [
-        ...saved,
-        ...DEFAULT_SECTIONS.filter((d) => !savedIds.has(d.id)),
-      ];
+      if (!Array.isArray(data.sections)) return DEFAULT_SECTIONS;
+
+      return data.sections as unknown as HomeSection[];
     },
     staleTime: 5 * 60 * 1000,
   });

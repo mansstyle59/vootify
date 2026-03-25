@@ -118,8 +118,8 @@ const HomePage = () => {
   })();
 
   const isVisible = useCallback(
-    (id: string) => sections.find((s) => s.id === id)?.visible ?? true,
-    [sections]
+    (id: string) => activeSections.find((s) => s.id === id)?.visible ?? true,
+    [activeSections]
   );
 
   const renderSection = (section: HomeSection) => {
