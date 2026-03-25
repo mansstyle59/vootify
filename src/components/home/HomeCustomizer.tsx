@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music, Pencil, Check } from "lucide-react";
 import { deezerApi } from "@/lib/deezerApi";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface HomeSection {
   id: string;
@@ -40,6 +41,8 @@ function extractPlaylistId(input: string): string | null {
   const urlMatch = input.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
   if (urlMatch) return urlMatch[1];
   if (/^\d+$/.test(input.trim())) return input.trim();
+  // Short links like https://link.deezer.com/... need resolution
+  if (/link\.deezer\.com/i.test(input.trim())) return "short:" + input.trim();
   return null;
 }
 
@@ -159,10 +162,19 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   }, []);
 
   const handleAddById = async () => {
-    const id = extractPlaylistId(playlistInput);
+    let id = extractPlaylistId(playlistInput);
     if (!id) return;
     setAddingById(true);
     try {
+      // Resolve short links via edge function
+      if (id.startsWith("short:")) {
+        const shortUrl = id.replace("short:", "");
+        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+          body: { action: "resolve_short_link", url: shortUrl },
+        });
+        if (error || !data?.playlist_id) throw new Error("Not a playlist link");
+        id = data.playlist_id;
+      }
       const info = await deezerApi.getPlaylistInfo(id);
       addPlaylist(info.id, info.title);
     } catch {

@@ -11,7 +11,25 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, query, id, limit } = await req.json();
+    const { action, query, id, limit, url: shortUrl } = await req.json();
+
+    // Resolve short links (link.deezer.com)
+    if (action === 'resolve_short_link') {
+      if (!shortUrl) {
+        return new Response(
+          JSON.stringify({ error: 'Missing url parameter' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`Resolving short link: ${shortUrl}`);
+      const resp = await fetch(shortUrl, { redirect: 'follow' });
+      const finalUrl = resp.url;
+      const match = finalUrl.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
+      return new Response(
+        JSON.stringify({ resolved_url: finalUrl, playlist_id: match ? match[1] : null }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     let url: string;
 
@@ -60,9 +78,6 @@ Deno.serve(async (req) => {
         break;
       case 'search_playlists':
         url = `${DEEZER_API}/search/playlist?q=${encodeURIComponent(query || '')}&limit=${limit || 10}`;
-        break;
-      case 'chart_artists':
-        url = `${DEEZER_API}/chart/0/artists?limit=${limit || 25}`;
         break;
       default:
         return new Response(
