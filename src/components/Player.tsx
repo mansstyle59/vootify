@@ -79,7 +79,7 @@ export function MiniPlayer() {
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
 
-      if (isNewTrack && audio.src && !audio.paused) {
+      if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
         // Crossfade: move current audio to crossfade ref and fade it out
         if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
         const oldAudio = crossfadeRef.current!;
