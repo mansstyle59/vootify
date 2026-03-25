@@ -158,6 +158,10 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20" title="Flux complet haute qualité">
           HD
         </span>
+      ) : song.id.startsWith("dz-") ? (
+        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/20" title="Aucun flux HD disponible">
+          No HD
+        </span>
       ) : null}
 
       <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
