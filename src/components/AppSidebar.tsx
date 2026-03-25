@@ -27,7 +27,7 @@ export function AppSidebar() {
     <aside className="hidden md:flex flex-col w-[240px] min-h-screen glass-panel border-r border-border/50 p-4">
       <div className="mb-8 px-2">
         <h1 className="text-2xl font-display font-bold gradient-text-primary">
-          VOO Music
+          Vootify
         </h1>
       </div>
 

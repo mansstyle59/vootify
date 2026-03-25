@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["pwa-icon-192.png", "pwa-icon-512.png"],
       manifest: {
-        name: "VOO Music",
-        short_name: "VOO Music",
+        name: "Vootify",
+        short_name: "Vootify",
         description: "Découvrez et écoutez de la musique en streaming",
         theme_color: "#0a0a0f",
         background_color: "#0a0a0f",
