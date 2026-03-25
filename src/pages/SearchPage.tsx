@@ -499,6 +499,15 @@ const SearchPage = () => {
               HD uniquement
             </button>
             <button
+              onClick={() => setCustomOnly(!customOnly)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                customOnly
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              Custom uniquement
+            <button
               onClick={() => {
                 hdCache.clear();
                 toast.success("Cache HD vidé");
