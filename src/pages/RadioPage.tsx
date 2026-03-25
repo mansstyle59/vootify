@@ -174,6 +174,16 @@ const RadioPage = () => {
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
 
+    // Use dynamic Deezer cover art for the active station
+    const dynamicCover = isActive && radioMetadata?.coverUrl ? radioMetadata.coverUrl : null;
+    const stationLogo = getStationLogo(station.name, station.coverUrl);
+    const displayCover = dynamicCover || stationLogo || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
+
+    // Show now-playing info under the active station
+    const nowPlayingText = isActive && radioMetadata?.artist && radioMetadata?.title
+      ? `${radioMetadata.artist} — ${radioMetadata.title}`
+      : null;
+
     if (isEditing) {
       return (
         <motion.div
@@ -208,12 +218,19 @@ const RadioPage = () => {
         <div className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 ring-2 transition-all duration-300 ${
           isActive ? "ring-primary shadow-lg shadow-primary/20" : "ring-transparent"
         }`}>
-          <img
-            src={getStationLogo(station.name, station.coverUrl) || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
-            alt={station.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
-          />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={displayCover}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              src={displayCover}
+              alt={station.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
+            />
+          </AnimatePresence>
 
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -281,7 +298,11 @@ const RadioPage = () => {
             {isActivePlaying && <LiveEqualizer />}
             <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
           </div>
-          <p className="text-xs text-muted-foreground truncate capitalize mt-0.5">{station.genre || "Radio"}</p>
+          {nowPlayingText ? (
+            <p className="text-xs text-primary/80 truncate mt-0.5 font-medium">{nowPlayingText}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground truncate capitalize mt-0.5">{station.genre || "Radio"}</p>
+          )}
         </div>
       </motion.div>
     );
