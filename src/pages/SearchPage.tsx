@@ -214,7 +214,7 @@ const SearchPage = () => {
         const nextPage = jsPage + 1;
         promises.push(
           jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
-            setAllJsResults((prev) => [...prev, ...res]);
+            setAllJsResults((prev) => [...prev, ...res.filter(isFullStream)]);
             setHasMoreJs(res.length >= PAGE_SIZE);
             setJsPage(nextPage);
           })
@@ -224,9 +224,17 @@ const SearchPage = () => {
         const nextPage = dzPage + 1;
         const offset = dzPage * PAGE_SIZE;
         promises.push(
-          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
-            setAllDzResults((prev) => [...prev, ...res]);
-            setHasMoreDz(res.length >= PAGE_SIZE);
+          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then(async (raw) => {
+            // Resolve full streams for Deezer tracks
+            const resolved: Song[] = [];
+            for (let i = 0; i < raw.length; i += 6) {
+              const batch = raw.slice(i, i + 6);
+              const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
+              resolved.push(...results);
+            }
+            const full = resolved.filter(isFullStream);
+            setAllDzResults((prev) => [...prev, ...full]);
+            setHasMoreDz(raw.length >= PAGE_SIZE);
             setDzPage(nextPage);
           })
         );
