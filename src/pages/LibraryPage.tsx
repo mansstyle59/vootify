@@ -1,23 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn, WifiOff } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
+type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
   songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview"));
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("recent");
+  const [customSort, setCustomSort] = useState<SortOption>("recent");
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -145,6 +148,16 @@ const LibraryPage = () => {
     };
     load();
   }, [tab]);
+
+  const sortedCustomSongs = useMemo(() => {
+    const arr = [...customSongs];
+    switch (customSort) {
+      case "alpha": return arr.sort((a, b) => a.title.localeCompare(b.title, "fr"));
+      case "artist": return arr.sort((a, b) => a.artist.localeCompare(b.artist, "fr"));
+      case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+      default: return arr; // already sorted by recent from query
+    }
+  }, [customSongs, customSort]);
 
 
   const removeCached = async (songId: string) => {
@@ -336,11 +349,44 @@ const LibraryPage = () => {
                   <p className="text-xs text-muted-foreground/60 mt-1">Les titres ajoutés par l'admin apparaissent ici</p>
                 </div>
               ) : (
-                customSongs.map((s, i) => (
-                  <div key={s.id} onClick={() => { setQueue(customSongs); play(s); }}>
-                    <SongCard song={s} index={i} showIndex />
+                <>
+                  {/* Sort menu */}
+                  <div className="relative flex items-center justify-between px-2 py-1.5 mb-1">
+                    <span className="text-xs text-muted-foreground">{customSongs.length} titre{customSongs.length > 1 ? "s" : ""}</span>
+                    <button
+                      onClick={() => setShowSortMenu(!showSortMenu)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <ArrowUpDown className="w-3 h-3" />
+                      {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
+                    </button>
+                    {showSortMenu && (
+                      <div className="absolute right-2 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
+                        {([
+                          { key: "recent" as SortOption, label: "Plus récent" },
+                          { key: "alpha" as SortOption, label: "Titre A→Z" },
+                          { key: "artist" as SortOption, label: "Artiste A→Z" },
+                          { key: "duration" as SortOption, label: "Durée" },
+                        ]).map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => { setCustomSort(opt.key); setShowSortMenu(false); }}
+                            className={`w-full text-left px-3 py-2 text-xs transition-colors ${
+                              customSort === opt.key ? "text-primary font-semibold bg-primary/5" : "text-foreground hover:bg-secondary"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))
+                  {sortedCustomSongs.map((s, i) => (
+                    <div key={s.id} onClick={() => { setQueue(sortedCustomSongs); play(s); }}>
+                      <SongCard song={s} index={i} showIndex />
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           )}
