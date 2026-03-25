@@ -157,6 +157,8 @@ const SearchPage = () => {
 
   const PAGE_SIZE = 50;
 
+  const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
+
   // JioSaavn results (page 1)
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
@@ -165,10 +167,21 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results (page 1)
+  // Deezer results (page 1) — resolve to full streams
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
+    queryFn: async () => {
+      const raw = await deezerApi.searchTracks(debouncedQuery, PAGE_SIZE);
+      // Resolve full streams in parallel (batch of 6 to avoid overwhelming)
+      const resolved: Song[] = [];
+      for (let i = 0; i < raw.length; i += 6) {
+        const batch = raw.slice(i, i + 6);
+        const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
+        resolved.push(...results);
+      }
+      // Only keep songs with full streams
+      return resolved.filter(isFullStream);
+    },
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
@@ -176,7 +189,7 @@ const SearchPage = () => {
   // Accumulate results from initial + extra pages
   useEffect(() => {
     if (jsResults) {
-      setAllJsResults(jsResults);
+      setAllJsResults(jsResults.filter(isFullStream));
       setHasMoreJs(jsResults.length >= PAGE_SIZE);
     }
   }, [jsResults]);
@@ -184,7 +197,7 @@ const SearchPage = () => {
   useEffect(() => {
     if (dzResults) {
       setAllDzResults(dzResults);
-      setHasMoreDz(dzResults.length >= PAGE_SIZE);
+      setHasMoreDz(dzResults.length >= PAGE_SIZE / 2);
     }
   }, [dzResults]);
 
