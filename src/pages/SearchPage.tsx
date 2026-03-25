@@ -176,20 +176,28 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Accumulate results from initial + extra pages
+  // Accumulate extra page results (page 2+)
+  const [extraJsResults, setExtraJsResults] = useState<Song[]>([]);
+  const [extraDzResults, setExtraDzResults] = useState<Song[]>([]);
+
+  // Reset extra results when query changes
   useEffect(() => {
-    if (jsResults) {
-      setAllJsResults(jsResults);
-      setHasMoreJs(jsResults.length >= PAGE_SIZE);
-    }
-  }, [jsResults]);
+    setExtraJsResults([]);
+    setExtraDzResults([]);
+  }, [debouncedQuery]);
+
+  // Combine page-1 query data with extra pages
+  useEffect(() => {
+    const js = [...(jsResults || []), ...extraJsResults];
+    setAllJsResults(js);
+    setHasMoreJs((jsResults?.length || 0) >= PAGE_SIZE || extraJsResults.length > 0);
+  }, [jsResults, extraJsResults]);
 
   useEffect(() => {
-    if (dzResults) {
-      setAllDzResults(dzResults);
-      setHasMoreDz(dzResults.length >= PAGE_SIZE);
-    }
-  }, [dzResults]);
+    const dz = [...(dzResults || []), ...extraDzResults];
+    setAllDzResults(dz);
+    setHasMoreDz((dzResults?.length || 0) >= PAGE_SIZE || extraDzResults.length > 0);
+  }, [dzResults, extraDzResults]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !debouncedQuery) return;
