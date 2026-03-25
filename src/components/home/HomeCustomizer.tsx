@@ -83,6 +83,8 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
+  const emojiButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [emojiPickerPos, setEmojiPickerPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (open) setSections(current);
