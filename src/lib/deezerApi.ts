@@ -145,17 +145,6 @@ export const deezerApi = {
       // Filter out blacklisted URLs
       const filtered = results.filter((r) => !r.streamUrl || !blacklistedUrls.includes(r.streamUrl));
 
-      // Find best match by comparing normalized titles
-      const norm = (s: string) =>
-        s.toLowerCase()
-          .replace(/\(.*?\)/g, "")
-          .replace(/\[.*?\]/g, "")
-          .replace(/\bfeat\.?\s*/gi, "")
-          .replace(/\bft\.?\s*/gi, "")
-          .replace(/[^a-z0-9\s]/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
-
       const targetTitle = norm(song.title);
       const targetArtist = norm(song.artist.split(",")[0]);
 
@@ -178,7 +167,38 @@ export const deezerApi = {
     } catch (e) {
       console.error("JioSaavn resolve failed:", e);
     }
-    // No full stream found — return song without Deezer preview
+
+    // Fallback: search admin custom_songs for a matching track
+    try {
+      const targetTitle = norm(song.title);
+      const targetArtist = norm(song.artist.split(",")[0]);
+      const { data: customSongs } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .not("stream_url", "is", null);
+
+      if (customSongs && customSongs.length > 0) {
+        const customMatch = customSongs.find((c) => {
+          const ct = norm(c.title);
+          const ca = norm(c.artist.split(",")[0]);
+          return (ct.includes(targetTitle) || targetTitle.includes(ct)) &&
+                 (ca.includes(targetArtist) || targetArtist.includes(ca));
+        });
+
+        if (customMatch?.stream_url) {
+          console.log("Resolved via admin custom song:", customMatch.title);
+          return {
+            ...song,
+            streamUrl: customMatch.stream_url,
+            coverUrl: customMatch.cover_url || song.coverUrl,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Custom songs fallback failed:", e);
+    }
+
+    // No full stream found
     return { ...song, streamUrl: "" };
   },
 
