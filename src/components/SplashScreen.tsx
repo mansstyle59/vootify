@@ -31,7 +31,7 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
           >
             <img
               src="/pwa-icon-512.png"
-              alt="VOO Music"
+              alt="Vootify"
               className="w-28 h-28 rounded-3xl"
               style={{ boxShadow: "0 20px 60px -10px rgba(29, 185, 84, 0.4)" }}
             />
@@ -41,7 +41,7 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
               transition={{ delay: 0.4 }}
               className="text-2xl font-display font-bold text-[#1DB954]"
             >
-              VOO Music
+              Vootify
             </motion.h1>
           </motion.div>
 
