@@ -607,12 +607,12 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-center w-full mb-6">
           <button
             onClick={togglePlay}
-            className="w-16 h-16 rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+            className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
           >
             {isPlaying ? (
-              <Pause className="w-8 h-8 text-background fill-current" />
+              <Pause className="w-9 h-9 text-background fill-current" />
             ) : (
-              <Play className="w-8 h-8 text-background fill-current ml-1" />
+              <Play className="w-9 h-9 text-background fill-current ml-1" />
             )}
           </button>
         </div>
@@ -874,52 +874,52 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Transport controls - Spotify flat style */}
+            {/* Transport controls */}
             <div className="flex items-center justify-between w-full mb-6">
               <button onClick={toggleShuffle} className="active:scale-90 transition-transform">
-                <Shuffle className={`w-5 h-5 ${shuffle ? "text-primary" : "text-foreground/50"}`} />
+                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary" : "text-foreground/50"}`} />
               </button>
               <button onClick={previous} className="active:scale-90 transition-transform">
-                <SkipBack className="w-8 h-8 text-foreground fill-current" />
+                <SkipBack className="w-9 h-9 text-foreground fill-current" />
               </button>
               <button
                 onClick={togglePlay}
-                className="w-16 h-16 rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+                className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
               >
                 {isPlaying ? (
-                  <Pause className="w-8 h-8 text-background fill-current" />
+                  <Pause className="w-9 h-9 text-background fill-current" />
                 ) : (
-                  <Play className="w-8 h-8 text-background fill-current ml-1" />
+                  <Play className="w-9 h-9 text-background fill-current ml-1" />
                 )}
               </button>
               <button onClick={next} className="active:scale-90 transition-transform">
-                <SkipForward className="w-8 h-8 text-foreground fill-current" />
+                <SkipForward className="w-9 h-9 text-foreground fill-current" />
               </button>
               <button onClick={cycleRepeat} className="active:scale-90 transition-transform">
                 {repeat === "one" ? (
-                  <Repeat1 className="w-5 h-5 text-primary" />
+                  <Repeat1 className="w-6 h-6 text-primary" />
                 ) : (
-                  <Repeat className={`w-5 h-5 ${repeat === "all" ? "text-primary" : "text-foreground/50"}`} />
+                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary" : "text-foreground/50"}`} />
                 )}
               </button>
             </div>
 
             {/* Bottom actions */}
             <div className="flex items-center justify-between">
-              <button className="p-1 active:scale-90 transition-transform">
-                <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
+              <button className="p-1.5 active:scale-90 transition-transform">
+                <Heart className={`w-6 h-6 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
                   onClick={() => toggleLike(currentSong)}
                 />
               </button>
 
-              {/* Wrong song button — only when HD-resolved from Deezer */}
+              {/* Wrong song button */}
               {originalStreamUrl && currentSong.id.startsWith("dz-") && (
                 <button
                   onClick={revertToPreview}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all active:scale-95 bg-destructive/15 text-destructive border border-destructive/25 hover:bg-destructive/25"
                   title="Ce n'est pas le bon morceau — revenir à l'extrait 30s"
                 >
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <AlertTriangle className="w-4 h-4" />
                   Mauvais titre
                 </button>
               )}
@@ -933,25 +933,25 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     download(currentSong);
                   }
                 }}
-                className={`relative p-1 active:scale-90 transition-transform ${
+                className={`relative p-1.5 active:scale-90 transition-transform ${
                   isCached ? "text-primary" : isDownloading ? "text-primary/60" : "text-foreground/40"
                 }`}
               >
                 {isDownloading ? (
                   <div className="relative">
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-6 h-6 animate-spin" />
                     <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary tabular-nums">
                       {dlProgress}%
                     </span>
                   </div>
                 ) : isCached ? (
-                  <Check className="w-5 h-5" />
+                  <Check className="w-6 h-6" />
                 ) : (
-                  <Download className="w-5 h-5" />
+                  <Download className="w-6 h-6" />
                 )}
               </button>
 
-              {/* Auto mix toggle — hidden when wrong song button is visible to save space */}
+              {/* Auto mix toggle */}
               {!originalStreamUrl && (
                 <button
                   onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
@@ -961,13 +961,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                       : "text-foreground/40 border border-foreground/10"
                   }`}
                 >
-                  <Disc3 className={`w-3.5 h-3.5 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
+                  <Disc3 className={`w-4 h-4 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
                   Auto mix
                 </button>
               )}
 
-              <button onClick={() => setShowQueue(true)} className="p-1 active:scale-90 transition-transform">
-                <ListMusic className="w-5 h-5 text-foreground/50" />
+              <button onClick={() => setShowQueue(true)} className="p-1.5 active:scale-90 transition-transform">
+                <ListMusic className="w-6 h-6 text-foreground/50" />
               </button>
             </div>
           </motion.div>
