@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
@@ -46,8 +45,6 @@ function AlbumCard({ album, onClick }: { album: Album; onClick: () => void }) {
   );
 }
 
-type SearchSource = "all" | "jiosaavn" | "deezer";
-
 const SearchPage = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -57,21 +54,17 @@ const SearchPage = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const userId = usePlayerStore((s) => s.userId);
 
-  // Load search history from DB
   useEffect(() => {
     if (userId) {
       musicDb.getSearchHistory(userId).then(setRecentSearches).catch(console.error);
     }
   }, [userId]);
+
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [hdOnly, setHdOnly] = useState(false);
   const [resolveProgress, setResolveProgress] = useState<{ resolved: number; total: number } | null>(null);
-  const [source, setSource] = useState<SearchSource>("all");
-  const [jsPage, setJsPage] = useState(1);
   const [dzPage, setDzPage] = useState(1);
-  const [allJsResults, setAllJsResults] = useState<Song[]>([]);
   const [allDzResults, setAllDzResults] = useState<Song[]>([]);
-  const [hasMoreJs, setHasMoreJs] = useState(true);
   const [hasMoreDz, setHasMoreDz] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -79,7 +72,6 @@ const SearchPage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Close suggestions on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -90,10 +82,10 @@ const SearchPage = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fast autocomplete query (200ms debounce, lightweight)
+  // Autocomplete via Deezer
   const { data: suggestions } = useQuery({
-    queryKey: ["autocomplete", suggestQuery],
-    queryFn: () => jiosaavnApi.search(suggestQuery, 5),
+    queryKey: ["autocomplete-dz", suggestQuery],
+    queryFn: () => deezerApi.searchTracks(suggestQuery, 5),
     enabled: suggestQuery.length >= 2 && showSuggestions,
     staleTime: 60 * 1000,
   });
@@ -103,18 +95,16 @@ const SearchPage = () => {
     setArtistFilter(null);
     setShowSuggestions(true);
 
-    // Fast debounce for suggestions
     clearTimeout((window as any).__suggestTimeout);
     (window as any).__suggestTimeout = setTimeout(() => {
       setSuggestQuery(value.trim());
     }, 200);
 
-    // Normal debounce for full search
     clearTimeout((window as any).__searchTimeout);
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value.trim());
-      setJsPage(1); setDzPage(1);
-      setHasMoreJs(true); setHasMoreDz(true);
+      setDzPage(1);
+      setHasMoreDz(true);
     }, 400);
   }, []);
 
@@ -124,8 +114,8 @@ const SearchPage = () => {
     setSuggestQuery("");
     setShowSuggestions(false);
     setArtistFilter(null);
-    setJsPage(1); setDzPage(1);
-    setHasMoreJs(true); setHasMoreDz(true);
+    setDzPage(1);
+    setHasMoreDz(true);
     inputRef.current?.blur();
   }, []);
 
@@ -133,12 +123,10 @@ const SearchPage = () => {
     commitSearch(term);
   };
 
-  // Unique suggestion artists + titles for autocomplete
   const autocompleteSuggestions = useMemo(() => {
     if (!suggestions || suggestions.length === 0) return [];
     const items: { type: "song" | "artist"; label: string; sub?: string; coverUrl?: string; song?: Song }[] = [];
 
-    // Extract unique artists
     const seenArtists = new Set<string>();
     suggestions.forEach((song) => {
       const artist = song.artist.split(",")[0].trim();
@@ -148,7 +136,6 @@ const SearchPage = () => {
       }
     });
 
-    // Add songs
     suggestions.slice(0, 4).forEach((song) => {
       items.push({ type: "song", label: song.title, sub: song.artist, coverUrl: song.coverUrl, song });
     });
@@ -158,41 +145,21 @@ const SearchPage = () => {
 
   const PAGE_SIZE = 50;
 
-  // Check if a song has a full stream (not just a 30s preview)
   const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
 
-  // JioSaavn results (page 1)
-  const { data: jsResults, isLoading: jsLoading } = useQuery({
-    queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, PAGE_SIZE),
-    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Deezer results (page 1) — will be resolved to full streams at play time
+  // Deezer search (page 1)
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
     queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
-    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
+    enabled: debouncedQuery.length >= 2,
     staleTime: 2 * 60 * 1000,
   });
 
-  // Accumulate extra page results (page 2+)
-  const [extraJsResults, setExtraJsResults] = useState<Song[]>([]);
   const [extraDzResults, setExtraDzResults] = useState<Song[]>([]);
 
-  // Reset extra results when query changes
   useEffect(() => {
-    setExtraJsResults([]);
     setExtraDzResults([]);
   }, [debouncedQuery]);
-
-  // Combine page-1 query data with extra pages
-  useEffect(() => {
-    const js = [...(jsResults || []), ...extraJsResults];
-    setAllJsResults(js);
-    setHasMoreJs((jsResults?.length || 0) >= PAGE_SIZE || extraJsResults.length > 0);
-  }, [jsResults, extraJsResults]);
 
   useEffect(() => {
     const dz = [...(dzResults || []), ...extraDzResults];
@@ -200,11 +167,10 @@ const SearchPage = () => {
     setHasMoreDz((dzResults?.length || 0) >= PAGE_SIZE || extraDzResults.length > 0);
   }, [dzResults, extraDzResults]);
 
-  // Background resolution: resolve Deezer 30s previews to full streams
+  // Background HD resolution
   const resolveAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Abort any previous resolution batch
     resolveAbortRef.current?.abort();
 
     const previewTracks = allDzResults.filter(
@@ -242,7 +208,6 @@ const SearchPage = () => {
           );
         }
       }
-      // Done — show toast and clear progress
       if (!controller.signal.aborted) {
         if (upgradedCount > 0) {
           toast.success(`${upgradedCount}/${total} morceaux upgradés en HD`);
@@ -256,41 +221,21 @@ const SearchPage = () => {
   }, [allDzResults.length, debouncedQuery]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !debouncedQuery) return;
-    const canLoadJs = (source === "all" || source === "jiosaavn") && hasMoreJs;
-    const canLoadDz = (source === "all" || source === "deezer") && hasMoreDz;
-    if (!canLoadJs && !canLoadDz) return;
+    if (loadingMore || !debouncedQuery || !hasMoreDz) return;
 
     setLoadingMore(true);
     try {
-      const promises: Promise<void>[] = [];
-      if (canLoadJs) {
-        const nextPage = jsPage + 1;
-        promises.push(
-          jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
-            setExtraJsResults((prev) => [...prev, ...res]);
-            setHasMoreJs(res.length >= PAGE_SIZE);
-            setJsPage(nextPage);
-          })
-        );
-      }
-      if (canLoadDz) {
-        const nextPage = dzPage + 1;
-        const offset = dzPage * PAGE_SIZE;
-        promises.push(
-          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
-            setExtraDzResults((prev) => [...prev, ...res]);
-            setHasMoreDz(res.length >= PAGE_SIZE);
-            setDzPage(nextPage);
-          })
-        );
-      }
-      await Promise.all(promises);
+      const nextPage = dzPage + 1;
+      const offset = dzPage * PAGE_SIZE;
+      const res = await deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset);
+      setExtraDzResults((prev) => [...prev, ...res]);
+      setHasMoreDz(res.length >= PAGE_SIZE);
+      setDzPage(nextPage);
     } catch (e) {
       console.error("Failed to load more results:", e);
     }
     setLoadingMore(false);
-  }, [loadingMore, debouncedQuery, source, hasMoreJs, hasMoreDz, jsPage, dzPage]);
+  }, [loadingMore, debouncedQuery, hasMoreDz, dzPage]);
 
   // Intersection observer for infinite scroll
   useEffect(() => {
@@ -308,7 +253,6 @@ const SearchPage = () => {
     return () => observer.disconnect();
   }, [loadMore, debouncedQuery]);
 
-  /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
   const normalize = useCallback((s: string) =>
     s.toLowerCase()
       .replace(/\(.*?\)/g, "")
@@ -321,56 +265,21 @@ const SearchPage = () => {
       .trim()
   , []);
 
-  // Album results (JioSaavn)
-  const { data: jsAlbumResults } = useQuery({
-    queryKey: ["album-search-js", debouncedQuery],
-    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 15),
-    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Album results (Deezer)
+  // Album results (Deezer only)
   const { data: dzAlbumResults } = useQuery({
     queryKey: ["album-search-dz", debouncedQuery],
     queryFn: () => deezerApi.searchAlbums(debouncedQuery, 15),
-    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
+    enabled: debouncedQuery.length >= 2,
     staleTime: 2 * 60 * 1000,
   });
 
-  // Merge albums, deduplicated by normalized title+artist
-  const albumResults = useMemo(() => {
-    if (source === "jiosaavn") return jsAlbumResults || [];
-    if (source === "deezer") return dzAlbumResults || [];
-    const js = jsAlbumResults || [];
-    const dz = dzAlbumResults || [];
-    const seen = new Set<string>();
-    const merged: Album[] = [];
-    for (const album of [...js, ...dz]) {
-      const key = `${normalize(album.title)}::${normalize(album.artist)}`;
-      if (!seen.has(key)) { seen.add(key); merged.push(album); }
-    }
-    return merged;
-  }, [jsAlbumResults, dzAlbumResults, source, normalize]);
-
-  const isLoading = jsLoading || dzLoading;
+  const albumResults = dzAlbumResults || [];
 
   const mergedResults = useMemo(() => {
-    if (source === "jiosaavn") return allJsResults;
-    if (source === "deezer") return allDzResults;
-    // Merge both sources, JioSaavn first (full streams), then Deezer (resolved at play)
-    const js = allJsResults;
-    const dz = allDzResults;
-    const seen = new Set<string>();
-    const merged: Song[] = [];
-
-    for (const song of [...js, ...dz]) {
-      const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
-      if (!seen.has(key)) { seen.add(key); merged.push(song); }
-    }
+    const results = [...allDzResults];
 
     // French/Belgian/African francophone popular artists for priority boost
     const frenchArtists = new Set([
-      // Rap FR
       "ninho", "aya nakamura", "jul", "damso", "gims", "maitre gims",
       "tayc", "sdm", "werenoi", "plk", "gazo", "tiakola", "angele",
       "stromae", "nekfeu", "orelsan", "booba", "pnl", "lacrim",
@@ -385,7 +294,6 @@ const SearchPage = () => {
       "franglish", "gambi", "landy", "hornet la frappe", "gradur",
       "bosh", "da uzi", "green montana", "bolemvn", "benjamin epps",
       "lesram", "moha k", "dystinct", "timal", "so la lune",
-      // Pop/Chanson FR
       "fally ipupa", "gael faye", "pierre de maere", "clara luciani",
       "pomme", "juliette armanet", "keen v", "black m",
       "mika", "calogero", "christophe mae", "m pokora",
@@ -393,12 +301,9 @@ const SearchPage = () => {
       "edith piaf", "jacques brel", "charles aznavour", "serge gainsbourg",
       "renaud", "mc solaar", "iam", "ntm", "oxmo puccino",
       "youssoupha", "kery james", "medine", "sniper",
-      // Afro FR
-      "fally ipupa", "innoss b", "gims", "tayc", "aya nakamura",
-      "vegedream", "naza", "keblack", "djadja & dinaz", "bramsito",
+      "innoss b", "naza", "djadja & dinaz", "bramsito",
     ]);
 
-    // Common French-language song title words for detection
     const frenchWords = new Set([
       "le", "la", "les", "de", "du", "des", "un", "une", "et", "en",
       "je", "tu", "il", "elle", "nous", "vous", "mon", "ma", "mes",
@@ -409,51 +314,40 @@ const SearchPage = () => {
       "femme", "homme", "dieu", "rue", "feu", "eau", "ciel",
     ]);
 
-    // Rank by relevance to query
     const q = normalize(debouncedQuery);
     const qWords = q.split(" ").filter(Boolean);
 
-    merged.sort((a, b) => {
+    results.sort((a, b) => {
       const scoreRelevance = (song: Song) => {
         const t = normalize(song.title);
         const ar = normalize(song.artist);
         let score = 0;
 
-        // Title match
         if (t === q) score += 100;
         else if (t.startsWith(q)) score += 80;
         else if (t.includes(q)) score += 60;
 
-        // Artist match
         if (ar === q) score += 90;
         else if (ar.startsWith(q)) score += 70;
         else if (ar.includes(q)) score += 50;
 
-        // Word-level matching
         for (const w of qWords) {
           if (t.includes(w)) score += 10;
           if (ar.includes(w)) score += 8;
         }
 
-        // French artist boost (strong)
         const mainArtist = ar.split(",")[0].trim();
         if (frenchArtists.has(mainArtist)) score += 40;
 
-        // Partial match: check if any known French artist appears within the artist field
         for (const fa of frenchArtists) {
           if (fa.length > 3 && ar.includes(fa)) { score += 30; break; }
         }
 
-        // French title detection: boost songs with French words in title
         const titleWords = t.split(/[\s\-']+/).filter(Boolean);
         const frenchWordCount = titleWords.filter((w) => frenchWords.has(w)).length;
         if (frenchWordCount >= 2) score += 25;
         else if (frenchWordCount === 1 && titleWords.length <= 4) score += 10;
 
-        // Deezer source boost (more likely to have French content than JioSaavn)
-        if (song.id.startsWith("dz-")) score += 15;
-
-        // Full stream boost
         if (isFullStream(song)) score += 20;
         else if (song.streamUrl) score += 5;
 
@@ -462,8 +356,8 @@ const SearchPage = () => {
       return scoreRelevance(b) - scoreRelevance(a);
     });
 
-    return merged;
-  }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
+    return results;
+  }, [allDzResults, normalize, debouncedQuery]);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && mergedResults.length > 0 && userId) {
@@ -533,12 +427,8 @@ const SearchPage = () => {
             onChange={(e) => handleChange(e.target.value)}
             onFocus={() => query.length >= 2 && setShowSuggestions(true)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                commitSearch(query.trim());
-              }
-              if (e.key === "Escape") {
-                setShowSuggestions(false);
-              }
+              if (e.key === "Enter") commitSearch(query.trim());
+              if (e.key === "Escape") setShowSuggestions(false);
             }}
             placeholder="Titres, artistes, albums..."
             className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
@@ -562,13 +452,7 @@ const SearchPage = () => {
                 {autocompleteSuggestions.map((item, i) => (
                   <button
                     key={`${item.type}-${item.label}-${i}`}
-                    onClick={() => {
-                      if (item.type === "artist") {
-                        commitSearch(item.label);
-                      } else if (item.song) {
-                        commitSearch(item.label);
-                      }
-                    }}
+                    onClick={() => commitSearch(item.label)}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-secondary/60 transition-colors"
                   >
                     {item.coverUrl ? (
@@ -597,23 +481,10 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {/* Source filter (visible when searching) */}
+      {/* Filter bar (visible when searching) */}
       {debouncedQuery && (
         <div className="px-4 md:px-8 mb-4">
           <div className="flex gap-2 flex-wrap">
-            {(["all", "jiosaavn", "deezer"] as SearchSource[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSource(s)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  source === s
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {s === "all" ? "Toutes sources" : s === "jiosaavn" ? "JioSaavn" : "Deezer"}
-              </button>
-            ))}
             <button
               onClick={() => setHdOnly(!hdOnly)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
@@ -705,7 +576,7 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Genre cards with gradients */}
+            {/* Genre cards */}
             <div>
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Parcourir les genres</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -736,7 +607,7 @@ const SearchPage = () => {
             exit={{ opacity: 0 }}
             className="px-4 md:px-8"
           >
-            {isLoading && (!albumResults || albumResults.length === 0) ? (
+            {dzLoading && (!albumResults || albumResults.length === 0) ? (
               <div className="rounded-xl bg-secondary/30 overflow-hidden">
                 {Array.from({ length: 8 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
@@ -807,7 +678,7 @@ const SearchPage = () => {
                     </div>
 
                     {/* Infinite scroll sentinel */}
-                    {(hasMoreJs || hasMoreDz) && !artistFilter && (
+                    {hasMoreDz && !artistFilter && (
                       <div ref={sentinelRef} className="flex items-center justify-center py-6">
                         {loadingMore && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
