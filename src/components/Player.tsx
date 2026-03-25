@@ -547,11 +547,14 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 220 }}
       drag="y"
+      dragDirectionLock
       dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0, bottom: 0.6 }}
-      onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 500) onClose(); }}
+      dragElastic={{ top: 0.05, bottom: 0.8 }}
+      onDragEnd={(_, info) => {
+        if (info.offset.y > 80 || info.velocity.y > 300) onClose();
+      }}
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden"
-      style={{ background: bgColor, transition: "background 1s ease-in-out", touchAction: "none" }}
+      style={{ background: bgColor, transition: "background 1s ease-in-out", touchAction: "pan-x" }}
     >
       {/* Dynamic blurred BG */}
       <div className="absolute inset-0 overflow-hidden">
