@@ -626,15 +626,20 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {/* Progress bar - Spotify style */}
             <div className="mb-5">
               <div
-                className="h-[4px] rounded-full cursor-pointer relative group"
-                style={{ background: "hsl(0 0% 100% / 0.15)" }}
+                ref={progressBarRef}
+                className="h-[4px] rounded-full cursor-pointer relative group py-3 -my-3"
+                style={{ touchAction: "none" }}
                 onClick={handleSeek}
+                onTouchStart={handleTouchSeek}
+                onTouchMove={handleTouchMoveSeek}
               >
-                <div
-                  className="h-full rounded-full relative transition-all duration-150"
-                  style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
-                >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[4px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
+                  <div
+                    className="h-full rounded-full relative transition-all duration-150"
+                    style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
+                  >
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between mt-1.5 text-[11px] text-foreground/50 tabular-nums font-medium">
