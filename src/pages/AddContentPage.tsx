@@ -198,13 +198,35 @@ function AlbumForm() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
+  const [id3Fields, setId3Fields] = useState<Set<string>>(new Set());
 
   const handleTracksUploaded = (uploaded: UploadedTrack[]) => {
     setTracks(uploaded);
-    // Auto-fill cover from first track's ID3 cover if no cover set
-    if (!form.coverUrl && uploaded.length > 0) {
+    if (uploaded.length === 0) return;
+
+    const filled = new Set<string>();
+
+    setForm((f) => {
+      const updated = { ...f };
+      // Auto-fill artist from first track's ID3 artist if empty
+      const firstArtist = uploaded.find((t) => t.artist)?.artist;
+      if (!f.artist && firstArtist) { updated.artist = firstArtist; filled.add("artist"); }
+
+      // Auto-fill cover from first track's ID3 cover
       const firstCover = uploaded.find((t) => t.coverUrl)?.coverUrl;
-      if (firstCover) setForm((f) => ({ ...f, coverUrl: firstCover }));
+      if (!f.coverUrl && firstCover) { updated.coverUrl = firstCover; filled.add("coverUrl"); }
+
+      return updated;
+    });
+
+    setId3Fields((prev) => {
+      const next = new Set(prev);
+      filled.forEach((f) => next.add(f));
+      return next;
+    });
+
+    if (filled.size > 0) {
+      toast.success(`${filled.size} champ${filled.size > 1 ? "s" : ""} rempli${filled.size > 1 ? "s" : ""} via ID3`);
     }
   };
 
@@ -213,7 +235,6 @@ function AlbumForm() {
     if (!form.title.trim() || !form.artist.trim()) return;
     setLoading(true);
 
-    // Create the album
     const { data: album, error } = await supabase.from("custom_albums").insert({
       user_id: ANONYMOUS_USER_ID,
       title: form.title.trim(),
@@ -224,7 +245,6 @@ function AlbumForm() {
 
     if (error) { toast.error("Erreur: " + error.message); setLoading(false); return; }
 
-    // Create songs for each uploaded track
     if (tracks.length > 0 && album) {
       const songInserts = tracks.map((t) => ({
         user_id: ANONYMOUS_USER_ID,
@@ -249,14 +269,20 @@ function AlbumForm() {
     toast.success(`Album ajouté${trackCount > 0 ? ` avec ${trackCount} piste${trackCount > 1 ? "s" : ""}` : ""} !`);
     setForm({ title: "", artist: "", coverUrl: "", year: "" });
     setTracks([]);
+    setId3Fields(new Set());
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <FieldInput label="Titre" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Nom de l'album" required />
-      <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required />
+      <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required autoFilled={id3Fields.has("artist")} />
       <FieldInput label="Année" value={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2025" type="number" />
       <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
+      {id3Fields.has("coverUrl") && form.coverUrl && (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold -mt-2">
+          <Sparkles className="w-2.5 h-2.5" /> Pochette ID3
+        </span>
+      )}
       <AlbumFolderPicker
         albumArtist={form.artist}
         onTracksUploaded={handleTracksUploaded}
