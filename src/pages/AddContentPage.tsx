@@ -147,6 +147,13 @@ function SongForm() {
         value={form.streamUrl}
         onChange={(url) => setForm((f) => ({ ...f, streamUrl: url }))}
         onDurationDetected={(dur) => setForm((f) => ({ ...f, duration: String(dur) }))}
+        onMetadataExtracted={(meta) => setForm((f) => ({
+          ...f,
+          title: meta.title || f.title,
+          artist: meta.artist || f.artist,
+          album: meta.album || f.album,
+          coverUrl: meta.coverUrl || f.coverUrl,
+        }))}
       />
       <FieldInput label="Ou URL du flux audio" value={form.streamUrl} onChange={(v) => setForm({ ...form, streamUrl: v })} placeholder="https://..." />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
