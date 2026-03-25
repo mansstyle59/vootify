@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
@@ -66,6 +67,7 @@ function AlbumCard({ album, onClick }: { album: Album; onClick: () => void }) {
 type SearchSource = "all" | "jiosaavn" | "deezer";
 
 const SearchPage = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [suggestQuery, setSuggestQuery] = useState("");
@@ -167,12 +169,35 @@ const SearchPage = () => {
   });
 
   // Album results (JioSaavn)
-  const { data: albumResults } = useQuery({
-    queryKey: ["album-search", debouncedQuery],
+  const { data: jsAlbumResults } = useQuery({
+    queryKey: ["album-search-js", debouncedQuery],
     queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 10),
-    enabled: debouncedQuery.length >= 2,
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
+
+  // Album results (Deezer)
+  const { data: dzAlbumResults } = useQuery({
+    queryKey: ["album-search-dz", debouncedQuery],
+    queryFn: () => deezerApi.searchAlbums(debouncedQuery, 10),
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Merge albums, deduplicated by normalized title+artist
+  const albumResults = useMemo(() => {
+    if (source === "jiosaavn") return jsAlbumResults || [];
+    if (source === "deezer") return dzAlbumResults || [];
+    const js = jsAlbumResults || [];
+    const dz = dzAlbumResults || [];
+    const seen = new Set<string>();
+    const merged: Album[] = [];
+    for (const album of [...js, ...dz]) {
+      const key = `${normalize(album.title)}::${normalize(album.artist)}`;
+      if (!seen.has(key)) { seen.add(key); merged.push(album); }
+    }
+    return merged;
+  }, [jsAlbumResults, dzAlbumResults, source, normalize]);
 
   const isLoading = jsLoading || dzLoading;
 
