@@ -507,6 +507,7 @@ const SearchPage = () => {
               }`}
             >
               Custom uniquement
+            </button>
             <button
               onClick={() => {
                 hdCache.clear();
