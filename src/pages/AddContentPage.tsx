@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
-import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut } from "lucide-react";
+import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
@@ -18,13 +18,19 @@ const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "radio", label: "Station Radio", icon: Radio },
 ];
 
-function FieldInput({ label, value, onChange, placeholder, type = "text", required = false }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean;
+function FieldInput({ label, value, onChange, placeholder, type = "text", required = false, autoFilled = false }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean; autoFilled?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-foreground mb-1 block">
+      <span className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
         {label} {required && <span className="text-destructive">*</span>}
+        {autoFilled && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+            <Sparkles className="w-2.5 h-2.5" />
+            ID3
+          </span>
+        )}
       </span>
       <input
         type={type}
@@ -32,7 +38,9 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+        className={`w-full px-3 py-2.5 rounded-lg bg-secondary border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
+          autoFilled ? "border-primary/40" : "border-border"
+        }`}
       />
     </label>
   );
@@ -116,6 +124,7 @@ function AdminLoginForm() {
 function SongForm() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", album: "", duration: "", coverUrl: "", streamUrl: "" });
+  const [id3Fields, setId3Fields] = useState<Set<string>>(new Set());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,26 +143,47 @@ function SongForm() {
     if (error) { toast.error("Erreur: " + error.message); return; }
     toast.success("Chanson ajoutée !");
     setForm({ title: "", artist: "", album: "", duration: "", coverUrl: "", streamUrl: "" });
+    setId3Fields(new Set());
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <FieldInput label="Titre" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Nom de la chanson" required />
-      <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required />
-      <FieldInput label="Album" value={form.album} onChange={(v) => setForm({ ...form, album: v })} placeholder="Nom de l'album (optionnel)" />
-      <FieldInput label="Durée (secondes)" value={form.duration} onChange={(v) => setForm({ ...form, duration: v })} placeholder="180" type="number" />
+      <FieldInput label="Titre" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Nom de la chanson" required autoFilled={id3Fields.has("title")} />
+      <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required autoFilled={id3Fields.has("artist")} />
+      <FieldInput label="Album" value={form.album} onChange={(v) => setForm({ ...form, album: v })} placeholder="Nom de l'album (optionnel)" autoFilled={id3Fields.has("album")} />
+      <FieldInput label="Durée (secondes)" value={form.duration} onChange={(v) => setForm({ ...form, duration: v })} placeholder="180" type="number" autoFilled={id3Fields.has("duration")} />
       <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
+      {id3Fields.has("coverUrl") && form.coverUrl && (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold -mt-2">
+          <Sparkles className="w-2.5 h-2.5" /> Pochette ID3
+        </span>
+      )}
       <AudioFilePicker
         value={form.streamUrl}
         onChange={(url) => setForm((f) => ({ ...f, streamUrl: url }))}
-        onDurationDetected={(dur) => setForm((f) => ({ ...f, duration: String(dur) }))}
-        onMetadataExtracted={(meta) => setForm((f) => ({
-          ...f,
-          title: meta.title || f.title,
-          artist: meta.artist || f.artist,
-          album: meta.album || f.album,
-          coverUrl: meta.coverUrl || f.coverUrl,
-        }))}
+        onDurationDetected={(dur) => {
+          setForm((f) => ({ ...f, duration: String(dur) }));
+          setId3Fields((s) => new Set(s).add("duration"));
+        }}
+        onMetadataExtracted={(meta) => {
+          const filled = new Set<string>();
+          setForm((f) => {
+            const updated = { ...f };
+            if (meta.title) { updated.title = meta.title; filled.add("title"); }
+            if (meta.artist) { updated.artist = meta.artist; filled.add("artist"); }
+            if (meta.album) { updated.album = meta.album; filled.add("album"); }
+            if (meta.coverUrl) { updated.coverUrl = meta.coverUrl; filled.add("coverUrl"); }
+            return updated;
+          });
+          setId3Fields((prev) => {
+            const next = new Set(prev);
+            filled.forEach((f) => next.add(f));
+            return next;
+          });
+          if (filled.size > 0) {
+            toast.success(`${filled.size} champ${filled.size > 1 ? "s" : ""} rempli${filled.size > 1 ? "s" : ""} via ID3`);
+          }
+        }}
       />
       <FieldInput label="Ou URL du flux audio" value={form.streamUrl} onChange={(v) => setForm({ ...form, streamUrl: v })} placeholder="https://..." />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
