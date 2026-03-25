@@ -720,8 +720,9 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     {currentSong.artist}
                   </p>
                   {isCached ? (
-                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-accent/20 text-accent-foreground border border-accent/30">
-                      Local
+                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <WifiOff className="w-2.5 h-2.5" />
+                      OFFLINE
                     </span>
                   ) : currentSong.resolvedViaCustom ? (
                     <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground border border-secondary">
