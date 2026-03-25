@@ -35,6 +35,8 @@ const TOP_TABS: { key: TopGenre; label: string }[] = [
 ];
 
 const HomePage = () => {
+  const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
+  const [topGenre, setTopGenre] = useState<TopGenre>("all");
   const { isAdmin } = useAdminAuth();
   const { sections, saveConfig } = useGlobalHomeConfig();
   const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
