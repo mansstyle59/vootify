@@ -4,7 +4,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
