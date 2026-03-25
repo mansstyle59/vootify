@@ -606,6 +606,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </motion.div>
   );
 }
 
