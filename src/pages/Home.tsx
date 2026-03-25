@@ -83,7 +83,9 @@ const HomePage = () => {
       {recentlyPlayed.length > 0 && (
         <div className="px-4 md:px-8 mb-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {recentlyPlayed.slice(0, 8).map((song, i) => {
+            {recentlyPlayed
+              .filter((song, i, arr) => arr.findIndex((s) => s.id === song.id) === i)
+              .slice(0, 8).map((song, i) => {
               const isActive = currentSong?.id === song.id;
               return (
                 <motion.button
