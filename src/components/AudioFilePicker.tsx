@@ -41,8 +41,29 @@ const AudioFilePicker = ({ value, onChange, onDurationDetected, onMetadataExtrac
 
     // Extract ID3 metadata
     const id3 = await extractID3(file, file.name);
+    let durationDetected = false;
     if (id3.duration && id3.duration > 0 && onDurationDetected) {
-      onDurationDetected(id3.duration);
+      onDurationDetected(Math.round(id3.duration));
+      durationDetected = true;
+    }
+
+    // Fallback: detect duration via HTML5 Audio element
+    if (!durationDetected && onDurationDetected) {
+      try {
+        const objectUrl = URL.createObjectURL(file);
+        const audio = new Audio();
+        audio.preload = "metadata";
+        audio.src = objectUrl;
+        audio.addEventListener("loadedmetadata", () => {
+          if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+            onDurationDetected(Math.round(audio.duration));
+          }
+          URL.revokeObjectURL(objectUrl);
+        }, { once: true });
+        audio.addEventListener("error", () => URL.revokeObjectURL(objectUrl), { once: true });
+      } catch (e) {
+        console.error("Audio duration fallback failed:", e);
+      }
     }
 
     // If ID3 is incomplete, try Deezer search to fill missing fields
