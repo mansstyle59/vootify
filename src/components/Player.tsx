@@ -220,7 +220,8 @@ export function MiniPlayer() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="fixed bottom-[4rem] left-0 right-0 z-50 md:bottom-0 px-2 pb-1"
+        className="fixed left-0 right-0 z-50 md:bottom-0 px-2 pb-1"
+        style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div
           className="rounded-2xl overflow-hidden"
@@ -505,7 +506,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Drag handle indicator */}
-      <div className="relative z-10 flex justify-center pt-3 pb-1">
+      <div className="relative z-10 flex justify-center pb-1" style={{ paddingTop: "calc(env(safe-area-inset-top, 12px) + 8px)" }}>
         <div className="w-10 h-1 rounded-full bg-foreground/20" />
       </div>
 
