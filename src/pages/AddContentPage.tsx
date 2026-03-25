@@ -253,6 +253,21 @@ function SongForm() {
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
       const streamUrl = urlData.publicUrl;
 
+      // Check for duplicate (same title + artist)
+      const { data: existing } = await supabase.from("custom_songs")
+        .select("id")
+        .eq("title", song.title.trim())
+        .eq("artist", song.artist.trim())
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        toast.error(`"${song.title}" existe déjà`);
+        // Remove uploaded audio file since we won't use it
+        await supabase.storage.from("audio").remove([path]);
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s));
+        continue;
+      }
+
       // Insert into DB
       const { error: dbErr } = await supabase.from("custom_songs").insert({
         user_id: ANONYMOUS_USER_ID,
@@ -429,21 +444,37 @@ function AlbumForm() {
     if (error) { toast.error("Erreur: " + error.message); setLoading(false); return; }
 
     if (tracks.length > 0 && album) {
-      const songInserts = tracks.map((t) => ({
-        user_id: ANONYMOUS_USER_ID,
-        title: t.title,
-        artist: t.artist || form.artist.trim(),
-        album: form.title.trim(),
-        duration: t.duration,
-        cover_url: form.coverUrl.trim() || null,
-        stream_url: t.streamUrl,
+      // Filter out duplicates
+      const dupeChecks = await Promise.all(tracks.map(async (t) => {
+        const { data } = await supabase.from("custom_songs")
+          .select("id")
+          .eq("title", t.title)
+          .eq("artist", t.artist || form.artist.trim())
+          .limit(1);
+        return { track: t, isDupe: !!(data && data.length > 0) };
       }));
 
-      const { error: songsError } = await supabase.from("custom_songs").insert(songInserts);
-      if (songsError) {
-        toast.error("Album créé mais erreur sur les pistes: " + songsError.message);
-        setLoading(false);
-        return;
+      const newTracks = dupeChecks.filter((c) => !c.isDupe).map((c) => c.track);
+      const dupeCount = dupeChecks.filter((c) => c.isDupe).length;
+      if (dupeCount > 0) toast.info(`${dupeCount} piste${dupeCount > 1 ? "s" : ""} déjà existante${dupeCount > 1 ? "s" : ""}, ignorée${dupeCount > 1 ? "s" : ""}`);
+
+      if (newTracks.length > 0) {
+        const songInserts = newTracks.map((t) => ({
+          user_id: ANONYMOUS_USER_ID,
+          title: t.title,
+          artist: t.artist || form.artist.trim(),
+          album: form.title.trim(),
+          duration: t.duration,
+          cover_url: form.coverUrl.trim() || null,
+          stream_url: t.streamUrl,
+        }));
+
+        const { error: songsError } = await supabase.from("custom_songs").insert(songInserts);
+        if (songsError) {
+          toast.error("Album créé mais erreur sur les pistes: " + songsError.message);
+          setLoading(false);
+          return;
+        }
       }
     }
 
