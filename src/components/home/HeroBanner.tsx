@@ -77,7 +77,7 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
         initial={{ opacity: 0, x: 10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.3 }}
-        className="absolute top-4 right-4 z-20"
+        className="absolute top-[calc(env(safe-area-inset-top,0px)+1rem)] right-4 z-20"
       >
         {user ? (
           <div className="flex items-center gap-2">
