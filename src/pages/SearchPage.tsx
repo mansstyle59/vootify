@@ -132,7 +132,81 @@ const SearchPage = () => {
     return items.slice(0, 6);
   }, [suggestions]);
 
-  return (
+  // JioSaavn results
+  const { data: jsResults, isLoading: jsLoading } = useQuery({
+    queryKey: ["jiosaavn-search", debouncedQuery],
+    queryFn: () => jiosaavnApi.search(debouncedQuery, 20),
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Deezer results
+  const { data: dzResults, isLoading: dzLoading } = useQuery({
+    queryKey: ["deezer-search", debouncedQuery],
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const isLoading = jsLoading || dzLoading;
+
+  const mergedResults = useMemo(() => {
+    if (source === "jiosaavn") return jsResults || [];
+    if (source === "deezer") return dzResults || [];
+    const js = jsResults || [];
+    const dz = dzResults || [];
+    const seen = new Set<string>();
+    const merged: Song[] = [];
+    for (const song of [...js, ...dz]) {
+      const key = `${song.title.toLowerCase().trim()}::${song.artist.toLowerCase().trim()}`;
+      if (!seen.has(key)) { seen.add(key); merged.push(song); }
+    }
+    return merged;
+  }, [jsResults, dzResults, source]);
+
+  useEffect(() => {
+    if (debouncedQuery.length >= 2 && mergedResults.length > 0) {
+      saveRecentSearch(debouncedQuery);
+      setRecentSearches(getRecentSearches());
+    }
+  }, [debouncedQuery, mergedResults]);
+
+  const uniqueArtists = useMemo(() => {
+    if (!mergedResults || mergedResults.length === 0) return [];
+    const artistCount = new Map<string, number>();
+    mergedResults.forEach((song) => {
+      song.artist.split(", ").forEach((a) => {
+        const name = a.trim();
+        if (name && name !== "Artiste inconnu") artistCount.set(name, (artistCount.get(name) || 0) + 1);
+      });
+    });
+    return Array.from(artistCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name]) => name);
+  }, [mergedResults]);
+
+  const filteredResults = useMemo(() => {
+    if (!mergedResults) return [];
+    if (!artistFilter) return mergedResults;
+    return mergedResults.filter((song) => song.artist.includes(artistFilter));
+  }, [mergedResults, artistFilter]);
+
+  const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
+    if (currentSong?.id === song.id) { togglePlay(); return; }
+    const resolved = song.id.startsWith("dz-") ? await deezerApi.resolveFullStream(song) : song;
+    setQueue(allSongs);
+    play(resolved);
+  };
+
+  const handleRemoveRecent = (term: string) => {
+    removeRecentSearch(term);
+    setRecentSearches(getRecentSearches());
+  };
+
+  const clearAllRecent = () => {
+    localStorage.setItem(RECENT_SEARCHES_KEY, "[]");
+    setRecentSearches([]);
+  };
+
+
     <div className="pb-32 max-w-7xl mx-auto">
       {/* Header */}
       <div className="px-4 md:px-8 pt-6 pb-2">
