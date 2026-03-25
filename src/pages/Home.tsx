@@ -134,6 +134,8 @@ const HomePage = () => {
     [activeSections]
   );
 
+  const sectionTitle = (s: HomeSection) => `${s.label} ${s.emoji}`;
+
   const renderSection = (section: HomeSection) => {
     // Custom Deezer playlist
     if (section.deezerPlaylistId && section.visible) {
@@ -141,7 +143,7 @@ const HomePage = () => {
         <CustomPlaylistSection
           key={section.id}
           playlistId={section.deezerPlaylistId}
-          label={section.label}
+          label={sectionTitle(section)}
           onPlayTrack={handlePlayTrack}
         />
       );
