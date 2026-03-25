@@ -310,19 +310,45 @@ const SearchPage = () => {
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
     }
 
-    // French/Belgian popular artists for priority boost
+    // French/Belgian/African francophone popular artists for priority boost
     const frenchArtists = new Set([
+      // Rap FR
       "ninho", "aya nakamura", "jul", "damso", "gims", "maitre gims",
       "tayc", "sdm", "werenoi", "plk", "gazo", "tiakola", "angele",
       "stromae", "nekfeu", "orelsan", "booba", "pnl", "lacrim",
       "soprano", "dadju", "vegedream", "lomepal", "vald", "hamza",
-      "romeo elvis", "dua lipa", "sch", "koba lad", "niska", "mhd",
+      "romeo elvis", "sch", "koba lad", "niska", "mhd", "freeze corleone",
       "amir", "slimane", "vitaa", "kendji girac", "louane", "zaho",
-      "lartiste", "djadja", "dinah", "heuss lenfoire", "rim k", "soolking",
+      "lartiste", "heuss lenfoire", "rim k", "soolking", "rohff", "la fouine",
+      "josman", "zola", "rk", "larry", "yanns", "alonzo", "kekra",
+      "dinos", "alpha wann", "georgio", "dosseh", "kalash", "kalash criminel",
+      "maes", "zkr", "guy2bezbar", "le juiice", "mister v", "bigflo et oli",
+      "47ter", "lefa", "keblack", "imen es", "wejdene", "eva",
+      "franglish", "gambi", "landy", "hornet la frappe", "gradur",
+      "bosh", "da uzi", "green montana", "bolemvn", "benjamin epps",
+      "lesram", "moha k", "dystinct", "timal", "so la lune",
+      // Pop/Chanson FR
       "fally ipupa", "gael faye", "pierre de maere", "clara luciani",
-      "pomme", "juliette armanet", "bigflo et oli", "keen v", "black m",
-      "maitre gims", "mika", "calogero", "christophe mae", "m pokora",
+      "pomme", "juliette armanet", "keen v", "black m",
+      "mika", "calogero", "christophe mae", "m pokora",
       "patrick bruel", "jean jacques goldman", "francis cabrel",
+      "edith piaf", "jacques brel", "charles aznavour", "serge gainsbourg",
+      "renaud", "mc solaar", "iam", "ntm", "oxmo puccino",
+      "youssoupha", "kery james", "medine", "sniper",
+      // Afro FR
+      "fally ipupa", "innoss b", "gims", "tayc", "aya nakamura",
+      "vegedream", "naza", "keblack", "djadja & dinaz", "bramsito",
+    ]);
+
+    // Common French-language song title words for detection
+    const frenchWords = new Set([
+      "le", "la", "les", "de", "du", "des", "un", "une", "et", "en",
+      "je", "tu", "il", "elle", "nous", "vous", "mon", "ma", "mes",
+      "ton", "ta", "tes", "son", "sa", "ses", "ce", "cette", "avec",
+      "pour", "dans", "sur", "par", "pas", "plus", "tout", "tous",
+      "comme", "qui", "que", "ou", "mais", "est", "sont", "fait",
+      "vie", "coeur", "amour", "nuit", "jour", "temps", "monde",
+      "femme", "homme", "dieu", "rue", "feu", "eau", "ciel",
     ]);
 
     // Rank by relevance to query
@@ -334,22 +360,45 @@ const SearchPage = () => {
         const t = normalize(song.title);
         const ar = normalize(song.artist);
         let score = 0;
+
+        // Title match
         if (t === q) score += 100;
         else if (t.startsWith(q)) score += 80;
         else if (t.includes(q)) score += 60;
+
+        // Artist match
         if (ar === q) score += 90;
         else if (ar.startsWith(q)) score += 70;
         else if (ar.includes(q)) score += 50;
+
+        // Word-level matching
         for (const w of qWords) {
           if (t.includes(w)) score += 10;
           if (ar.includes(w)) score += 8;
         }
-        // Boost French/Belgian artists
+
+        // French artist boost (strong)
         const mainArtist = ar.split(",")[0].trim();
-        if (frenchArtists.has(mainArtist)) score += 15;
-        // Boost songs with full streams (not 30s previews)
+        if (frenchArtists.has(mainArtist)) score += 40;
+
+        // Partial match: check if any known French artist appears within the artist field
+        for (const fa of frenchArtists) {
+          if (fa.length > 3 && ar.includes(fa)) { score += 30; break; }
+        }
+
+        // French title detection: boost songs with French words in title
+        const titleWords = t.split(/[\s\-']+/).filter(Boolean);
+        const frenchWordCount = titleWords.filter((w) => frenchWords.has(w)).length;
+        if (frenchWordCount >= 2) score += 25;
+        else if (frenchWordCount === 1 && titleWords.length <= 4) score += 10;
+
+        // Deezer source boost (more likely to have French content than JioSaavn)
+        if (song.id.startsWith("dz-")) score += 15;
+
+        // Full stream boost
         if (isFullStream(song)) score += 20;
         else if (song.streamUrl) score += 5;
+
         return score;
       };
       return scoreRelevance(b) - scoreRelevance(a);
