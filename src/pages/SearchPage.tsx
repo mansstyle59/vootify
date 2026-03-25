@@ -64,6 +64,14 @@ const SearchPage = () => {
   }, [userId]);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [source, setSource] = useState<SearchSource>("all");
+  const [jsPage, setJsPage] = useState(1);
+  const [dzPage, setDzPage] = useState(1);
+  const [allJsResults, setAllJsResults] = useState<Song[]>([]);
+  const [allDzResults, setAllDzResults] = useState<Song[]>([]);
+  const [hasMoreJs, setHasMoreJs] = useState(true);
+  const [hasMoreDz, setHasMoreDz] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
