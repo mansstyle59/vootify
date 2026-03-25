@@ -155,21 +155,91 @@ const SearchPage = () => {
     return items.slice(0, 6);
   }, [suggestions]);
 
-  // JioSaavn results
+  const PAGE_SIZE = 50;
+
+  // JioSaavn results (page 1)
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, 50),
+    queryFn: () => jiosaavnApi.search(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results
+  // Deezer results (page 1)
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 50),
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
+
+  // Accumulate results from initial + extra pages
+  useEffect(() => {
+    if (jsResults) {
+      setAllJsResults(jsResults);
+      setHasMoreJs(jsResults.length >= PAGE_SIZE);
+    }
+  }, [jsResults]);
+
+  useEffect(() => {
+    if (dzResults) {
+      setAllDzResults(dzResults);
+      setHasMoreDz(dzResults.length >= PAGE_SIZE);
+    }
+  }, [dzResults]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !debouncedQuery) return;
+    const canLoadJs = (source === "all" || source === "jiosaavn") && hasMoreJs;
+    const canLoadDz = (source === "all" || source === "deezer") && hasMoreDz;
+    if (!canLoadJs && !canLoadDz) return;
+
+    setLoadingMore(true);
+    try {
+      const promises: Promise<void>[] = [];
+      if (canLoadJs) {
+        const nextPage = jsPage + 1;
+        promises.push(
+          jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
+            setAllJsResults((prev) => [...prev, ...res]);
+            setHasMoreJs(res.length >= PAGE_SIZE);
+            setJsPage(nextPage);
+          })
+        );
+      }
+      if (canLoadDz) {
+        const nextPage = dzPage + 1;
+        const offset = dzPage * PAGE_SIZE;
+        promises.push(
+          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
+            setAllDzResults((prev) => [...prev, ...res]);
+            setHasMoreDz(res.length >= PAGE_SIZE);
+            setDzPage(nextPage);
+          })
+        );
+      }
+      await Promise.all(promises);
+    } catch (e) {
+      console.error("Failed to load more results:", e);
+    }
+    setLoadingMore(false);
+  }, [loadingMore, debouncedQuery, source, hasMoreJs, hasMoreDz, jsPage, dzPage]);
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && debouncedQuery.length >= 2) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, debouncedQuery]);
 
   /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
   const normalize = useCallback((s: string) =>
