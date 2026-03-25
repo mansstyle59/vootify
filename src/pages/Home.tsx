@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { SongCard, SongSkeleton } from "@/components/MusicCards";
+import { SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
 import { Play, Pause } from "lucide-react";
 import type { Song } from "@/data/mockData";
@@ -12,19 +13,31 @@ import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
 import { HeroBanner } from "@/components/home/HeroBanner";
+import { TopChartCard } from "@/components/home/TopChartCard";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
   rapstars: "3272614282",
-  popHits: "1996494362",    // Pop Hits
-  chillVibes: "1362516565", // Chill Vibes
-  afrobeats: "6460178564",  // Afrobeats
+  popHits: "1996494362",
+  chillVibes: "1362516565",
+  afrobeats: "6460178564",
 } as const;
+
+type TopGenre = "all" | "rap" | "pop" | "chill" | "afro";
+
+const TOP_TABS: { key: TopGenre; label: string }[] = [
+  { key: "all", label: "Tous" },
+  { key: "rap", label: "Rap" },
+  { key: "pop", label: "Pop" },
+  { key: "chill", label: "Chill" },
+  { key: "afro", label: "Afro" },
+];
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
   const { user } = useAuth();
   const userId = user?.id || ANONYMOUS_USER_ID;
+  const [topGenre, setTopGenre] = useState<TopGenre>("all");
 
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
     queryKey: ["deezer-titres-du-moment"],
@@ -74,9 +87,43 @@ const HomePage = () => {
     play(resolved);
   };
 
+  // Filter full streams only
+  const filterFull = (songs?: Song[]) =>
+    (songs || []).filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"));
+
+  // Get top songs for selected genre
+  const getTopSongs = (): { songs: Song[]; loading: boolean; source: Song[] } => {
+    switch (topGenre) {
+      case "rap": return { songs: filterFull(rapstars).slice(0, 10), loading: loadingRap, source: rapstars || [] };
+      case "pop": return { songs: filterFull(popHits).slice(0, 10), loading: loadingPop, source: popHits || [] };
+      case "chill": return { songs: filterFull(chillVibes).slice(0, 10), loading: loadingChill, source: chillVibes || [] };
+      case "afro": return { songs: filterFull(afrobeats).slice(0, 10), loading: loadingAfro, source: afrobeats || [] };
+      default: return { songs: filterFull(titresDuMoment).slice(0, 10), loading: loadingTitres, source: titresDuMoment || [] };
+    }
+  };
+
+  const topData = getTopSongs();
+
+  // Personalized mix: blend liked + recent, deduplicated & shuffled
+  const personalizedMix = (() => {
+    const pool = [...likedSongs, ...recentlyPlayed];
+    const seen = new Set<string>();
+    const unique = pool.filter((s) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+    // Deterministic-ish shuffle based on day
+    const day = new Date().getDate();
+    return unique.sort((a, b) => {
+      const ha = (a.id.charCodeAt(0) * 31 + day) % 100;
+      const hb = (b.id.charCodeAt(0) * 31 + day) % 100;
+      return ha - hb;
+    }).slice(0, 20);
+  })();
+
   return (
     <div className="pb-32 max-w-7xl mx-auto">
-      {/* ─── Hero Banner with parallax ─── */}
       <HeroBanner />
 
       {/* ─── Quick-access — recently played ─── */}
@@ -116,6 +163,25 @@ const HomePage = () => {
             })}
           </div>
         </div>
+      )}
+
+      {/* ─── Playlist personnalisée ─── */}
+      {personalizedMix.length >= 4 && (
+        <Section title="Pour vous 💫">
+          <HorizontalScroll>
+            {personalizedMix.map((song, i) => (
+              <CoverCard
+                key={song.id}
+                title={song.title}
+                subtitle={song.artist}
+                imageUrl={song.coverUrl}
+                index={i}
+                isActive={currentSong?.id === song.id && isPlaying}
+                onClick={() => handlePlayTrack(song, personalizedMix)}
+              />
+            ))}
+          </HorizontalScroll>
+        </Section>
       )}
 
       {/* ─── Vos coups de cœur ─── */}
@@ -232,20 +298,38 @@ const HomePage = () => {
         </HorizontalScroll>
       </Section>
 
-      {/* ─── Top 10 ─── */}
+      {/* ─── Top 10 avec onglets par genre ─── */}
       <Section title="Top 10 🏆">
         <div className="px-4 md:px-8">
-          <div className="rounded-xl bg-secondary/30 overflow-hidden">
-            {loadingTitres
+          {/* Genre tabs */}
+          <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-hide pb-1">
+            {TOP_TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTopGenre(key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                  topGenre === key
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Chart list */}
+          <div className="rounded-xl bg-secondary/20 border border-border/50 overflow-hidden divide-y divide-border/30">
+            {topData.loading
               ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
-              : titresDuMoment
-                  ?.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"))
-                  .slice(0, 10)
-                  .map((song, i) => (
-                    <div key={song.id} onClick={() => handlePlayTrack(song, titresDuMoment!)}>
-                      <SongCard song={song} index={i} showIndex />
-                    </div>
-                  ))}
+              : topData.songs.map((song, i) => (
+                  <TopChartCard
+                    key={song.id}
+                    song={song}
+                    rank={i + 1}
+                    onClick={() => handlePlayTrack(song, topData.source)}
+                  />
+                ))}
           </div>
         </div>
       </Section>
