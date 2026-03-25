@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { hdCache } from "@/lib/hdCache";
 
 interface PlayerState {
   currentSong: Song | null;
@@ -86,6 +87,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           blacklist[key].push(currentSong.streamUrl);
         }
         localStorage.setItem("hd-blacklist", JSON.stringify(blacklist));
+        // Invalidate HD cache for this song
+        if (currentSong.id) hdCache.remove(currentSong.id);
       } catch (e) {
         console.error("Failed to save blacklist:", e);
       }

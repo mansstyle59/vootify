@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Song, Album } from "@/data/mockData";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
+import { hdCache } from "@/lib/hdCache";
 
 /** Normalize a string for fuzzy matching — aggressive cleaning */
 const norm = (s: string) =>
@@ -152,6 +153,18 @@ export const deezerApi = {
   async resolveFullStream(song: Song): Promise<Song> {
     if (!song.id.startsWith("dz-")) return song;
 
+    // Check HD cache first
+    const cached = hdCache.get(song.id);
+    if (cached) {
+      console.log("HD cache hit:", song.title);
+      return {
+        ...song,
+        streamUrl: cached.streamUrl,
+        coverUrl: cached.coverUrl || song.coverUrl,
+        resolvedViaCustom: cached.resolvedViaCustom,
+      };
+    }
+
     // Load blacklist for this song
     let blacklistedUrls: string[] = [];
     try {
@@ -222,12 +235,19 @@ export const deezerApi = {
 
         if (bestCustom?.stream_url && bestScore >= 80) {
           console.log("Resolved via admin custom song (priority):", bestCustom.title, `(score: ${bestScore})`);
-          return {
+          const resolved = {
             ...song,
             streamUrl: bestCustom.stream_url,
             coverUrl: bestCustom.cover_url || song.coverUrl,
             resolvedViaCustom: true,
           };
+          hdCache.set(song.id, {
+            streamUrl: resolved.streamUrl,
+            coverUrl: bestCustom.cover_url || undefined,
+            resolvedViaCustom: true,
+            ts: Date.now(),
+          });
+          return resolved;
         }
       }
     } catch (e) {
@@ -271,6 +291,10 @@ export const deezerApi = {
       }
 
       if (bestMatch?.streamUrl && bestScore >= 80) {
+        hdCache.set(song.id, {
+          streamUrl: bestMatch.streamUrl,
+          ts: Date.now(),
+        });
         return { ...song, streamUrl: bestMatch.streamUrl };
       }
     } catch (e) {
