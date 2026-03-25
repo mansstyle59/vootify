@@ -4,30 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
+import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
-
-const RECENT_SEARCHES_KEY = "voo-recent-searches";
-const MAX_RECENT = 8;
-
-function getRecentSearches(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]");
-  } catch { return []; }
-}
-
-function saveRecentSearch(q: string) {
-  const recent = getRecentSearches().filter((r) => r !== q);
-  recent.unshift(q);
-  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)));
-}
-
-function removeRecentSearch(q: string) {
-  const recent = getRecentSearches().filter((r) => r !== q);
-  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent));
-}
 
 const trendingSuggestions = [
   "Ninho", "Aya Nakamura", "Jul", "Damso", "Rihanna",
