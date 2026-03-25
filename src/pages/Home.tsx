@@ -70,13 +70,6 @@ const HomePage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: recentlyPlayed = [] } = useQuery({
-    queryKey: ["recently-played"],
-    queryFn: () => musicDb.getRecentlyPlayed(userId, 10),
-    staleTime: 60 * 1000,
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
 
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) {
@@ -107,7 +100,7 @@ const HomePage = () => {
 
   // Personalized mix: blend liked + recent, deduplicated & shuffled
   const personalizedMix = (() => {
-    const pool = [...likedSongs, ...recentlyPlayed];
+    const pool = [...likedSongs];
     const seen = new Set<string>();
     const unique = pool.filter((s) => {
       if (seen.has(s.id)) return false;
