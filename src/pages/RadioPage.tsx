@@ -12,8 +12,35 @@ import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
+import { useRef, useEffect } from "react";
 
 type TabKey = "france" | "top" | "custom" | "search";
+
+/* ── Marquee for long text ── */
+function MarqueeText({ text, className }: { text: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const textEl = textRef.current;
+    if (container && textEl) {
+      setShouldScroll(textEl.scrollWidth > container.clientWidth + 2);
+    }
+  }, [text]);
+
+  return (
+    <div ref={containerRef} className={`overflow-hidden whitespace-nowrap ${className || ""}`} style={{ containerType: "inline-size" }}>
+      <span
+        ref={textRef}
+        className={shouldScroll ? "animate-marquee pr-8" : ""}
+      >
+        {text}
+      </span>
+    </div>
+  );
+}
 type ViewMode = "grid" | "list";
 
 const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news", "talk"];
@@ -103,16 +130,12 @@ function NowPlayingHero({
               <span className="text-[9px] font-bold text-white tracking-widest uppercase">LIVE</span>
             </span>
           </div>
-          <h2 className="text-lg md:text-xl font-bold text-white truncate leading-tight">
-            {station.name}
-          </h2>
+          <MarqueeText text={station.name} className="text-lg md:text-xl font-bold text-white leading-tight" />
           {radioMetadata?.title ? (
             <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-white/90 truncate">
-                ♪ {radioMetadata.title}
-              </p>
+              <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-sm font-semibold text-white/90" />
               {radioMetadata.artist && (
-                <p className="text-xs text-white/60 truncate">{radioMetadata.artist}</p>
+                <MarqueeText text={radioMetadata.artist} className="text-xs text-white/60" />
               )}
             </div>
           ) : (
@@ -301,19 +324,18 @@ const RadioPage = () => {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             {isActivePlaying && <LiveEqualizer />}
-            <h3 className={`text-sm font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
+            <MarqueeText text={station.name} className={`text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {isActive && radioMetadata?.title ? (
-            <motion.p
+            <motion.div
               key={radioMetadata.title}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xs text-primary/80 truncate font-medium"
             >
-              ♪ {radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}{radioMetadata.title}
-            </motion.p>
+              <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-xs text-primary/80 font-medium" />
+            </motion.div>
           ) : (
-            <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
+            <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize" />
           )}
         </div>
 
@@ -464,7 +486,7 @@ const RadioPage = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
             )}
             {isActivePlaying && <LiveEqualizer />}
-            <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
+            <MarqueeText text={station.name} className={`font-semibold text-sm ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {nowPlayingText ? (
             <motion.div
@@ -473,15 +495,13 @@ const RadioPage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mt-0.5 space-y-0"
             >
-              <p className="text-xs text-primary/90 truncate font-semibold">
-                ♪ {radioMetadata?.title}
-              </p>
+              <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-xs text-primary/90 font-semibold" />
               {radioMetadata?.artist && (
-                <p className="text-[11px] text-muted-foreground truncate">{radioMetadata.artist}</p>
+                <MarqueeText text={radioMetadata.artist} className="text-[11px] text-muted-foreground" />
               )}
             </motion.div>
           ) : (
-            <p className="text-xs text-muted-foreground truncate capitalize mt-0.5">{station.genre || "Radio"}</p>
+            <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize mt-0.5" />
           )}
         </div>
       </motion.div>
