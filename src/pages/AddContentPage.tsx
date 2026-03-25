@@ -237,7 +237,7 @@ const AddContentPage = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 pb-32 max-w-2xl mx-auto">
+    <div className="p-4 md:p-8 pb-40 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Ajouter du contenu</h1>
         <button

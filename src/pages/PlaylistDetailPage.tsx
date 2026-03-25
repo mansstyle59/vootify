@@ -124,7 +124,7 @@ const PlaylistDetailPage = () => {
 
   if (!playlist) {
     return (
-      <div className="p-4 pb-32 flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
         <p className="text-muted-foreground">Playlist introuvable</p>
         <button onClick={() => navigate("/library")} className="mt-4 text-primary text-sm">Retour</button>
       </div>
@@ -134,7 +134,7 @@ const PlaylistDetailPage = () => {
   const coverUrl = playlist.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop";
 
   return (
-    <div className="pb-32 max-w-3xl mx-auto">
+    <div className="pb-40 max-w-3xl mx-auto">
       {/* Header */}
       <div className="relative">
         <div className="h-56 md:h-72 overflow-hidden relative">

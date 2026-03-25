@@ -117,7 +117,7 @@ const ProfilePage = () => {
   const initials = (displayName || "U").slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen pb-32">
+    <div className="min-h-screen pb-40">
       {/* Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-primary/5 to-background" />

@@ -245,7 +245,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pb-32 max-w-7xl mx-auto">
+    <div className="pb-40 max-w-7xl mx-auto">
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
       {activeSections.map((s) => renderSection(s))}
