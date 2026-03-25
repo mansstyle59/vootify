@@ -173,7 +173,7 @@ const SearchPage = () => {
   // Album results (JioSaavn)
   const { data: jsAlbumResults } = useQuery({
     queryKey: ["album-search-js", debouncedQuery],
-    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 10),
+    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 15),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
@@ -181,7 +181,7 @@ const SearchPage = () => {
   // Album results (Deezer)
   const { data: dzAlbumResults } = useQuery({
     queryKey: ["album-search-dz", debouncedQuery],
-    queryFn: () => deezerApi.searchAlbums(debouncedQuery, 10),
+    queryFn: () => deezerApi.searchAlbums(debouncedQuery, 15),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
