@@ -20,10 +20,13 @@ interface PlayerState {
   crossfadeEnabled: boolean;
   crossfadeDuration: number; // in seconds
   _seekTime: number | null;
+  originalStreamUrl: string | null; // original Deezer preview before HD resolve
 
   setUserId: (id: string | null) => void;
   setCrossfadeEnabled: (enabled: boolean) => void;
   setCrossfadeDuration: (duration: number) => void;
+  setOriginalStreamUrl: (url: string | null) => void;
+  revertToPreview: () => void;
   loadUserData: (userId: string) => Promise<void>;
   play: (song: Song) => void;
   togglePlay: () => void;
@@ -64,10 +67,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   crossfadeEnabled: true,
   crossfadeDuration: 2,
   _seekTime: null,
+  originalStreamUrl: null,
 
   setUserId: (id) => set({ userId: id }),
   setCrossfadeEnabled: (enabled) => set({ crossfadeEnabled: enabled }),
   setCrossfadeDuration: (duration) => set({ crossfadeDuration: duration }),
+  setOriginalStreamUrl: (url) => set({ originalStreamUrl: url }),
+  revertToPreview: () => {
+    const { currentSong, originalStreamUrl } = get();
+    if (currentSong && originalStreamUrl) {
+      set({
+        currentSong: { ...currentSong, streamUrl: originalStreamUrl },
+        originalStreamUrl: null,
+        progress: 0,
+      });
+    }
+  },
 
   loadUserData: async (userId) => {
     try {
