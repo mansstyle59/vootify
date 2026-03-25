@@ -184,15 +184,13 @@ const SearchPage = () => {
   // Accumulate results from initial + extra pages
   useEffect(() => {
     if (jsResults) {
-      setAllJsResults(jsResults.filter(isFullStream));
+      setAllJsResults(jsResults);
       setHasMoreJs(jsResults.length >= PAGE_SIZE);
     }
   }, [jsResults]);
 
   useEffect(() => {
     if (dzResults) {
-      // Filter Deezer: only keep those NOT having a dzcdn preview (already resolved or metadata-only)
-      // Actually keep all — player resolves at play time
       setAllDzResults(dzResults);
       setHasMoreDz(dzResults.length >= PAGE_SIZE);
     }
