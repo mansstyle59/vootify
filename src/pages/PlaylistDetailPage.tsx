@@ -39,10 +39,13 @@ const PlaylistDetailPage = () => {
   };
 
   const [downloading, setDownloading] = useState(false);
+  const [dlProgress, setDlProgress] = useState({ done: 0, total: 0 });
 
   const handleDownloadAll = async () => {
     if (songs.length === 0) return;
     setDownloading(true);
+    const total = songs.length;
+    setDlProgress({ done: 0, total });
     let done = 0;
     for (const song of songs) {
       try {
@@ -51,8 +54,10 @@ const PlaylistDetailPage = () => {
           await offlineCache.cacheSong(song);
         }
         done++;
-        toast.info(`Téléchargement ${done}/${songs.length}...`);
+        setDlProgress({ done, total });
       } catch {
+        done++;
+        setDlProgress({ done, total });
         toast.error(`Échec : ${song.title}`);
       }
     }
