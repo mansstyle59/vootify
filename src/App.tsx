@@ -17,6 +17,7 @@ import LibraryPage from "./pages/LibraryPage";
 import RadioPage from "./pages/RadioPage";
 import AddContentPage from "./pages/AddContentPage";
 import PlaylistDetailPage from "./pages/PlaylistDetailPage";
+import AlbumDetailPage from "./pages/AlbumDetailPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
@@ -49,6 +50,7 @@ function AppContent() {
           <Route path="/radio" element={<RadioPage />} />
           <Route path="/add" element={<AddContentPage />} />
           <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
+          <Route path="/album/:id" element={<AlbumDetailPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
@@ -47,12 +48,17 @@ const GENRE_CARDS: { name: string; gradient: string; icon: React.ElementType }[]
 
 function AlbumCard({ album, onClick }: { album: Album; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex-shrink-0 w-36 group text-left">
-      <div className="relative w-36 h-36 rounded-xl overflow-hidden mb-2 shadow-lg">
+    <button onClick={onClick} className="flex-shrink-0 w-40 group text-left">
+      <div className="relative w-40 h-40 rounded-2xl overflow-hidden mb-2.5 shadow-lg ring-1 ring-border/10">
         <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-lg">
+            <Disc3 className="w-4 h-4 text-primary-foreground" />
+          </div>
+        </div>
       </div>
-      <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+      <p className="text-sm font-semibold text-foreground truncate">{album.title}</p>
       <p className="text-xs text-muted-foreground truncate">{album.artist} · {album.year}</p>
     </button>
   );
@@ -61,6 +67,7 @@ function AlbumCard({ album, onClick }: { album: Album; onClick: () => void }) {
 type SearchSource = "all" | "jiosaavn" | "deezer";
 
 const SearchPage = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [suggestQuery, setSuggestQuery] = useState("");
@@ -161,16 +168,6 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Album results (JioSaavn)
-  const { data: albumResults } = useQuery({
-    queryKey: ["album-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 10),
-    enabled: debouncedQuery.length >= 2,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const isLoading = jsLoading || dzLoading;
-
   /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
   const normalize = useCallback((s: string) =>
     s.toLowerCase()
@@ -183,6 +180,39 @@ const SearchPage = () => {
       .replace(/\s+/g, " ")
       .trim()
   , []);
+
+  // Album results (JioSaavn)
+  const { data: jsAlbumResults } = useQuery({
+    queryKey: ["album-search-js", debouncedQuery],
+    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 10),
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Album results (Deezer)
+  const { data: dzAlbumResults } = useQuery({
+    queryKey: ["album-search-dz", debouncedQuery],
+    queryFn: () => deezerApi.searchAlbums(debouncedQuery, 10),
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Merge albums, deduplicated by normalized title+artist
+  const albumResults = useMemo(() => {
+    if (source === "jiosaavn") return jsAlbumResults || [];
+    if (source === "deezer") return dzAlbumResults || [];
+    const js = jsAlbumResults || [];
+    const dz = dzAlbumResults || [];
+    const seen = new Set<string>();
+    const merged: Album[] = [];
+    for (const album of [...js, ...dz]) {
+      const key = `${normalize(album.title)}::${normalize(album.artist)}`;
+      if (!seen.has(key)) { seen.add(key); merged.push(album); }
+    }
+    return merged;
+  }, [jsAlbumResults, dzAlbumResults, source, normalize]);
+
+  const isLoading = jsLoading || dzLoading;
 
   const mergedResults = useMemo(() => {
     if (source === "jiosaavn") return jsResults || [];
@@ -463,7 +493,7 @@ const SearchPage = () => {
                     </div>
                     <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                       {albumResults.map((album) => (
-                        <AlbumCard key={album.id} album={album} onClick={() => handleBubbleClick(`${album.title} ${album.artist}`)} />
+                        <AlbumCard key={album.id} album={album} onClick={() => navigate(`/album/${album.id}`)} />
                       ))}
                     </div>
                   </div>

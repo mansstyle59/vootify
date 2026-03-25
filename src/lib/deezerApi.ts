@@ -70,6 +70,11 @@ export const deezerApi = {
     return (data.data || []).map(mapDeezerAlbum);
   },
 
+  async searchAlbums(query: string, limit = 12): Promise<Album[]> {
+    const data = await callDeezer({ action: "search_albums", query, limit });
+    return (data.data || []).map(mapDeezerAlbum);
+  },
+
   async getPlaylistTracks(playlistId: string, limit = 30): Promise<Song[]> {
     const data = await callDeezer({ action: "playlist", id: playlistId });
     const tracks = data.tracks?.data || [];
