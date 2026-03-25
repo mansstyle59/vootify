@@ -146,6 +146,14 @@ export const musicDb = {
     return (data || []).map((r) => ({ ...rowToSong(r), liked: false }));
   },
 
+  async clearRecentlyPlayed(userId: string) {
+    const { error } = await supabase
+      .from("recently_played")
+      .delete()
+      .eq("user_id", userId);
+    if (error) console.error("Failed to clear recently played:", error);
+  },
+
   // Search history
   async getSearchHistory(userId: string, limit = 8): Promise<string[]> {
     const { data, error } = await supabase

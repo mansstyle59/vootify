@@ -40,6 +40,7 @@ interface PlayerState {
   addSongToPlaylist: (playlistId: string, song: Song) => void;
   removeSongFromPlaylist: (playlistId: string, songId: string) => void;
   loadPlaylistSongs: (playlistId: string) => Promise<void>;
+  clearRecentlyPlayed: () => Promise<void>;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
