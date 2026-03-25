@@ -92,7 +92,24 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   }, []);
 
   const removeSection = useCallback((id: string) => {
-    setSections((prev) => prev.filter((s) => s.id !== id));
+    setSections((prev) => {
+      const el = document.querySelector(`[data-section-id="${id}"]`);
+      if (el) {
+        el.animate(
+          [
+            { transform: "translateX(0)", opacity: 1, height: el.clientHeight + "px" },
+            { transform: "translateX(100%)", opacity: 0, height: el.clientHeight + "px" },
+            { transform: "translateX(100%)", opacity: 0, height: "0px", padding: "0", margin: "0" },
+          ],
+          { duration: 300, easing: "ease-out" }
+        );
+      }
+      // Delay state update to let animation play
+      return prev;
+    });
+    setTimeout(() => {
+      setSections((prev) => prev.filter((s) => s.id !== id));
+    }, 280);
   }, []);
 
   const startEditing = useCallback((section: HomeSection) => {
@@ -225,14 +242,22 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                 <Reorder.Item
                   key={section.id}
                   value={section}
-                  className="flex items-center gap-3 px-4 py-3.5 bg-background cursor-grab active:cursor-grabbing"
+                  data-section-id={section.id}
+                  className="flex items-center gap-3 px-4 py-3.5 bg-background cursor-grab active:cursor-grabbing overflow-hidden"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0, x: 100 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   whileDrag={{
-                    scale: 1.02,
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                    scale: 1.03,
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
                     zIndex: 50,
+                    borderRadius: "12px",
+                    cursor: "grabbing",
                   }}
+                  layout
                 >
-                  <span className="text-base">{section.emoji}</span>
+                  <span className="text-base select-none">{section.emoji}</span>
                   {editingId === section.id ? (
                     <div className="flex-1 flex items-center gap-1.5">
                       <input
@@ -250,7 +275,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                     </div>
                   ) : (
                     <span
-                      className={`flex-1 text-sm font-medium truncate ${
+                      className={`flex-1 text-sm font-medium truncate transition-colors duration-200 ${
                         section.visible ? "text-foreground" : "text-muted-foreground line-through"
                       }`}
                     >
@@ -263,7 +288,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                         e.stopPropagation();
                         startEditing(section);
                       }}
-                      className="p-1.5 rounded-lg transition-colors hover:bg-primary/10"
+                      className="p-1.5 rounded-lg transition-colors hover:bg-primary/10 active:scale-90"
                     >
                       <Pencil className="w-3.5 h-3.5 text-primary/70" />
                     </button>
@@ -274,7 +299,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                         e.stopPropagation();
                         removeSection(section.id);
                       }}
-                      className="p-1.5 rounded-lg transition-colors hover:bg-destructive/10"
+                      className="p-1.5 rounded-lg transition-all duration-200 hover:bg-destructive/20 active:scale-90"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
                     </button>
@@ -284,7 +309,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                       e.stopPropagation();
                       toggleVisibility(section.id);
                     }}
-                    className="p-1.5 rounded-lg transition-colors"
+                    className="p-1.5 rounded-lg transition-all duration-200 active:scale-90"
                   >
                     {section.visible ? (
                       <Eye className="w-4 h-4 text-primary" />
