@@ -455,6 +455,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked
   } = usePlayerStore();
+  const [addingToLib, setAddingToLib] = useState(false);
+  const [addedToLib, setAddedToLib] = useState(false);
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
@@ -555,10 +557,48 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           <button
-            onClick={() => toggleLike(currentSong)}
+            onClick={async () => {
+              if (addingToLib || addedToLib) return;
+              const artist = radioMeta?.artist;
+              const title = radioMeta?.title;
+              if (!artist || !title) return;
+              setAddingToLib(true);
+              try {
+                // Search Deezer for the track
+                const results = await deezerApi.searchTracks(`${artist} ${title}`, 1);
+                if (results.length > 0) {
+                  const track = results[0];
+                  // Resolve HD stream via JioSaavn
+                  const hdResults = await jiosaavnApi.search(`${track.title} ${track.artist}`, 1);
+                  const song = {
+                    id: track.id,
+                    title: track.title,
+                    artist: track.artist,
+                    album: track.album || "",
+                    duration: track.duration,
+                    coverUrl: track.coverUrl,
+                    streamUrl: hdResults.length > 0 ? hdResults[0].streamUrl : "",
+                    liked: true,
+                  };
+                  toggleLike(song);
+                  setAddedToLib(true);
+                  setTimeout(() => setAddedToLib(false), 3000);
+                }
+              } catch {
+                // silent
+              } finally {
+                setAddingToLib(false);
+              }
+            }}
             className="p-1 active:scale-90 transition-transform"
           >
-            <PlusCircle className={`w-7 h-7 ${liked ? "text-primary" : "text-foreground/40"}`} />
+            {addingToLib ? (
+              <Loader2 className="w-7 h-7 text-foreground/40 animate-spin" />
+            ) : addedToLib ? (
+              <Check className="w-7 h-7 text-primary" />
+            ) : (
+              <PlusCircle className="w-7 h-7 text-foreground/40" />
+            )}
           </button>
         </div>
 
