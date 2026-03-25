@@ -468,11 +468,27 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    const time = Math.max(0, Math.min(Math.floor(pct * currentSong.duration), currentSong.duration));
+  const progressBarRef = useRef<HTMLDivElement>(null);
+
+  const seekFromX = (clientX: number) => {
+    const bar = progressBarRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const time = Math.floor(pct * currentSong.duration);
     storeSeekTo(time);
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => seekFromX(e.clientX);
+
+  const handleTouchSeek = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    seekFromX(e.touches[0].clientX);
+  };
+
+  const handleTouchMoveSeek = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    seekFromX(e.touches[0].clientX);
   };
 
   return (
