@@ -103,7 +103,7 @@ const AlbumDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="pb-32">
+      <div className="pb-40">
         <div className="px-4 md:px-8 pt-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" /> Retour
@@ -118,7 +118,7 @@ const AlbumDetailPage = () => {
 
   if (!album) {
     return (
-      <div className="pb-32 px-4 md:px-8 pt-6">
+      <div className="pb-40 px-4 md:px-8 pt-6">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="w-4 h-4" /> Retour
         </button>
@@ -128,7 +128,7 @@ const AlbumDetailPage = () => {
   }
 
   return (
-    <div className="pb-32 max-w-4xl mx-auto">
+    <div className="pb-40 max-w-4xl mx-auto">
       {/* Header with cover */}
       <div className="relative overflow-hidden">
         {/* Blurred background */}

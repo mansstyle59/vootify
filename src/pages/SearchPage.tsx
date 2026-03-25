@@ -267,7 +267,7 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="pb-32 max-w-7xl mx-auto">
+    <div className="pb-40 max-w-7xl mx-auto">
       {/* Header */}
       <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Rechercher</h1>
