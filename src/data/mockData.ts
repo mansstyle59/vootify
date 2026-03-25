@@ -7,6 +7,7 @@ export interface Song {
   coverUrl: string;
   streamUrl: string;
   liked: boolean;
+  resolvedViaCustom?: boolean;
 }
 
 export interface Album {
