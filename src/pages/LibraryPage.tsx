@@ -5,13 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn } from "lucide-react";
-import { getStationLogo } from "@/lib/radioLogos";
+import { Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 
-type Tab = "liked" | "playlists" | "recent" | "radios" | "downloads" | "custom";
+type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("recent");
@@ -48,19 +48,6 @@ const LibraryPage = () => {
     countCached();
   }, [tab, playlists, playlistSongs]);
 
-  const { data: savedRadios = [] } = useQuery({
-    queryKey: ["custom-radio-stations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_radio_stations")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000,
-    enabled: tab === "radios" && !!user,
-  });
 
   const { data: customSongs = [] } = useQuery({
     queryKey: ["custom-songs"],
@@ -101,19 +88,6 @@ const LibraryPage = () => {
     load();
   }, [tab]);
 
-  const playStation = (station: typeof savedRadios[0]) => {
-    if (currentSong?.id === station.id) { togglePlay(); return; }
-    play({
-      id: station.id,
-      title: station.name,
-      artist: station.genre || "Radio",
-      album: "Radio en direct",
-      duration: 0,
-      coverUrl: getStationLogo(station.name, station.cover_url || ""),
-      streamUrl: station.stream_url || "",
-      liked: false,
-    });
-  };
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
@@ -141,7 +115,6 @@ const LibraryPage = () => {
     { key: "playlists", label: "Playlists", icon: ListMusic },
     { key: "custom", label: "Mes titres", icon: Music },
     { key: "downloads", label: "Téléchargés", icon: Download },
-    { key: "radios", label: "Radios", icon: Radio },
   ];
 
   // Auth gate — all hooks are above
