@@ -504,8 +504,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(0 0% 0% / 0.3) 60%, hsl(0 0% 0% / 0.6) 100%)" }} />
       </div>
 
+      {/* Drag handle indicator */}
+      <div className="relative z-10 flex justify-center pt-3 pb-1">
+        <div className="w-10 h-1 rounded-full bg-foreground/20" />
+      </div>
+
       {/* Top bar - Spotify style */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-[env(safe-area-inset-top,40px)] pb-2">
+      <div className="relative z-10 flex items-center justify-between px-5 pb-2">
         <button onClick={onClose} className="p-1 active:scale-90 transition-transform">
           <ChevronDown className="w-7 h-7 text-foreground" />
         </button>
