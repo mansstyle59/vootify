@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
 import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music } from "lucide-react";
+import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
@@ -52,7 +53,7 @@ const LibraryPage = () => {
       artist: station.genre || "Radio",
       album: "Radio en direct",
       duration: 0,
-      coverUrl: station.cover_url || "",
+      coverUrl: getStationLogo(station.name, station.cover_url || ""),
       streamUrl: station.stream_url || "",
       liked: false,
     });
@@ -252,7 +253,7 @@ const LibraryPage = () => {
                       >
                         <div className="relative aspect-square rounded-2xl overflow-hidden mb-2.5 bg-secondary">
                           <img
-                            src={station.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
+                            src={getStationLogo(station.name, station.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop")}
                             alt={station.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
