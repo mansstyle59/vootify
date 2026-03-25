@@ -14,7 +14,7 @@ import { Song } from "@/data/mockData";
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 
 const filterFullStreams = (songs: Song[]) =>
-  songs.filter((s) => !s.streamUrl?.includes("dzcdn.net"));
+  songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview"));
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("recent");
