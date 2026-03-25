@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { radioCoverCache } from "@/lib/radioCoverCache";
 
 export interface RadioMetadata {
   nowPlaying: string;
@@ -29,11 +30,24 @@ export function useRadioMetadata(
           body: { streamUrl, stationName, stationCover },
         });
         if (!error && data?.success && data.nowPlaying) {
+          let coverUrl = data.coverUrl || "";
+
+          // Check local cache first for cover
+          if (data.artist && data.title) {
+            const cached = radioCoverCache.get(data.artist, data.title);
+            if (cached) {
+              coverUrl = cached;
+            } else if (coverUrl) {
+              // Store new cover in cache
+              radioCoverCache.set(data.artist, data.title, coverUrl);
+            }
+          }
+
           setMetadata({
             nowPlaying: data.nowPlaying,
             title: data.title,
             artist: data.artist,
-            coverUrl: data.coverUrl || "",
+            coverUrl,
           });
         }
       } catch {
