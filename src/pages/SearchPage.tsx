@@ -63,6 +63,7 @@ const SearchPage = () => {
 
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [hdOnly, setHdOnly] = useState(false);
+  const [customOnly, setCustomOnly] = useState(false);
   const [resolveProgress, setResolveProgress] = useState<{ resolved: number; total: number } | null>(null);
   const [dzPage, setDzPage] = useState(1);
   const [allDzResults, setAllDzResults] = useState<Song[]>([]);
