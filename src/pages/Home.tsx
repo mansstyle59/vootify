@@ -73,16 +73,8 @@ const HomePage = () => {
 
   return (
     <div className="pb-32 max-w-7xl mx-auto">
-      {/* ─── Greeting ─── */}
-      <div className="px-4 md:px-8 pt-6 pb-4">
-        <motion.h1
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl md:text-3xl font-display font-bold text-foreground"
-        >
-          {getGreeting()} 👋
-        </motion.h1>
-      </div>
+      {/* ─── Hero Banner with parallax ─── */}
+      <HeroBanner />
 
       {/* ─── Quick-access — recently played ─── */}
       {recentlyPlayed.length > 0 && (
