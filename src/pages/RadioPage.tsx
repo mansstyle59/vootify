@@ -318,9 +318,7 @@ const RadioPage = () => {
 
     if (isEditing) {
       return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <div
           className="rounded-2xl border border-border bg-card p-4 space-y-2.5"
         >
           <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm bg-secondary border-border/50" />
