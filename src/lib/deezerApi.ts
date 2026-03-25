@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Song, Album } from "@/data/mockData";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
+import { hdCache } from "@/lib/hdCache";
 
 /** Normalize a string for fuzzy matching — aggressive cleaning */
 const norm = (s: string) =>
