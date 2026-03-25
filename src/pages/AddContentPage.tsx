@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
-import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut } from "lucide-react";
+import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
