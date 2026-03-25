@@ -163,32 +163,76 @@ export const deezerApi = {
       }
     } catch {}
 
-    try {
-      // Use "artist title" for more precise matching
-      const query = `${song.artist.split(",")[0].trim()} ${song.title}`;
-      const results = await jiosaavnApi.search(query, 8);
+    const targetTitle = norm(song.title);
+    const targetArtist = norm(song.artist.split(",")[0]);
+    const targetDuration = song.duration; // seconds
 
-      // Filter out blacklisted URLs
-      const filtered = results.filter((r) => !r.streamUrl || !blacklistedUrls.includes(r.streamUrl));
+    /** Score a candidate result against the target song */
+    const scoreCandidate = (r: Song): number => {
+      if (!r.streamUrl || blacklistedUrls.includes(r.streamUrl)) return -1;
+      const t = norm(r.title);
+      const a = norm(r.artist.split(",")[0]);
+      let score = 0;
 
-      const targetTitle = norm(song.title);
-      const targetArtist = norm(song.artist.split(",")[0]);
+      // Title match (most important)
+      score += matchScore(t, targetTitle) * 2;
 
-      const match = filtered.find((r) => {
-        const t = norm(r.title);
-        const a = norm(r.artist.split(",")[0]);
-        return (t.includes(targetTitle) || targetTitle.includes(t)) &&
-               (a.includes(targetArtist) || targetArtist.includes(a));
-      });
+      // Artist match
+      score += matchScore(a, targetArtist) * 1.5;
 
-      if (match?.streamUrl) {
-        return { ...song, streamUrl: match.streamUrl };
+      // Duration proximity bonus (within 10s = great, within 30s = ok)
+      if (r.duration > 0 && targetDuration > 0) {
+        const diff = Math.abs(r.duration - targetDuration);
+        if (diff <= 5) score += 40;
+        else if (diff <= 15) score += 25;
+        else if (diff <= 30) score += 10;
+        else if (diff > 60) score -= 20; // penalty for very different durations
       }
 
-      // Fallback: first non-blacklisted result with stream
-      const fallback = filtered.find((r) => r.streamUrl);
-      if (fallback?.streamUrl) {
-        return { ...song, streamUrl: fallback.streamUrl };
+      return score;
+    };
+
+    try {
+      // Strategy: try multiple search queries for better matching
+      const mainArtist = song.artist.split(",")[0].trim();
+      const queries = [
+        `${mainArtist} ${song.title}`,                    // "Artist Title"
+        song.title,                                        // just title
+        `${song.title} ${mainArtist}`,                     // "Title Artist" (reversed)
+      ];
+
+      // Remove duplicate normalized queries
+      const seen = new Set<string>();
+      const uniqueQueries = queries.filter((q) => {
+        const n = norm(q);
+        if (seen.has(n)) return false;
+        seen.add(n);
+        return true;
+      });
+
+      let bestMatch: Song | null = null;
+      let bestScore = 0;
+
+      for (const q of uniqueQueries) {
+        try {
+          const results = await jiosaavnApi.search(q, 10);
+          for (const r of results) {
+            const s = scoreCandidate(r);
+            if (s > bestScore) {
+              bestScore = s;
+              bestMatch = r;
+            }
+          }
+          // If we found a very good match, don't try more queries
+          if (bestScore >= 200) break;
+        } catch {
+          // continue with next query
+        }
+      }
+
+      // Accept match if score is reasonable (title + artist partially match)
+      if (bestMatch?.streamUrl && bestScore >= 80) {
+        return { ...song, streamUrl: bestMatch.streamUrl };
       }
     } catch (e) {
       console.error("JioSaavn resolve failed:", e);
@@ -196,27 +240,38 @@ export const deezerApi = {
 
     // Fallback: search admin custom_songs for a matching track
     try {
-      const targetTitle = norm(song.title);
-      const targetArtist = norm(song.artist.split(",")[0]);
       const { data: customSongs } = await supabase
         .from("custom_songs")
         .select("*")
         .not("stream_url", "is", null);
 
       if (customSongs && customSongs.length > 0) {
-        const customMatch = customSongs.find((c) => {
+        let bestCustom: typeof customSongs[0] | null = null;
+        let bestScore = 0;
+
+        for (const c of customSongs) {
           const ct = norm(c.title);
           const ca = norm(c.artist.split(",")[0]);
-          return (ct.includes(targetTitle) || targetTitle.includes(ct)) &&
-                 (ca.includes(targetArtist) || targetArtist.includes(ca));
-        });
+          let score = 0;
+          score += matchScore(ct, targetTitle) * 2;
+          score += matchScore(ca, targetArtist) * 1.5;
+          if (c.duration > 0 && targetDuration > 0) {
+            const diff = Math.abs(c.duration - targetDuration);
+            if (diff <= 15) score += 30;
+            else if (diff <= 30) score += 15;
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            bestCustom = c;
+          }
+        }
 
-        if (customMatch?.stream_url) {
-          console.log("Resolved via admin custom song:", customMatch.title);
+        if (bestCustom?.stream_url && bestScore >= 80) {
+          console.log("Resolved via admin custom song:", bestCustom.title, `(score: ${bestScore})`);
           return {
             ...song,
-            streamUrl: customMatch.stream_url,
-            coverUrl: customMatch.cover_url || song.coverUrl,
+            streamUrl: bestCustom.stream_url,
+            coverUrl: bestCustom.cover_url || song.coverUrl,
             resolvedViaCustom: true,
           };
         }
