@@ -277,54 +277,8 @@ const LibraryPage = () => {
             </div>
           )}
 
-          {tab === "radios" && (
-            <div>
-              {savedRadios.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Radio className="w-14 h-14 text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">Aucune station sauvegardée. Ajoutez-en depuis la page Radio avec le ❤️.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {savedRadios.map((station, i) => {
-                    const isActive = currentSong?.id === station.id && isPlaying;
-                    return (
-                      <motion.div
-                        key={station.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.02 }}
-                        className="cursor-pointer group"
-                        onClick={() => playStation(station)}
-                      >
-                        <div className="relative aspect-square rounded-2xl overflow-hidden mb-2.5 bg-secondary">
-                          <img
-                            src={getStationLogo(station.name, station.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop")}
-                            alt={station.name}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
-                          />
-                          <div className="absolute inset-0 bg-background/0 group-hover:bg-background/30 transition-colors flex items-center justify-center">
-                            <div className={`w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg transition-all ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"}`}>
-                              {isActive ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
-                            </div>
-                          </div>
-                          {isActive && (
-                            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/90 backdrop-blur-sm">
-                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                              <span className="text-[10px] font-bold text-white tracking-wider">LIVE</span>
-                            </div>
-                          )}
-                        </div>
-                        <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
-                        <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+
+
 
           {tab === "downloads" && (
             <div>
