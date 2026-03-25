@@ -75,7 +75,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setOriginalStreamUrl: (url) => set({ originalStreamUrl: url }),
   revertToPreview: () => {
     const { currentSong, originalStreamUrl } = get();
-    if (currentSong && originalStreamUrl) {
+    if (currentSong && originalStreamUrl && currentSong.streamUrl) {
+      // Blacklist this bad JioSaavn match
+      try {
+        const key = `${currentSong.title}|||${currentSong.artist}`;
+        const stored = localStorage.getItem("hd-blacklist");
+        const blacklist: Record<string, string[]> = stored ? JSON.parse(stored) : {};
+        if (!blacklist[key]) blacklist[key] = [];
+        if (!blacklist[key].includes(currentSong.streamUrl)) {
+          blacklist[key].push(currentSong.streamUrl);
+        }
+        localStorage.setItem("hd-blacklist", JSON.stringify(blacklist));
+      } catch (e) {
+        console.error("Failed to save blacklist:", e);
+      }
       set({
         currentSong: { ...currentSong, streamUrl: originalStreamUrl },
         originalStreamUrl: null,

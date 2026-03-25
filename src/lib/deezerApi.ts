@@ -114,10 +114,25 @@ export const deezerApi = {
   /** Search JioSaavn for a full stream URL matching a Deezer track */
   async resolveFullStream(song: Song): Promise<Song> {
     if (!song.id.startsWith("dz-")) return song;
+
+    // Load blacklist for this song
+    let blacklistedUrls: string[] = [];
+    try {
+      const stored = localStorage.getItem("hd-blacklist");
+      if (stored) {
+        const blacklist: Record<string, string[]> = JSON.parse(stored);
+        const key = `${song.title}|||${song.artist}`;
+        blacklistedUrls = blacklist[key] || [];
+      }
+    } catch {}
+
     try {
       // Use "artist title" for more precise matching
       const query = `${song.artist.split(",")[0].trim()} ${song.title}`;
       const results = await jiosaavnApi.search(query, 8);
+
+      // Filter out blacklisted URLs
+      const filtered = results.filter((r) => !r.streamUrl || !blacklistedUrls.includes(r.streamUrl));
 
       // Find best match by comparing normalized titles
       const norm = (s: string) =>
@@ -133,10 +148,9 @@ export const deezerApi = {
       const targetTitle = norm(song.title);
       const targetArtist = norm(song.artist.split(",")[0]);
 
-      const match = results.find((r) => {
+      const match = filtered.find((r) => {
         const t = norm(r.title);
         const a = norm(r.artist.split(",")[0]);
-        // Title must be similar and artist must share keywords
         return (t.includes(targetTitle) || targetTitle.includes(t)) &&
                (a.includes(targetArtist) || targetArtist.includes(a));
       });
@@ -145,8 +159,8 @@ export const deezerApi = {
         return { ...song, streamUrl: match.streamUrl };
       }
 
-      // Fallback: first result with stream
-      const fallback = results.find((r) => r.streamUrl);
+      // Fallback: first non-blacklisted result with stream
+      const fallback = filtered.find((r) => r.streamUrl);
       if (fallback?.streamUrl) {
         return { ...song, streamUrl: fallback.streamUrl };
       }
