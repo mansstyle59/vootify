@@ -12,6 +12,7 @@ import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { deezerApi } from "@/lib/deezerApi";
+import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { useDominantColor } from "@/hooks/useDominantColor";
 
 /* ── Shared glass styles ── */
@@ -76,6 +77,26 @@ export function MiniPlayer() {
           }
         } catch (e) {
           console.error("Failed to resolve full stream:", e);
+        }
+      }
+
+      // Fallback: if song has no stream URL (e.g. custom song without file), search JioSaavn
+      if (!songToPlay.streamUrl) {
+        try {
+          const mainArtist = songToPlay.artist.split(",")[0].trim();
+          const query = `${mainArtist} ${songToPlay.title}`;
+          const results = await jiosaavnApi.search(query, 5);
+          const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+          const targetTitle = norm(songToPlay.title);
+          const bestMatch = results.find((r) => r.streamUrl && norm(r.title).includes(targetTitle))
+            || results.find((r) => !!r.streamUrl);
+          if (bestMatch?.streamUrl) {
+            console.log("Custom song resolved via JioSaavn:", bestMatch.title);
+            songToPlay = { ...songToPlay, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || songToPlay.coverUrl };
+            usePlayerStore.setState({ currentSong: songToPlay });
+          }
+        } catch (e) {
+          console.error("JioSaavn fallback failed:", e);
         }
       }
 
