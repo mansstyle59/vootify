@@ -168,15 +168,10 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results (page 1) — filter out 30s previews, resolve at play time
+  // Deezer results (page 1) — will be resolved to full streams at play time
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: async () => {
-      const raw = await deezerApi.searchTracks(debouncedQuery, PAGE_SIZE);
-      // Keep all Deezer results — they'll be resolved to full streams at play time
-      // Filter out ones that only have preview URLs (will be resolved by player)
-      return raw;
-    },
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
