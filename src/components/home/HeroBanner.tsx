@@ -36,7 +36,7 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-0" style={{ minHeight: "220px" }}>
+    <div ref={ref} className="relative overflow-hidden mb-0 pt-[env(safe-area-inset-top)]" style={{ minHeight: "220px" }}>
       {/* Parallax background */}
       <motion.div
         style={{ y, scale }}

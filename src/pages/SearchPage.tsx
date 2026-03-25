@@ -269,7 +269,7 @@ const SearchPage = () => {
   return (
     <div className="pb-32 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="px-4 md:px-8 pt-6 pb-2">
+      <div className="px-4 md:px-8 pt-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Rechercher</h1>
         <p className="text-sm text-muted-foreground mb-5">Trouvez vos artistes et morceaux préférés</p>
       </div>
