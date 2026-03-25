@@ -40,6 +40,8 @@ function extractPlaylistId(input: string): string | null {
   const urlMatch = input.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
   if (urlMatch) return urlMatch[1];
   if (/^\d+$/.test(input.trim())) return input.trim();
+  // Short links like https://link.deezer.com/... need resolution
+  if (/link\.deezer\.com/i.test(input.trim())) return "short:" + input.trim();
   return null;
 }
 
@@ -159,10 +161,19 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   }, []);
 
   const handleAddById = async () => {
-    const id = extractPlaylistId(playlistInput);
+    let id = extractPlaylistId(playlistInput);
     if (!id) return;
     setAddingById(true);
     try {
+      // Resolve short links via edge function redirect
+      if (id.startsWith("short:")) {
+        const shortUrl = id.replace("short:", "");
+        const resp = await fetch(shortUrl, { redirect: "follow" });
+        const finalUrl = resp.url;
+        const match = finalUrl.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
+        if (!match) throw new Error("Not a playlist link");
+        id = match[1];
+      }
       const info = await deezerApi.getPlaylistInfo(id);
       addPlaylist(info.id, info.title);
     } catch {
