@@ -577,7 +577,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     album: track.album || "",
                     duration: track.duration,
                     coverUrl: track.coverUrl,
-                    streamUrl: hdResult?.streamUrl || "",
+                    streamUrl: hdResults.length > 0 ? hdResults[0].streamUrl : "",
                     liked: true,
                   };
                   toggleLike(song);
