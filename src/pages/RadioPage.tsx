@@ -361,7 +361,7 @@ const RadioPage = () => {
             </button>
           )}
         </div>
-      </motion.div>
+      </div>
     );
   }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
 
