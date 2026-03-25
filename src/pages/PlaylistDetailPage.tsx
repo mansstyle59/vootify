@@ -4,7 +4,8 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download } from "lucide-react";
+import { offlineCache } from "@/lib/offlineCache";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,28 @@ const PlaylistDetailPage = () => {
     const shuffled = [...songs].sort(() => Math.random() - 0.5);
     setQueue(shuffled);
     play(shuffled[0]);
+  };
+
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadAll = async () => {
+    if (songs.length === 0) return;
+    setDownloading(true);
+    let done = 0;
+    for (const song of songs) {
+      try {
+        const cached = await offlineCache.isCached(song.id);
+        if (!cached && song.streamUrl) {
+          await offlineCache.cacheSong(song);
+        }
+        done++;
+        toast.info(`Téléchargement ${done}/${songs.length}...`);
+      } catch {
+        toast.error(`Échec : ${song.title}`);
+      }
+    }
+    setDownloading(false);
+    toast.success("Tous les morceaux ont été téléchargés !");
   };
 
   const handleRemove = async (songId: string) => {
@@ -148,6 +171,13 @@ const PlaylistDetailPage = () => {
           className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm disabled:opacity-50"
         >
           <Shuffle className="w-4 h-4" /> Aléatoire
+        </button>
+        <button
+          onClick={handleDownloadAll}
+          disabled={songs.length === 0 || downloading}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm disabled:opacity-50"
+        >
+          <Download className={`w-4 h-4 ${downloading ? "animate-bounce" : ""}`} /> {downloading ? "..." : "Télécharger"}
         </button>
       </div>
 
