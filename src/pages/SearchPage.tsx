@@ -168,6 +168,19 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
+  const normalize = useCallback((s: string) =>
+    s.toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .replace(/\[.*?\]/g, "")
+      .replace(/\bfeat\.?\s*/gi, "")
+      .replace(/\bft\.?\s*/gi, "")
+      .replace(/[''`]/g, "'")
+      .replace(/[^a-z0-9\s']/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  , []);
+
   // Album results (JioSaavn)
   const { data: jsAlbumResults } = useQuery({
     queryKey: ["album-search-js", debouncedQuery],
@@ -198,21 +211,6 @@ const SearchPage = () => {
     }
     return merged;
   }, [jsAlbumResults, dzAlbumResults, source, normalize]);
-
-  const isLoading = jsLoading || dzLoading;
-
-  /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
-  const normalize = useCallback((s: string) =>
-    s.toLowerCase()
-      .replace(/\(.*?\)/g, "")
-      .replace(/\[.*?\]/g, "")
-      .replace(/\bfeat\.?\s*/gi, "")
-      .replace(/\bft\.?\s*/gi, "")
-      .replace(/[''`]/g, "'")
-      .replace(/[^a-z0-9\s']/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-  , []);
 
   const mergedResults = useMemo(() => {
     if (source === "jiosaavn") return jsResults || [];
