@@ -2,6 +2,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song, Album } from "@/data/mockData";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 
+/** Normalize a string for fuzzy matching */
+const norm = (s: string) =>
+  s.toLowerCase()
+    .replace(/\(.*?\)/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\bfeat\.?\s*/gi, "")
+    .replace(/\bft\.?\s*/gi, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 interface DeezerTrack {
   id: number;
   title: string;
