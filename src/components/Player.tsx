@@ -461,6 +461,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const [showQueue, setShowQueue] = useState(false);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   if (!currentSong) return null;
 
@@ -468,7 +469,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
-  const progressBarRef = useRef<HTMLDivElement>(null);
 
   const seekFromX = (clientX: number) => {
     const bar = progressBarRef.current;
