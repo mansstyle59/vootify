@@ -50,9 +50,25 @@ export function MiniPlayer() {
     const audio = audioRef.current;
 
     const loadAndPlay = async () => {
+      let songToPlay = currentSong;
+
+      // Auto-resolve Deezer tracks to full stream via JioSaavn
+      if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
+        try {
+          const resolved = await deezerApi.resolveFullStream(songToPlay);
+          if (resolved.streamUrl !== songToPlay.streamUrl) {
+            songToPlay = resolved;
+            // Update the store with the resolved stream URL
+            usePlayerStore.setState({ currentSong: resolved });
+          }
+        } catch (e) {
+          console.error("Failed to resolve full stream:", e);
+        }
+      }
+
       // Try offline cache first
-      const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
-      const srcToUse = cachedUrl || currentSong.streamUrl;
+      const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
+      const srcToUse = cachedUrl || songToPlay.streamUrl;
 
       if (srcToUse && audio.src !== srcToUse) {
         audio.src = srcToUse;
