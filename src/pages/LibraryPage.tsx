@@ -80,12 +80,12 @@ const LibraryPage = () => {
   };
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+    { key: "recent", label: "Récents", icon: Clock },
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
     { key: "custom", label: "Mes titres", icon: Music },
     { key: "downloads", label: "Téléchargés", icon: Download },
     { key: "radios", label: "Radios", icon: Radio },
-    { key: "recent", label: "Récents", icon: Clock },
   ];
 
   // Custom songs from database
@@ -366,11 +366,44 @@ const LibraryPage = () => {
           )}
 
           {tab === "recent" && (
-            <div className="glass-panel-light rounded-xl p-2">
+            <div>
               {recentlyPlayed.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">Écoutez quelque chose pour le voir ici</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Clock className="w-14 h-14 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground">Rien d'écouté récemment.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Vos morceaux écoutés apparaîtront ici</p>
+                </div>
               ) : (
-                recentlyPlayed.map((s, i) => <SongCard key={s.id} song={s} index={i} />)
+                <>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => { setQueue(recentlyPlayed); play(recentlyPlayed[0]); }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
+                    >
+                      <Play className="w-4 h-4" />
+                      Tout lire
+                    </button>
+                    <button
+                      onClick={() => {
+                        const shuffled = [...recentlyPlayed].sort(() => Math.random() - 0.5);
+                        setQueue(shuffled);
+                        play(shuffled[0]);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-all"
+                    >
+                      <Shuffle className="w-4 h-4" />
+                      Aléatoire
+                    </button>
+                    <span className="ml-auto flex items-center text-xs text-muted-foreground">
+                      {recentlyPlayed.length} titre{recentlyPlayed.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="glass-panel-light rounded-xl p-2">
+                    {recentlyPlayed
+                      .filter((song, i, arr) => arr.findIndex((s) => s.id === song.id) === i)
+                      .map((s, i) => <SongCard key={`${s.id}-${i}`} song={s} index={i} showIndex />)}
+                  </div>
+                </>
               )}
             </div>
           )}
