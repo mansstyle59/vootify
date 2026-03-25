@@ -296,6 +296,10 @@ function UsersTab() {
 function SongsTab() {
   const [songs, setSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editArtist, setEditArtist] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     supabase
@@ -314,6 +318,35 @@ function SongsTab() {
     toast.success("Morceau supprimé");
   };
 
+  const startEdit = (s: any) => {
+    setEditingId(s.id);
+    setEditTitle(s.title);
+    setEditArtist(s.artist);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editTitle.trim() || !editArtist.trim()) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("custom_songs")
+      .update({ title: editTitle.trim(), artist: editArtist.trim() })
+      .eq("id", id);
+    setSaving(false);
+    if (error) {
+      toast.error("Erreur lors de la modification");
+      return;
+    }
+    setSongs((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title: editTitle.trim(), artist: editArtist.trim() } : s))
+    );
+    setEditingId(null);
+    toast.success("Morceau modifié");
+  };
+
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
   return (
@@ -326,16 +359,66 @@ function SongsTab() {
             {s.cover_url && (
               <img src={s.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
             )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{s.title}</p>
-              <p className="text-xs text-muted-foreground truncate">{s.artist}</p>
-            </div>
-            <button
-              onClick={() => handleDelete(s.id)}
-              className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {editingId === s.id ? (
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full text-sm font-medium bg-background/80 border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Titre"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit(s.id)}
+                />
+                <input
+                  value={editArtist}
+                  onChange={(e) => setEditArtist(e.target.value)}
+                  className="w-full text-xs bg-background/80 border border-border rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Artiste"
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit(s.id)}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{s.title}</p>
+                <p className="text-xs text-muted-foreground truncate">{s.artist}</p>
+              </div>
+            )}
+            {editingId === s.id ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => saveEdit(s.id)}
+                  disabled={saving}
+                  className="p-1.5 rounded-full text-primary hover:bg-primary/10 transition-colors"
+                  title="Sauvegarder"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                  title="Annuler"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => startEdit(s)}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                  title="Modifier"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(s.id)}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+                  title="Supprimer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         ))
       )}
