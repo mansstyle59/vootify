@@ -13,7 +13,7 @@ import { Song } from "@/data/mockData";
 type Tab = "liked" | "playlists" | "recent" | "radios" | "downloads" | "custom";
 
 const LibraryPage = () => {
-  const [tab, setTab] = useState<Tab>("liked");
+  const [tab, setTab] = useState<Tab>("recent");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const navigate = useNavigate();
