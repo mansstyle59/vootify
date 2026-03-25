@@ -34,7 +34,7 @@ export function HeroBanner() {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0];
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-6" style={{ minHeight: "220px" }}>
+    <div ref={ref} className="relative overflow-hidden mb-0" style={{ minHeight: "220px" }}>
       {/* Parallax background */}
       <motion.div
         style={{ y, scale }}
@@ -43,6 +43,10 @@ export function HeroBanner() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-accent/20 to-background" />
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary/15 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-56 h-56 bg-accent/15 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/4" />
+      </motion.div>
+
+      {/* Bottom fade to background */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent z-[1]" />
 
         <motion.div
           animate={{ y: [0, -12, 0], rotate: [0, 8, 0] }}
