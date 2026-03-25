@@ -3,20 +3,14 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { Play, Pause, Heart, Music } from "lucide-react";
+import { Play, Pause } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Bonjour";
-  if (h < 18) return "Bon après-midi";
-  return "Bonsoir";
-}
+import { HeroBanner } from "@/components/home/HeroBanner";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
