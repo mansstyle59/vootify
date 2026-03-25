@@ -122,6 +122,9 @@ const SearchPage = () => {
     setSuggestQuery("");
     setShowSuggestions(false);
     setArtistFilter(null);
+    setJsPage(1); setDzPage(1);
+    setAllJsResults([]); setAllDzResults([]);
+    setHasMoreJs(true); setHasMoreDz(true);
     inputRef.current?.blur();
   }, []);
 
