@@ -87,6 +87,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           blacklist[key].push(currentSong.streamUrl);
         }
         localStorage.setItem("hd-blacklist", JSON.stringify(blacklist));
+        // Invalidate HD cache for this song
+        if (currentSong.id) hdCache.remove(currentSong.id);
       } catch (e) {
         console.error("Failed to save blacklist:", e);
       }
