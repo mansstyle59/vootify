@@ -681,9 +681,28 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                   {currentSong.title}
                 </h2>
-                <p className="text-[15px] text-foreground/60 truncate mt-0.5">
-                  {currentSong.artist}
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[15px] text-foreground/60 truncate">
+                    {currentSong.artist}
+                  </p>
+                  {isCached ? (
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-accent/20 text-accent-foreground border border-accent/30">
+                      Local
+                    </span>
+                  ) : currentSong.resolvedViaCustom ? (
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground border border-secondary">
+                      Custom
+                    </span>
+                  ) : currentSong.streamUrl && !currentSong.streamUrl.includes("dzcdn.net") && currentSong.id.startsWith("dz-") ? (
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                      HD
+                    </span>
+                  ) : currentSong.id.startsWith("dz-") ? (
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30">
+                      No HD
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <button
                 onClick={() => toggleLike(currentSong)}
