@@ -14,13 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    const { action, query, id, limit = 20 } = await req.json();
+    const { action, query, id, limit = 20, page = 1 } = await req.json();
 
     let url: string;
 
     switch (action) {
       case "search":
-        url = `${JIOSAAVN_BASE}/search/songs?query=${encodeURIComponent(query)}&limit=${limit}`;
+        url = `${JIOSAAVN_BASE}/search/songs?query=${encodeURIComponent(query)}&limit=${limit}&page=${page}`;
         break;
       case "song":
         url = `${JIOSAAVN_BASE}/songs/${id}`;
