@@ -502,7 +502,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     currentSong, isPlaying, progress, shuffle, repeat, queue,
     togglePlay, next, previous, seekTo: storeSeekTo,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue,
-    crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration
+    crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
+    originalStreamUrl, revertToPreview
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
