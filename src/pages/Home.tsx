@@ -127,44 +127,8 @@ const HomePage = () => {
     <div className="pb-32 max-w-7xl mx-auto">
       <HeroBanner />
 
-      {/* ─── Quick-access — recently played ─── */}
-      {recentlyPlayed.length > 0 && (
-        <div className="px-4 md:px-8 mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {recentlyPlayed
-              .filter((song, i, arr) => arr.findIndex((s) => s.id === song.id) === i)
-              .slice(0, 8).map((song, i) => {
-              const isActive = currentSong?.id === song.id;
-              return (
-                <motion.button
-                  key={song.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  onClick={() => handlePlayTrack(song, recentlyPlayed)}
-                  className={`flex items-center gap-3 rounded-md overflow-hidden text-left transition-colors group ${
-                    isActive ? "bg-primary/15" : "bg-secondary/60 hover:bg-secondary"
-                  }`}
-                >
-                  <img src={song.coverUrl} alt={song.title} className="w-12 h-12 object-cover flex-shrink-0" />
-                  <span className={`text-[13px] font-semibold truncate pr-2 flex-1 ${isActive ? "text-primary" : "text-foreground"}`}>
-                    {song.title}
-                  </span>
-                  <div className={`pr-3 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                      {isActive && isPlaying ? (
-                        <Pause className="w-4 h-4 text-primary-foreground" />
-                      ) : (
-                        <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
-                      )}
-                    </div>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+
+
 
       {/* ─── Playlist personnalisée ─── */}
       {personalizedMix.length >= 4 && (
