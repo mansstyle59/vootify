@@ -36,7 +36,7 @@ export function MiniPlayer() {
     currentSong, isPlaying, progress, volume, shuffle, repeat,
     togglePlay, next, previous, setProgress, setVolume,
     toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer,
-    _seekTime
+    _seekTime, crossfadeEnabled, crossfadeDuration
   } = usePlayerStore();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -44,7 +44,7 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
 
-  const CROSSFADE_MS = 2000;
+  const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
 
   useEffect(() => {
