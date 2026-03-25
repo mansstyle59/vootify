@@ -47,12 +47,17 @@ const GENRE_CARDS: { name: string; gradient: string; icon: React.ElementType }[]
 
 function AlbumCard({ album, onClick }: { album: Album; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex-shrink-0 w-36 group text-left">
-      <div className="relative w-36 h-36 rounded-xl overflow-hidden mb-2 shadow-lg">
+    <button onClick={onClick} className="flex-shrink-0 w-40 group text-left">
+      <div className="relative w-40 h-40 rounded-2xl overflow-hidden mb-2.5 shadow-lg ring-1 ring-border/10">
         <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-lg">
+            <Disc3 className="w-4 h-4 text-primary-foreground" />
+          </div>
+        </div>
       </div>
-      <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+      <p className="text-sm font-semibold text-foreground truncate">{album.title}</p>
       <p className="text-xs text-muted-foreground truncate">{album.artist} · {album.year}</p>
     </button>
   );
