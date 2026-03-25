@@ -18,13 +18,19 @@ const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "radio", label: "Station Radio", icon: Radio },
 ];
 
-function FieldInput({ label, value, onChange, placeholder, type = "text", required = false }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean;
+function FieldInput({ label, value, onChange, placeholder, type = "text", required = false, autoFilled = false }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean; autoFilled?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-foreground mb-1 block">
+      <span className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
         {label} {required && <span className="text-destructive">*</span>}
+        {autoFilled && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+            <Sparkles className="w-2.5 h-2.5" />
+            ID3
+          </span>
+        )}
       </span>
       <input
         type={type}
@@ -32,7 +38,9 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+        className={`w-full px-3 py-2.5 rounded-lg bg-secondary border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
+          autoFilled ? "border-primary/40" : "border-border"
+        }`}
       />
     </label>
   );
