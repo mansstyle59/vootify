@@ -120,7 +120,7 @@ const LibraryPage = () => {
   // Auth gate — all hooks are above
   if (!authLoading && !user) {
     return (
-      <div className="p-4 md:p-8 pt-[max(1rem,env(safe-area-inset-top))] pb-40 max-w-7xl mx-auto">
+      <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Votre Bibliothèque</h1>
         <p className="text-sm text-muted-foreground mb-8">Connectez-vous pour accéder à votre bibliothèque privée</p>
         <motion.div
@@ -148,7 +148,7 @@ const LibraryPage = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 pt-[max(1rem,env(safe-area-inset-top))] pb-40 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
       <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Votre Bibliothèque</h1>
       <p className="text-sm text-muted-foreground mb-5">Vos morceaux, playlists et stations sauvegardés</p>
 
