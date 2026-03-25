@@ -35,6 +35,7 @@ function cleanTitle(fileName: string): string {
   return name.trim();
 }
 
+// detectDuration kept as fallback
 function detectDuration(file: File | Blob): Promise<number> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
