@@ -152,7 +152,7 @@ const HomePage = () => {
     switch (section.id) {
       case "pourVous":
         return personalizedMix.length >= 4 && isVisible("pourVous") ? (
-          <Section key="pourVous" title="Pour vous 💫">
+          <Section key="pourVous" title={sectionTitle(section)}>
             <HorizontalScroll>
               {personalizedMix.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, personalizedMix)} />
