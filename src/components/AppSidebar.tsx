@@ -1,15 +1,22 @@
 import { NavLink as RouterNavLink } from "react-router-dom";
 import { Home, Search, Library, Radio, PlusCircle } from "lucide-react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const navItems = [
   { to: "/", icon: Home, label: "Accueil" },
   { to: "/search", icon: Search, label: "Recherche" },
   { to: "/library", icon: Library, label: "Bibliothèque" },
   { to: "/radio", icon: Radio, label: "Radio" },
+];
+
+const adminItems = [
   { to: "/add", icon: PlusCircle, label: "Ajouter" },
 ];
 
 export function AppSidebar() {
+  const { isAdmin } = useAdminAuth();
+  const items = isAdmin ? [...navItems, ...adminItems] : navItems;
+
   return (
     <aside className="hidden md:flex flex-col w-[240px] min-h-screen glass-panel border-r border-border/50 p-4">
       <div className="mb-8 px-2">
@@ -19,7 +26,7 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map((item) => (
+        {items.map((item) => (
           <RouterNavLink
             key={item.to}
             to={item.to}
@@ -42,10 +49,13 @@ export function AppSidebar() {
 }
 
 export function MobileNav() {
+  const { isAdmin } = useAdminAuth();
+  const items = isAdmin ? [...navItems, ...adminItems] : navItems;
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-border/50 px-2 pb-[env(safe-area-inset-bottom)]">
       <div className="flex justify-around py-2">
-        {navItems.map((item) => (
+        {items.map((item) => (
           <RouterNavLink
             key={item.to}
             to={item.to}
