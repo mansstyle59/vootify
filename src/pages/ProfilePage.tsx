@@ -3,8 +3,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -219,6 +222,51 @@ const ProfilePage = () => {
             )}
             Sauvegarder
           </button>
+
+          {/* Audio Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 p-5 rounded-2xl bg-secondary/50 border border-border space-y-5"
+          >
+            <div className="flex items-center gap-3 mb-1">
+              <Music className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Lecture audio</h3>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Crossfade</p>
+                <p className="text-xs text-muted-foreground">Transition fluide entre les pistes</p>
+              </div>
+              <Switch
+                checked={usePlayerStore.getState().crossfadeEnabled}
+                onCheckedChange={(checked) => usePlayerStore.getState().setCrossfadeEnabled(checked)}
+              />
+            </div>
+
+            {usePlayerStore.getState().crossfadeEnabled && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-foreground">Durée du crossfade</p>
+                  <span className="text-sm font-mono text-primary">{usePlayerStore.getState().crossfadeDuration}s</span>
+                </div>
+                <Slider
+                  value={[usePlayerStore.getState().crossfadeDuration]}
+                  onValueChange={([val]) => usePlayerStore.getState().setCrossfadeDuration(val)}
+                  min={1}
+                  max={8}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                  <span>1s</span>
+                  <span>8s</span>
+                </div>
+              </div>
+            )}
+          </motion.div>
 
           {isAdmin && (
             <button
