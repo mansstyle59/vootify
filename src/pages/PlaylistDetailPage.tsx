@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -18,8 +18,17 @@ const PlaylistDetailPage = () => {
   const playlist = playlists.find((p) => p.id === id);
   const songs: Song[] = id ? playlistSongs[id] || [] : [];
 
+  const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
+
+  // Check which songs are cached offline
+  useEffect(() => {
+    if (songs.length === 0) return;
+    Promise.all(songs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
+      (ids) => setCachedIds(new Set(ids.filter(Boolean) as string[]))
+    );
+  }, [songs]);
 
   useEffect(() => {
     if (id) loadPlaylistSongs(id);
@@ -62,6 +71,7 @@ const PlaylistDetailPage = () => {
       }
     }
     setDownloading(false);
+    setCachedIds(new Set(songs.map((s) => s.id)));
     toast.success("Tous les morceaux ont été téléchargés !");
   };
 
@@ -231,6 +241,9 @@ const PlaylistDetailPage = () => {
                 <div className="flex-1 min-w-0">
                   <SongCard song={song} index={i} showIndex />
                 </div>
+                {cachedIds.has(song.id) && (
+                  <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
                   className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
