@@ -495,7 +495,7 @@ const RadioPage = () => {
         {/* Content */}
         {isLoading ? (
           viewMode === "grid" ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
                   <div className="aspect-square rounded-2xl bg-secondary/60 mb-2.5" />
@@ -519,7 +519,7 @@ const RadioPage = () => {
           )
         ) : stations.length > 0 ? (
           viewMode === "grid" ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {stations.map((station, i) => (
                   <StationCard key={station.id} station={station} index={i} />
                 ))}
