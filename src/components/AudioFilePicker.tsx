@@ -1,0 +1,111 @@
+import { useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload, FileAudio, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
+
+interface AudioFilePickerProps {
+  value: string;
+  onChange: (url: string) => void;
+  onDurationDetected?: (seconds: number) => void;
+  className?: string;
+}
+
+const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
+
+const AudioFilePicker = ({ value, onChange, onDurationDetected, className = "" }: AudioFilePickerProps) => {
+  const [uploading, setUploading] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const detectDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio();
+      audio.preload = "metadata";
+      audio.onloadedmetadata = () => {
+        const dur = Math.round(audio.duration);
+        URL.revokeObjectURL(url);
+        resolve(dur);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(0);
+      };
+      audio.src = url;
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Fichier trop lourd (max 50 Mo)");
+      return;
+    }
+
+    setUploading(true);
+    setFileName(file.name);
+
+    // Detect duration from file
+    const duration = await detectDuration(file);
+    if (duration > 0 && onDurationDetected) {
+      onDurationDetected(duration);
+    }
+
+    // Upload to Supabase storage
+    const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error } = await supabase.storage.from("audio").upload(path, file, {
+      contentType: file.type || "audio/mpeg",
+    });
+
+    if (error) {
+      toast.error("Erreur d'upload audio");
+      console.error(error);
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
+    onChange(urlData.publicUrl);
+    setUploading(false);
+    toast.success("Fichier audio uploadé !");
+  };
+
+  const handleRemove = () => {
+    onChange("");
+    setFileName("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <div className={`space-y-2 ${className}`}>
+      <span className="text-sm font-medium text-foreground block">Fichier audio local</span>
+
+      {value && fileName && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/60 text-sm">
+          <FileAudio className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-foreground truncate flex-1">{fileName}</span>
+          <button type="button" onClick={handleRemove} className="p-0.5 rounded text-muted-foreground hover:text-foreground">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      <input ref={fileRef} type="file" accept={ACCEPTED_AUDIO} onChange={handleFileUpload} className="hidden" />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 transition-colors disabled:opacity-50"
+      >
+        {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+        {uploading ? "Upload..." : "Choisir un fichier"}
+      </button>
+    </div>
+  );
+};
+
+export default AudioFilePicker;
