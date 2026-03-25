@@ -379,7 +379,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Drag handle */}
-      <div className="relative z-10 flex justify-center pt-3 pb-1">
+      <div className="relative z-10 flex justify-center pb-1" style={{ paddingTop: "calc(env(safe-area-inset-top, 12px) + 8px)" }}>
         <div className="w-9 h-1 rounded-full" style={{ background: "hsl(0 0% 100% / 0.2)" }} />
       </div>
 
