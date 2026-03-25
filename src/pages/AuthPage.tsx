@@ -205,9 +205,18 @@ const AuthPage = () => {
               <p className="text-destructive text-sm text-center">{error}</p>
             )}
 
-            {/* Forgot password link */}
+            {/* Forgot password link + Remember me */}
             {mode === "login" && (
-              <div className="text-right">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-border bg-secondary text-primary accent-primary"
+                  />
+                  <span className="text-xs text-muted-foreground">Se souvenir de moi</span>
+                </label>
                 <button
                   type="button"
                   onClick={() => switchMode("forgot")}
