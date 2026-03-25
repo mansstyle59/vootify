@@ -41,7 +41,7 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
               transition={{ delay: 0.4 }}
               className="text-2xl font-display font-bold text-[#1DB954]"
             >
-              Vootify
+              VOOTIFY
             </motion.h1>
           </motion.div>
 
