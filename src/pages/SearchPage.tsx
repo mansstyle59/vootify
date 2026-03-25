@@ -493,7 +493,7 @@ const SearchPage = () => {
                     </div>
                     <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                       {albumResults.map((album) => (
-                        <AlbumCard key={album.id} album={album} onClick={() => handleBubbleClick(`${album.title} ${album.artist}`)} />
+                        <AlbumCard key={album.id} album={album} onClick={() => navigate(`/album/${album.id}`)} />
                       ))}
                     </div>
                   </div>
