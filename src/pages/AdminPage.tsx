@@ -390,4 +390,70 @@ function RadiosTab() {
   );
 }
 
+function LogsTab() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from("admin_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .then(({ data }) => {
+        setLogs(data || []);
+        setLoading(false);
+      });
+  }, []);
+
+  const actionLabels: Record<string, { label: string; color: string }> = {
+    promote: { label: "Promotion", color: "text-primary" },
+    demote: { label: "Rétrogradation", color: "text-orange-400" },
+    delete_user: { label: "Suppression", color: "text-destructive" },
+  };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  return (
+    <div className="space-y-2">
+      {logs.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Aucun log enregistré</p>
+      ) : (
+        logs.map((log) => {
+          const info = actionLabels[log.action] || { label: log.action, color: "text-foreground" };
+          return (
+            <motion.div
+              key={log.id}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+            >
+              <ScrollText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm">
+                  <span className={`font-semibold ${info.color}`}>{info.label}</span>
+                  {log.details?.role && (
+                    <span className="text-muted-foreground"> — rôle: {log.details.role}</span>
+                  )}
+                  {log.details?.deleted_user_name && (
+                    <span className="text-muted-foreground"> — {log.details.deleted_user_name}</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {new Date(log.created_at).toLocaleString("fr-FR")}
+                  {log.target_user_id && (
+                    <span className="ml-2 font-mono text-[10px] opacity-60">
+                      cible: {log.target_user_id.slice(0, 8)}…
+                    </span>
+                  )}
+                </p>
+              </div>
+            </motion.div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
 export default AdminPage;
