@@ -192,53 +192,7 @@ export const deezerApi = {
       return score;
     };
 
-    try {
-      // Strategy: try multiple search queries for better matching
-      const mainArtist = song.artist.split(",")[0].trim();
-      const queries = [
-        `${mainArtist} ${song.title}`,                    // "Artist Title"
-        song.title,                                        // just title
-        `${song.title} ${mainArtist}`,                     // "Title Artist" (reversed)
-      ];
-
-      // Remove duplicate normalized queries
-      const seen = new Set<string>();
-      const uniqueQueries = queries.filter((q) => {
-        const n = norm(q);
-        if (seen.has(n)) return false;
-        seen.add(n);
-        return true;
-      });
-
-      let bestMatch: Song | null = null;
-      let bestScore = 0;
-
-      for (const q of uniqueQueries) {
-        try {
-          const results = await jiosaavnApi.search(q, 10);
-          for (const r of results) {
-            const s = scoreCandidate(r);
-            if (s > bestScore) {
-              bestScore = s;
-              bestMatch = r;
-            }
-          }
-          // If we found a very good match, don't try more queries
-          if (bestScore >= 200) break;
-        } catch {
-          // continue with next query
-        }
-      }
-
-      // Accept match if score is reasonable (title + artist partially match)
-      if (bestMatch?.streamUrl && bestScore >= 80) {
-        return { ...song, streamUrl: bestMatch.streamUrl };
-      }
-    } catch (e) {
-      console.error("JioSaavn resolve failed:", e);
-    }
-
-    // Fallback: search admin custom_songs for a matching track
+    // PRIORITY 1: Check admin custom_songs first
     try {
       const { data: customSongs } = await supabase
         .from("custom_songs")
@@ -267,7 +221,7 @@ export const deezerApi = {
         }
 
         if (bestCustom?.stream_url && bestScore >= 80) {
-          console.log("Resolved via admin custom song:", bestCustom.title, `(score: ${bestScore})`);
+          console.log("Resolved via admin custom song (priority):", bestCustom.title, `(score: ${bestScore})`);
           return {
             ...song,
             streamUrl: bestCustom.stream_url,
@@ -277,7 +231,50 @@ export const deezerApi = {
         }
       }
     } catch (e) {
-      console.error("Custom songs fallback failed:", e);
+      console.error("Custom songs check failed:", e);
+    }
+
+    // PRIORITY 2: Search JioSaavn for full stream
+    try {
+      const mainArtist = song.artist.split(",")[0].trim();
+      const queries = [
+        `${mainArtist} ${song.title}`,
+        song.title,
+        `${song.title} ${mainArtist}`,
+      ];
+
+      const seen = new Set<string>();
+      const uniqueQueries = queries.filter((q) => {
+        const n = norm(q);
+        if (seen.has(n)) return false;
+        seen.add(n);
+        return true;
+      });
+
+      let bestMatch: Song | null = null;
+      let bestScore = 0;
+
+      for (const q of uniqueQueries) {
+        try {
+          const results = await jiosaavnApi.search(q, 10);
+          for (const r of results) {
+            const s = scoreCandidate(r);
+            if (s > bestScore) {
+              bestScore = s;
+              bestMatch = r;
+            }
+          }
+          if (bestScore >= 200) break;
+        } catch {
+          // continue with next query
+        }
+      }
+
+      if (bestMatch?.streamUrl && bestScore >= 80) {
+        return { ...song, streamUrl: bestMatch.streamUrl };
+      }
+    } catch (e) {
+      console.error("JioSaavn resolve failed:", e);
     }
 
     // No full stream found
