@@ -40,26 +40,35 @@ export function MiniPlayer() {
   } = usePlayerStore();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const crossfadeRef = useRef<HTMLAudioElement | null>(null);
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastSongIdRef = useRef<string | null>(null);
+
+  const CROSSFADE_MS = 2000;
+  const FADE_STEP = 50;
 
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.volume = volume;
   }, [volume]);
 
+  // Crossfade logic
   useEffect(() => {
     if (!audioRef.current || !currentSong) return;
     const audio = audioRef.current;
+    const prevSongId = lastSongIdRef.current;
+    lastSongIdRef.current = currentSong.id;
+
+    const isNewTrack = prevSongId !== null && prevSongId !== currentSong.id;
 
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
 
-      // Auto-resolve Deezer tracks to full stream via JioSaavn
       if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
         try {
           const resolved = await deezerApi.resolveFullStream(songToPlay);
           if (resolved.streamUrl !== songToPlay.streamUrl) {
             songToPlay = resolved;
-            // Update the store with the resolved stream URL
             usePlayerStore.setState({ currentSong: resolved });
           }
         } catch (e) {
@@ -67,18 +76,59 @@ export function MiniPlayer() {
         }
       }
 
-      // Try offline cache first
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
 
-      if (srcToUse && audio.src !== srcToUse) {
-        audio.src = srcToUse;
-        audio.load();
-      }
-      if (isPlaying) {
+      if (isNewTrack && audio.src && !audio.paused) {
+        // Crossfade: move current audio to crossfade ref and fade it out
+        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+        const oldAudio = crossfadeRef.current!;
+        oldAudio.src = audio.src;
+        oldAudio.currentTime = audio.currentTime;
+        oldAudio.volume = volume;
+        oldAudio.play().catch(() => {});
+
+        // Fade out old
+        const steps = CROSSFADE_MS / FADE_STEP;
+        let step = 0;
+        fadeIntervalRef.current = setInterval(() => {
+          step++;
+          oldAudio.volume = Math.max(0, volume * (1 - step / steps));
+          if (step >= steps) {
+            oldAudio.pause();
+            oldAudio.src = "";
+            if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+            fadeIntervalRef.current = null;
+          }
+        }, FADE_STEP);
+
+        // Start new track with fade in
+        if (srcToUse && audio.src !== srcToUse) {
+          audio.src = srcToUse;
+          audio.load();
+        }
+        audio.volume = 0;
         audio.play().catch(console.error);
+        let fadeInStep = 0;
+        const fadeInInterval = setInterval(() => {
+          fadeInStep++;
+          audio.volume = Math.min(volume, volume * (fadeInStep / steps));
+          if (fadeInStep >= steps) {
+            audio.volume = volume;
+            clearInterval(fadeInInterval);
+          }
+        }, FADE_STEP);
       } else {
-        audio.pause();
+        // Normal play (first track or play/pause toggle)
+        if (srcToUse && audio.src !== srcToUse) {
+          audio.src = srcToUse;
+          audio.load();
+        }
+        if (isPlaying) {
+          audio.play().catch(console.error);
+        } else {
+          audio.pause();
+        }
       }
     };
 
@@ -164,6 +214,7 @@ export function MiniPlayer() {
         onEnded={handleEnded}
         preload="auto"
       />
+      <audio ref={crossfadeRef} preload="auto" />
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
