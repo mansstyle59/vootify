@@ -165,9 +165,10 @@ export const deezerApi = {
         return { ...song, streamUrl: fallback.streamUrl };
       }
     } catch (e) {
-      console.error("JioSaavn resolve failed, using Deezer preview:", e);
+      console.error("JioSaavn resolve failed:", e);
     }
-    return song;
+    // No full stream found — return song without Deezer preview
+    return { ...song, streamUrl: "" };
   },
 
   /** Resolve full streams for an array of Deezer tracks */

@@ -150,15 +150,11 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
           )}
         </button>
       )}
-      {isFullStream(song) ? (
+      {isFullStream(song) && (
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20" title="Flux complet haute qualité">
           HD
         </span>
-      ) : song.streamUrl ? (
-        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border" title="Extrait 30 secondes">
-          30s
-        </span>
-      ) : null}
+      )}
 
       <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
     </motion.div>
