@@ -212,7 +212,7 @@ const SearchPage = () => {
         const nextPage = jsPage + 1;
         promises.push(
           jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
-            setAllJsResults((prev) => [...prev, ...res.filter(isFullStream)]);
+            setExtraJsResults((prev) => [...prev, ...res]);
             setHasMoreJs(res.length >= PAGE_SIZE);
             setJsPage(nextPage);
           })
@@ -223,7 +223,7 @@ const SearchPage = () => {
         const offset = dzPage * PAGE_SIZE;
         promises.push(
           deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
-            setAllDzResults((prev) => [...prev, ...res]);
+            setExtraDzResults((prev) => [...prev, ...res]);
             setHasMoreDz(res.length >= PAGE_SIZE);
             setDzPage(nextPage);
           })
