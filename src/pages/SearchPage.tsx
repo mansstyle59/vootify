@@ -366,8 +366,8 @@ const SearchPage = () => {
       };
       return scoreRelevance(b) - scoreRelevance(a);
     });
-      return scoreRelevance(b) - scoreRelevance(a);
-    });
+
+    return merged;
 
     return merged;
   }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
