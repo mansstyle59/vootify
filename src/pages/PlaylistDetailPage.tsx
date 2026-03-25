@@ -241,6 +241,9 @@ const PlaylistDetailPage = () => {
                 <div className="flex-1 min-w-0">
                   <SongCard song={song} index={i} showIndex />
                 </div>
+                {cachedIds.has(song.id) && (
+                  <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
                   className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
