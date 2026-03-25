@@ -167,20 +167,14 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results (page 1) — resolve to full streams
+  // Deezer results (page 1) — filter out 30s previews, resolve at play time
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
     queryFn: async () => {
       const raw = await deezerApi.searchTracks(debouncedQuery, PAGE_SIZE);
-      // Resolve full streams in parallel (batch of 6 to avoid overwhelming)
-      const resolved: Song[] = [];
-      for (let i = 0; i < raw.length; i += 6) {
-        const batch = raw.slice(i, i + 6);
-        const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
-        resolved.push(...results);
-      }
-      // Only keep songs with full streams
-      return resolved.filter(isFullStream);
+      // Keep all Deezer results — they'll be resolved to full streams at play time
+      // Filter out ones that only have preview URLs (will be resolved by player)
+      return raw;
     },
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
@@ -196,8 +190,10 @@ const SearchPage = () => {
 
   useEffect(() => {
     if (dzResults) {
+      // Filter Deezer: only keep those NOT having a dzcdn preview (already resolved or metadata-only)
+      // Actually keep all — player resolves at play time
       setAllDzResults(dzResults);
-      setHasMoreDz(dzResults.length >= PAGE_SIZE / 2);
+      setHasMoreDz(dzResults.length >= PAGE_SIZE);
     }
   }, [dzResults]);
 
