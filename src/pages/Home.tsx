@@ -7,6 +7,7 @@ import { Play, Pause } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { useAuth } from "@/hooks/useAuth";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
