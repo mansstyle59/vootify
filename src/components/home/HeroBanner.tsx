@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { Play, Headphones, Music2, LogIn, User, LogOut } from "lucide-react";
+import { Play, Headphones, Music2, LogIn, LogOut } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -31,7 +32,8 @@ export function HeroBanner() {
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
-  const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0];
+  const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
     <div ref={ref} className="relative overflow-hidden mb-0" style={{ minHeight: "220px" }}>
@@ -80,7 +82,12 @@ export function HeroBanner() {
         {user ? (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50">
-              <User className="w-4 h-4 text-primary" />
+              <Avatar className="w-6 h-6">
+                <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+                <AvatarFallback className="text-[10px] font-semibold bg-primary/20 text-primary">
+                  {(displayName || "U").slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <span className="text-xs font-medium text-foreground truncate max-w-[100px]">
                 {displayName}
               </span>
