@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
-import { FolderUp, FileArchive, Loader2, X, FileAudio, Check } from "lucide-react";
+import { FolderUp, FileArchive, Loader2, X, FileAudio, Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { extractID3 } from "@/lib/id3Utils";
 import { deezerApi } from "@/lib/deezerApi";
