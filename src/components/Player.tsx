@@ -107,6 +107,7 @@ export function MiniPlayer() {
         }
       }
 
+      setPlayingFromCache(!!cachedUrl);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
 
       if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
