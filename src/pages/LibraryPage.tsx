@@ -22,7 +22,7 @@ const LibraryPage = () => {
   const [newName, setNewName] = useState("");
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay, clearRecentlyPlayed } = usePlayerStore();
 
   const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
 
@@ -348,6 +348,13 @@ const LibraryPage = () => {
                     >
                       <Shuffle className="w-4 h-4" />
                       Aléatoire
+                    </button>
+                    <button
+                      onClick={() => clearRecentlyPlayed()}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Vider
                     </button>
                     <span className="ml-auto flex items-center text-xs text-muted-foreground">
                       {filterFullStreams(recentlyPlayed).length} titre{filterFullStreams(recentlyPlayed).length > 1 ? "s" : ""}
