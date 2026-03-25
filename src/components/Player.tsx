@@ -461,6 +461,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const [showQueue, setShowQueue] = useState(false);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   if (!currentSong) return null;
 
@@ -468,11 +469,26 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    const time = Math.max(0, Math.min(Math.floor(pct * currentSong.duration), currentSong.duration));
+
+  const seekFromX = (clientX: number) => {
+    const bar = progressBarRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const time = Math.floor(pct * currentSong.duration);
     storeSeekTo(time);
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => seekFromX(e.clientX);
+
+  const handleTouchSeek = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    seekFromX(e.touches[0].clientX);
+  };
+
+  const handleTouchMoveSeek = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    seekFromX(e.touches[0].clientX);
   };
 
   return (
@@ -610,15 +626,20 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {/* Progress bar - Spotify style */}
             <div className="mb-5">
               <div
-                className="h-[4px] rounded-full cursor-pointer relative group"
-                style={{ background: "hsl(0 0% 100% / 0.15)" }}
+                ref={progressBarRef}
+                className="h-[4px] rounded-full cursor-pointer relative group py-3 -my-3"
+                style={{ touchAction: "none" }}
                 onClick={handleSeek}
+                onTouchStart={handleTouchSeek}
+                onTouchMove={handleTouchMoveSeek}
               >
-                <div
-                  className="h-full rounded-full relative transition-all duration-150"
-                  style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
-                >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[4px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
+                  <div
+                    className="h-full rounded-full relative transition-all duration-150"
+                    style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
+                  >
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between mt-1.5 text-[11px] text-foreground/50 tabular-nums font-medium">
