@@ -21,7 +21,130 @@ const LibraryPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
-  // If not logged in, show auth gate
+  const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (tab === "playlists") {
+      playlists.forEach((p) => {
+        if (!playlistSongs[p.id]) loadPlaylistSongs(p.id);
+      });
+    }
+  }, [tab, playlists]);
+
+  useEffect(() => {
+    if (tab !== "playlists") return;
+    const countCached = async () => {
+      const counts: Record<string, number> = {};
+      for (const p of playlists) {
+        const songs = playlistSongs[p.id] || [];
+        let count = 0;
+        for (const s of songs) {
+          if (await offlineCache.isCached(s.id)) count++;
+        }
+        counts[p.id] = count;
+      }
+      setPlaylistCachedCounts(counts);
+    };
+    countCached();
+  }, [tab, playlists, playlistSongs]);
+
+  const { data: savedRadios = [] } = useQuery({
+    queryKey: ["custom-radio-stations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_radio_stations")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: tab === "radios" && !!user,
+  });
+
+  const { data: customSongs = [] } = useQuery({
+    queryKey: ["custom-songs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((s: any): Song => ({
+        id: `custom-${s.id}`,
+        title: s.title,
+        artist: s.artist,
+        album: s.album || "",
+        duration: s.duration,
+        coverUrl: s.cover_url || "",
+        streamUrl: s.stream_url || "",
+        liked: false,
+      }));
+    },
+    staleTime: 60 * 1000,
+    enabled: tab === "custom" && !!user,
+  });
+
+  const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
+  const [cacheSize, setCacheSize] = useState(0);
+
+  useEffect(() => {
+    if (tab !== "downloads") return;
+    const load = async () => {
+      const [songs, size] = await Promise.all([
+        offlineCache.getAllCached(),
+        offlineCache.getCacheSize(),
+      ]);
+      setCachedSongs(songs);
+      setCacheSize(size);
+    };
+    load();
+  }, [tab]);
+
+  const playStation = (station: typeof savedRadios[0]) => {
+    if (currentSong?.id === station.id) { togglePlay(); return; }
+    play({
+      id: station.id,
+      title: station.name,
+      artist: station.genre || "Radio",
+      album: "Radio en direct",
+      duration: 0,
+      coverUrl: getStationLogo(station.name, station.cover_url || ""),
+      streamUrl: station.stream_url || "",
+      liked: false,
+    });
+  };
+
+  const removeCached = async (songId: string) => {
+    await offlineCache.removeCached(songId);
+    setCachedSongs((prev) => prev.filter((s) => s.id !== songId));
+    const size = await offlineCache.getCacheSize();
+    setCacheSize(size);
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  };
+
+  const handleCreate = () => {
+    if (newName.trim()) {
+      createPlaylist(newName.trim());
+      setNewName("");
+      setShowCreate(false);
+    }
+  };
+
+  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+    { key: "recent", label: "Récents", icon: Clock },
+    { key: "liked", label: "Aimés", icon: Heart },
+    { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "custom", label: "Mes titres", icon: Music },
+    { key: "downloads", label: "Téléchargés", icon: Download },
+    { key: "radios", label: "Radios", icon: Radio },
+  ];
+
+  // Auth gate — all hooks are above
   if (!authLoading && !user) {
     return (
       <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
@@ -50,136 +173,6 @@ const LibraryPage = () => {
       </div>
     );
   }
-
-  const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    if (tab === "playlists") {
-      playlists.forEach((p) => {
-        if (!playlistSongs[p.id]) loadPlaylistSongs(p.id);
-      });
-    }
-  }, [tab, playlists]);
-
-  // Count cached songs per playlist
-  useEffect(() => {
-    if (tab !== "playlists") return;
-    const countCached = async () => {
-      const counts: Record<string, number> = {};
-      for (const p of playlists) {
-        const songs = playlistSongs[p.id] || [];
-        let count = 0;
-        for (const s of songs) {
-          if (await offlineCache.isCached(s.id)) count++;
-        }
-        counts[p.id] = count;
-      }
-      setPlaylistCachedCounts(counts);
-    };
-    countCached();
-  }, [tab, playlists, playlistSongs]);
-
-  // Saved radio stations
-  const { data: savedRadios = [] } = useQuery({
-    queryKey: ["custom-radio-stations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_radio_stations")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000,
-    enabled: tab === "radios",
-  });
-
-  const playStation = (station: typeof savedRadios[0]) => {
-    if (currentSong?.id === station.id) {
-      togglePlay();
-      return;
-    }
-    play({
-      id: station.id,
-      title: station.name,
-      artist: station.genre || "Radio",
-      album: "Radio en direct",
-      duration: 0,
-      coverUrl: getStationLogo(station.name, station.cover_url || ""),
-      streamUrl: station.stream_url || "",
-      liked: false,
-    });
-  };
-
-  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "recent", label: "Récents", icon: Clock },
-    { key: "liked", label: "Aimés", icon: Heart },
-    { key: "playlists", label: "Playlists", icon: ListMusic },
-    { key: "custom", label: "Mes titres", icon: Music },
-    { key: "downloads", label: "Téléchargés", icon: Download },
-    { key: "radios", label: "Radios", icon: Radio },
-  ];
-
-  // Custom songs from database
-  const { data: customSongs = [], refetch: refetchCustom } = useQuery({
-    queryKey: ["custom-songs"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []).map((s: any): Song => ({
-        id: `custom-${s.id}`,
-        title: s.title,
-        artist: s.artist,
-        album: s.album || "",
-        duration: s.duration,
-        coverUrl: s.cover_url || "",
-        streamUrl: s.stream_url || "",
-        liked: false,
-      }));
-    },
-    staleTime: 60 * 1000,
-    enabled: tab === "custom",
-  });
-
-  // Offline cached songs
-  const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
-  const [cacheSize, setCacheSize] = useState(0);
-
-  useEffect(() => {
-    if (tab !== "downloads") return;
-    const load = async () => {
-      const [songs, size] = await Promise.all([
-        offlineCache.getAllCached(),
-        offlineCache.getCacheSize(),
-      ]);
-      setCachedSongs(songs);
-      setCacheSize(size);
-    };
-    load();
-  }, [tab]);
-
-  const removeCached = async (songId: string) => {
-    await offlineCache.removeCached(songId);
-    setCachedSongs((prev) => prev.filter((s) => s.id !== songId));
-    const size = await offlineCache.getCacheSize();
-    setCacheSize(size);
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
-  };
-
-  const handleCreate = () => {
-    if (newName.trim()) {
-      createPlaylist(newName.trim());
-      setNewName("");
-      setShowCreate(false);
-    }
-  };
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
