@@ -31,6 +31,9 @@ Deno.serve(async (req) => {
       case 'album':
         url = `${DEEZER_API}/album/${id}`;
         break;
+      case 'search_albums':
+        url = `${DEEZER_API}/search/album?q=${encodeURIComponent(query || '')}&limit=${limit || 12}`;
+        break;
       case 'artist':
         url = `${DEEZER_API}/artist/${id}`;
         break;
