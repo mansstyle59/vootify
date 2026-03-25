@@ -160,11 +160,37 @@ const LibraryPage = () => {
           transition={{ duration: 0.2 }}
         >
           {tab === "liked" && (
-            <div className="glass-panel-light rounded-xl p-2">
+            <div>
               {likedSongs.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">Pas encore de titres aimés. Likez des chansons en naviguant !</p>
+                <div className="glass-panel-light rounded-xl p-2">
+                  <p className="text-center text-muted-foreground py-12">Pas encore de titres aimés. Likez des chansons en naviguant !</p>
+                </div>
               ) : (
-                likedSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)
+                <>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => { setQueue(likedSongs); play(likedSongs[0]); }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
+                    >
+                      <Play className="w-4 h-4" />
+                      Tout lire
+                    </button>
+                    <button
+                      onClick={() => {
+                        const shuffled = [...likedSongs].sort(() => Math.random() - 0.5);
+                        setQueue(shuffled);
+                        play(shuffled[0]);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-all"
+                    >
+                      <Shuffle className="w-4 h-4" />
+                      Aléatoire
+                    </button>
+                  </div>
+                  <div className="glass-panel-light rounded-xl p-2">
+                    {likedSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)}
+                  </div>
+                </>
               )}
             </div>
           )}
