@@ -291,6 +291,10 @@ export const deezerApi = {
       }
 
       if (bestMatch?.streamUrl && bestScore >= 80) {
+        hdCache.set(song.id, {
+          streamUrl: bestMatch.streamUrl,
+          ts: Date.now(),
+        });
         return { ...song, streamUrl: bestMatch.streamUrl };
       }
     } catch (e) {
