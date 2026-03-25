@@ -222,34 +222,6 @@ const RadioPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: frenchStations = [], isLoading: loadingFr } = useQuery({
-    queryKey: ["radio-browser-france"],
-    queryFn: () => radioBrowserApi.getTopFrench(40),
-    staleTime: 10 * 60 * 1000,
-    enabled: activeTab === "france",
-  });
-
-  const { data: topStations = [], isLoading: loadingTop } = useQuery({
-    queryKey: ["radio-browser-top"],
-    queryFn: () => radioBrowserApi.getTop(40),
-    staleTime: 10 * 60 * 1000,
-    enabled: activeTab === "top",
-  });
-
-  const { data: genreStations = [], isLoading: loadingGenre } = useQuery({
-    queryKey: ["radio-browser-genre", selectedGenre],
-    queryFn: () => radioBrowserApi.getByTag(selectedGenre!, 40),
-    staleTime: 10 * 60 * 1000,
-    enabled: !!selectedGenre,
-  });
-
-  const { data: searchResults = [], isLoading: loadingSearch } = useQuery({
-    queryKey: ["radio-browser-search", searchQuery],
-    queryFn: () => radioBrowserApi.search(searchQuery, 30),
-    staleTime: 5 * 60 * 1000,
-    enabled: activeTab === "search" && searchQuery.length >= 2,
-  });
-
   const { data: customStations = [], isLoading: loadingCustom } = useQuery({
     queryKey: ["custom-radio-stations"],
     queryFn: async (): Promise<RadioBrowserStation[]> => {
@@ -261,33 +233,23 @@ const RadioPage = () => {
       }));
     },
     staleTime: 5 * 60 * 1000,
-    enabled: activeTab === "custom",
   });
 
-  const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: "custom", label: "Mes stations", icon: <Star className="w-4 h-4" /> },
-    { key: "france", label: "France", icon: <span className="text-sm">🇫🇷</span> },
-    { key: "top", label: "Top mondial", icon: <Globe className="w-4 h-4" /> },
-    { key: "search", label: "Rechercher", icon: <Search className="w-4 h-4" /> },
-  ];
+  const { data: searchResults = [], isLoading: loadingSearch } = useQuery({
+    queryKey: ["radio-browser-search", searchQuery],
+    queryFn: () => radioBrowserApi.search(searchQuery, 30),
+    staleTime: 5 * 60 * 1000,
+    enabled: searchQuery.length >= 2,
+  });
 
-  const getStations = (): RadioBrowserStation[] => {
-    if (selectedGenre) return genreStations;
-    switch (activeTab) {
-      case "france": return frenchStations;
-      case "top": return topStations;
-      case "custom": return customStations;
-      case "search": return searchResults;
-      default: return [];
-    }
-  };
+  const isLoading = searchQuery.length >= 2 ? loadingSearch : loadingCustom;
 
-  const isLoading = selectedGenre ? loadingGenre : (
-    activeTab === "france" ? loadingFr : activeTab === "top" ? loadingTop : activeTab === "custom" ? loadingCustom : loadingSearch
-  );
+  const stations = useMemo(() => {
+    if (searchQuery.length >= 2) return searchResults;
+    return customStations;
+  }, [searchQuery, searchResults, customStations]);
 
-  const stations = getStations();
-  const isCustomTab = activeTab === "custom";
+  const isCustomTab = searchQuery.length < 2;
 
   // Show Now Playing hero when a radio station is playing
   const showNowPlaying = isLiveRadio && currentSong;
