@@ -638,7 +638,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     className="h-full rounded-full relative transition-all duration-150"
                     style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)" }}
                   >
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[7px] h-[7px] rounded-full bg-foreground shadow-sm shadow-black/30" />
                   </div>
                 </div>
               </div>
