@@ -17,9 +17,13 @@ interface PlayerState {
   recentlyPlayed: Song[];
   playlistSongs: Record<string, Song[]>;
   userId: string | null;
+  crossfadeEnabled: boolean;
+  crossfadeDuration: number; // in seconds
   _seekTime: number | null;
 
   setUserId: (id: string | null) => void;
+  setCrossfadeEnabled: (enabled: boolean) => void;
+  setCrossfadeDuration: (duration: number) => void;
   loadUserData: (userId: string) => Promise<void>;
   play: (song: Song) => void;
   togglePlay: () => void;
@@ -57,9 +61,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   recentlyPlayed: [],
   playlistSongs: {},
   userId: ANONYMOUS_USER_ID,
+  crossfadeEnabled: true,
+  crossfadeDuration: 2,
   _seekTime: null,
 
   setUserId: (id) => set({ userId: id }),
+  setCrossfadeEnabled: (enabled) => set({ crossfadeEnabled: enabled }),
+  setCrossfadeDuration: (duration) => set({ crossfadeDuration: duration }),
 
   loadUserData: async (userId) => {
     try {
