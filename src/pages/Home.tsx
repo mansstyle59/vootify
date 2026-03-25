@@ -23,6 +23,8 @@ const PLAYLISTS = {
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
+  const { user } = useAuth();
+  const userId = user?.id || ANONYMOUS_USER_ID;
 
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
     queryKey: ["deezer-titres-du-moment"],
