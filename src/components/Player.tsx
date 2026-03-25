@@ -706,6 +706,33 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 />
               </button>
 
+              {/* Download button */}
+              <button
+                onClick={() => {
+                  if (isCached) {
+                    remove(currentSong.id);
+                  } else if (!isDownloading) {
+                    download(currentSong);
+                  }
+                }}
+                className={`relative p-1 active:scale-90 transition-transform ${
+                  isCached ? "text-primary" : isDownloading ? "text-primary/60" : "text-foreground/40"
+                }`}
+              >
+                {isDownloading ? (
+                  <div className="relative">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary tabular-nums">
+                      {dlProgress}%
+                    </span>
+                  </div>
+                ) : isCached ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  <Download className="w-5 h-5" />
+                )}
+              </button>
+
               {/* Auto mix toggle */}
               <button
                 onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
