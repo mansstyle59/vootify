@@ -55,8 +55,8 @@ function mapDeezerAlbum(a: DeezerAlbum): Album {
 
 
 export const deezerApi = {
-  async searchTracks(query: string, limit = 25): Promise<Song[]> {
-    const data = await callDeezer({ action: "search", query, limit });
+  async searchTracks(query: string, limit = 25, index = 0): Promise<Song[]> {
+    const data = await callDeezer({ action: "search", query, limit, index });
     return (data.data || []).map(mapTrackToSong);
   },
 
