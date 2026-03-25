@@ -36,8 +36,45 @@ const AlbumDetailPage = () => {
 
   const album = data?.album;
   const tracks = data?.tracks || [];
-
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
+
+  // Check if album is saved in library
+  const { data: isSaved = false } = useQuery({
+    queryKey: ["saved-album", id, user?.id],
+    queryFn: async () => {
+      if (!user || !id) return false;
+      const { count } = await supabase
+        .from("custom_albums")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("id", id);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!user && !!id,
+  });
+
+  const toggleSave = useMutation({
+    mutationFn: async () => {
+      if (!user || !album || !id) return;
+      if (isSaved) {
+        await supabase.from("custom_albums").delete().eq("id", id).eq("user_id", user.id);
+      } else {
+        await supabase.from("custom_albums").insert({
+          id,
+          user_id: user.id,
+          title: album.title,
+          artist: album.artist,
+          cover_url: album.coverUrl,
+          year: album.year,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-album", id] });
+      toast.success(isSaved ? "Album retiré de la bibliothèque" : "Album sauvegardé !");
+    },
+    onError: () => toast.error("Erreur lors de la sauvegarde"),
+  });
 
   const handlePlay = async (song: Song) => {
     if (currentSong?.id === song.id) {
