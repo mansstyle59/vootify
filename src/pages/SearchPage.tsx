@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
+import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp, User } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song } from "@/data/mockData";
 
@@ -33,12 +34,26 @@ const trendingSuggestions = [
   "Werenoi", "PLK", "Gazo", "Tiakola", "Burna Boy",
 ];
 
+const GENRE_CARDS: { name: string; gradient: string; icon: React.ElementType }[] = [
+  { name: "Pop", gradient: "from-pink-500 to-rose-400", icon: Music },
+  { name: "Hip Hop", gradient: "from-amber-500 to-orange-500", icon: Mic2 },
+  { name: "Rock", gradient: "from-red-600 to-red-400", icon: Zap },
+  { name: "R&B", gradient: "from-purple-600 to-violet-400", icon: Disc3 },
+  { name: "Electronic", gradient: "from-cyan-500 to-blue-500", icon: Zap },
+  { name: "Jazz", gradient: "from-yellow-600 to-amber-400", icon: Music },
+  { name: "Reggaeton", gradient: "from-green-500 to-emerald-400", icon: Mic2 },
+  { name: "Français", gradient: "from-blue-600 to-indigo-400", icon: Disc3 },
+];
+
+type SearchSource = "all" | "jiosaavn" | "deezer";
+
 const SearchPage = () => {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches());
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
-  const { play, setQueue } = usePlayerStore();
+  const [source, setSource] = useState<SearchSource>("all");
+  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   const handleChange = useCallback((value: string) => {
     setQuery(value);
@@ -55,26 +70,58 @@ const SearchPage = () => {
     setArtistFilter(null);
   };
 
-  const { data: results, isLoading } = useQuery({
-    queryKey: ["deezer-search", debouncedQuery],
+  // JioSaavn results
+  const { data: jsResults, isLoading: jsLoading } = useQuery({
+    queryKey: ["jiosaavn-search", debouncedQuery],
     queryFn: () => jiosaavnApi.search(debouncedQuery, 20),
-    enabled: debouncedQuery.length >= 2,
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
 
+  // Deezer results
+  const { data: dzResults, isLoading: dzLoading } = useQuery({
+    queryKey: ["deezer-search", debouncedQuery],
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, 20),
+    enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const isLoading = jsLoading || dzLoading;
+
+  // Merge and deduplicate results
+  const mergedResults = useMemo(() => {
+    if (source === "jiosaavn") return jsResults || [];
+    if (source === "deezer") return dzResults || [];
+    
+    const js = jsResults || [];
+    const dz = dzResults || [];
+    // Interleave: JioSaavn first (full streams), then Deezer
+    const seen = new Set<string>();
+    const merged: Song[] = [];
+    
+    for (const song of [...js, ...dz]) {
+      // Deduplicate by normalized title+artist
+      const key = `${song.title.toLowerCase().trim()}::${song.artist.toLowerCase().trim()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(song);
+      }
+    }
+    return merged;
+  }, [jsResults, dzResults, source]);
+
   useEffect(() => {
-    if (debouncedQuery.length >= 2 && results && results.length > 0) {
+    if (debouncedQuery.length >= 2 && mergedResults.length > 0) {
       saveRecentSearch(debouncedQuery);
       setRecentSearches(getRecentSearches());
     }
-  }, [debouncedQuery, results]);
+  }, [debouncedQuery, mergedResults]);
 
   // Extract unique artists from results
   const uniqueArtists = useMemo(() => {
-    if (!results || results.length === 0) return [];
+    if (!mergedResults || mergedResults.length === 0) return [];
     const artistCount = new Map<string, number>();
-    results.forEach((song) => {
-      // Split combined artists and count each
+    mergedResults.forEach((song) => {
       const artists = song.artist.split(", ");
       artists.forEach((a) => {
         const name = a.trim();
@@ -83,23 +130,29 @@ const SearchPage = () => {
         }
       });
     });
-    // Sort by frequency, return top artists
     return Array.from(artistCount.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([name]) => name);
-  }, [results]);
+  }, [mergedResults]);
 
-  // Filter results by selected artist
   const filteredResults = useMemo(() => {
-    if (!results) return [];
-    if (!artistFilter) return results;
-    return results.filter((song) => song.artist.includes(artistFilter));
-  }, [results, artistFilter]);
+    if (!mergedResults) return [];
+    if (!artistFilter) return mergedResults;
+    return mergedResults.filter((song) => song.artist.includes(artistFilter));
+  }, [mergedResults, artistFilter]);
 
-  const handlePlayTrack = (song: Song, allSongs: Song[]) => {
+  const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
+    if (currentSong?.id === song.id) {
+      togglePlay();
+      return;
+    }
+    // Resolve full stream for Deezer tracks
+    const resolved = song.id.startsWith("dz-")
+      ? await deezerApi.resolveFullStream(song)
+      : song;
     setQueue(allSongs);
-    play(song);
+    play(resolved);
   };
 
   const handleRemoveRecent = (term: string) => {
@@ -107,167 +160,228 @@ const SearchPage = () => {
     setRecentSearches(getRecentSearches());
   };
 
-  const genres = ["Pop", "Rock", "Hip Hop", "Electronic", "Jazz", "R&B", "Reggaeton", "Français"];
+  const clearAllRecent = () => {
+    localStorage.setItem(RECENT_SEARCHES_KEY, "[]");
+    setRecentSearches([]);
+  };
 
   return (
-    <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Rechercher</h1>
-      <p className="text-sm text-muted-foreground mb-5">Trouvez vos artistes et morceaux préférés</p>
-
-      {/* Search bar */}
-      <div className="relative mb-5">
-        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder="Rechercher des chansons, artistes..."
-          className="w-full pl-12 pr-10 py-3.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-        />
-        {query && (
-          <button onClick={() => { setQuery(""); setDebouncedQuery(""); setArtistFilter(null); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-            <X className="w-4 h-4" />
-          </button>
-        )}
+    <div className="pb-32 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="px-4 md:px-8 pt-6 pb-2">
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Rechercher</h1>
+        <p className="text-sm text-muted-foreground mb-5">Trouvez vos artistes et morceaux préférés</p>
       </div>
 
-      {!debouncedQuery ? (
-        <div className="space-y-6">
-          {/* Recent searches bubbles */}
-          {recentSearches.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recherches récentes</h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {recentSearches.map((term, i) => (
-                  <motion.div
-                    key={term}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="group flex items-center"
-                  >
-                    <button
-                      onClick={() => handleBubbleClick(term)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-secondary/80 border border-border text-sm text-foreground hover:bg-primary/15 hover:border-primary/30 transition-all"
-                    >
-                      {term}
-                    </button>
-                    <button
-                      onClick={() => handleRemoveRecent(term)}
-                      className="ml-0.5 p-1 rounded-full text-muted-foreground/50 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+      {/* Search bar */}
+      <div className="px-4 md:px-8 mb-4">
+        <div className="relative">
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="Titres, artistes, albums..."
+            className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
+          />
+          {query && (
+            <button onClick={() => { setQuery(""); setDebouncedQuery(""); setArtistFilter(null); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
           )}
-
-          {/* Trending bubbles */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tendances</h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {trendingSuggestions.map((term, i) => (
-                <motion.button
-                  key={term}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.02 }}
-                  onClick={() => handleBubbleClick(term)}
-                  className="px-3.5 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm text-foreground hover:bg-primary/20 hover:border-primary/40 transition-all"
-                >
-                  {term}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          {/* Genre grid */}
-          <div>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Parcourir les genres</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {genres.map((genre, i) => (
-                <motion.button
-                  key={genre}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => handleBubbleClick(genre)}
-                  className="glass-panel-light rounded-xl p-6 text-left hover-glass"
-                >
-                  <span className="font-display font-semibold text-foreground">{genre}</span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
         </div>
-      ) : (
-        <div>
-          {isLoading ? (
-            <div className="glass-panel-light rounded-xl p-2">
-              {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
-            </div>
-          ) : results && results.length > 0 ? (
-            <>
-              {/* Artist filter bubbles */}
-              {uniqueArtists.length > 1 && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Artistes</span>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                    <button
-                      onClick={() => setArtistFilter(null)}
-                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        !artistFilter
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary/80 border border-border text-foreground hover:bg-primary/15"
-                      }`}
-                    >
-                      Tous
-                    </button>
-                    {uniqueArtists.map((artist) => (
-                      <button
-                        key={artist}
-                        onClick={() => setArtistFilter(artistFilter === artist ? null : artist)}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          artistFilter === artist
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary/80 border border-border text-foreground hover:bg-primary/15"
-                        }`}
-                      >
-                        {artist}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+      </div>
 
-              <p className="text-sm text-muted-foreground mb-3">
-                {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
-                {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
-              </p>
-              <div className="glass-panel-light rounded-xl p-2">
-                {filteredResults.map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
-                    <SongCard song={song} index={i} />
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="text-center text-muted-foreground py-12">Aucun résultat trouvé pour « {debouncedQuery} »</p>
-          )}
+      {/* Source filter (visible when searching) */}
+      {debouncedQuery && (
+        <div className="px-4 md:px-8 mb-4">
+          <div className="flex gap-2">
+            {(["all", "jiosaavn", "deezer"] as SearchSource[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSource(s)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  source === s
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                }`}
+              >
+                {s === "all" ? "Toutes sources" : s === "jiosaavn" ? "JioSaavn" : "Deezer"}
+              </button>
+            ))}
+          </div>
         </div>
       )}
+
+      <AnimatePresence mode="wait">
+        {!debouncedQuery ? (
+          <motion.div
+            key="explore"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="px-4 md:px-8 space-y-6"
+          >
+            {/* Recent searches */}
+            {recentSearches.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recherches récentes</h2>
+                  </div>
+                  <button onClick={clearAllRecent} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                    Tout effacer
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {recentSearches.map((term, i) => (
+                    <motion.div
+                      key={term}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="group flex items-center"
+                    >
+                      <button
+                        onClick={() => handleBubbleClick(term)}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-secondary/80 border border-border text-sm text-foreground hover:bg-primary/15 hover:border-primary/30 transition-all"
+                      >
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        {term}
+                      </button>
+                      <button
+                        onClick={() => handleRemoveRecent(term)}
+                        className="ml-0.5 p-1 rounded-full text-muted-foreground/50 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trending */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tendances</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {trendingSuggestions.map((term, i) => (
+                  <motion.button
+                    key={term}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    onClick={() => handleBubbleClick(term)}
+                    className="px-3.5 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm text-foreground hover:bg-primary/20 hover:border-primary/40 transition-all"
+                  >
+                    {term}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            {/* Genre cards with gradients */}
+            <div>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Parcourir les genres</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {GENRE_CARDS.map((genre, i) => {
+                  const Icon = genre.icon;
+                  return (
+                    <motion.button
+                      key={genre.name}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.04 }}
+                      onClick={() => handleBubbleClick(genre.name)}
+                      className={`relative rounded-2xl p-5 text-left overflow-hidden bg-gradient-to-br ${genre.gradient} hover:scale-[1.03] active:scale-[0.98] transition-transform`}
+                    >
+                      <Icon className="absolute -bottom-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
+                      <span className="relative font-display font-bold text-white text-sm">{genre.name}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="px-4 md:px-8"
+          >
+            {isLoading ? (
+              <div className="rounded-xl bg-secondary/30 overflow-hidden">
+                {Array.from({ length: 8 }).map((_, i) => <SongSkeleton key={i} />)}
+              </div>
+            ) : filteredResults.length > 0 ? (
+              <>
+                {/* Artist filter bubbles */}
+                {uniqueArtists.length > 1 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Filtrer par artiste</span>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                      <button
+                        onClick={() => setArtistFilter(null)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          !artistFilter
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        }`}
+                      >
+                        Tous
+                      </button>
+                      {uniqueArtists.map((artist) => (
+                        <button
+                          key={artist}
+                          onClick={() => setArtistFilter(artistFilter === artist ? null : artist)}
+                          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            artistFilter === artist
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          }`}
+                        >
+                          {artist}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground mb-3">
+                  {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
+                  {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
+                </p>
+                <div className="rounded-xl bg-secondary/30 overflow-hidden">
+                  {filteredResults.map((song, i) => (
+                    <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
+                      <SongCard song={song} index={i} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-16"
+              >
+                <SearchIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="text-muted-foreground">Aucun résultat pour « <span className="text-foreground font-medium">{debouncedQuery}</span> »</p>
+                <p className="text-sm text-muted-foreground/60 mt-1">Essayez un autre terme ou vérifiez l'orthographe</p>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
