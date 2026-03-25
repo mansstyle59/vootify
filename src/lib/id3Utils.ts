@@ -26,7 +26,7 @@ export async function extractID3(file: File | Blob, fileName?: string): Promise<
     if (picture) {
       try {
         const ext = picture.format?.includes("png") ? "png" : "jpg";
-        const blob = new Blob([picture.data], { type: picture.format || "image/jpeg" });
+        const blob = new Blob([new Uint8Array(picture.data)], { type: picture.format || "image/jpeg" });
         const path = `id3-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error } = await supabase.storage.from("covers").upload(path, blob, {
           contentType: picture.format || "image/jpeg",
