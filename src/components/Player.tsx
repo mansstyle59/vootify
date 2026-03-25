@@ -100,6 +100,8 @@ export function MiniPlayer() {
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
+  const coverForColor = isLive ? (radioMeta?.coverUrl || currentSong?.coverUrl) : currentSong?.coverUrl;
+  const miniDominantColor = useDominantColor(coverForColor);
 
   // ── Media Session API: lock screen metadata ──
   useEffect(() => {
@@ -171,7 +173,13 @@ export function MiniPlayer() {
       >
         <div
           className="rounded-2xl overflow-hidden"
-          style={glassStyle}
+          style={{
+            ...glassStyle,
+            ...(miniDominantColor ? {
+              background: `linear-gradient(135deg, ${miniDominantColor}, hsl(0 0% 4% / 0.8))`,
+              transition: "background 0.8s ease-in-out",
+            } : {}),
+          }}
         >
           {/* Progress line */}
           {!isLive && (
