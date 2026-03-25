@@ -117,7 +117,7 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
       {/* Content */}
       <motion.div
         style={{ opacity }}
-        className="relative px-4 md:px-8 pt-10 pb-6 flex flex-col justify-end"
+        className="relative z-10 px-4 md:px-8 pt-10 pb-6 flex flex-col justify-end"
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
