@@ -285,11 +285,40 @@ const LibraryPage = () => {
           {tab === "downloads" && (
             <div>
               {cacheSize > 0 && (
-                <div className="flex items-center gap-2 mb-4 px-1">
-                  <HardDrive className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} · {formatSize(cacheSize)}
-                  </span>
+                <div className="glass-panel-light rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-primary/10">
+                        <HardDrive className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} hors-ligne
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatSize(cacheSize)} utilisé{cachedSongs.length > 0 ? ` · ~${formatSize(Math.round(cacheSize / cachedSongs.length))}/titre` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        for (const s of cachedSongs) await offlineCache.removeCached(s.id);
+                        setCachedSongs([]);
+                        setCacheSize(0);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Tout supprimer
+                    </button>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-1.5">
+                    <div
+                      className="bg-primary rounded-full h-1.5 transition-all"
+                      style={{ width: `${Math.min((cacheSize / (500 * 1024 * 1024)) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1 text-right">{formatSize(cacheSize)} / 500 Mo</p>
                 </div>
               )}
               {cachedSongs.length === 0 ? (
@@ -299,22 +328,44 @@ const LibraryPage = () => {
                   <p className="text-xs text-muted-foreground/60 mt-1">Téléchargez des morceaux pour les écouter hors-ligne</p>
                 </div>
               ) : (
-                <div className="glass-panel-light rounded-xl p-2">
-                  {cachedSongs.map((s, i) => (
-                    <div key={s.id} className="flex items-center group">
-                      <div className="flex-1 min-w-0" onClick={() => { setQueue(cachedSongs); play(s); }}>
-                        <SongCard song={s} index={i} />
+                <>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
+                    >
+                      <Play className="w-4 h-4" />
+                      Tout lire
+                    </button>
+                    <button
+                      onClick={() => {
+                        const shuffled = [...cachedSongs].sort(() => Math.random() - 0.5);
+                        setQueue(shuffled);
+                        play(shuffled[0]);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-all"
+                    >
+                      <Shuffle className="w-4 h-4" />
+                      Aléatoire
+                    </button>
+                  </div>
+                  <div className="glass-panel-light rounded-xl p-2">
+                    {cachedSongs.map((s, i) => (
+                      <div key={s.id} className="flex items-center group">
+                        <div className="flex-1 min-w-0" onClick={() => { setQueue(cachedSongs); play(s); }}>
+                          <SongCard song={s} index={i} />
+                        </div>
+                        <button
+                          onClick={() => removeCached(s.id)}
+                          className="p-2 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          title="Supprimer du cache"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeCached(s.id)}
-                        className="p-2 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                        title="Supprimer du cache"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </>
               )}
               {isGuest && (
                 <div className="mt-6 p-4 rounded-xl bg-secondary/50 text-center">
