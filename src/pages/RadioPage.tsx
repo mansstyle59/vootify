@@ -43,6 +43,16 @@ const RadioPage = () => {
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
   const queryClient = useQueryClient();
 
+  // Live metadata: dynamically fetch cover art from Deezer for the active station
+  const isLiveRadio = currentSong?.album === "Radio en direct";
+  const radioMetadata = useRadioMetadata(
+    isLiveRadio ? currentSong?.streamUrl : undefined,
+    isLiveRadio,
+    isPlaying,
+    currentSong?.title,
+    currentSong?.coverUrl
+  );
+
   const playStation = (station: { id: string; name: string; genre: string; coverUrl: string; streamUrl: string }) => {
     if (currentSong?.id === station.id) { togglePlay(); return; }
     play({
