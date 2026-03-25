@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 import { formatDuration } from "@/data/mockData";
 
 const AlbumDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
 
   const isJioSaavn = id?.startsWith("js-album-");
