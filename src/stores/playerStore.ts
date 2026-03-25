@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { hdCache } from "@/lib/hdCache";
 
 interface PlayerState {
   currentSong: Song | null;
