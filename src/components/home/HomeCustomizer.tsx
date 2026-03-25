@@ -212,6 +212,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
 
             {/* Reorderable list */}
             <Reorder.Group
+              key={sections.map(s => s.id).join(',')}
               axis="y"
               values={sections}
               onReorder={setSections}
