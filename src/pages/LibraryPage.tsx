@@ -149,6 +149,16 @@ const LibraryPage = () => {
     load();
   }, [tab]);
 
+  const sortedCustomSongs = useMemo(() => {
+    const arr = [...customSongs];
+    switch (customSort) {
+      case "alpha": return arr.sort((a, b) => a.title.localeCompare(b.title, "fr"));
+      case "artist": return arr.sort((a, b) => a.artist.localeCompare(b.artist, "fr"));
+      case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+      default: return arr; // already sorted by recent from query
+    }
+  }, [customSongs, customSort]);
+
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
