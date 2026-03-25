@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
-import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles } from "lucide-react";
+import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles, Upload, FileAudio, X, Trash2 } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { extractID3 } from "@/lib/id3Utils";
+import { deezerApi } from "@/lib/deezerApi";
 
 type Tab = "song" | "album" | "radio";
 
