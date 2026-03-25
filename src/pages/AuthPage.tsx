@@ -6,17 +6,18 @@ import { Music, Mail, Lock, User, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in (e.g. after Google OAuth return)
+  // Redirect if already logged in
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
