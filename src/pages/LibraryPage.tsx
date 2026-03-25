@@ -150,10 +150,12 @@ const LibraryPage = () => {
   return (
     <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
       <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Votre Bibliothèque</h1>
-      <p className="text-sm text-muted-foreground mb-5">Vos morceaux, playlists et stations sauvegardés</p>
+      <p className="text-sm text-muted-foreground mb-5">
+        {isGuest ? "Vos morceaux téléchargés sont disponibles hors-ligne" : "Vos morceaux, playlists et stations sauvegardés"}
+      </p>
 
       <div className="flex gap-1.5 mb-5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
-        {tabs.map(({ key, label, icon: Icon }) => (
+        {visibleTabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
