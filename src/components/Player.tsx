@@ -137,11 +137,48 @@ export function MiniPlayer() {
     loadAndPlay();
   }, [isPlaying, currentSong]);
 
+  const preemptiveTriggeredRef = useRef(false);
+
   const handleTimeUpdate = useCallback(() => {
     if (!audioRef.current) return;
-    const t = Math.floor(audioRef.current.currentTime);
+    const audio = audioRef.current;
+    const t = Math.floor(audio.currentTime);
     if (t !== progress) setProgress(t);
-  }, [progress, setProgress]);
+
+    // Preemptive crossfade: start next track before current ends
+    const { crossfadeEnabled, crossfadeDuration, repeat } = usePlayerStore.getState();
+    if (
+      crossfadeEnabled &&
+      !preemptiveTriggeredRef.current &&
+      audio.duration > 0 &&
+      audio.duration - audio.currentTime <= crossfadeDuration &&
+      audio.duration - audio.currentTime > 0.5 &&
+      repeat !== "one"
+    ) {
+      preemptiveTriggeredRef.current = true;
+
+      // Start fading out current track
+      const steps = (crossfadeDuration * 1000) / FADE_STEP;
+      let step = 0;
+      const fadeOutInterval = setInterval(() => {
+        step++;
+        if (audioRef.current) {
+          audioRef.current.volume = Math.max(0, volume * (1 - step / steps));
+        }
+        if (step >= steps) {
+          clearInterval(fadeOutInterval);
+        }
+      }, FADE_STEP);
+
+      // Trigger next song (crossfade logic in the main effect will handle fade-in)
+      next();
+    }
+  }, [progress, setProgress, volume, next]);
+
+  // Reset preemptive trigger when song changes
+  useEffect(() => {
+    preemptiveTriggeredRef.current = false;
+  }, [currentSong?.id]);
 
   useEffect(() => {
     if (_seekTime !== null && audioRef.current) {
@@ -193,6 +230,8 @@ export function MiniPlayer() {
   }, [currentSong, isLive, radioMeta, togglePlay, next, previous]);
 
   const handleEnded = useCallback(() => {
+    // If preemptive crossfade already triggered next, don't double-skip
+    if (preemptiveTriggeredRef.current) return;
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
       if (audioRef.current) {
