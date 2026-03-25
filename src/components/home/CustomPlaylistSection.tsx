@@ -22,7 +22,7 @@ export function CustomPlaylistSection({ playlistId, label, onPlayTrack }: Props)
   });
 
   return (
-    <Section title={`${label} 🎵`}>
+    <Section title={label}>
       <HorizontalScroll>
         {isLoading ? (
           <CoverSkeleton />
