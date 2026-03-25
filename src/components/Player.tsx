@@ -607,12 +607,12 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-center w-full mb-6">
           <button
             onClick={togglePlay}
-            className="w-16 h-16 rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+            className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
           >
             {isPlaying ? (
-              <Pause className="w-8 h-8 text-background fill-current" />
+              <Pause className="w-9 h-9 text-background fill-current" />
             ) : (
-              <Play className="w-8 h-8 text-background fill-current ml-1" />
+              <Play className="w-9 h-9 text-background fill-current ml-1" />
             )}
           </button>
         </div>
