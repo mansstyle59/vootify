@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { hdCache } from "@/lib/hdCache";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +8,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -267,6 +268,26 @@ const ProfilePage = () => {
                 </div>
               </div>
             )}
+
+            {/* Clear HD cache */}
+            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+              <div>
+                <p className="text-sm font-medium text-foreground">Cache HD</p>
+                <p className="text-xs text-muted-foreground">
+                  {hdCache.stats().count} résolution{hdCache.stats().count > 1 ? "s" : ""} en cache
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  hdCache.clear();
+                  toast.success("Cache HD vidé !");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Vider
+              </button>
+            </div>
           </motion.div>
 
           {isAdmin && (
