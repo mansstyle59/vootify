@@ -342,7 +342,7 @@ const RadioPage = () => {
         className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
-        <div className={`relative aspect-square rounded-xl overflow-hidden mb-1.5 ring-2 transition-all duration-300 ${
+        <div className={`relative aspect-square rounded-lg overflow-hidden mb-1 ring-[1.5px] transition-all duration-300 ${
           isActive ? "ring-primary shadow-lg shadow-primary/20" : "ring-transparent"
         }`}>
           <img
@@ -412,17 +412,17 @@ const RadioPage = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
             )}
             {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`font-semibold text-xs ${isActive ? "text-primary" : "text-foreground"}`} />
+            <MarqueeText text={station.name} className={`font-semibold text-[10px] leading-tight ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {nowPlayingText ? (
             <div className="mt-0.5 space-y-0">
-              <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-[10px] text-primary/90 font-semibold" />
+              <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-[9px] text-primary/90 font-semibold" />
               {radioMetadata?.artist && (
                 <MarqueeText text={radioMetadata.artist} className="text-[11px] text-muted-foreground" />
               )}
             </div>
           ) : (
-            <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize mt-0.5" />
+            <MarqueeText text={station.genre || "Radio"} className="text-[9px] text-muted-foreground capitalize" />
           )}
         </div>
       </div>
