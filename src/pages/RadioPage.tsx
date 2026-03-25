@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, Play, Pause, Search, Star, Heart, Pencil, Trash2, X, Check, Globe, Waves, LayoutGrid, List, Volume2 } from "lucide-react";
+import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, X, Check, Waves, LayoutGrid, List, Volume2 } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 import { useRef, useEffect } from "react";
 
-type TabKey = "france" | "top" | "custom" | "search";
+
 
 /* ── Marquee for long text ── */
 function MarqueeText({ text, className }: { text: string; className?: string }) {
@@ -156,9 +156,7 @@ function NowPlayingHero({
 
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
-  const [activeTab, setActiveTab] = useState<TabKey>("custom");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -222,34 +220,6 @@ const RadioPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: frenchStations = [], isLoading: loadingFr } = useQuery({
-    queryKey: ["radio-browser-france"],
-    queryFn: () => radioBrowserApi.getTopFrench(40),
-    staleTime: 10 * 60 * 1000,
-    enabled: activeTab === "france",
-  });
-
-  const { data: topStations = [], isLoading: loadingTop } = useQuery({
-    queryKey: ["radio-browser-top"],
-    queryFn: () => radioBrowserApi.getTop(40),
-    staleTime: 10 * 60 * 1000,
-    enabled: activeTab === "top",
-  });
-
-  const { data: genreStations = [], isLoading: loadingGenre } = useQuery({
-    queryKey: ["radio-browser-genre", selectedGenre],
-    queryFn: () => radioBrowserApi.getByTag(selectedGenre!, 40),
-    staleTime: 10 * 60 * 1000,
-    enabled: !!selectedGenre,
-  });
-
-  const { data: searchResults = [], isLoading: loadingSearch } = useQuery({
-    queryKey: ["radio-browser-search", searchQuery],
-    queryFn: () => radioBrowserApi.search(searchQuery, 30),
-    staleTime: 5 * 60 * 1000,
-    enabled: activeTab === "search" && searchQuery.length >= 2,
-  });
-
   const { data: customStations = [], isLoading: loadingCustom } = useQuery({
     queryKey: ["custom-radio-stations"],
     queryFn: async (): Promise<RadioBrowserStation[]> => {
@@ -261,33 +231,23 @@ const RadioPage = () => {
       }));
     },
     staleTime: 5 * 60 * 1000,
-    enabled: activeTab === "custom",
   });
 
-  const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: "custom", label: "Mes stations", icon: <Star className="w-4 h-4" /> },
-    { key: "france", label: "France", icon: <span className="text-sm">🇫🇷</span> },
-    { key: "top", label: "Top mondial", icon: <Globe className="w-4 h-4" /> },
-    { key: "search", label: "Rechercher", icon: <Search className="w-4 h-4" /> },
-  ];
+  const { data: searchResults = [], isLoading: loadingSearch } = useQuery({
+    queryKey: ["radio-browser-search", searchQuery],
+    queryFn: () => radioBrowserApi.search(searchQuery, 30),
+    staleTime: 5 * 60 * 1000,
+    enabled: searchQuery.length >= 2,
+  });
 
-  const getStations = (): RadioBrowserStation[] => {
-    if (selectedGenre) return genreStations;
-    switch (activeTab) {
-      case "france": return frenchStations;
-      case "top": return topStations;
-      case "custom": return customStations;
-      case "search": return searchResults;
-      default: return [];
-    }
-  };
+  const isLoading = searchQuery.length >= 2 ? loadingSearch : loadingCustom;
 
-  const isLoading = selectedGenre ? loadingGenre : (
-    activeTab === "france" ? loadingFr : activeTab === "top" ? loadingTop : activeTab === "custom" ? loadingCustom : loadingSearch
-  );
+  const stations = useMemo(() => {
+    if (searchQuery.length >= 2) return searchResults;
+    return customStations;
+  }, [searchQuery, searchResults, customStations]);
 
-  const stations = getStations();
-  const isCustomTab = activeTab === "custom";
+  const isCustomTab = searchQuery.length < 2;
 
   // Show Now Playing hero when a radio station is playing
   const showNowPlaying = isLiveRadio && currentSong;
@@ -533,30 +493,16 @@ const RadioPage = () => {
       </AnimatePresence>
 
       <div className="px-4 md:px-8">
-        {/* Tabs + View toggle */}
+        {/* Search + View toggle */}
         <div className="flex items-center gap-2 mb-5">
-          <div className="flex gap-1 flex-1 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => { setActiveTab(t.key); setSelectedGenre(null); }}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-                  activeTab === t.key && !selectedGenre
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                    : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                {t.icon}
-                {t.label}
-                {t.key === "custom" && customStations.length > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                    activeTab === "custom" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
-                  }`}>
-                    {customStations.length}
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="relative flex-1 max-w-lg">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher une station..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-11 rounded-xl bg-secondary/60 border-border/50 focus:bg-secondary text-sm"
+            />
           </div>
 
           {/* View mode toggle */}
@@ -575,41 +521,6 @@ const RadioPage = () => {
             </button>
           </div>
         </div>
-
-        {/* Search input */}
-        {activeTab === "search" && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-5 max-w-lg">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher une station..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-11 rounded-xl bg-secondary/60 border-border/50 focus:bg-secondary text-sm"
-                autoFocus
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Genre chips */}
-        {(activeTab === "france" || activeTab === "top") && (
-          <div className="flex gap-2 mb-5 flex-wrap">
-            {GENRE_TAGS.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setSelectedGenre(selectedGenre === tag ? null : tag)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all capitalize ${
-                  selectedGenre === tag
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Station count */}
         {!isLoading && stations.length > 0 && (
@@ -647,7 +558,7 @@ const RadioPage = () => {
           <AnimatePresence mode="wait">
             {viewMode === "grid" ? (
               <motion.div
-                key={`grid-${activeTab}-${selectedGenre}`}
+                key={`grid-${searchQuery}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -659,7 +570,7 @@ const RadioPage = () => {
               </motion.div>
             ) : (
               <motion.div
-                key={`list-${activeTab}-${selectedGenre}`}
+                key={`list-${searchQuery}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -672,32 +583,19 @@ const RadioPage = () => {
             )}
           </AnimatePresence>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center"
-          >
+          <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-full bg-secondary/60 flex items-center justify-center mb-5">
               <Radio className="w-9 h-9 text-muted-foreground/50" />
             </div>
             <h2 className="text-lg font-display font-semibold text-foreground mb-2">
-              {activeTab === "search" && searchQuery.length < 2 ? "Tapez pour rechercher" : "Aucune station trouvée"}
+              {searchQuery.length < 2 ? "Recherchez une station" : "Aucune station trouvée"}
             </h2>
             <p className="text-sm text-muted-foreground max-w-xs">
-              {activeTab === "custom"
-                ? "Explorez les onglets France ou Top mondial et ajoutez vos stations favorites avec le ❤️"
-                : "Essayez un autre filtre ou une autre recherche."}
+              {searchQuery.length < 2
+                ? "Utilisez la barre de recherche pour trouver et ajouter des stations radio"
+                : "Essayez un autre terme de recherche."}
             </p>
-            {activeTab === "custom" && (
-              <button
-                onClick={() => setActiveTab("france")}
-                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
-              >
-                <Globe className="w-4 h-4" />
-                Explorer les stations
-              </button>
-            )}
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
