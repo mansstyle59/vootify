@@ -11,6 +11,7 @@ export interface UploadedTrack {
   duration: number;
   title: string;
   artist: string;
+  coverUrl?: string;
 }
 
 interface AlbumFolderPickerProps {
