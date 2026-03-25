@@ -35,8 +35,6 @@ function cleanTitle(fileName: string): string {
   name = name.replace(/\.[^.]+$/, "");
   // Remove leading track numbers: "01 - ", "1. ", "01.", "03 ", etc.
   name = name.replace(/^\d{1,3}[\s.\-_]+/, "");
-  // Remove Greek/special letter prefixes: "Π. ", "Σ. ", "Θ. ", etc.
-  name = name.replace(/^[A-ZΑ-Ωa-zα-ω]{1,2}[\s.\-_]+/, "");
   // Remove leading/trailing whitespace and dashes
   name = name.replace(/^[\s\-_]+|[\s\-_]+$/g, "");
   return name.trim();
