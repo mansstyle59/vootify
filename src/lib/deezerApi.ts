@@ -2,16 +2,42 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song, Album } from "@/data/mockData";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 
-/** Normalize a string for fuzzy matching */
+/** Normalize a string for fuzzy matching — aggressive cleaning */
 const norm = (s: string) =>
   s.toLowerCase()
-    .replace(/\(.*?\)/g, "")
-    .replace(/\[.*?\]/g, "")
+    .replace(/\(.*?\)/g, "")         // remove (remix), (feat. X), etc.
+    .replace(/\[.*?\]/g, "")         // remove [deluxe], [explicit]
     .replace(/\bfeat\.?\s*/gi, "")
     .replace(/\bft\.?\s*/gi, "")
+    .replace(/\bwith\s+/gi, "")
+    .replace(/\bprod\.?\s*/gi, "")
+    .replace(/[''\u2019`\u0060]/g, "") // normalize apostrophes → remove
+    .replace(/[àáâãäå]/g, "a")
+    .replace(/[èéêë]/g, "e")
+    .replace(/[ìíîï]/g, "i")
+    .replace(/[òóôõö]/g, "o")
+    .replace(/[ùúûü]/g, "u")
+    .replace(/[ç]/g, "c")
+    .replace(/[ñ]/g, "n")
+    .replace(/[œ]/g, "oe")
+    .replace(/[æ]/g, "ae")
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+
+/** Score how well two strings match (0 = no match, higher = better) */
+function matchScore(a: string, b: string): number {
+  if (a === b) return 100;
+  if (a.startsWith(b) || b.startsWith(a)) return 80;
+  if (a.includes(b) || b.includes(a)) return 60;
+  // Word overlap
+  const wa = new Set(a.split(" "));
+  const wb = new Set(b.split(" "));
+  const overlap = [...wa].filter((w) => wb.has(w)).length;
+  const total = Math.max(wa.size, wb.size);
+  if (total === 0) return 0;
+  return Math.round((overlap / total) * 50);
+}
 
 interface DeezerTrack {
   id: number;
