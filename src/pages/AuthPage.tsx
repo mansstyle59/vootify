@@ -52,6 +52,9 @@ const AuthPage = () => {
     if (result.error) {
       setError(result.error.message);
     } else {
+      if (mode === "login") {
+        localStorage.setItem("vootify_remember_me", rememberMe ? "true" : "false");
+      }
       navigate("/");
     }
     setLoading(false);
