@@ -63,6 +63,7 @@ const SearchPage = () => {
     }
   }, [userId]);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
+  const [hdOnly, setHdOnly] = useState(false);
   const [source, setSource] = useState<SearchSource>("all");
   const [jsPage, setJsPage] = useState(1);
   const [dzPage, setDzPage] = useState(1);
@@ -429,9 +430,11 @@ const SearchPage = () => {
 
   const filteredResults = useMemo(() => {
     if (!mergedResults) return [];
-    if (!artistFilter) return mergedResults;
-    return mergedResults.filter((song) => song.artist.includes(artistFilter));
-  }, [mergedResults, artistFilter]);
+    let results = mergedResults;
+    if (hdOnly) results = results.filter(isFullStream);
+    if (artistFilter) results = results.filter((song) => song.artist.includes(artistFilter));
+    return results;
+  }, [mergedResults, artistFilter, hdOnly]);
 
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
@@ -540,7 +543,7 @@ const SearchPage = () => {
       {/* Source filter (visible when searching) */}
       {debouncedQuery && (
         <div className="px-4 md:px-8 mb-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {(["all", "jiosaavn", "deezer"] as SearchSource[]).map((s) => (
               <button
                 key={s}
@@ -554,6 +557,16 @@ const SearchPage = () => {
                 {s === "all" ? "Toutes sources" : s === "jiosaavn" ? "JioSaavn" : "Deezer"}
               </button>
             ))}
+            <button
+              onClick={() => setHdOnly(!hdOnly)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                hdOnly
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              HD uniquement
+            </button>
           </div>
         </div>
       )}
