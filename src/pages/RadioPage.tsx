@@ -156,9 +156,7 @@ function NowPlayingHero({
 
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
-  const [activeTab, setActiveTab] = useState<TabKey>("custom");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -585,32 +583,19 @@ const RadioPage = () => {
             )}
           </AnimatePresence>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center"
-          >
+          <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-full bg-secondary/60 flex items-center justify-center mb-5">
               <Radio className="w-9 h-9 text-muted-foreground/50" />
             </div>
             <h2 className="text-lg font-display font-semibold text-foreground mb-2">
-              {activeTab === "search" && searchQuery.length < 2 ? "Tapez pour rechercher" : "Aucune station trouvée"}
+              {searchQuery.length < 2 ? "Recherchez une station" : "Aucune station trouvée"}
             </h2>
             <p className="text-sm text-muted-foreground max-w-xs">
-              {activeTab === "custom"
-                ? "Explorez les onglets France ou Top mondial et ajoutez vos stations favorites avec le ❤️"
-                : "Essayez un autre filtre ou une autre recherche."}
+              {searchQuery.length < 2
+                ? "Utilisez la barre de recherche pour trouver et ajouter des stations radio"
+                : "Essayez un autre terme de recherche."}
             </p>
-            {activeTab === "custom" && (
-              <button
-                onClick={() => setActiveTab("france")}
-                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
-              >
-                <Globe className="w-4 h-4" />
-                Explorer les stations
-              </button>
-            )}
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
