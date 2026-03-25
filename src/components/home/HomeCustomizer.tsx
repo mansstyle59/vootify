@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music } from "lucide-react";
+import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music, Pencil, Check } from "lucide-react";
 import { deezerApi } from "@/lib/deezerApi";
 
 export interface HomeSection {
@@ -76,7 +76,10 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const [searching, setSearching] = useState(false);
   const [addingById, setAddingById] = useState(false);
   const [playlistInput, setPlaylistInput] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) setSections(current);
