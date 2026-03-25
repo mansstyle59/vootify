@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongSkeleton } from "@/components/MusicCards";
@@ -42,6 +42,61 @@ const HomePage = () => {
   const { sections, saveConfig } = useGlobalHomeConfig();
   const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
   const [showCustomizer, setShowCustomizer] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Pull-to-refresh state
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef(0);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const PULL_THRESHOLD = 80;
+
+  const doRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries();
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setPullDistance(0);
+    }, 600);
+  }, [queryClient]);
+
+  // Refresh on app visibility change (returning to app)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        queryClient.invalidateQueries();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [queryClient]);
+
+  // Pull-to-refresh touch handlers
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const el = scrollRef.current;
+    if (el && el.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    } else {
+      touchStartY.current = 0;
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartY.current || isRefreshing) return;
+    const delta = e.touches[0].clientY - touchStartY.current;
+    if (delta > 0) {
+      setPullDistance(Math.min(delta * 0.5, 120));
+    }
+  }, [isRefreshing]);
+
+  const onTouchEnd = useCallback(() => {
+    if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
+      doRefresh();
+    } else {
+      setPullDistance(0);
+    }
+    touchStartY.current = 0;
+  }, [pullDistance, isRefreshing, doRefresh]);
 
   // Use local override while customizer is open, otherwise DB config
   const activeSections = localSections ?? sections;
@@ -245,8 +300,30 @@ const HomePage = () => {
     }
   };
 
+  const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
+
   return (
-    <div className="pb-40 max-w-7xl mx-auto">
+    <div
+      ref={scrollRef}
+      className="pb-40 max-w-7xl mx-auto relative overflow-y-auto"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all"
+        style={{ height: pullDistance > 0 || isRefreshing ? `${Math.max(pullDistance, isRefreshing ? 48 : 0)}px` : "0px" }}
+      >
+        <div
+          className={`w-7 h-7 rounded-full border-[2.5px] border-primary/30 border-t-primary ${isRefreshing ? "animate-spin" : ""}`}
+          style={{
+            transform: `rotate(${pullProgress * 360}deg)`,
+            opacity: pullProgress,
+            transition: isRefreshing ? "none" : "transform 0.1s",
+          }}
+        />
+      </div>
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
       {activeSections.map((s) => renderSection(s))}
