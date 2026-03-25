@@ -154,6 +154,10 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent/15 text-accent-foreground border border-accent/20" title="Disponible hors-ligne">
           Local
         </span>
+      ) : song.resolvedViaCustom ? (
+        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary" title="Résolu via morceau custom admin">
+          Custom
+        </span>
       ) : isFullStream(song) ? (
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20" title="Flux complet haute qualité">
           HD
