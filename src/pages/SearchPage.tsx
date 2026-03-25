@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
+import { hdCache } from "@/lib/hdCache";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2 } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
 
@@ -494,6 +495,16 @@ const SearchPage = () => {
               }`}
             >
               HD uniquement
+            </button>
+            <button
+              onClick={() => {
+                hdCache.clear();
+                toast.success("Cache HD vidé");
+              }}
+              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground hover:bg-destructive/20 hover:text-destructive transition-all flex items-center gap-1"
+            >
+              <Trash2 className="w-3 h-3" />
+              Vider cache HD
             </button>
             {resolveProgress && (
               <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-1.5 animate-pulse">
