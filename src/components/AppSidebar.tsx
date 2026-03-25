@@ -1,4 +1,4 @@
-import { NavLink as RouterNavLink } from "react-router-dom";
+import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import { Home, Search, Library, Radio, PlusCircle, LogOut } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,7 @@ const adminItems = [
 export function AppSidebar() {
   const { isAdmin } = useAdminAuth();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
@@ -54,6 +55,7 @@ export function AppSidebar() {
       {user && (
         <div className="mt-auto pt-4 border-t border-border/50">
           <div className="flex items-center gap-3 px-2">
+          <button onClick={() => navigate("/profile")} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
             <Avatar className="w-8 h-8">
               <AvatarImage src={avatarUrl} alt={displayName || "User"} />
               <AvatarFallback className="text-xs font-semibold bg-primary/20 text-primary">
@@ -63,6 +65,7 @@ export function AppSidebar() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
             </div>
+          </button>
             <button
               onClick={() => signOut()}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"

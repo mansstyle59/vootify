@@ -18,6 +18,7 @@ import RadioPage from "./pages/RadioPage";
 import AddContentPage from "./pages/AddContentPage";
 import PlaylistDetailPage from "./pages/PlaylistDetailPage";
 import AuthPage from "./pages/AuthPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ function AppContent() {
           <Route path="/add" element={<AddContentPage />} />
           <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
