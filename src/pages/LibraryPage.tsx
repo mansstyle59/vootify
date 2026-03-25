@@ -316,6 +316,20 @@ const LibraryPage = () => {
                   ))}
                 </div>
               )}
+              {isGuest && (
+                <div className="mt-6 p-4 rounded-xl bg-secondary/50 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Connectez-vous pour accéder à vos playlists, morceaux aimés et historique
+                  </p>
+                  <button
+                    onClick={() => navigate("/auth")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm shadow-md shadow-primary/25 hover:brightness-110 transition-all"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Se connecter
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
