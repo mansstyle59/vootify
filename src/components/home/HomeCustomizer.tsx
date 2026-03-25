@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music, Pencil, Check } from "lucide-react";
+import { toast } from "sonner";
 import { deezerApi } from "@/lib/deezerApi";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -178,7 +179,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
       const info = await deezerApi.getPlaylistInfo(id);
       addPlaylist(info.id, info.title);
     } catch {
-      // silently fail
+      toast.error("Impossible d'ajouter cette playlist. Vérifie le lien ou l'ID.");
     } finally {
       setAddingById(false);
     }
