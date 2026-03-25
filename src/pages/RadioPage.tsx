@@ -558,7 +558,7 @@ const RadioPage = () => {
           <AnimatePresence mode="wait">
             {viewMode === "grid" ? (
               <motion.div
-                key={`grid-${activeTab}-${selectedGenre}`}
+                key={`grid-${searchQuery}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -570,7 +570,7 @@ const RadioPage = () => {
               </motion.div>
             ) : (
               <motion.div
-                key={`list-${activeTab}-${selectedGenre}`}
+                key={`list-${searchQuery}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
