@@ -484,12 +484,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const handleTouchSeek = (e: React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    setIsSeeking(true);
     seekFromX(e.touches[0].clientX);
   };
 
   const handleTouchMoveSeek = (e: React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();
     seekFromX(e.touches[0].clientX);
+  };
+
+  const handleTouchEndSeek = () => {
+    setIsSeeking(false);
   };
 
   return (
