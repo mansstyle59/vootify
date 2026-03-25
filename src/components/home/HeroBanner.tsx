@@ -69,7 +69,6 @@ export function HeroBanner() {
         >
           <Play className="w-8 h-8" />
         </motion.div>
-      </motion.div>
 
       {/* Login / User button — top right */}
       <motion.div
