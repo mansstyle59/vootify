@@ -153,6 +153,18 @@ export const deezerApi = {
   async resolveFullStream(song: Song): Promise<Song> {
     if (!song.id.startsWith("dz-")) return song;
 
+    // Check HD cache first
+    const cached = hdCache.get(song.id);
+    if (cached) {
+      console.log("HD cache hit:", song.title);
+      return {
+        ...song,
+        streamUrl: cached.streamUrl,
+        coverUrl: cached.coverUrl || song.coverUrl,
+        resolvedViaCustom: cached.resolvedViaCustom,
+      };
+    }
+
     // Load blacklist for this song
     let blacklistedUrls: string[] = [];
     try {
