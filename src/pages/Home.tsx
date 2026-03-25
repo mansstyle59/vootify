@@ -7,6 +7,7 @@ import { Play, Pause } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { useAuth } from "@/hooks/useAuth";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
@@ -22,6 +23,8 @@ const PLAYLISTS = {
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
+  const { user } = useAuth();
+  const userId = user?.id || ANONYMOUS_USER_ID;
 
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
     queryKey: ["deezer-titres-du-moment"],
@@ -55,7 +58,7 @@ const HomePage = () => {
 
   const { data: recentlyPlayed = [] } = useQuery({
     queryKey: ["recently-played"],
-    queryFn: () => musicDb.getRecentlyPlayed(ANONYMOUS_USER_ID, 10),
+    queryFn: () => musicDb.getRecentlyPlayed(userId, 10),
     staleTime: 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,

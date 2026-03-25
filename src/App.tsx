@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { AnimatePresence } from "framer-motion";
@@ -16,6 +17,7 @@ import LibraryPage from "./pages/LibraryPage";
 import RadioPage from "./pages/RadioPage";
 import AddContentPage from "./pages/AddContentPage";
 import PlaylistDetailPage from "./pages/PlaylistDetailPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,10 +25,15 @@ const queryClient = new QueryClient();
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
   const loadUserData = usePlayerStore((s) => s.loadUserData);
+  const setUserId = usePlayerStore((s) => s.setUserId);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    loadUserData(ANONYMOUS_USER_ID);
-  }, [loadUserData]);
+    if (loading) return;
+    const userId = user?.id || ANONYMOUS_USER_ID;
+    setUserId(userId);
+    loadUserData(userId);
+  }, [user, loading, loadUserData, setUserId]);
 
   return (
     <div className="min-h-screen flex w-full">
@@ -39,6 +46,7 @@ function AppContent() {
           <Route path="/radio" element={<RadioPage />} />
           <Route path="/add" element={<AddContentPage />} />
           <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -58,13 +66,15 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AdminAuthProvider>
-          <Sonner />
-          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </AdminAuthProvider>
+        <AuthProvider>
+          <AdminAuthProvider>
+            <Sonner />
+            {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </AdminAuthProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
