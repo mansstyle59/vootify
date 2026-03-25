@@ -198,6 +198,45 @@ const SearchPage = () => {
     setHasMoreDz((dzResults?.length || 0) >= PAGE_SIZE || extraDzResults.length > 0);
   }, [dzResults, extraDzResults]);
 
+  // Background resolution: resolve Deezer 30s previews to full streams
+  const resolveAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    // Abort any previous resolution batch
+    resolveAbortRef.current?.abort();
+
+    const previewTracks = allDzResults.filter(
+      (s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
+    );
+    if (previewTracks.length === 0) return;
+
+    const controller = new AbortController();
+    resolveAbortRef.current = controller;
+
+    const resolveInBackground = async () => {
+      // Process in batches of 4 to avoid overwhelming
+      for (let i = 0; i < previewTracks.length; i += 4) {
+        if (controller.signal.aborted) return;
+        const batch = previewTracks.slice(i, i + 4);
+        const resolved = await Promise.all(
+          batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s))
+        );
+        if (controller.signal.aborted) return;
+
+        // Update resolved tracks in state
+        const resolvedMap = new Map(resolved.filter((r, idx) => r.streamUrl !== batch[idx].streamUrl).map((r) => [r.id, r]));
+        if (resolvedMap.size > 0) {
+          setAllDzResults((prev) =>
+            prev.map((s) => resolvedMap.get(s.id) || s)
+          );
+        }
+      }
+    };
+
+    resolveInBackground();
+    return () => controller.abort();
+  }, [allDzResults.length, debouncedQuery]);
+
   const loadMore = useCallback(async () => {
     if (loadingMore || !debouncedQuery) return;
     const canLoadJs = (source === "all" || source === "jiosaavn") && hasMoreJs;
