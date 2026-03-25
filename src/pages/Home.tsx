@@ -246,16 +246,25 @@ const HomePage = () => {
 
   return (
     <div className="pb-32 max-w-7xl mx-auto">
-      <HeroBanner onCustomize={() => setShowCustomizer(true)} />
+      <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
-      {sections.map((s) => renderSection(s))}
+      {activeSections.map((s) => renderSection(s))}
 
-      <HomeCustomizer
-        open={showCustomizer}
-        onClose={() => setShowCustomizer(false)}
-        onSave={setSections}
-        current={sections}
-      />
+      {isAdmin && (
+        <HomeCustomizer
+          open={showCustomizer}
+          onClose={() => {
+            setShowCustomizer(false);
+            setLocalSections(null);
+          }}
+          onSave={async (newSections) => {
+            setLocalSections(newSections);
+            await saveConfig(newSections);
+            setLocalSections(null);
+          }}
+          current={activeSections}
+        />
+      )}
     </div>
   );
 };
