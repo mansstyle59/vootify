@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileAudio, Loader2, X } from "lucide-react";
+import { Upload, FileAudio, Loader2, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { extractID3 } from "@/lib/id3Utils";
+import { deezerApi } from "@/lib/deezerApi";
 
 export interface AudioFileMetadata {
   title?: string;
@@ -43,13 +44,33 @@ const AudioFilePicker = ({ value, onChange, onDurationDetected, onMetadataExtrac
     if (id3.duration && id3.duration > 0 && onDurationDetected) {
       onDurationDetected(id3.duration);
     }
+
+    // If ID3 is incomplete, try Deezer search to fill missing fields
+    let finalMeta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
+    const needsLookup = !id3.title || !id3.artist || !id3.coverUrl;
+    if (needsLookup) {
+      const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
+      const searchQuery = id3.title && id3.artist
+        ? `${id3.artist} ${id3.title}`
+        : id3.title || cleanName;
+      try {
+        toast.info("Recherche de métadonnées en ligne...");
+        const results = await deezerApi.searchTracks(searchQuery, 5);
+        if (results.length > 0) {
+          const best = results[0];
+          if (!finalMeta.title) finalMeta.title = best.title;
+          if (!finalMeta.artist) finalMeta.artist = best.artist;
+          if (!finalMeta.album) finalMeta.album = best.album;
+          if (!finalMeta.coverUrl) finalMeta.coverUrl = best.coverUrl;
+          toast.success("Métadonnées trouvées en ligne !");
+        }
+      } catch (e) {
+        console.error("Deezer metadata lookup failed:", e);
+      }
+    }
+
     if (onMetadataExtracted) {
-      onMetadataExtracted({
-        title: id3.title,
-        artist: id3.artist,
-        album: id3.album,
-        coverUrl: id3.coverUrl,
-      });
+      onMetadataExtracted(finalMeta);
     }
 
     // Upload audio to storage
