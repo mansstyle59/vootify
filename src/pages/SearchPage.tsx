@@ -543,7 +543,7 @@ const SearchPage = () => {
       {/* Source filter (visible when searching) */}
       {debouncedQuery && (
         <div className="px-4 md:px-8 mb-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {(["all", "jiosaavn", "deezer"] as SearchSource[]).map((s) => (
               <button
                 key={s}
@@ -557,6 +557,16 @@ const SearchPage = () => {
                 {s === "all" ? "Toutes sources" : s === "jiosaavn" ? "JioSaavn" : "Deezer"}
               </button>
             ))}
+            <button
+              onClick={() => setHdOnly(!hdOnly)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                hdOnly
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              HD uniquement
+            </button>
           </div>
         </div>
       )}
