@@ -166,14 +166,14 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     if (!id) return;
     setAddingById(true);
     try {
-      // Resolve short links via edge function redirect
+      // Resolve short links via edge function
       if (id.startsWith("short:")) {
         const shortUrl = id.replace("short:", "");
-        const resp = await fetch(shortUrl, { redirect: "follow" });
-        const finalUrl = resp.url;
-        const match = finalUrl.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
-        if (!match) throw new Error("Not a playlist link");
-        id = match[1];
+        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+          body: { action: "resolve_short_link", url: shortUrl },
+        });
+        if (error || !data?.playlist_id) throw new Error("Not a playlist link");
+        id = data.playlist_id;
       }
       const info = await deezerApi.getPlaylistInfo(id);
       addPlaylist(info.id, info.title);
