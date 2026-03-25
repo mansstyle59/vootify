@@ -261,10 +261,22 @@ function SongForm() {
         .limit(1);
 
       if (existing && existing.length > 0) {
-        toast.error(`"${song.title}" existe déjà`);
-        // Remove uploaded audio file since we won't use it
-        await supabase.storage.from("audio").remove([path]);
-        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s));
+        // Update existing song instead of blocking
+        const existingId = existing[0].id;
+        const { error: updateErr } = await supabase.from("custom_songs").update({
+          album: song.album.trim() || null,
+          duration: song.duration || 0,
+          cover_url: song.coverUrl.trim() || null,
+          stream_url: streamUrl,
+        }).eq("id", existingId);
+
+        if (updateErr) {
+          toast.error(`Erreur mise à jour: ${song.title}`);
+          await supabase.storage.from("audio").remove([path]);
+        } else {
+          toast.success(`"${song.title}" mis à jour`);
+        }
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: !updateErr } : s));
         continue;
       }
 
