@@ -456,7 +456,19 @@ const RadioPage = () => {
             <h3 className={`font-semibold text-sm truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
           </div>
           {nowPlayingText ? (
-            <p className="text-xs text-primary/80 truncate mt-0.5 font-medium">{nowPlayingText}</p>
+            <motion.div
+              key={nowPlayingText}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-0.5 space-y-0"
+            >
+              <p className="text-xs text-primary/90 truncate font-semibold">
+                ♪ {radioMetadata?.title}
+              </p>
+              {radioMetadata?.artist && (
+                <p className="text-[11px] text-muted-foreground truncate">{radioMetadata.artist}</p>
+              )}
+            </motion.div>
           ) : (
             <p className="text-xs text-muted-foreground truncate capitalize mt-0.5">{station.genre || "Radio"}</p>
           )}
