@@ -466,6 +466,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isSeeking, setIsSeeking] = useState(false);
+  const { isCached, isDownloading, progress: dlProgress, download, remove } = useOfflineCache(currentSong?.id);
 
   if (!currentSong) return null;
 
