@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function CustomPlaylistSection({ playlistId, label, onPlayTrack }: Props) {
-  const { currentSong, isPlaying } = usePlayerStore();
+  const { currentSong, isPlaying, play, setQueue } = usePlayerStore();
 
   const { data: tracks, isLoading } = useQuery({
     queryKey: ["deezer-custom-playlist", playlistId],
@@ -22,7 +22,16 @@ export function CustomPlaylistSection({ playlistId, label, onPlayTrack }: Props)
   });
 
   return (
-    <Section title={label}>
+    <Section
+      title={label}
+      songs={tracks}
+      onPlayAll={() => {
+        if (tracks?.length) {
+          setQueue(tracks);
+          play(tracks[0]);
+        }
+      }}
+    >
       <HorizontalScroll>
         {isLoading ? (
           <CoverSkeleton />
