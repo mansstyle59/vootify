@@ -92,6 +92,25 @@ export default {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
         },
+        "equalizer-1": {
+          "0%, 100%": { height: "0.5rem" },
+          "50%": { height: "1rem" },
+        },
+        "equalizer-2": {
+          "0%, 100%": { height: "0.75rem" },
+          "30%": { height: "0.375rem" },
+          "70%": { height: "1rem" },
+        },
+        "equalizer-3": {
+          "0%, 100%": { height: "0.625rem" },
+          "40%": { height: "1rem" },
+          "80%": { height: "0.375rem" },
+        },
+        "equalizer-4": {
+          "0%, 100%": { height: "0.875rem" },
+          "25%": { height: "0.375rem" },
+          "75%": { height: "1rem" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -100,6 +119,10 @@ export default {
         "slide-up": "slide-up 0.4s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "spin-slow": "spin-slow 8s linear infinite",
+        "equalizer-1": "equalizer-1 0.8s ease-in-out infinite",
+        "equalizer-2": "equalizer-2 0.6s ease-in-out infinite",
+        "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
+        "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
       },
     },
   },

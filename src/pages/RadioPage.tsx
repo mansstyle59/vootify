@@ -45,12 +45,12 @@ type ViewMode = "grid" | "list";
 const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news", "talk"];
 
 // Simple equalizer indicator for active station
-const LiveEqualizer = () => (
+const LiveEqualizer = ({ color = "bg-primary" }: { color?: string }) => (
   <div className="flex items-end gap-[2px] h-4">
-    <div className="w-[3px] rounded-full bg-primary h-2" />
-    <div className="w-[3px] rounded-full bg-primary h-3" />
-    <div className="w-[3px] rounded-full bg-primary h-2.5" />
-    <div className="w-[3px] rounded-full bg-primary h-3.5" />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-1`} />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-2`} />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-3`} />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-4`} />
   </div>
 );
 
@@ -108,7 +108,7 @@ function NowPlayingHero({
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-destructive/80 backdrop-blur-sm">
-              <LiveEqualizer />
+              <LiveEqualizer color="bg-white" />
               <span className="text-[9px] font-bold text-white tracking-widest uppercase">LIVE</span>
             </span>
           </div>
@@ -366,10 +366,10 @@ const RadioPage = () => {
 
           {/* Live badge */}
           {isActivePlaying && (
-            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/90 backdrop-blur-md">
-              <LiveEqualizer />
-              <span className="text-[10px] font-bold text-white tracking-widest uppercase">Live</span>
-            </div>
+             <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/90 backdrop-blur-md">
+               <LiveEqualizer color="bg-white" />
+               <span className="text-[10px] font-bold text-white tracking-widest uppercase">Live</span>
+             </div>
           )}
 
           {/* Action buttons */}
