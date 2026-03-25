@@ -195,7 +195,7 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
           style={{ background: "hsl(var(--background))" }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
             <button onClick={onClose} className="text-sm font-medium text-primary">
               Annuler
             </button>
