@@ -176,7 +176,7 @@ const AlbumDetailPage = () => {
       </div>
 
       {/* Actions */}
-      <div className="px-4 md:px-8 flex gap-2 mb-5 mt-2">
+      <div className="px-4 md:px-8 flex items-center gap-2 mb-5 mt-2">
         <button
           onClick={playAll}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
@@ -191,6 +191,20 @@ const AlbumDetailPage = () => {
           <Shuffle className="w-4 h-4" />
           Aléatoire
         </button>
+        {user && (
+          <button
+            onClick={() => toggleSave.mutate()}
+            disabled={toggleSave.isPending}
+            className={`ml-auto flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+              isSaved
+                ? "bg-primary/15 text-primary border border-primary/30"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            }`}
+          >
+            {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+            {isSaved ? "Sauvegardé" : "Sauvegarder"}
+          </button>
+        )}
       </div>
 
       {/* Track list */}
