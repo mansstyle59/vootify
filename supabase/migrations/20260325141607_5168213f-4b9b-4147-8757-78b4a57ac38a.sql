@@ -1,0 +1,1 @@
+DELETE FROM recently_played;
