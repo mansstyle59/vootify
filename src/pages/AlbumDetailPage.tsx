@@ -35,7 +35,59 @@ const AlbumDetailPage = () => {
   });
 
   const album = data?.album;
-  const tracks = data?.tracks || [];
+  const rawTracks = data?.tracks || [];
+  const [resolvedTracks, setResolvedTracks] = useState<Song[]>([]);
+  const resolvingRef = useRef(false);
+
+  // Background HD resolution for Deezer album tracks
+  useEffect(() => {
+    if (rawTracks.length === 0 || resolvingRef.current) return;
+    const dzTracks = rawTracks.filter((t) => t.id.startsWith("dz-"));
+    if (dzTracks.length === 0) {
+      setResolvedTracks(rawTracks);
+      return;
+    }
+
+    resolvingRef.current = true;
+    setResolvedTracks(rawTracks);
+
+    const controller = new AbortController();
+    (async () => {
+      let upgraded = 0;
+      const updated = [...rawTracks];
+
+      // Resolve in batches of 4
+      for (let i = 0; i < updated.length; i += 4) {
+        if (controller.signal.aborted) return;
+        const batch = updated.slice(i, i + 4);
+        const resolved = await Promise.all(
+          batch.map((s) =>
+            s.id.startsWith("dz-")
+              ? deezerApi.resolveFullStream(s).catch(() => s)
+              : Promise.resolve(s)
+          )
+        );
+        if (controller.signal.aborted) return;
+
+        for (let j = 0; j < resolved.length; j++) {
+          const idx = i + j;
+          if (resolved[j].streamUrl && resolved[j].streamUrl !== updated[idx].streamUrl) {
+            updated[idx] = resolved[j];
+            upgraded++;
+          }
+        }
+        setResolvedTracks([...updated]);
+      }
+
+      if (upgraded > 0) {
+        toast.success(`${upgraded} titre${upgraded > 1 ? "s" : ""} résolu${upgraded > 1 ? "s" : ""} en HD`);
+      }
+    })();
+
+    return () => { controller.abort(); };
+  }, [rawTracks]);
+
+  const tracks = resolvedTracks.length > 0 ? resolvedTracks : rawTracks;
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
 
   // Check if album is saved in library
