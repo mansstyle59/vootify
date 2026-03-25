@@ -3,20 +3,14 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { Play, Pause, Heart, Music } from "lucide-react";
+import { Play, Pause } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Bonjour";
-  if (h < 18) return "Bon après-midi";
-  return "Bonsoir";
-}
+import { HeroBanner } from "@/components/home/HeroBanner";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
@@ -79,16 +73,8 @@ const HomePage = () => {
 
   return (
     <div className="pb-32 max-w-7xl mx-auto">
-      {/* ─── Greeting ─── */}
-      <div className="px-4 md:px-8 pt-6 pb-4">
-        <motion.h1
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl md:text-3xl font-display font-bold text-foreground"
-        >
-          {getGreeting()} 👋
-        </motion.h1>
-      </div>
+      {/* ─── Hero Banner with parallax ─── */}
+      <HeroBanner />
 
       {/* ─── Quick-access — recently played ─── */}
       {recentlyPlayed.length > 0 && (
