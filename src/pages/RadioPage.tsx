@@ -12,8 +12,35 @@ import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
+import { useRef, useEffect } from "react";
 
 type TabKey = "france" | "top" | "custom" | "search";
+
+/* ── Marquee for long text ── */
+function MarqueeText({ text, className }: { text: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const textEl = textRef.current;
+    if (container && textEl) {
+      setShouldScroll(textEl.scrollWidth > container.clientWidth + 2);
+    }
+  }, [text]);
+
+  return (
+    <div ref={containerRef} className={`overflow-hidden whitespace-nowrap ${className || ""}`} style={{ containerType: "inline-size" }}>
+      <span
+        ref={textRef}
+        className={shouldScroll ? "animate-marquee pr-8" : ""}
+      >
+        {text}
+      </span>
+    </div>
+  );
+}
 type ViewMode = "grid" | "list";
 
 const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news", "talk"];

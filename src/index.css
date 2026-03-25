@@ -150,6 +150,16 @@
 }
 
 @layer utilities {
+  .animate-marquee {
+    display: inline-block;
+    animation: marquee-scroll 8s linear infinite;
+  }
+  @keyframes marquee-scroll {
+    0% { transform: translateX(0%); }
+    10% { transform: translateX(0%); }
+    90% { transform: translateX(calc(-100% + 100cqw)); }
+    100% { transform: translateX(calc(-100% + 100cqw)); }
+  }
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
