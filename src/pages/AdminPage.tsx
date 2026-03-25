@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs";
 
 interface UserProfile {
   user_id: string;
@@ -40,6 +40,7 @@ const AdminPage = () => {
     { key: "users", label: "Utilisateurs", icon: Users },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
+    { key: "logs", label: "Logs", icon: ScrollText },
   ];
 
   return (
@@ -88,6 +89,7 @@ const AdminPage = () => {
         {tab === "users" && <UsersTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
+        {tab === "logs" && <LogsTab />}
       </div>
     </div>
   );
