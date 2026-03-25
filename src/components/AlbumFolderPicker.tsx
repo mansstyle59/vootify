@@ -262,19 +262,20 @@ const AlbumFolderPicker = ({ onTracksUploaded, albumArtist = "", className = "" 
       </div>
 
       {tracks.length > 0 && (
-        <div className="space-y-1 max-h-48 overflow-y-auto">
+        <div className="space-y-1 max-h-64 overflow-y-auto">
           {tracks.map((t, i) => (
-            <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-secondary/40 text-xs">
-              <span className="text-muted-foreground w-5 text-right shrink-0">{i + 1}</span>
-              <FileAudio className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="truncate flex-1 text-foreground">{t.title}</span>
-              <span className="text-muted-foreground shrink-0">
-                {Math.floor(t.duration / 60)}:{(t.duration % 60).toString().padStart(2, "0")}
-              </span>
-              <button type="button" onClick={() => handleRemoveTrack(i)} className="p-0.5 text-muted-foreground hover:text-foreground">
-                <X className="w-3 h-3" />
-              </button>
-            </div>
+            <TrackRow
+              key={i}
+              track={t}
+              index={i}
+              onUpdate={(field, value) => {
+                const updated = [...tracks];
+                updated[i] = { ...updated[i], [field]: value };
+                setTracks(updated);
+                onTracksUploaded(updated);
+              }}
+              onRemove={() => handleRemoveTrack(i)}
+            />
           ))}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
             <Check className="w-3.5 h-3.5 text-primary" />
