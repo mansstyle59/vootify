@@ -169,6 +169,15 @@ function AlbumForm() {
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
 
+  const handleTracksUploaded = (uploaded: UploadedTrack[]) => {
+    setTracks(uploaded);
+    // Auto-fill cover from first track's ID3 cover if no cover set
+    if (!form.coverUrl && uploaded.length > 0) {
+      const firstCover = uploaded.find((t) => t.coverUrl)?.coverUrl;
+      if (firstCover) setForm((f) => ({ ...f, coverUrl: firstCover }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.artist.trim()) return;
