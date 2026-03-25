@@ -148,6 +148,14 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  // Album results (JioSaavn)
+  const { data: albumResults } = useQuery({
+    queryKey: ["album-search", debouncedQuery],
+    queryFn: () => jiosaavnApi.searchAlbums(debouncedQuery, 10),
+    enabled: debouncedQuery.length >= 2,
+    staleTime: 2 * 60 * 1000,
+  });
+
   const isLoading = jsLoading || dzLoading;
 
   const mergedResults = useMemo(() => {
