@@ -430,9 +430,11 @@ const SearchPage = () => {
 
   const filteredResults = useMemo(() => {
     if (!mergedResults) return [];
-    if (!artistFilter) return mergedResults;
-    return mergedResults.filter((song) => song.artist.includes(artistFilter));
-  }, [mergedResults, artistFilter]);
+    let results = mergedResults;
+    if (hdOnly) results = results.filter(isFullStream);
+    if (artistFilter) results = results.filter((song) => song.artist.includes(artistFilter));
+    return results;
+  }, [mergedResults, artistFilter, hdOnly]);
 
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
