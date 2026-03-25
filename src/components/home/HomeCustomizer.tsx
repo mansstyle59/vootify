@@ -69,7 +69,6 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     setSections(DEFAULT_SECTIONS);
   };
 
-  if (!open) return null;
 
   return (
     <AnimatePresence>
