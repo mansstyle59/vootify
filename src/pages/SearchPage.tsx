@@ -111,6 +111,9 @@ const SearchPage = () => {
 
   return (
     <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
+      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Rechercher</h1>
+      <p className="text-sm text-muted-foreground mb-5">Trouvez vos artistes et morceaux préférés</p>
+
       {/* Search bar */}
       <div className="relative mb-5">
         <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
