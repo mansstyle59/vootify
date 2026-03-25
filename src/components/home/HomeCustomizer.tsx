@@ -256,7 +256,6 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                     cursor: "grabbing",
                   }}
                   layout
-                  layoutTransition={{ type: "spring", stiffness: 400, damping: 30 }}
                 >
                   <span className="text-base select-none">{section.emoji}</span>
                   {editingId === section.id ? (
