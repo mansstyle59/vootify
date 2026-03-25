@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { Play, Headphones, Music2, LogIn, LogOut } from "lucide-react";
+import { Play, Headphones, Music2, LogIn, LogOut, Settings2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,7 @@ function getSubGreeting() {
   return "Détendez-vous avec vos morceaux préférés";
 }
 
-export function HeroBanner() {
+export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -144,12 +144,26 @@ export function HeroBanner() {
           {getSubGreeting()}
         </motion.p>
 
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-          className="mt-4 h-0.5 w-16 rounded-full bg-gradient-to-r from-primary to-accent origin-left"
-        />
+        <div className="flex items-center gap-3 mt-4">
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+            className="h-0.5 w-16 rounded-full bg-gradient-to-r from-primary to-accent origin-left"
+          />
+          {onCustomize && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              onClick={onCustomize}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50 hover:bg-secondary transition-colors text-xs font-medium text-muted-foreground"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Personnaliser
+            </motion.button>
+          )}
+        </div>
       </motion.div>
     </div>
   );
