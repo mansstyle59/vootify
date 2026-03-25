@@ -182,7 +182,7 @@ const LibraryPage = () => {
         >
           {tab === "liked" && (
             <div>
-              {likedSongs.length === 0 ? (
+              {filterFullStreams(likedSongs).length === 0 ? (
                 <div className="glass-panel-light rounded-xl p-2">
                   <p className="text-center text-muted-foreground py-12">Pas encore de titres aimés. Likez des chansons en naviguant !</p>
                 </div>
@@ -190,7 +190,7 @@ const LibraryPage = () => {
                 <>
                   <div className="flex gap-2 mb-3">
                     <button
-                      onClick={() => { setQueue(likedSongs); play(likedSongs[0]); }}
+                      onClick={() => { const full = filterFullStreams(likedSongs); setQueue(full); play(full[0]); }}
                       className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
                     >
                       <Play className="w-4 h-4" />
@@ -198,7 +198,7 @@ const LibraryPage = () => {
                     </button>
                     <button
                       onClick={() => {
-                        const shuffled = [...likedSongs].sort(() => Math.random() - 0.5);
+                        const shuffled = filterFullStreams([...likedSongs]).sort(() => Math.random() - 0.5);
                         setQueue(shuffled);
                         play(shuffled[0]);
                       }}
@@ -209,7 +209,7 @@ const LibraryPage = () => {
                     </button>
                   </div>
                   <div className="glass-panel-light rounded-xl p-2">
-                    {likedSongs.map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)}
+                    {filterFullStreams(likedSongs).map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)}
                   </div>
                 </>
               )}
