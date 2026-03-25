@@ -3,12 +3,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, ArrowLeft, Loader2, Check } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -216,6 +216,14 @@ const ProfilePage = () => {
               <Check className="w-4 h-4" />
             )}
             Sauvegarder
+          </button>
+
+          <button
+            onClick={async () => { await signOut(); navigate("/"); }}
+            className="w-full py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Se déconnecter
           </button>
         </motion.div>
       </div>
