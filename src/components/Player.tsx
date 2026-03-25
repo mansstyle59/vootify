@@ -565,11 +565,11 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
               setAddingToLib(true);
               try {
                 // Search Deezer for the track
-                const results = await deezerApi.search(`${artist} ${title}`, 1);
+                const results = await deezerApi.searchTracks(`${artist} ${title}`, 1);
                 if (results.length > 0) {
                   const track = results[0];
-                  // Resolve HD stream
-                  const hdResult = await jiosaavnApi.searchAndMatch(track.title, track.artist, track.duration);
+                  // Resolve HD stream via JioSaavn
+                  const hdResults = await jiosaavnApi.search(`${track.title} ${track.artist}`, 1);
                   const song = {
                     id: track.id,
                     title: track.title,
