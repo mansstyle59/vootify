@@ -141,7 +141,7 @@ serve(async (req) => {
             const deezerData = await deezerRes.json();
             if (deezerData.data && deezerData.data.length > 0) {
               const track = deezerData.data[0];
-              coverUrl = track.album?.cover_big || track.album?.cover_medium || track.album?.cover || "";
+              coverUrl = track.album?.cover_xl || track.album?.cover_big || track.album?.cover_medium || "";
             }
           }
         } catch (e) {
