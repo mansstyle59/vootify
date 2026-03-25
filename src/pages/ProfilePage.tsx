@@ -258,13 +258,13 @@ const ProfilePage = () => {
                   value={[crossfadeDuration]}
                   onValueChange={([val]) => setCrossfadeDuration(val)}
                   min={1}
-                  max={8}
+                  max={12}
                   step={1}
                   className="w-full"
                 />
                 <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
                   <span>1s</span>
-                  <span>8s</span>
+                  <span>12s</span>
                 </div>
               </div>
             )}
