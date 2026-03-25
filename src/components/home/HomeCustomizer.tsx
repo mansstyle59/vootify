@@ -5,6 +5,13 @@ import { toast } from "sonner";
 import { deezerApi } from "@/lib/deezerApi";
 import { supabase } from "@/integrations/supabase/client";
 
+const EMOJI_PALETTE = [
+  "🔥", "💫", "❤️", "💖", "⭐", "🌙", "🌍", "🏆", "🎵", "🎶",
+  "🎤", "🎧", "🎸", "🥁", "🎹", "🎺", "🎷", "🎻", "🪗", "🎼",
+  "✨", "💎", "👑", "🦋", "🌈", "☀️", "☁️", "🌊", "🍀", "🌸",
+  "😎", "🤩", "🥳", "💃", "🕺", "🙌", "💪", "🚀", "⚡", "🪩",
+];
+
 export interface HomeSection {
   id: string;
   label: string;
