@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useAuth } from "@/hooks/useAuth";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music, Shuffle } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
@@ -17,7 +18,38 @@ const LibraryPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay } = usePlayerStore();
+
+  // If not logged in, show auth gate
+  if (!authLoading && !user) {
+    return (
+      <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Votre Bibliothèque</h1>
+        <p className="text-sm text-muted-foreground mb-8">Connectez-vous pour accéder à votre bibliothèque privée</p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-16 text-center"
+        >
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+            <LogIn className="w-9 h-9 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Connexion requise</h2>
+          <p className="text-sm text-muted-foreground max-w-xs mb-6">
+            Vos morceaux aimés, playlists et historique sont sauvegardés sur votre compte.
+          </p>
+          <button
+            onClick={() => navigate("/auth")}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
+          >
+            <LogIn className="w-4 h-4" />
+            Se connecter
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
 
