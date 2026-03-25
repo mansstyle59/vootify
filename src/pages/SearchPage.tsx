@@ -209,13 +209,18 @@ const SearchPage = () => {
     const previewTracks = allDzResults.filter(
       (s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
     );
-    if (previewTracks.length === 0) return;
+    if (previewTracks.length === 0) {
+      setResolveProgress(null);
+      return;
+    }
 
     const controller = new AbortController();
     resolveAbortRef.current = controller;
+    let resolvedCount = 0;
+    const total = previewTracks.length;
+    setResolveProgress({ resolved: 0, total });
 
     const resolveInBackground = async () => {
-      // Process in batches of 4 to avoid overwhelming
       for (let i = 0; i < previewTracks.length; i += 4) {
         if (controller.signal.aborted) return;
         const batch = previewTracks.slice(i, i + 4);
@@ -224,7 +229,9 @@ const SearchPage = () => {
         );
         if (controller.signal.aborted) return;
 
-        // Update resolved tracks in state
+        resolvedCount += batch.length;
+        setResolveProgress({ resolved: resolvedCount, total });
+
         const resolvedMap = new Map(resolved.filter((r, idx) => r.streamUrl !== batch[idx].streamUrl).map((r) => [r.id, r]));
         if (resolvedMap.size > 0) {
           setAllDzResults((prev) =>
@@ -232,10 +239,14 @@ const SearchPage = () => {
           );
         }
       }
+      // Done — clear after a short delay
+      if (!controller.signal.aborted) {
+        setTimeout(() => setResolveProgress(null), 2000);
+      }
     };
 
     resolveInBackground();
-    return () => controller.abort();
+    return () => { controller.abort(); setResolveProgress(null); };
   }, [allDzResults.length, debouncedQuery]);
 
   const loadMore = useCallback(async () => {
