@@ -64,6 +64,9 @@ Deno.serve(async (req) => {
       case 'radio':
         url = `${DEEZER_API}/radio`;
         break;
+      case 'search_radio':
+        url = `${DEEZER_API}/search/radio?q=${encodeURIComponent(query || '')}&limit=${limit || 5}`;
+        break;
       case 'radio_tracks':
         url = `${DEEZER_API}/radio/${id}/tracks?limit=${limit || 25}`;
         break;
