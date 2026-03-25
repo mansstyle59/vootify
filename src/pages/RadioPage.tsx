@@ -17,7 +17,7 @@ const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic",
 
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
-  const [activeTab, setActiveTab] = useState<TabKey>("france");
+  const [activeTab, setActiveTab] = useState<TabKey>("custom");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);

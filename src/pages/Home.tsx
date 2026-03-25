@@ -161,11 +161,14 @@ const HomePage = () => {
           <div className="rounded-xl bg-secondary/30 overflow-hidden">
             {loadingTitres
               ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
-              : titresDuMoment?.slice(0, 10).map((song, i) => (
-                  <div key={song.id} onClick={() => handlePlayTrack(song, titresDuMoment!)}>
-                    <SongCard song={song} index={i} showIndex />
-                  </div>
-                ))}
+              : titresDuMoment
+                  ?.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"))
+                  .slice(0, 10)
+                  .map((song, i) => (
+                    <div key={song.id} onClick={() => handlePlayTrack(song, titresDuMoment!)}>
+                      <SongCard song={song} index={i} showIndex />
+                    </div>
+                  ))}
           </div>
         </div>
       </Section>
