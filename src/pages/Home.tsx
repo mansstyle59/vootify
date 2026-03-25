@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -307,30 +308,46 @@ const HomePage = () => {
               <button
                 key={key}
                 onClick={() => setTopGenre(key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                className={`relative px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${
                   topGenre === key
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    ? "text-primary-foreground"
                     : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
                 }`}
               >
-                {label}
+                {topGenre === key && (
+                  <motion.div
+                    layoutId="topTabIndicator"
+                    className="absolute inset-0 bg-primary rounded-full shadow-md shadow-primary/25"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{label}</span>
               </button>
             ))}
           </div>
 
           {/* Chart list */}
-          <div className="rounded-xl bg-secondary/20 border border-border/50 overflow-hidden divide-y divide-border/30">
-            {topData.loading
-              ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
-              : topData.songs.map((song, i) => (
-                  <TopChartCard
-                    key={song.id}
-                    song={song}
-                    rank={i + 1}
-                    onClick={() => handlePlayTrack(song, topData.source)}
-                  />
-                ))}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={topGenre}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="rounded-xl bg-secondary/20 border border-border/50 overflow-hidden divide-y divide-border/30"
+            >
+              {topData.loading
+                ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
+                : topData.songs.map((song, i) => (
+                    <TopChartCard
+                      key={song.id}
+                      song={song}
+                      rank={i + 1}
+                      onClick={() => handlePlayTrack(song, topData.source)}
+                    />
+                  ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </Section>
     </div>
