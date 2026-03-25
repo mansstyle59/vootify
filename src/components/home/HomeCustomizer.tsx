@@ -1,12 +1,15 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { X, GripVertical, Eye, EyeOff, RotateCcw } from "lucide-react";
+import { X, GripVertical, Eye, EyeOff, RotateCcw, Plus, Search, Loader2, Trash2, Music } from "lucide-react";
+import { deezerApi } from "@/lib/deezerApi";
 
 export interface HomeSection {
   id: string;
   label: string;
   emoji: string;
   visible: boolean;
+  /** For custom Deezer playlists */
+  deezerPlaylistId?: string;
 }
 
 export const DEFAULT_SECTIONS: HomeSection[] = [
@@ -27,7 +30,6 @@ export function loadSections(): HomeSection[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SECTIONS;
     const saved: HomeSection[] = JSON.parse(raw);
-    // Merge with defaults (in case new sections are added)
     const savedIds = new Set(saved.map((s) => s.id));
     const merged = [
       ...saved,
@@ -43,6 +45,22 @@ export function saveSections(sections: HomeSection[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
 }
 
+function extractPlaylistId(input: string): string | null {
+  // Accept raw ID, or Deezer URL like https://www.deezer.com/playlist/1234567
+  const urlMatch = input.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
+  if (urlMatch) return urlMatch[1];
+  if (/^\d+$/.test(input.trim())) return input.trim();
+  return null;
+}
+
+interface SearchResult {
+  id: string;
+  title: string;
+  picture: string;
+  nb_tracks: number;
+  user: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -52,6 +70,13 @@ interface Props {
 
 export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const [sections, setSections] = useState<HomeSection[]>(current);
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [addingById, setAddingById] = useState(false);
+  const [playlistInput, setPlaylistInput] = useState("");
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (open) setSections(current);
@@ -61,6 +86,10 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
     );
+  }, []);
+
+  const removeSection = useCallback((id: string) => {
+    setSections((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
   const handleSave = () => {
@@ -73,6 +102,62 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     setSections(DEFAULT_SECTIONS);
   };
 
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (q.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    searchTimeout.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await deezerApi.searchPlaylists(q, 8);
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+  }, []);
+
+  const addPlaylist = useCallback((id: string, title: string) => {
+    const sectionId = `custom-dz-${id}`;
+    setSections((prev) => {
+      if (prev.some((s) => s.id === sectionId)) return prev;
+      return [
+        ...prev,
+        {
+          id: sectionId,
+          label: title,
+          emoji: "🎵",
+          visible: true,
+          deezerPlaylistId: id,
+        },
+      ];
+    });
+    setShowAddPanel(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setPlaylistInput("");
+  }, []);
+
+  const handleAddById = async () => {
+    const id = extractPlaylistId(playlistInput);
+    if (!id) return;
+    setAddingById(true);
+    try {
+      const info = await deezerApi.getPlaylistInfo(id);
+      addPlaylist(info.id, info.title);
+    } catch {
+      // silently fail
+    } finally {
+      setAddingById(false);
+    }
+  };
+
+  const isCustom = (s: HomeSection) => !!s.deezerPlaylistId;
 
   return (
     <AnimatePresence>
@@ -86,38 +171,29 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-            <button
-              onClick={onClose}
-              className="text-sm font-medium text-primary"
-            >
+            <button onClick={onClose} className="text-sm font-medium text-primary">
               Annuler
             </button>
             <h2 className="text-base font-bold text-foreground">Personnaliser</h2>
-            <button
-              onClick={handleSave}
-              className="text-sm font-bold text-primary"
-            >
+            <button onClick={handleSave} className="text-sm font-bold text-primary">
               Terminer
             </button>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide">
-            <p className="text-sm text-muted-foreground mb-5">
-              Réorganise ta page d'accueil
+            <p className="text-sm text-muted-foreground mb-4">
+              Réorganise ta page d'accueil et ajoute tes playlists Deezer
             </p>
 
-            {/* Preview mode label */}
-            <div className="flex flex-col items-center gap-2 mb-4">
-              <div className="flex gap-1">
-                <div className="w-8 h-6 rounded bg-muted/60" />
-                <div className="w-8 h-6 rounded bg-muted/60" />
-                <div className="w-8 h-6 rounded bg-muted/60" />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Sections avec aperçu en cartes
-              </p>
-            </div>
+            {/* Add playlist button */}
+            <button
+              onClick={() => setShowAddPanel(true)}
+              className="w-full mb-4 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-primary/30 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter une playlist Deezer
+            </button>
 
             {/* Reorderable list */}
             <Reorder.Group
@@ -139,12 +215,23 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
                 >
                   <span className="text-base">{section.emoji}</span>
                   <span
-                    className={`flex-1 text-sm font-medium ${
+                    className={`flex-1 text-sm font-medium truncate ${
                       section.visible ? "text-foreground" : "text-muted-foreground line-through"
                     }`}
                   >
                     {section.label}
                   </span>
+                  {isCustom(section) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSection(section.id);
+                      }}
+                      className="p-1.5 rounded-lg transition-colors hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -172,6 +259,113 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
               Réinitialiser les réglages
             </button>
           </div>
+
+          {/* Add playlist panel (bottom sheet) */}
+          <AnimatePresence>
+            {showAddPanel && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[210] bg-black/50 flex items-end"
+                onClick={() => setShowAddPanel(false)}
+              >
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="w-full max-h-[80vh] bg-background rounded-t-2xl flex flex-col"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                    <h3 className="text-sm font-bold text-foreground">Ajouter une playlist</h3>
+                    <button onClick={() => setShowAddPanel(false)} className="p-1">
+                      <X className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  <div className="px-4 py-3 space-y-3">
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Rechercher une playlist..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-secondary/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Or by ID/URL */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="ID ou URL de playlist Deezer..."
+                        value={playlistInput}
+                        onChange={(e) => setPlaylistInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddById()}
+                        className="flex-1 h-10 px-3 rounded-lg border border-border bg-secondary/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                      <button
+                        onClick={handleAddById}
+                        disabled={addingById || !playlistInput.trim()}
+                        className="px-4 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                      >
+                        {addingById ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ajouter"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search results */}
+                  <div className="flex-1 overflow-y-auto px-4 pb-6 scrollbar-hide">
+                    {searching && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      </div>
+                    )}
+                    {!searching && searchResults.length > 0 && (
+                      <div className="space-y-1">
+                        {searchResults.map((pl) => {
+                          const alreadyAdded = sections.some((s) => s.deezerPlaylistId === pl.id);
+                          return (
+                            <button
+                              key={pl.id}
+                              disabled={alreadyAdded}
+                              onClick={() => addPlaylist(pl.id, pl.title)}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary/60 transition-colors disabled:opacity-40"
+                            >
+                              {pl.picture ? (
+                                <img src={pl.picture} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center flex-shrink-0">
+                                  <Music className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="flex-1 text-left min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{pl.title}</p>
+                                <p className="text-xs text-muted-foreground">{pl.nb_tracks} titres · {pl.user}</p>
+                              </div>
+                              {alreadyAdded ? (
+                                <span className="text-xs text-muted-foreground">Ajoutée</span>
+                              ) : (
+                                <Plus className="w-4 h-4 text-primary flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
+                      <p className="text-center text-sm text-muted-foreground py-8">Aucun résultat</p>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
