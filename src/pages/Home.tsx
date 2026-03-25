@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
-import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { motion } from "framer-motion";
-import { Play, Pause, ChevronRight } from "lucide-react";
+import { Play, Pause, Heart, Music } from "lucide-react";
 import type { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { Section } from "@/components/home/Section";
+import { CoverCard } from "@/components/home/CoverCard";
+import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -16,23 +18,44 @@ function getGreeting() {
   return "Bonsoir";
 }
 
-const DEEZER_PLAYLIST_TITRES_DU_MOMENT = "53362031";
-const DEEZER_PLAYLIST_RAPSTARS = "3272614282"; // Rapstars
+const PLAYLISTS = {
+  titresDuMoment: "53362031",
+  rapstars: "3272614282",
+  popHits: "1996494362",    // Pop Hits
+  chillVibes: "1362516565", // Chill Vibes
+  afrobeats: "6460178564",  // Afrobeats
+} as const;
 
 const HomePage = () => {
-  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
 
-  // Les titres du moment (Deezer playlist)
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
     queryKey: ["deezer-titres-du-moment"],
-    queryFn: () => deezerApi.getPlaylistTracks(DEEZER_PLAYLIST_TITRES_DU_MOMENT, 20),
+    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.titresDuMoment, 20),
     staleTime: 10 * 60 * 1000,
   });
 
-  // Rapstars
   const { data: rapstars, isLoading: loadingRap } = useQuery({
     queryKey: ["deezer-rapstars"],
-    queryFn: () => deezerApi.getPlaylistTracks(DEEZER_PLAYLIST_RAPSTARS, 20),
+    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.rapstars, 20),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: popHits, isLoading: loadingPop } = useQuery({
+    queryKey: ["deezer-pop-hits"],
+    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.popHits, 20),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: chillVibes, isLoading: loadingChill } = useQuery({
+    queryKey: ["deezer-chill-vibes"],
+    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.chillVibes, 20),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: afrobeats, isLoading: loadingAfro } = useQuery({
+    queryKey: ["deezer-afrobeats"],
+    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.afrobeats, 20),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -49,7 +72,6 @@ const HomePage = () => {
       togglePlay();
       return;
     }
-    // Resolve full stream before playing
     const resolved = await deezerApi.resolveFullStream(song);
     setQueue(allSongs);
     play(resolved);
@@ -57,7 +79,7 @@ const HomePage = () => {
 
   return (
     <div className="pb-32 max-w-7xl mx-auto">
-      {/* ─── Greeting header ─── */}
+      {/* ─── Greeting ─── */}
       <div className="px-4 md:px-8 pt-6 pb-4">
         <motion.h1
           initial={{ opacity: 0, y: -10 }}
@@ -68,7 +90,7 @@ const HomePage = () => {
         </motion.h1>
       </div>
 
-      {/* ─── Quick-access grid — recently played ─── */}
+      {/* ─── Quick-access — recently played ─── */}
       {recentlyPlayed.length > 0 && (
         <div className="px-4 md:px-8 mb-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -105,17 +127,30 @@ const HomePage = () => {
         </div>
       )}
 
+      {/* ─── Vos coups de cœur ─── */}
+      {likedSongs.length > 0 && (
+        <Section title="Vos coups de cœur ❤️">
+          <HorizontalScroll>
+            {likedSongs.slice(0, 20).map((song, i) => (
+              <CoverCard
+                key={song.id}
+                title={song.title}
+                subtitle={song.artist}
+                imageUrl={song.coverUrl}
+                index={i}
+                isActive={currentSong?.id === song.id && isPlaying}
+                onClick={() => handlePlayTrack(song, likedSongs)}
+              />
+            ))}
+          </HorizontalScroll>
+        </Section>
+      )}
+
       {/* ─── Les titres du moment ─── */}
       <Section title="Les titres du moment 🔥">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 md:px-8 pb-2">
+        <HorizontalScroll>
           {loadingTitres
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-40 animate-pulse">
-                  <div className="w-40 h-40 rounded-xl bg-secondary mb-2" />
-                  <div className="h-3.5 w-28 bg-secondary rounded mb-1" />
-                  <div className="h-3 w-20 bg-secondary rounded" />
-                </div>
-              ))
+            ? <CoverSkeleton />
             : titresDuMoment?.map((song, i) => (
                 <CoverCard
                   key={song.id}
@@ -127,20 +162,33 @@ const HomePage = () => {
                   onClick={() => handlePlayTrack(song, titresDuMoment)}
                 />
               ))}
-        </div>
+        </HorizontalScroll>
+      </Section>
+
+      {/* ─── Pop Hits ─── */}
+      <Section title="Pop Hits 🎤">
+        <HorizontalScroll>
+          {loadingPop
+            ? <CoverSkeleton />
+            : popHits?.map((song, i) => (
+                <CoverCard
+                  key={song.id}
+                  title={song.title}
+                  subtitle={song.artist}
+                  imageUrl={song.coverUrl}
+                  index={i}
+                  isActive={currentSong?.id === song.id && isPlaying}
+                  onClick={() => handlePlayTrack(song, popHits)}
+                />
+              ))}
+        </HorizontalScroll>
       </Section>
 
       {/* ─── Rapstars ─── */}
       <Section title="Rapstars ⭐">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 md:px-8 pb-2">
+        <HorizontalScroll>
           {loadingRap
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-40 animate-pulse">
-                  <div className="w-40 h-40 rounded-xl bg-secondary mb-2" />
-                  <div className="h-3.5 w-28 bg-secondary rounded mb-1" />
-                  <div className="h-3 w-20 bg-secondary rounded" />
-                </div>
-              ))
+            ? <CoverSkeleton />
             : rapstars?.map((song, i) => (
                 <CoverCard
                   key={song.id}
@@ -152,11 +200,49 @@ const HomePage = () => {
                   onClick={() => handlePlayTrack(song, rapstars)}
                 />
               ))}
-        </div>
+        </HorizontalScroll>
       </Section>
 
-      {/* ─── Top 10 titres du moment ─── */}
-      <Section title="Top 10">
+      {/* ─── Chill Vibes ─── */}
+      <Section title="Chill & Détente 🌙">
+        <HorizontalScroll>
+          {loadingChill
+            ? <CoverSkeleton />
+            : chillVibes?.map((song, i) => (
+                <CoverCard
+                  key={song.id}
+                  title={song.title}
+                  subtitle={song.artist}
+                  imageUrl={song.coverUrl}
+                  index={i}
+                  isActive={currentSong?.id === song.id && isPlaying}
+                  onClick={() => handlePlayTrack(song, chillVibes)}
+                />
+              ))}
+        </HorizontalScroll>
+      </Section>
+
+      {/* ─── Afrobeats ─── */}
+      <Section title="Afrobeats 🌍">
+        <HorizontalScroll>
+          {loadingAfro
+            ? <CoverSkeleton />
+            : afrobeats?.map((song, i) => (
+                <CoverCard
+                  key={song.id}
+                  title={song.title}
+                  subtitle={song.artist}
+                  imageUrl={song.coverUrl}
+                  index={i}
+                  isActive={currentSong?.id === song.id && isPlaying}
+                  onClick={() => handlePlayTrack(song, afrobeats)}
+                />
+              ))}
+        </HorizontalScroll>
+      </Section>
+
+      {/* ─── Top 10 ─── */}
+      <Section title="Top 10 🏆">
         <div className="px-4 md:px-8">
           <div className="rounded-xl bg-secondary/30 overflow-hidden">
             {loadingTitres
@@ -175,63 +261,5 @@ const HomePage = () => {
     </div>
   );
 };
-
-/* ─── Section wrapper ─── */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-8"
-    >
-      <div className="flex items-center justify-between px-4 md:px-8 mb-3">
-        <h2 className="text-lg md:text-xl font-display font-bold text-foreground">{title}</h2>
-      </div>
-      {children}
-    </motion.section>
-  );
-}
-
-/* ─── Cover card ─── */
-function CoverCard({
-  title, subtitle, imageUrl, index = 0, isActive = false, onClick,
-}: {
-  title: string;
-  subtitle: string;
-  imageUrl: string;
-  index?: number;
-  isActive?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.03 }}
-      className="flex-shrink-0 w-40 cursor-pointer group"
-      onClick={onClick}
-    >
-      <div className="relative w-40 h-40 rounded-xl overflow-hidden mb-2 bg-secondary">
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-background/0 group-hover:bg-background/20 transition-colors" />
-        <div className={`absolute bottom-2 right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-xl transition-all ${
-          isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
-        }`}>
-          {isActive ? (
-            <Pause className="w-4 h-4 text-primary-foreground" />
-          ) : (
-            <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
-          )}
-        </div>
-      </div>
-      <h3 className={`text-sm font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>{title}</h3>
-      <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-    </motion.div>
-  );
-}
 
 export default HomePage;
