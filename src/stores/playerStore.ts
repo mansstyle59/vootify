@@ -205,4 +205,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       console.error("Failed to load playlist songs:", e);
     }
   },
+
+  clearRecentlyPlayed: async () => {
+    const userId = get().userId;
+    if (!userId) return;
+    set({ recentlyPlayed: [] });
+    await musicDb.clearRecentlyPlayed(userId);
+  },
 }));
