@@ -157,6 +157,7 @@ const SearchPage = () => {
 
   const PAGE_SIZE = 50;
 
+  // Check if a song has a full stream (not just a 30s preview)
   const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
 
   // JioSaavn results (page 1)
@@ -167,21 +168,10 @@ const SearchPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results (page 1) — resolve to full streams
+  // Deezer results (page 1) — will be resolved to full streams at play time
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: async () => {
-      const raw = await deezerApi.searchTracks(debouncedQuery, PAGE_SIZE);
-      // Resolve full streams in parallel (batch of 6 to avoid overwhelming)
-      const resolved: Song[] = [];
-      for (let i = 0; i < raw.length; i += 6) {
-        const batch = raw.slice(i, i + 6);
-        const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
-        resolved.push(...results);
-      }
-      // Only keep songs with full streams
-      return resolved.filter(isFullStream);
-    },
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
@@ -189,7 +179,7 @@ const SearchPage = () => {
   // Accumulate results from initial + extra pages
   useEffect(() => {
     if (jsResults) {
-      setAllJsResults(jsResults.filter(isFullStream));
+      setAllJsResults(jsResults);
       setHasMoreJs(jsResults.length >= PAGE_SIZE);
     }
   }, [jsResults]);
@@ -197,7 +187,7 @@ const SearchPage = () => {
   useEffect(() => {
     if (dzResults) {
       setAllDzResults(dzResults);
-      setHasMoreDz(dzResults.length >= PAGE_SIZE / 2);
+      setHasMoreDz(dzResults.length >= PAGE_SIZE);
     }
   }, [dzResults]);
 
@@ -224,17 +214,9 @@ const SearchPage = () => {
         const nextPage = dzPage + 1;
         const offset = dzPage * PAGE_SIZE;
         promises.push(
-          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then(async (raw) => {
-            // Resolve full streams for Deezer tracks
-            const resolved: Song[] = [];
-            for (let i = 0; i < raw.length; i += 6) {
-              const batch = raw.slice(i, i + 6);
-              const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s)));
-              resolved.push(...results);
-            }
-            const full = resolved.filter(isFullStream);
-            setAllDzResults((prev) => [...prev, ...full]);
-            setHasMoreDz(raw.length >= PAGE_SIZE);
+          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
+            setAllDzResults((prev) => [...prev, ...res]);
+            setHasMoreDz(res.length >= PAGE_SIZE);
             setDzPage(nextPage);
           })
         );
@@ -309,13 +291,11 @@ const SearchPage = () => {
   const isLoading = jsLoading || dzLoading;
 
   const mergedResults = useMemo(() => {
-    // All results should already be full streams, but double-check
-    const onlyFull = (songs: Song[]) => songs.filter(isFullStream);
-
-    if (source === "jiosaavn") return onlyFull(allJsResults);
-    if (source === "deezer") return onlyFull(allDzResults);
-    const js = onlyFull(allJsResults);
-    const dz = onlyFull(allDzResults);
+    if (source === "jiosaavn") return allJsResults;
+    if (source === "deezer") return allDzResults;
+    // Merge both sources, JioSaavn first (full streams), then Deezer (resolved at play)
+    const js = allJsResults;
+    const dz = allDzResults;
     const seen = new Set<string>();
     const merged: Song[] = [];
 
@@ -361,13 +341,13 @@ const SearchPage = () => {
         // Boost French/Belgian artists
         const mainArtist = ar.split(",")[0].trim();
         if (frenchArtists.has(mainArtist)) score += 15;
-        if (song.streamUrl) score += 5;
+        // Boost songs with full streams (not 30s previews)
+        if (isFullStream(song)) score += 20;
+        else if (song.streamUrl) score += 5;
         return score;
       };
       return scoreRelevance(b) - scoreRelevance(a);
     });
-
-    return merged;
 
     return merged;
   }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
