@@ -173,7 +173,13 @@ export function MiniPlayer() {
       >
         <div
           className="rounded-2xl overflow-hidden"
-          style={glassStyle}
+          style={{
+            ...glassStyle,
+            ...(miniDominantColor ? {
+              background: `linear-gradient(135deg, ${miniDominantColor}, hsl(0 0% 4% / 0.8))`,
+              transition: "background 0.8s ease-in-out",
+            } : {}),
+          }}
         >
           {/* Progress line */}
           {!isLive && (
