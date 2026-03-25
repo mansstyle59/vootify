@@ -81,7 +81,10 @@ export function HeroBanner() {
       >
         {user ? (
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50">
+            <button
+              onClick={() => navigate("/profile")}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50 hover:bg-secondary transition-colors"
+            >
               <Avatar className="w-6 h-6">
                 <AvatarImage src={avatarUrl} alt={displayName || "User"} />
                 <AvatarFallback className="text-[10px] font-semibold bg-primary/20 text-primary">
@@ -91,7 +94,7 @@ export function HeroBanner() {
               <span className="text-xs font-medium text-foreground truncate max-w-[100px]">
                 {displayName}
               </span>
-            </div>
+            </button>
             <button
               onClick={() => signOut()}
               className="p-2 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50 hover:bg-destructive/20 transition-colors"
