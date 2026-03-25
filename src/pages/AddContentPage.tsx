@@ -253,6 +253,21 @@ function SongForm() {
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
       const streamUrl = urlData.publicUrl;
 
+      // Check for duplicate (same title + artist)
+      const { data: existing } = await supabase.from("custom_songs")
+        .select("id")
+        .eq("title", song.title.trim())
+        .eq("artist", song.artist.trim())
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        toast.error(`"${song.title}" existe déjà`);
+        // Remove uploaded audio file since we won't use it
+        await supabase.storage.from("audio").remove([path]);
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s));
+        continue;
+      }
+
       // Insert into DB
       const { error: dbErr } = await supabase.from("custom_songs").insert({
         user_id: ANONYMOUS_USER_ID,
