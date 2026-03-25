@@ -11,6 +11,10 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { hdCache } from "@/lib/hdCache";
+
+// Clear HD cache on app startup
+hdCache.clear();
 import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
