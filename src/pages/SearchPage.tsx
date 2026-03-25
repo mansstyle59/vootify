@@ -45,6 +45,19 @@ const GENRE_CARDS: { name: string; gradient: string; icon: React.ElementType }[]
   { name: "Français", gradient: "from-blue-600 to-indigo-400", icon: Disc3 },
 ];
 
+function AlbumCard({ album, onClick }: { album: Album; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex-shrink-0 w-36 group text-left">
+      <div className="relative w-36 h-36 rounded-xl overflow-hidden mb-2 shadow-lg">
+        <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+      </div>
+      <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+      <p className="text-xs text-muted-foreground truncate">{album.artist} · {album.year}</p>
+    </button>
+  );
+}
+
 type SearchSource = "all" | "jiosaavn" | "deezer";
 
 const SearchPage = () => {
