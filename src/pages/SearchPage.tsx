@@ -291,14 +291,13 @@ const SearchPage = () => {
     const filterFullStreams = (songs: Song[]) =>
       songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"));
 
-    if (source === "jiosaavn") return jsResults || [];
-    if (source === "deezer") return filterFullStreams(dzResults || []);
-    const js = jsResults || [];
-    const dz = filterFullStreams(dzResults || []);
+    if (source === "jiosaavn") return allJsResults;
+    if (source === "deezer") return filterFullStreams(allDzResults);
+    const js = allJsResults;
+    const dz = filterFullStreams(allDzResults);
     const seen = new Set<string>();
     const merged: Song[] = [];
 
-    // JioSaavn first (full streams), then Deezer (only full streams)
     for (const song of [...js, ...dz]) {
       const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
@@ -313,22 +312,16 @@ const SearchPage = () => {
         const t = normalize(song.title);
         const ar = normalize(song.artist);
         let score = 0;
-        // Exact title match
         if (t === q) score += 100;
-        // Title starts with query
         else if (t.startsWith(q)) score += 80;
-        // Title contains query
         else if (t.includes(q)) score += 60;
-        // Artist exact match
         if (ar === q) score += 90;
         else if (ar.startsWith(q)) score += 70;
         else if (ar.includes(q)) score += 50;
-        // Word-level matching
         for (const w of qWords) {
           if (t.includes(w)) score += 10;
           if (ar.includes(w)) score += 8;
         }
-        // Prefer songs with streams
         if (song.streamUrl) score += 5;
         return score;
       };
@@ -336,7 +329,7 @@ const SearchPage = () => {
     });
 
     return merged;
-  }, [jsResults, dzResults, source, normalize, debouncedQuery]);
+  }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && mergedResults.length > 0 && userId) {
