@@ -384,10 +384,11 @@ const SearchPage = () => {
   const filteredResults = useMemo(() => {
     if (!mergedResults) return [];
     let results = mergedResults;
+    if (customOnly) results = results.filter((s) => s.id.startsWith("custom-") || s.resolvedViaCustom);
     if (hdOnly) results = results.filter(isFullStream);
     if (artistFilter) results = results.filter((song) => song.artist.includes(artistFilter));
     return results;
-  }, [mergedResults, artistFilter, hdOnly]);
+  }, [mergedResults, artistFilter, hdOnly, customOnly]);
 
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
