@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { X, GripVertical, Eye, EyeOff, RotateCcw } from "lucide-react";
 
@@ -53,6 +53,10 @@ interface Props {
 export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const [sections, setSections] = useState<HomeSection[]>(current);
 
+  useEffect(() => {
+    if (open) setSections(current);
+  }, [open]);
+
   const toggleVisibility = useCallback((id: string) => {
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
@@ -69,7 +73,6 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     setSections(DEFAULT_SECTIONS);
   };
 
-  if (!open) return null;
 
   return (
     <AnimatePresence>

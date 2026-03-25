@@ -117,7 +117,7 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
       {/* Content */}
       <motion.div
         style={{ opacity }}
-        className="relative px-4 md:px-8 pt-10 pb-6 flex flex-col justify-end"
+        className="relative z-10 px-4 md:px-8 pt-10 pb-6 flex flex-col justify-end"
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
@@ -156,8 +156,8 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 }}
-              onClick={onCustomize}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50 hover:bg-secondary transition-colors text-xs font-medium text-muted-foreground"
+              onClick={(e) => { e.stopPropagation(); onCustomize(); }}
+              className="relative z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/80 backdrop-blur-sm border border-border/50 hover:bg-secondary transition-colors text-xs font-medium text-muted-foreground"
             >
               <Settings2 className="w-3.5 h-3.5" />
               Personnaliser
