@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getStationLogoAsync } from "@/lib/radioLogos";
 
 export interface RadioBrowserStation {
   id: string;
@@ -18,7 +19,17 @@ async function invoke(body: Record<string, unknown>): Promise<RadioBrowserStatio
   const { data, error } = await supabase.functions.invoke("radio-browser", { body });
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Radio browser error");
-  return data.stations || [];
+  const stations: RadioBrowserStation[] = data.stations || [];
+
+  // Enrich covers in parallel via Deezer search for stations with poor/missing covers
+  const enriched = await Promise.all(
+    stations.map(async (s) => {
+      const betterCover = await getStationLogoAsync(s.name, s.coverUrl);
+      return { ...s, coverUrl: betterCover };
+    })
+  );
+
+  return enriched;
 }
 
 export const radioBrowserApi = {
