@@ -648,11 +648,23 @@ const SearchPage = () => {
                     </p>
                     <div className="rounded-xl bg-secondary/30 overflow-hidden">
                       {filteredResults.map((song, i) => (
-                        <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
+                        <div key={`${song.id}-${i}`} onClick={() => handlePlayTrack(song, filteredResults)}>
                           <SongCard song={song} index={i} />
                         </div>
                       ))}
                     </div>
+
+                    {/* Infinite scroll sentinel */}
+                    {(hasMoreJs || hasMoreDz) && !artistFilter && (
+                      <div ref={sentinelRef} className="flex items-center justify-center py-6">
+                        {loadingMore && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            Chargement...
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 ) : !albumResults?.length && (
                   <motion.div
