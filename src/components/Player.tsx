@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2
+  Download, Check, Loader2, AlertTriangle
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence } from "framer-motion";
@@ -68,10 +68,11 @@ export function MiniPlayer() {
 
       if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
         try {
+          const originalPreview = songToPlay.streamUrl;
           const resolved = await deezerApi.resolveFullStream(songToPlay);
           if (resolved.streamUrl !== songToPlay.streamUrl) {
             songToPlay = resolved;
-            usePlayerStore.setState({ currentSong: resolved });
+            usePlayerStore.setState({ currentSong: resolved, originalStreamUrl: originalPreview });
           }
         } catch (e) {
           console.error("Failed to resolve full stream:", e);
@@ -501,7 +502,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     currentSong, isPlaying, progress, shuffle, repeat, queue,
     togglePlay, next, previous, seekTo: storeSeekTo,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue,
-    crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration
+    crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
+    originalStreamUrl, revertToPreview
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
@@ -751,6 +753,18 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 />
               </button>
 
+              {/* Wrong song button — only when HD-resolved from Deezer */}
+              {originalStreamUrl && currentSong.id.startsWith("dz-") && (
+                <button
+                  onClick={revertToPreview}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all active:scale-95 bg-destructive/15 text-destructive border border-destructive/25 hover:bg-destructive/25"
+                  title="Ce n'est pas le bon morceau — revenir à l'extrait 30s"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Mauvais titre
+                </button>
+              )}
+
               {/* Download button */}
               <button
                 onClick={() => {
@@ -778,18 +792,20 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 )}
               </button>
 
-              {/* Auto mix toggle */}
-              <button
-                onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase transition-all active:scale-95 ${
-                  crossfadeEnabled
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "text-foreground/40 border border-foreground/10"
-                }`}
-              >
-                <Disc3 className={`w-3.5 h-3.5 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
-                Auto mix
-              </button>
+              {/* Auto mix toggle — hidden when wrong song button is visible to save space */}
+              {!originalStreamUrl && (
+                <button
+                  onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase transition-all active:scale-95 ${
+                    crossfadeEnabled
+                      ? "bg-primary/20 text-primary border border-primary/30"
+                      : "text-foreground/40 border border-foreground/10"
+                  }`}
+                >
+                  <Disc3 className={`w-3.5 h-3.5 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
+                  Auto mix
+                </button>
+              )}
 
               <button onClick={() => setShowQueue(true)} className="p-1 active:scale-90 transition-transform">
                 <ListMusic className="w-5 h-5 text-foreground/50" />
