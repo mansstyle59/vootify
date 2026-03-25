@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
 import { FolderUp, FileArchive, Loader2, X, FileAudio, Check } from "lucide-react";
 import { toast } from "sonner";
+import { extractID3 } from "@/lib/id3Utils";
 
 export interface UploadedTrack {
   fileName: string;
@@ -10,6 +11,7 @@ export interface UploadedTrack {
   duration: number;
   title: string;
   artist: string;
+  coverUrl?: string;
 }
 
 interface AlbumFolderPickerProps {
@@ -33,6 +35,7 @@ function cleanTitle(fileName: string): string {
   return name.trim();
 }
 
+// detectDuration kept as fallback
 function detectDuration(file: File | Blob): Promise<number> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -88,7 +91,10 @@ async function uploadAndProcessFiles(
     setProgress({ done: i, total: audioFiles.length });
 
     try {
-      const duration = await detectDuration(file);
+      // Extract ID3 metadata
+      const id3 = await extractID3(file, file.name);
+      const duration = id3.duration || await detectDuration(file);
+
       const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from("audio").upload(path, file, {
@@ -105,8 +111,9 @@ async function uploadAndProcessFiles(
         fileName: file.name,
         streamUrl: urlData.publicUrl,
         duration,
-        title: cleanTitle(file.name),
-        artist: albumArtist,
+        title: id3.title || cleanTitle(file.name),
+        artist: id3.artist || albumArtist,
+        coverUrl: id3.coverUrl,
       });
     } catch (err) {
       console.error(`Error processing ${file.name}:`, err);

@@ -147,6 +147,13 @@ function SongForm() {
         value={form.streamUrl}
         onChange={(url) => setForm((f) => ({ ...f, streamUrl: url }))}
         onDurationDetected={(dur) => setForm((f) => ({ ...f, duration: String(dur) }))}
+        onMetadataExtracted={(meta) => setForm((f) => ({
+          ...f,
+          title: meta.title || f.title,
+          artist: meta.artist || f.artist,
+          album: meta.album || f.album,
+          coverUrl: meta.coverUrl || f.coverUrl,
+        }))}
       />
       <FieldInput label="Ou URL du flux audio" value={form.streamUrl} onChange={(v) => setForm({ ...form, streamUrl: v })} placeholder="https://..." />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
@@ -161,6 +168,15 @@ function AlbumForm() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
+
+  const handleTracksUploaded = (uploaded: UploadedTrack[]) => {
+    setTracks(uploaded);
+    // Auto-fill cover from first track's ID3 cover if no cover set
+    if (!form.coverUrl && uploaded.length > 0) {
+      const firstCover = uploaded.find((t) => t.coverUrl)?.coverUrl;
+      if (firstCover) setForm((f) => ({ ...f, coverUrl: firstCover }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,7 +229,7 @@ function AlbumForm() {
       <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
       <AlbumFolderPicker
         albumArtist={form.artist}
-        onTracksUploaded={setTracks}
+        onTracksUploaded={handleTracksUploaded}
       />
       <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
