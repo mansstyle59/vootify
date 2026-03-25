@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -319,18 +320,27 @@ const HomePage = () => {
           </div>
 
           {/* Chart list */}
-          <div className="rounded-xl bg-secondary/20 border border-border/50 overflow-hidden divide-y divide-border/30">
-            {topData.loading
-              ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
-              : topData.songs.map((song, i) => (
-                  <TopChartCard
-                    key={song.id}
-                    song={song}
-                    rank={i + 1}
-                    onClick={() => handlePlayTrack(song, topData.source)}
-                  />
-                ))}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={topGenre}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="rounded-xl bg-secondary/20 border border-border/50 overflow-hidden divide-y divide-border/30"
+            >
+              {topData.loading
+                ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
+                : topData.songs.map((song, i) => (
+                    <TopChartCard
+                      key={song.id}
+                      song={song}
+                      rank={i + 1}
+                      onClick={() => handlePlayTrack(song, topData.source)}
+                    />
+                  ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </Section>
     </div>
