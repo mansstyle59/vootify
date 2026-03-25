@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -150,30 +150,54 @@ function StatsTab() {
 function UsersTab() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { user: currentAdmin } = useAdminAuth();
 
-  useEffect(() => {
-    const load = async () => {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const loadUsers = async () => {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role");
 
-      const adminIds = new Set((roles || []).filter(r => r.role === "admin").map(r => r.user_id));
+    const adminIds = new Set((roles || []).filter(r => r.role === "admin").map(r => r.user_id));
 
-      setUsers(
-        (profiles || []).map((p) => ({
-          ...p,
-          isAdmin: adminIds.has(p.user_id),
-        }))
-      );
-      setLoading(false);
-    };
-    load();
-  }, []);
+    setUsers(
+      (profiles || []).map((p) => ({
+        ...p,
+        isAdmin: adminIds.has(p.user_id),
+      }))
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => { loadUsers(); }, []);
+
+  const manageRole = async (action: string, targetUserId: string) => {
+    setActionLoading(`${action}-${targetUserId}`);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-roles", {
+        body: { action, target_user_id: targetUserId, role: "admin" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      const labels: Record<string, string> = {
+        promote: "Utilisateur promu admin",
+        demote: "Rôle admin retiré",
+        delete_user: "Utilisateur supprimé",
+      };
+      toast.success(labels[action] || "Action effectuée");
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
@@ -182,32 +206,86 @@ function UsersTab() {
       {users.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Aucun utilisateur</p>
       ) : (
-        users.map((u) => (
-          <motion.div
-            key={u.user_id}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
-              {(u.display_name || "?").slice(0, 2).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {u.display_name || "Sans nom"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Inscrit le {new Date(u.created_at).toLocaleDateString("fr-FR")}
-              </p>
-            </div>
-            {u.isAdmin && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold">
-                <Crown className="w-3 h-3" />
-                Admin
-              </span>
-            )}
-          </motion.div>
-        ))
+        users.map((u) => {
+          const isSelf = u.user_id === currentAdmin?.id;
+          return (
+            <motion.div
+              key={u.user_id}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                {(u.display_name || "?").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {u.display_name || "Sans nom"}
+                  {isSelf && <span className="text-xs text-muted-foreground ml-1">(vous)</span>}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Inscrit le {new Date(u.created_at).toLocaleDateString("fr-FR")}
+                </p>
+              </div>
+
+              {u.isAdmin ? (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold">
+                  <Crown className="w-3 h-3" />
+                  Admin
+                </span>
+              ) : null}
+
+              {/* Actions */}
+              {!isSelf && (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {u.isAdmin ? (
+                    <button
+                      onClick={() => manageRole("demote", u.user_id)}
+                      disabled={actionLoading === `demote-${u.user_id}`}
+                      className="p-1.5 rounded-full text-muted-foreground hover:text-orange-400 transition-colors"
+                      title="Retirer admin"
+                    >
+                      {actionLoading === `demote-${u.user_id}` ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ShieldOff className="w-4 h-4" />
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => manageRole("promote", u.user_id)}
+                      disabled={actionLoading === `promote-${u.user_id}`}
+                      className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                      title="Promouvoir admin"
+                    >
+                      {actionLoading === `promote-${u.user_id}` ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Shield className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (confirm(`Supprimer ${u.display_name || "cet utilisateur"} ? Cette action est irréversible.`)) {
+                        manageRole("delete_user", u.user_id);
+                      }
+                    }}
+                    disabled={actionLoading === `delete_user-${u.user_id}`}
+                    className="p-1.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+                    title="Supprimer l'utilisateur"
+                  >
+                    {actionLoading === `delete_user-${u.user_id}` ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <UserX className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          );
+        })
       )}
     </div>
   );
