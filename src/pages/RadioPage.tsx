@@ -45,12 +45,12 @@ type ViewMode = "grid" | "list";
 const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news", "talk"];
 
 // Simple equalizer indicator for active station
-const LiveEqualizer = () => (
+const LiveEqualizer = ({ color = "bg-primary" }: { color?: string }) => (
   <div className="flex items-end gap-[2px] h-4">
-    <div className="w-[3px] rounded-full bg-primary h-2" />
-    <div className="w-[3px] rounded-full bg-primary h-3" />
-    <div className="w-[3px] rounded-full bg-primary h-2.5" />
-    <div className="w-[3px] rounded-full bg-primary h-3.5" />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-1`} />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-2`} />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-3`} />
+    <div className={`w-[3px] rounded-full ${color} animate-equalizer-4`} />
   </div>
 );
 
