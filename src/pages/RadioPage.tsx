@@ -1,18 +1,20 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, Play, Pause, Search, Star, TrendingUp, Heart, Pencil, Trash2, X, Check, Globe, Waves } from "lucide-react";
+import { Radio, Play, Pause, Search, Star, Heart, Pencil, Trash2, X, Check, Globe, Waves, LayoutGrid, List, Volume2 } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
+import { useDominantColor } from "@/hooks/useDominantColor";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 
 type TabKey = "france" | "top" | "custom" | "search";
+type ViewMode = "grid" | "list";
 
 const GENRE_TAGS = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news", "talk"];
 
@@ -34,6 +36,103 @@ const LiveEqualizer = () => (
   </div>
 );
 
+/* ── Now Playing Hero ── */
+function NowPlayingHero({
+  station,
+  radioMetadata,
+  isPlaying,
+  onTogglePlay,
+}: {
+  station: { id: string; name: string; coverUrl: string; artist: string };
+  radioMetadata: { title?: string; artist?: string; coverUrl?: string; nowPlaying?: string } | null;
+  isPlaying: boolean;
+  onTogglePlay: () => void;
+}) {
+  const coverUrl = radioMetadata?.coverUrl || station.coverUrl;
+  const dominantColor = useDominantColor(coverUrl);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative rounded-2xl overflow-hidden mx-4 md:mx-8 mb-5"
+      style={{ minHeight: 140 }}
+    >
+      {/* BG */}
+      <div
+        className="absolute inset-0 transition-colors duration-1000"
+        style={{ background: dominantColor || "hsl(var(--secondary))" }}
+      />
+      <img
+        src={coverUrl}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[60px] scale-[2]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+
+      <div className="relative z-10 flex items-center gap-4 p-4 md:p-5">
+        {/* Cover */}
+        <button onClick={onTogglePlay} className="relative flex-shrink-0 active:scale-95 transition-transform">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={coverUrl}
+              src={coverUrl}
+              alt={station.name}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.4 }}
+              className="w-24 h-24 md:w-28 md:h-28 rounded-xl object-cover"
+              style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.5)" }}
+            />
+          </AnimatePresence>
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/20">
+            {isPlaying ? (
+              <Pause className="w-8 h-8 text-white drop-shadow-lg" />
+            ) : (
+              <Play className="w-8 h-8 text-white drop-shadow-lg ml-0.5" />
+            )}
+          </div>
+        </button>
+
+        {/* Info */}
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-destructive/80 backdrop-blur-sm">
+              <LiveEqualizer />
+              <span className="text-[9px] font-bold text-white tracking-widest uppercase">LIVE</span>
+            </span>
+          </div>
+          <h2 className="text-lg md:text-xl font-bold text-white truncate leading-tight">
+            {station.name}
+          </h2>
+          {radioMetadata?.title ? (
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold text-white/90 truncate">
+                ♪ {radioMetadata.title}
+              </p>
+              {radioMetadata.artist && (
+                <p className="text-xs text-white/60 truncate">{radioMetadata.artist}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-white/60 truncate">{station.artist}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Animated bar at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: "hsl(0 0% 100% / 0.1)" }}>
+        <motion.div
+          className="h-full bg-primary"
+          animate={{ width: ["15%", "70%", "40%", "90%", "25%"] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const [activeTab, setActiveTab] = useState<TabKey>("custom");
@@ -41,9 +140,10 @@ const RadioPage = () => {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const queryClient = useQueryClient();
 
-  // Live metadata: dynamically fetch cover art from Deezer for the active station
+  // Live metadata
   const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = useRadioMetadata(
     isLiveRadio ? currentSong?.streamUrl : undefined,
@@ -168,18 +268,86 @@ const RadioPage = () => {
   const stations = getStations();
   const isCustomTab = activeTab === "custom";
 
+  // Show Now Playing hero when a radio station is playing
+  const showNowPlaying = isLiveRadio && currentSong;
+
+  /* ── Station List Item (compact) ── */
+  const StationListItem = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
+    const isSaved = savedIds.has(station.id);
+    const isActive = currentSong?.id === station.id;
+    const isActivePlaying = isActive && isPlaying;
+    const stationLogo = getStationLogo(station.name, station.coverUrl);
+    const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.02 }}
+        onClick={() => playStation(station)}
+        className={`group flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+          isActive ? "bg-primary/10" : "hover:bg-secondary/60"
+        }`}
+      >
+        {/* Cover */}
+        <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+          <img src={displayCover} alt={station.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }} />
+          <div className={`absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity ${isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+            {isActivePlaying ? <Volume2 className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            {isActivePlaying && <LiveEqualizer />}
+            <h3 className={`text-sm font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>{station.name}</h3>
+          </div>
+          <p className="text-xs text-muted-foreground truncate capitalize">{station.genre || "Radio"}</p>
+        </div>
+
+        {/* Meta badges */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {station.countryCode && (
+            <span className="text-[10px] font-medium text-muted-foreground uppercase">{station.countryCode}</span>
+          )}
+          {station.bitrate > 0 && (
+            <span className="text-[10px] text-muted-foreground">{station.bitrate}k</span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          {isCustomTab ? (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-1.5 rounded-full hover:bg-secondary transition-colors">
+                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); removeStation(station.id); }} className="p-1.5 rounded-full hover:bg-destructive/20 transition-colors">
+                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+              </button>
+            </>
+          ) : (
+            <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }} className="p-1.5 rounded-full hover:bg-secondary transition-colors">
+              <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+            </button>
+          )}
+        </div>
+      </motion.div>
+    );
+  }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
+
+  /* ── Station Grid Card ── */
   const StationCard = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
     const isSaved = savedIds.has(station.id);
     const isEditing = editingId === station.id;
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
 
-    // Use dynamic Deezer cover art for the active station
     const dynamicCover = isActive && radioMetadata?.coverUrl ? radioMetadata.coverUrl : null;
     const stationLogo = getStationLogo(station.name, station.coverUrl);
     const displayCover = dynamicCover || stationLogo || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
 
-    // Show now-playing info under the active station
     const nowPlayingText = isActive && radioMetadata?.artist && radioMetadata?.title
       ? `${radioMetadata.artist} — ${radioMetadata.title}`
       : null;
@@ -237,7 +405,7 @@ const RadioPage = () => {
             </div>
           </div>
 
-          {/* Live badge with equalizer */}
+          {/* Live badge */}
           {isActivePlaying && (
             <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/90 backdrop-blur-md">
               <LiveEqualizer />
@@ -263,7 +431,7 @@ const RadioPage = () => {
             )}
           </div>
 
-          {/* Bitrate & country badges */}
+          {/* Badges */}
           <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
             {station.countryCode && (
               <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[10px] font-medium text-white/80 uppercase">
@@ -304,7 +472,7 @@ const RadioPage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/5" />
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/3" />
         
-        <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-6">
+        <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
               <Waves className="w-5 h-5 text-primary" />
@@ -317,30 +485,60 @@ const RadioPage = () => {
         </div>
       </div>
 
+      {/* Now Playing Hero */}
+      <AnimatePresence>
+        {showNowPlaying && (
+          <NowPlayingHero
+            station={{ id: currentSong.id, name: currentSong.title, coverUrl: getStationLogo(currentSong.title, currentSong.coverUrl), artist: currentSong.artist }}
+            radioMetadata={radioMetadata}
+            isPlaying={isPlaying}
+            onTogglePlay={togglePlay}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="px-4 md:px-8">
-        {/* Tabs */}
-        <div className="flex gap-1 mb-5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
-          {tabs.map((t) => (
+        {/* Tabs + View toggle */}
+        <div className="flex items-center gap-2 mb-5">
+          <div className="flex gap-1 flex-1 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setActiveTab(t.key); setSelectedGenre(null); }}
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                  activeTab === t.key && !selectedGenre
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                    : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                {t.icon}
+                {t.label}
+                {t.key === "custom" && customStations.length > 0 && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    activeTab === "custom" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
+                  }`}>
+                    {customStations.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* View mode toggle */}
+          <div className="flex items-center rounded-lg bg-secondary/60 p-0.5 flex-shrink-0">
             <button
-              key={t.key}
-              onClick={() => { setActiveTab(t.key); setSelectedGenre(null); }}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-                activeTab === t.key && !selectedGenre
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                  : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
             >
-              {t.icon}
-              {t.label}
-              {t.key === "custom" && customStations.length > 0 && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  activeTab === "custom" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
-                }`}>
-                  {customStations.length}
-                </span>
-              )}
+              <LayoutGrid className="w-4 h-4" />
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Search input */}
@@ -378,29 +576,65 @@ const RadioPage = () => {
           </div>
         )}
 
-        {/* Grid */}
+        {/* Station count */}
+        {!isLoading && stations.length > 0 && (
+          <p className="text-xs text-muted-foreground mb-3">
+            {stations.length} station{stations.length > 1 ? "s" : ""}
+          </p>
+        )}
+
+        {/* Content */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-square rounded-2xl bg-secondary/60 mb-2.5" />
-                <div className="h-4 w-3/4 bg-secondary/60 rounded-lg mb-1.5" />
-                <div className="h-3 w-1/2 bg-secondary/40 rounded-lg" />
-              </div>
-            ))}
-          </div>
+          viewMode === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-square rounded-2xl bg-secondary/60 mb-2.5" />
+                  <div className="h-4 w-3/4 bg-secondary/60 rounded-lg mb-1.5" />
+                  <div className="h-3 w-1/2 bg-secondary/40 rounded-lg" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-2.5 animate-pulse">
+                  <div className="w-12 h-12 rounded-lg bg-secondary/60" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-4 w-2/3 bg-secondary/60 rounded" />
+                    <div className="h-3 w-1/3 bg-secondary/40 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         ) : stations.length > 0 ? (
           <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeTab}-${selectedGenre}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5"
-            >
-              {stations.map((station, i) => (
-                <StationCard key={station.id} station={station} index={i} />
-              ))}
-            </motion.div>
+            {viewMode === "grid" ? (
+              <motion.div
+                key={`grid-${activeTab}-${selectedGenre}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5"
+              >
+                {stations.map((station, i) => (
+                  <StationCard key={station.id} station={station} index={i} />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`list-${activeTab}-${selectedGenre}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-0.5"
+              >
+                {stations.map((station, i) => (
+                  <StationListItem key={station.id} station={station} index={i} />
+                ))}
+              </motion.div>
+            )}
           </AnimatePresence>
         ) : (
           <motion.div
