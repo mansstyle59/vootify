@@ -374,6 +374,12 @@ export function MiniPlayer() {
                         <span className="text-primary font-semibold text-[10px]">LIVE</span>
                       </span>
                     )}
+                    {!isLive && playingFromCache && (
+                      <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                        <WifiOff className="w-2.5 h-2.5" />
+                        <span className="font-semibold text-[10px]">OFFLINE</span>
+                      </span>
+                    )}
                   </motion.p>
                 </AnimatePresence>
               </div>
