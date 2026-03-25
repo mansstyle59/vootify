@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, query, id, limit, url: shortUrl } = await req.json();
+    const { action, query, id, limit, url: shortUrl, index } = await req.json();
 
     // Resolve short links (link.deezer.com)
     if (action === 'resolve_short_link') {
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'search':
-        url = `${DEEZER_API}/search?q=${encodeURIComponent(query || '')}&limit=${limit || 25}`;
+        url = `${DEEZER_API}/search?q=${encodeURIComponent(query || '')}&limit=${limit || 25}&index=${index || 0}`;
         break;
       case 'chart':
         url = `${DEEZER_API}/chart/0/tracks?limit=${limit || 25}`;

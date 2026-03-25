@@ -6,7 +6,7 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
 
@@ -64,6 +64,14 @@ const SearchPage = () => {
   }, [userId]);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const [source, setSource] = useState<SearchSource>("all");
+  const [jsPage, setJsPage] = useState(1);
+  const [dzPage, setDzPage] = useState(1);
+  const [allJsResults, setAllJsResults] = useState<Song[]>([]);
+  const [allDzResults, setAllDzResults] = useState<Song[]>([]);
+  const [hasMoreJs, setHasMoreJs] = useState(true);
+  const [hasMoreDz, setHasMoreDz] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +110,9 @@ const SearchPage = () => {
     clearTimeout((window as any).__searchTimeout);
     (window as any).__searchTimeout = setTimeout(() => {
       setDebouncedQuery(value.trim());
+      setJsPage(1); setDzPage(1);
+      setAllJsResults([]); setAllDzResults([]);
+      setHasMoreJs(true); setHasMoreDz(true);
     }, 400);
   }, []);
 
@@ -111,6 +122,9 @@ const SearchPage = () => {
     setSuggestQuery("");
     setShowSuggestions(false);
     setArtistFilter(null);
+    setJsPage(1); setDzPage(1);
+    setAllJsResults([]); setAllDzResults([]);
+    setHasMoreJs(true); setHasMoreDz(true);
     inputRef.current?.blur();
   }, []);
 
@@ -141,21 +155,91 @@ const SearchPage = () => {
     return items.slice(0, 6);
   }, [suggestions]);
 
-  // JioSaavn results
+  const PAGE_SIZE = 50;
+
+  // JioSaavn results (page 1)
   const { data: jsResults, isLoading: jsLoading } = useQuery({
     queryKey: ["jiosaavn-search", debouncedQuery],
-    queryFn: () => jiosaavnApi.search(debouncedQuery, 50),
+    queryFn: () => jiosaavnApi.search(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "jiosaavn"),
     staleTime: 2 * 60 * 1000,
   });
 
-  // Deezer results
+  // Deezer results (page 1)
   const { data: dzResults, isLoading: dzLoading } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
-    queryFn: () => deezerApi.searchTracks(debouncedQuery, 50),
+    queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2 && (source === "all" || source === "deezer"),
     staleTime: 2 * 60 * 1000,
   });
+
+  // Accumulate results from initial + extra pages
+  useEffect(() => {
+    if (jsResults) {
+      setAllJsResults(jsResults);
+      setHasMoreJs(jsResults.length >= PAGE_SIZE);
+    }
+  }, [jsResults]);
+
+  useEffect(() => {
+    if (dzResults) {
+      setAllDzResults(dzResults);
+      setHasMoreDz(dzResults.length >= PAGE_SIZE);
+    }
+  }, [dzResults]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !debouncedQuery) return;
+    const canLoadJs = (source === "all" || source === "jiosaavn") && hasMoreJs;
+    const canLoadDz = (source === "all" || source === "deezer") && hasMoreDz;
+    if (!canLoadJs && !canLoadDz) return;
+
+    setLoadingMore(true);
+    try {
+      const promises: Promise<void>[] = [];
+      if (canLoadJs) {
+        const nextPage = jsPage + 1;
+        promises.push(
+          jiosaavnApi.search(debouncedQuery, PAGE_SIZE, nextPage).then((res) => {
+            setAllJsResults((prev) => [...prev, ...res]);
+            setHasMoreJs(res.length >= PAGE_SIZE);
+            setJsPage(nextPage);
+          })
+        );
+      }
+      if (canLoadDz) {
+        const nextPage = dzPage + 1;
+        const offset = dzPage * PAGE_SIZE;
+        promises.push(
+          deezerApi.searchTracks(debouncedQuery, PAGE_SIZE, offset).then((res) => {
+            setAllDzResults((prev) => [...prev, ...res]);
+            setHasMoreDz(res.length >= PAGE_SIZE);
+            setDzPage(nextPage);
+          })
+        );
+      }
+      await Promise.all(promises);
+    } catch (e) {
+      console.error("Failed to load more results:", e);
+    }
+    setLoadingMore(false);
+  }, [loadingMore, debouncedQuery, source, hasMoreJs, hasMoreDz, jsPage, dzPage]);
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && debouncedQuery.length >= 2) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, debouncedQuery]);
 
   /** Normalize a string for dedup: lowercase, strip feat/ft, remove parens, trim */
   const normalize = useCallback((s: string) =>
@@ -207,14 +291,13 @@ const SearchPage = () => {
     const filterFullStreams = (songs: Song[]) =>
       songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"));
 
-    if (source === "jiosaavn") return jsResults || [];
-    if (source === "deezer") return filterFullStreams(dzResults || []);
-    const js = jsResults || [];
-    const dz = filterFullStreams(dzResults || []);
+    if (source === "jiosaavn") return allJsResults;
+    if (source === "deezer") return filterFullStreams(allDzResults);
+    const js = allJsResults;
+    const dz = filterFullStreams(allDzResults);
     const seen = new Set<string>();
     const merged: Song[] = [];
 
-    // JioSaavn first (full streams), then Deezer (only full streams)
     for (const song of [...js, ...dz]) {
       const key = `${normalize(song.title)}::${normalize(song.artist.split(",")[0])}`;
       if (!seen.has(key)) { seen.add(key); merged.push(song); }
@@ -229,22 +312,16 @@ const SearchPage = () => {
         const t = normalize(song.title);
         const ar = normalize(song.artist);
         let score = 0;
-        // Exact title match
         if (t === q) score += 100;
-        // Title starts with query
         else if (t.startsWith(q)) score += 80;
-        // Title contains query
         else if (t.includes(q)) score += 60;
-        // Artist exact match
         if (ar === q) score += 90;
         else if (ar.startsWith(q)) score += 70;
         else if (ar.includes(q)) score += 50;
-        // Word-level matching
         for (const w of qWords) {
           if (t.includes(w)) score += 10;
           if (ar.includes(w)) score += 8;
         }
-        // Prefer songs with streams
         if (song.streamUrl) score += 5;
         return score;
       };
@@ -252,7 +329,7 @@ const SearchPage = () => {
     });
 
     return merged;
-  }, [jsResults, dzResults, source, normalize, debouncedQuery]);
+  }, [allJsResults, allDzResults, source, normalize, debouncedQuery]);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && mergedResults.length > 0 && userId) {
@@ -571,11 +648,23 @@ const SearchPage = () => {
                     </p>
                     <div className="rounded-xl bg-secondary/30 overflow-hidden">
                       {filteredResults.map((song, i) => (
-                        <div key={song.id} onClick={() => handlePlayTrack(song, filteredResults)}>
+                        <div key={`${song.id}-${i}`} onClick={() => handlePlayTrack(song, filteredResults)}>
                           <SongCard song={song} index={i} />
                         </div>
                       ))}
                     </div>
+
+                    {/* Infinite scroll sentinel */}
+                    {(hasMoreJs || hasMoreDz) && !artistFilter && (
+                      <div ref={sentinelRef} className="flex items-center justify-center py-6">
+                        {loadingMore && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            Chargement...
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 ) : !albumResults?.length && (
                   <motion.div
