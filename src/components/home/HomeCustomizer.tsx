@@ -82,6 +82,8 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
+
   useEffect(() => {
     if (open) setSections(current);
   }, [open]);
