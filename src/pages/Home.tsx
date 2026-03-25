@@ -11,8 +11,10 @@ import { CoverCard } from "@/components/home/CoverCard";
 import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { TopChartCard } from "@/components/home/TopChartCard";
-import { HomeCustomizer, loadSections, type HomeSection } from "@/components/home/HomeCustomizer";
+import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomizer";
 import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
+import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
@@ -35,8 +37,13 @@ const TOP_TABS: { key: TopGenre; label: string }[] = [
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
   const [topGenre, setTopGenre] = useState<TopGenre>("all");
-  const [sections, setSections] = useState<HomeSection[]>(loadSections);
+  const { isAdmin } = useAdminAuth();
+  const { sections, saveConfig } = useGlobalHomeConfig();
+  const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
   const [showCustomizer, setShowCustomizer] = useState(false);
+
+  // Use local override while customizer is open, otherwise DB config
+  const activeSections = localSections ?? sections;
 
   const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
     queryKey: ["deezer-titres-du-moment"],
@@ -239,16 +246,25 @@ const HomePage = () => {
 
   return (
     <div className="pb-32 max-w-7xl mx-auto">
-      <HeroBanner onCustomize={() => setShowCustomizer(true)} />
+      <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
-      {sections.map((s) => renderSection(s))}
+      {activeSections.map((s) => renderSection(s))}
 
-      <HomeCustomizer
-        open={showCustomizer}
-        onClose={() => setShowCustomizer(false)}
-        onSave={setSections}
-        current={sections}
-      />
+      {isAdmin && (
+        <HomeCustomizer
+          open={showCustomizer}
+          onClose={() => {
+            setShowCustomizer(false);
+            setLocalSections(null);
+          }}
+          onSave={async (newSections) => {
+            setLocalSections(newSections);
+            await saveConfig(newSections);
+            setLocalSections(null);
+          }}
+          current={activeSections}
+        />
+      )}
     </div>
   );
 };

@@ -137,6 +137,27 @@ export type Database = {
         }
         Relationships: []
       }
+      home_config: {
+        Row: {
+          id: string
+          sections: Json
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          id?: string
+          sections?: Json
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          id?: string
+          sections?: Json
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       liked_songs: {
         Row: {
           album: string | null

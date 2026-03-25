@@ -64,7 +64,7 @@ interface SearchResult {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave: (sections: HomeSection[]) => void;
+  onSave: (sections: HomeSection[]) => void | Promise<void>;
   current: HomeSection[];
 }
 
@@ -128,9 +128,8 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
     setEditingLabel("");
   }, [editingId, editingLabel]);
 
-  const handleSave = () => {
-    saveSections(sections);
-    onSave(sections);
+  const handleSave = async () => {
+    await onSave(sections);
     onClose();
   };
 
