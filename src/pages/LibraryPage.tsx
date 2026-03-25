@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Radio, Play, Pause, Download, HardDrive, Trash, Music, Shuffle } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
