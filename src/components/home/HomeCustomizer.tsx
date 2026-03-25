@@ -460,6 +460,44 @@ export function HomeCustomizer({ open, onClose, onSave, current }: Props) {
               </motion.div>
             )}
           </AnimatePresence>
+        {/* Emoji picker rendered as fixed overlay to escape overflow:hidden */}
+        <AnimatePresence>
+          {emojiPickerId && emojiPickerPos && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              style={{ top: emojiPickerPos.top, left: emojiPickerPos.left }}
+              className="fixed z-[200] w-[220px] p-2 rounded-xl bg-background border border-border shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="grid grid-cols-8 gap-0.5">
+                {EMOJI_PALETTE.map((emoji) => {
+                  const activeSection = sections.find((s) => s.id === emojiPickerId);
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        setSections((prev) =>
+                          prev.map((s) => (s.id === emojiPickerId ? { ...s, emoji } : s))
+                        );
+                        setEmojiPickerId(null);
+                        setEmojiPickerPos(null);
+                      }}
+                      className={`w-7 h-7 flex items-center justify-center rounded-md text-sm hover:bg-primary/15 transition-colors ${
+                        activeSection?.emoji === emoji ? "bg-primary/20 ring-1 ring-primary/40" : ""
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
