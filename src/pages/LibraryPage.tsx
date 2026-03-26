@@ -78,9 +78,9 @@ function PremiumSongRow({
       transition={{ duration: 0.2 }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      onClick={onClick}
+      onClick={selectable ? onSelect : onClick}
       className={`group flex items-center gap-3.5 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
-        isActive ? "bg-primary/8 ring-1 ring-primary/15" : "hover:bg-secondary/50"
+        selected ? "bg-primary/12 ring-1 ring-primary/25" : isActive ? "bg-primary/8 ring-1 ring-primary/15" : "hover:bg-secondary/50"
       }`}
     >
       {/* Index or equalizer */}
