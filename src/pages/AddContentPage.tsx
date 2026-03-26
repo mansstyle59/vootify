@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getEffectiveUserId } from "@/lib/deviceId";
 
-import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles, Upload, FileAudio, X, Trash2 } from "lucide-react";
+import { Music, Disc3, Radio, Loader2, CheckCircle, Sparkles, Upload, X, Trash2 } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
