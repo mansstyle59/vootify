@@ -48,6 +48,7 @@ export const musicDb = {
   },
 
   async likeSong(userId: string, song: Song): Promise<void> {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("liked_songs")
       .upsert(songToRow(song, userId), { onConflict: "user_id,song_id" });
@@ -55,6 +56,7 @@ export const musicDb = {
   },
 
   async unlikeSong(userId: string, songId: string): Promise<void> {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("liked_songs")
       .delete()
