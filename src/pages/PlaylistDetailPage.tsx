@@ -16,8 +16,56 @@ const PlaylistDetailPage = () => {
   const navigate = useNavigate();
   const { playlistSongs, loadPlaylistSongs, play, setQueue, removeSongFromPlaylist, playlists } = usePlayerStore();
 
-  const playlist = playlists.find((p) => p.id === id);
-  const songs: Song[] = id ? playlistSongs[id] || [] : [];
+  const isDeezerPlaylist = id?.startsWith("dz-");
+  const deezerRawId = isDeezerPlaylist ? id!.replace("dz-", "") : null;
+
+  // Local user playlist lookup
+  const userPlaylist = playlists.find((p) => p.id === id);
+
+  // Deezer playlist state
+  const [dzInfo, setDzInfo] = useState<{ title: string; picture: string } | null>(null);
+  const [dzSongs, setDzSongs] = useState<Song[]>([]);
+  const [dzLoading, setDzLoading] = useState(false);
+  const [dzError, setDzError] = useState(false);
+
+  // Fetch Deezer playlist
+  useEffect(() => {
+    if (!isDeezerPlaylist || !deezerRawId) return;
+    let cancelled = false;
+    const fetchDz = async (retry = false) => {
+      setDzLoading(true);
+      setDzError(false);
+      try {
+        console.log("[playlist] Fetching Deezer playlist:", deezerRawId);
+        const [info, tracks] = await Promise.all([
+          deezerApi.getPlaylistInfo(deezerRawId),
+          deezerApi.getPlaylistTracks(deezerRawId, 50),
+        ]);
+        if (cancelled) return;
+        console.log("[playlist] Deezer response:", { info, trackCount: tracks.length });
+        setDzInfo({ title: info.title, picture: info.picture });
+        setDzSongs(tracks);
+      } catch (e) {
+        console.error("[playlist] Deezer fetch error:", e);
+        if (!retry && !cancelled) {
+          console.log("[playlist] Retrying...");
+          await fetchDz(true);
+          return;
+        }
+        if (!cancelled) setDzError(true);
+      } finally {
+        if (!cancelled) setDzLoading(false);
+      }
+    };
+    fetchDz();
+    return () => { cancelled = true; };
+  }, [isDeezerPlaylist, deezerRawId]);
+
+  // Determine playlist data source
+  const playlist = isDeezerPlaylist
+    ? dzInfo ? { id: id!, name: dzInfo.title, cover_url: dzInfo.picture, created_at: "" } : null
+    : userPlaylist;
+  const songs: Song[] = isDeezerPlaylist ? dzSongs : (id ? playlistSongs[id] || [] : []);
 
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -34,9 +82,10 @@ const PlaylistDetailPage = () => {
     );
   }, [songs]);
 
+  // Load user playlist songs
   useEffect(() => {
-    if (id) loadPlaylistSongs(id);
-  }, [id]);
+    if (id && !isDeezerPlaylist) loadPlaylistSongs(id);
+  }, [id, isDeezerPlaylist]);
 
   // Background HD resolution for playlist tracks
   useEffect(() => {
