@@ -56,9 +56,59 @@ export function MiniPlayer() {
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.volume = volume;
+    audioRef.current.muted = false;
   }, [volume]);
 
-  // Crossfade logic
+  // ── Silent playback watchdog (iOS bug detector) ──
+  const watchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastTimeCheckRef = useRef<{ time: number; ts: number } | null>(null);
+
+  useEffect(() => {
+    if (watchdogRef.current) clearInterval(watchdogRef.current);
+    if (!isPlaying || !currentSong) return;
+
+    lastTimeCheckRef.current = null;
+
+    watchdogRef.current = setInterval(() => {
+      const audio = audioRef.current;
+      if (!audio || audio.paused || !audio.src || audio.duration === 0) return;
+
+      const now = Date.now();
+      const currentTime = audio.currentTime;
+      const prev = lastTimeCheckRef.current;
+
+      if (prev) {
+        const wallElapsed = now - prev.ts;
+        const audioElapsed = (currentTime - prev.time) * 1000;
+
+        // If wall clock advanced >3s but audio didn't move → stuck/silent
+        if (wallElapsed > 3000 && audioElapsed < 500 && !audio.paused) {
+          console.warn("[watchdog] Audio stuck — attempting reload");
+          const src = audio.src;
+          const time = audio.currentTime;
+          audio.src = "";
+          audio.load();
+          // Small delay then reload
+          setTimeout(() => {
+            audio.src = src;
+            audio.load();
+            audio.currentTime = Math.max(0, time - 0.5);
+            audio.volume = volume;
+            audio.muted = false;
+            audio.play().catch((e) => console.error("[watchdog] Reload play failed:", e));
+          }, 100);
+        }
+      }
+
+      lastTimeCheckRef.current = { time: currentTime, ts: now };
+    }, 2500);
+
+    return () => {
+      if (watchdogRef.current) clearInterval(watchdogRef.current);
+    };
+  }, [isPlaying, currentSong?.id, volume]);
+
+  // ── Main audio loading & crossfade logic ──
   useEffect(() => {
     if (!audioRef.current || !currentSong) return;
     const audio = audioRef.current;
@@ -95,13 +145,13 @@ export function MiniPlayer() {
               usePlayerStore.setState({ currentSong: resolved });
             }
           } catch (e) {
-            console.error("Stream resolution failed:", e);
+            console.error("[player] Stream resolution failed:", e);
           }
           setResolveStep(null);
 
           // If still a 30s preview or no stream → skip
           if (!songToPlay.streamUrl || (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
-            console.warn("No playable source for:", songToPlay.title);
+            console.warn("[player] No playable source for:", songToPlay.title);
             const { next: nextTrack } = usePlayerStore.getState();
             nextTrack();
             return;
@@ -111,6 +161,9 @@ export function MiniPlayer() {
 
       setPlayingFromCache(!!cachedUrl);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
+      if (!srcToUse) return;
+
+      console.log(`[player] ${isNewTrack ? "Track change" : "Play/pause"}: "${songToPlay.title}" | bg=${document.hidden}`);
 
       if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
         // Crossfade: move current audio to crossfade ref and fade it out
@@ -135,13 +188,26 @@ export function MiniPlayer() {
           }
         }, FADE_STEP);
 
+        // iOS fix: force clean cycle before loading new src
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+
         // Start new track with fade in
-        if (srcToUse && audio.src !== srcToUse) {
-          audio.src = srcToUse;
-          audio.load();
-        }
+        audio.src = srcToUse;
+        audio.load();
         audio.volume = 0;
-        audio.play().catch(console.error);
+        audio.muted = false;
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise.catch((e) => {
+            console.error("[player] Crossfade play failed:", e);
+            // Retry once after short delay (iOS background recovery)
+            setTimeout(() => {
+              audio.play().catch((e2) => console.error("[player] Crossfade retry failed:", e2));
+            }, 200);
+          });
+        }
         let fadeInStep = 0;
         const fadeInInterval = setInterval(() => {
           fadeInStep++;
@@ -151,12 +217,58 @@ export function MiniPlayer() {
             clearInterval(fadeInInterval);
           }
         }, FADE_STEP);
+      } else if (isNewTrack) {
+        // New track without crossfade — clean cycle for iOS background
+        console.log("[player] Clean track load (no crossfade)");
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load(); // Reset internal state
+
+        // Load new source
+        audio.src = srcToUse;
+        audio.load();
+        audio.volume = volume;
+        audio.muted = false;
+
+        // Wait for canplay before playing — critical for iOS background
+        const onCanPlay = () => {
+          audio.removeEventListener("canplay", onCanPlay);
+          console.log("[player] canplay fired, starting playback");
+          audio.volume = volume;
+          audio.muted = false;
+          const p = audio.play();
+          if (p) {
+            p.catch((e) => {
+              console.error("[player] Play after canplay failed:", e);
+              // Last resort retry
+              setTimeout(() => {
+                audio.volume = volume;
+                audio.muted = false;
+                audio.play().catch((e2) => console.error("[player] Final retry failed:", e2));
+              }, 300);
+            });
+          }
+        };
+        audio.addEventListener("canplay", onCanPlay, { once: true });
+
+        // Safety timeout: if canplay doesn't fire in 5s, force play anyway
+        setTimeout(() => {
+          audio.removeEventListener("canplay", onCanPlay);
+          if (audio.paused && isPlaying) {
+            console.warn("[player] canplay timeout — forcing play");
+            audio.volume = volume;
+            audio.muted = false;
+            audio.play().catch(console.error);
+          }
+        }, 5000);
       } else {
-        // Normal play (first track or play/pause toggle)
-        if (srcToUse && audio.src !== srcToUse) {
+        // Same track: play/pause toggle
+        if (srcToUse && !audio.src.includes(srcToUse.substring(0, 50))) {
           audio.src = srcToUse;
           audio.load();
         }
+        audio.volume = volume;
+        audio.muted = false;
         if (isPlaying) {
           audio.play().catch(console.error);
         } else {
@@ -225,12 +337,40 @@ export function MiniPlayer() {
   const miniDominantColor = useDominantColor(coverForColor);
 
   // ── Media Session API: lock screen metadata ──
+  // IMPORTANT: Don't remove action handlers on cleanup — iOS loses the Now Playing session
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    // Set action handlers once (idempotent)
+    navigator.mediaSession.setActionHandler("play", () => {
+      usePlayerStore.getState().togglePlay();
+    });
+    navigator.mediaSession.setActionHandler("pause", () => {
+      usePlayerStore.getState().togglePlay();
+    });
+    navigator.mediaSession.setActionHandler("previoustrack", () => {
+      usePlayerStore.getState().previous();
+    });
+    navigator.mediaSession.setActionHandler("nexttrack", () => {
+      usePlayerStore.getState().next();
+    });
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (details.seekTime != null && audioRef.current) {
+        audioRef.current.currentTime = details.seekTime;
+        usePlayerStore.getState().setProgress(details.seekTime);
+      }
+    });
+  }, []); // Only once
+
+  // Update metadata whenever song/radio changes
   useEffect(() => {
     if (!currentSong || !("mediaSession" in navigator)) return;
 
     const title = isLive && radioMeta?.title ? radioMeta.title : currentSong.title;
     const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
     const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
+
+    console.log(`[mediaSession] Updating: "${title}" — ${artist}`);
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title,
@@ -248,18 +388,23 @@ export function MiniPlayer() {
         : [],
     });
 
-    navigator.mediaSession.setActionHandler("play", () => togglePlay());
-    navigator.mediaSession.setActionHandler("pause", () => togglePlay());
-    navigator.mediaSession.setActionHandler("previoustrack", () => previous());
-    navigator.mediaSession.setActionHandler("nexttrack", () => next());
+    // Keep playback state in sync
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+  }, [currentSong, isLive, radioMeta, isPlaying]);
 
-    return () => {
-      navigator.mediaSession.setActionHandler("play", null);
-      navigator.mediaSession.setActionHandler("pause", null);
-      navigator.mediaSession.setActionHandler("previoustrack", null);
-      navigator.mediaSession.setActionHandler("nexttrack", null);
-    };
-  }, [currentSong, isLive, radioMeta, togglePlay, next, previous]);
+  // Update position state for lock screen scrubber
+  useEffect(() => {
+    if (!("mediaSession" in navigator) || !currentSong || isLive) return;
+    if ("setPositionState" in navigator.mediaSession && currentSong.duration > 0) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: currentSong.duration,
+          playbackRate: 1,
+          position: Math.min(progress, currentSong.duration),
+        });
+      } catch { /* ignore */ }
+    }
+  }, [progress, currentSong, isLive]);
 
   const handleEnded = useCallback(() => {
     // If preemptive crossfade already triggered next, don't double-skip
@@ -268,24 +413,49 @@ export function MiniPlayer() {
     if (repeat === "one") {
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
+        audioRef.current.volume = volume;
+        audioRef.current.muted = false;
         audioRef.current.play().catch(console.error);
       }
     } else {
+      console.log("[player] Track ended — advancing to next");
       next();
     }
-  }, [next]);
+  }, [next, volume]);
 
   const handleAudioError = useCallback(async () => {
     if (!audioRef.current || !currentSong) return;
+    const audio = audioRef.current;
+    console.error("[player] Audio error for:", currentSong.title, "readyState:", audio.readyState, "networkState:", audio.networkState);
+
     // Try local cache fallback
     const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
-    if (cachedUrl && audioRef.current.src !== cachedUrl) {
-      console.warn("Stream error, falling back to local cache for:", currentSong.title);
-      audioRef.current.src = cachedUrl;
-      audioRef.current.load();
-      audioRef.current.play().catch(console.error);
+    if (cachedUrl && !audio.src.includes("blob:")) {
+      console.warn("[player] Falling back to local cache");
+      audio.src = cachedUrl;
+      audio.load();
+      audio.volume = volume;
+      audio.muted = false;
+      audio.play().catch(console.error);
+      return;
     }
-  }, [currentSong]);
+
+    // If we have a stream URL, retry once
+    if (currentSong.streamUrl) {
+      console.warn("[player] Retrying stream URL");
+      audio.src = currentSong.streamUrl;
+      audio.load();
+      audio.volume = volume;
+      audio.muted = false;
+      setTimeout(() => {
+        audio.play().catch((e) => {
+          console.error("[player] Retry also failed:", e);
+          // Skip to next track as last resort
+          next();
+        });
+      }, 500);
+    }
+  }, [currentSong, volume, next]);
 
   if (!currentSong) return null;
 
