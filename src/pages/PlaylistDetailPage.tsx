@@ -4,64 +4,54 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { deezerApi } from "@/lib/deezerApi";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDuration } from "@/data/mockData";
 
 const PlaylistDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { playlistSongs, loadPlaylistSongs, play, setQueue, removeSongFromPlaylist, playlists } = usePlayerStore();
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  const { scrollY } = useScroll();
+  const bgY = useTransform(scrollY, [0, 400], [0, 120]);
+  const coverScale = useTransform(scrollY, [0, 300], [1, 0.75]);
+  const coverOpacity = useTransform(scrollY, [0, 250], [1, 0.5]);
+  const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
 
   const isDeezerPlaylist = id?.startsWith("dz-");
   const deezerRawId = isDeezerPlaylist ? id!.replace("dz-", "") : null;
 
-  // Local user playlist lookup
   const userPlaylist = playlists.find((p) => p.id === id);
 
-  // Deezer playlist state
   const [dzInfo, setDzInfo] = useState<{ title: string; picture: string } | null>(null);
   const [dzSongs, setDzSongs] = useState<Song[]>([]);
   const [dzLoading, setDzLoading] = useState(false);
   const [dzError, setDzError] = useState(false);
 
-  // Fetch Deezer playlist
   useEffect(() => {
     if (!isDeezerPlaylist || !deezerRawId) return;
     let cancelled = false;
     const fetchDz = async (retry = false) => {
-      setDzLoading(true);
-      setDzError(false);
+      setDzLoading(true); setDzError(false);
       try {
-        console.log("[playlist] Fetching Deezer playlist:", deezerRawId);
-        const [info, tracks] = await Promise.all([
-          deezerApi.getPlaylistInfo(deezerRawId),
-          deezerApi.getPlaylistTracks(deezerRawId, 50),
-        ]);
+        const [info, tracks] = await Promise.all([deezerApi.getPlaylistInfo(deezerRawId), deezerApi.getPlaylistTracks(deezerRawId, 50)]);
         if (cancelled) return;
-        console.log("[playlist] Deezer response:", { info, trackCount: tracks.length });
-        setDzInfo({ title: info.title, picture: info.picture });
-        setDzSongs(tracks);
+        setDzInfo({ title: info.title, picture: info.picture }); setDzSongs(tracks);
       } catch (e) {
-        console.error("[playlist] Deezer fetch error:", e);
-        if (!retry && !cancelled) {
-          console.log("[playlist] Retrying...");
-          await fetchDz(true);
-          return;
-        }
+        if (!retry && !cancelled) { await fetchDz(true); return; }
         if (!cancelled) setDzError(true);
-      } finally {
-        if (!cancelled) setDzLoading(false);
-      }
+      } finally { if (!cancelled) setDzLoading(false); }
     };
     fetchDz();
     return () => { cancelled = true; };
   }, [isDeezerPlaylist, deezerRawId]);
 
-  // Determine playlist data source
   const playlist = isDeezerPlaylist
     ? dzInfo ? { id: id!, name: dzInfo.title, cover_url: dzInfo.picture, created_at: "" } : null
     : userPlaylist;
@@ -74,7 +64,6 @@ const PlaylistDetailPage = () => {
   const [resolveProgress, setResolveProgress] = useState<{ done: number; total: number } | null>(null);
   const resolveAbortRef = useRef<AbortController | null>(null);
 
-  // Check which songs are cached offline
   useEffect(() => {
     if (songs.length === 0) return;
     Promise.all(songs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
@@ -82,52 +71,31 @@ const PlaylistDetailPage = () => {
     );
   }, [songs]);
 
-  // Load user playlist songs
-  useEffect(() => {
-    if (id && !isDeezerPlaylist) loadPlaylistSongs(id);
-  }, [id, isDeezerPlaylist]);
+  useEffect(() => { if (id && !isDeezerPlaylist) loadPlaylistSongs(id); }, [id, isDeezerPlaylist]);
 
-  // Background HD resolution for playlist tracks
   useEffect(() => {
     resolveAbortRef.current?.abort();
     if (songs.length === 0) return;
-
-    const needsResolve = songs.filter(
-      (s) => s.id.startsWith("dz-") && s.streamUrl &&
-        (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
-    );
+    const needsResolve = songs.filter((s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview")));
     if (needsResolve.length === 0) return;
-
     const controller = new AbortController();
     resolveAbortRef.current = controller;
     setResolveProgress({ done: 0, total: needsResolve.length });
-
     const resolve = async () => {
-      let done = 0;
-      let upgraded = 0;
+      let done = 0, upgraded = 0;
       for (let i = 0; i < needsResolve.length; i += 4) {
         if (controller.signal.aborted) return;
         const batch = needsResolve.slice(i, i + 4);
-        const results = await Promise.all(
-          batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s))
-        );
+        const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s)));
         if (controller.signal.aborted) return;
         done += batch.length;
         setResolveProgress({ done, total: needsResolve.length });
-
         const newResolved = new Map(resolvedSongs);
-        results.forEach((r, idx) => {
-          if (r.streamUrl && r.streamUrl !== batch[idx].streamUrl) {
-            newResolved.set(r.id, r);
-            upgraded++;
-          }
-        });
-        if (newResolved.size > resolvedSongs.size) {
-          setResolvedSongs(new Map(newResolved));
-        }
+        results.forEach((r, idx) => { if (r.streamUrl && r.streamUrl !== batch[idx].streamUrl) { newResolved.set(r.id, r); upgraded++; } });
+        if (newResolved.size > resolvedSongs.size) setResolvedSongs(new Map(newResolved));
       }
       if (!controller.signal.aborted) {
-        if (upgraded > 0) toast.success(`${upgraded} morceau${upgraded > 1 ? "x" : ""} upgradé${upgraded > 1 ? "s" : ""} en HD`);
+        if (upgraded > 0) toast.success(`${upgraded} morceau${upgraded > 1 ? "x" : ""} HD`);
         setTimeout(() => setResolveProgress(null), 1500);
       }
     };
@@ -135,105 +103,46 @@ const PlaylistDetailPage = () => {
     return () => controller.abort();
   }, [songs.length, id]);
 
-  // Merge resolved songs with original
   const displaySongs = songs.map((s) => resolvedSongs.get(s.id) || s);
+  const totalDuration = displaySongs.reduce((sum, t) => sum + t.duration, 0);
 
-  const handlePlayAll = () => {
-    if (displaySongs.length === 0) return;
-    setQueue(displaySongs);
-    play(displaySongs[0]);
-  };
-
-  const handleShufflePlay = () => {
-    if (displaySongs.length === 0) return;
-    const shuffled = [...displaySongs].sort(() => Math.random() - 0.5);
-    setQueue(shuffled);
-    play(shuffled[0]);
-  };
+  const handlePlayAll = () => { if (displaySongs.length > 0) { setQueue(displaySongs); play(displaySongs[0]); } };
+  const handleShufflePlay = () => { if (displaySongs.length > 0) { const s = [...displaySongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); } };
 
   const [downloading, setDownloading] = useState(false);
   const [dlProgress, setDlProgress] = useState({ done: 0, total: 0 });
-
   const handleDownloadAll = async () => {
     if (displaySongs.length === 0) return;
-    setDownloading(true);
-    const total = displaySongs.length;
-    setDlProgress({ done: 0, total });
-    let done = 0;
+    setDownloading(true); const total = displaySongs.length; setDlProgress({ done: 0, total }); let done = 0;
     for (const song of displaySongs) {
-      try {
-        const cached = await offlineCache.isCached(song.id);
-        if (!cached && song.streamUrl) {
-          await offlineCache.cacheSong(song);
-        }
-        done++;
-        setDlProgress({ done, total });
-      } catch {
-        done++;
-        setDlProgress({ done, total });
-        toast.error(`Échec : ${song.title}`);
-      }
+      try { const cached = await offlineCache.isCached(song.id); if (!cached && song.streamUrl) await offlineCache.cacheSong(song); done++; setDlProgress({ done, total }); }
+      catch { done++; setDlProgress({ done, total }); }
     }
-    setDownloading(false);
-    setCachedIds(new Set(displaySongs.map((s) => s.id)));
-    toast.success("Tous les morceaux ont été téléchargés !");
+    setDownloading(false); setCachedIds(new Set(displaySongs.map((s) => s.id)));
+    toast.success("Téléchargement terminé !");
   };
 
-  const handleRemove = async (songId: string) => {
-    if (!id) return;
-    await removeSongFromPlaylist(id, songId);
-    toast.success("Morceau retiré");
-  };
+  const handleRemove = async (songId: string) => { if (!id) return; await removeSongFromPlaylist(id, songId); toast.success("Morceau retiré"); };
 
-  // Drag & drop reorder
   const handleDragStart = (idx: number) => setDragIdx(idx);
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    setOverIdx(idx);
-  };
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setOverIdx(idx); };
   const handleDrop = useCallback(async (targetIdx: number) => {
     if (dragIdx === null || dragIdx === targetIdx || !id) return;
-    const reordered = [...songs];
-    const [moved] = reordered.splice(dragIdx, 1);
-    reordered.splice(targetIdx, 0, moved);
-
-    const updates = reordered.map((song, i) =>
-      supabase
-        .from("playlist_songs")
-        .update({ position: i })
-        .eq("playlist_id", id)
-        .eq("song_id", song.id)
-    );
-    await Promise.all(updates);
-    await loadPlaylistSongs(id);
-    setDragIdx(null);
-    setOverIdx(null);
+    const reordered = [...songs]; const [moved] = reordered.splice(dragIdx, 1); reordered.splice(targetIdx, 0, moved);
+    await Promise.all(reordered.map((song, i) => supabase.from("playlist_songs").update({ position: i }).eq("playlist_id", id).eq("song_id", song.id)));
+    await loadPlaylistSongs(id); setDragIdx(null); setOverIdx(null);
   }, [dragIdx, songs, id, loadPlaylistSongs]);
 
-  // Cover update
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !id) return;
-
+    const file = e.target.files?.[0]; if (!file || !id) return;
     const reader = new FileReader();
     reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      const { error } = await supabase
-        .from("playlists")
-        .update({ cover_url: dataUrl })
-        .eq("id", id);
-      if (error) {
-        toast.error("Erreur lors de la mise à jour de la couverture");
-      } else {
-        toast.success("Couverture mise à jour");
-        const uid = usePlayerStore.getState().userId;
-        if (uid) usePlayerStore.getState().loadUserData(uid);
-      }
+      const { error } = await supabase.from("playlists").update({ cover_url: reader.result as string }).eq("id", id);
+      if (error) toast.error("Erreur couverture"); else { toast.success("Couverture mise à jour"); const uid = usePlayerStore.getState().userId; if (uid) usePlayerStore.getState().loadUserData(uid); }
     };
     reader.readAsDataURL(file);
   };
 
-  // Loading state for Deezer playlists
   if (isDeezerPlaylist && dzLoading) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
@@ -243,12 +152,10 @@ const PlaylistDetailPage = () => {
     );
   }
 
-  // Error state with retry
   if (isDeezerPlaylist && dzError) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
         <p className="text-muted-foreground mb-2">Playlist indisponible</p>
-        <p className="text-xs text-muted-foreground/60 mb-4">Vérifiez votre connexion et réessayez</p>
         <div className="flex gap-3">
           <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm rounded-full bg-secondary text-secondary-foreground">Retour</button>
           <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm rounded-full bg-primary text-primary-foreground">Réessayer</button>
@@ -268,140 +175,192 @@ const PlaylistDetailPage = () => {
 
   const coverUrl = playlist.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop";
 
+  // Build mosaic if no cover and we have songs
+  const hasCover = !!playlist.cover_url;
+  const mosaicCovers = !hasCover && displaySongs.length >= 4
+    ? displaySongs.slice(0, 4).map(s => s.coverUrl).filter(Boolean)
+    : [];
+
   return (
-    <div className="pb-40 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="relative">
-        <div className="h-56 md:h-72 overflow-hidden relative">
-          <img src={coverUrl} alt={playlist.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
+    <div className="pb-40 max-w-4xl mx-auto">
+      {/* ─── ULTRA PREMIUM HERO ─── */}
+      <div ref={heroRef} className="relative overflow-hidden">
+        {/* Parallax blurred background */}
+        <motion.div className="absolute inset-0 -top-20 -bottom-20" style={{ y: bgY }}>
+          <img src={coverUrl} alt="" className="w-full h-full object-cover blur-[60px] scale-[1.8] opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background" />
+        </motion.div>
+
+        {/* Ambient glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px]" />
         </div>
 
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute left-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground"
-          style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        {/* Navigation bar */}
+        <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
+          <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <motion.div style={{ opacity: headerOpacity }} className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-foreground truncate max-w-[200px]">
+            {playlist.name}
+          </motion.div>
+          <div className="flex items-center gap-2">
+            {!isDeezerPlaylist && (
+              <label className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all cursor-pointer">
+                <ImageIcon className="w-5 h-5" />
+                <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
+              </label>
+            )}
+            <button className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all">
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
-        {!isDeezerPlaylist && (
-          <label className="absolute right-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground cursor-pointer hover:bg-background/70 transition-colors" style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-            <ImageIcon className="w-5 h-5" />
-            <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
-          </label>
-        )}
+        {/* Cover + Info */}
+        <div className="relative z-10 flex flex-col items-center px-6 pt-6 pb-8">
+          {/* Cover with reflection */}
+          <motion.div style={{ scale: coverScale, opacity: coverOpacity }} className="relative mb-6">
+            {mosaicCovers.length === 4 ? (
+              <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[20px] overflow-hidden shadow-[0_20px_80px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.08] grid grid-cols-2 grid-rows-2">
+                {mosaicCovers.map((url, i) => (
+                  <img key={i} src={url} alt="" className="w-full h-full object-cover" />
+                ))}
+              </div>
+            ) : (
+              <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[20px] overflow-hidden shadow-[0_20px_80px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.08]">
+                <img src={coverUrl} alt={playlist.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+            {/* Reflection */}
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-[85%] h-12 overflow-hidden opacity-20 blur-sm pointer-events-none">
+              <img src={coverUrl} alt="" className="w-full h-full object-cover object-bottom scale-y-[-1]" />
+            </div>
+          </motion.div>
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">{playlist.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{songs.length} titre{songs.length !== 1 ? "s" : ""}</p>
+          {/* Title & Meta */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="text-center max-w-sm"
+          >
+            <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight leading-tight mb-1.5">
+              {playlist.name}
+            </h1>
+            <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground/60 uppercase tracking-widest font-medium">
+              <span>Playlist</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span>{displaySongs.length} titre{displaySongs.length !== 1 ? "s" : ""}</span>
+              {totalDuration > 0 && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                  <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{formatDuration(totalDuration)}</span>
+                </>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 px-4 py-4 flex-wrap">
+      {/* ─── ACTION BAR ─── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="px-4 md:px-8 flex items-center gap-3 mb-4 -mt-1"
+      >
         <button
           onClick={handlePlayAll}
-          disabled={songs.length === 0}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50"
+          disabled={displaySongs.length === 0}
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40"
         >
-          <Play className="w-4 h-4 ml-0.5" /> Lecture
+          <Play className="w-5 h-5 fill-current" />
+          Lecture
         </button>
         <button
           onClick={handleShufflePlay}
-          disabled={songs.length === 0}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm disabled:opacity-50"
+          disabled={displaySongs.length === 0}
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-foreground font-semibold text-sm hover:bg-white/[0.12] active:scale-[0.98] transition-all disabled:opacity-40"
         >
-          <Shuffle className="w-4 h-4" /> Aléatoire
+          <Shuffle className="w-4 h-4" />
+          Aléatoire
         </button>
         <button
           onClick={handleDownloadAll}
-          disabled={songs.length === 0 || downloading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm disabled:opacity-50"
+          disabled={displaySongs.length === 0 || downloading}
+          className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
         >
-          <Download className={`w-4 h-4 ${downloading ? "animate-bounce" : ""}`} /> {downloading ? "..." : "Télécharger"}
+          <Download className={`w-5 h-5 ${downloading ? "animate-bounce" : ""}`} />
         </button>
-      </div>
+      </motion.div>
 
       {/* HD resolve progress */}
       {resolveProgress && (
-        <div className="px-4 pb-2">
+        <div className="px-4 md:px-8 pb-3">
           <div className="flex items-center gap-3">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
-            <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: 0 }}
-                animate={{ width: `${resolveProgress.total > 0 ? (resolveProgress.done / resolveProgress.total) * 100 : 0}%` }}
-                transition={{ duration: 0.3 }}
-              />
+            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }} animate={{ width: `${resolveProgress.total > 0 ? (resolveProgress.done / resolveProgress.total) * 100 : 0}%` }} transition={{ duration: 0.3 }} />
             </div>
-            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">
-              {resolveProgress.done}/{resolveProgress.total} HD
-            </span>
+            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">{resolveProgress.done}/{resolveProgress.total} HD</span>
           </div>
         </div>
       )}
 
-      {/* Download progress bar */}
+      {/* Download progress */}
       {downloading && (
-        <div className="px-4 pb-2">
+        <div className="px-4 md:px-8 pb-3">
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: 0 }}
-                animate={{ width: `${dlProgress.total > 0 ? (dlProgress.done / dlProgress.total) * 100 : 0}%` }}
-                transition={{ duration: 0.3 }}
-              />
+            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }} animate={{ width: `${dlProgress.total > 0 ? (dlProgress.done / dlProgress.total) * 100 : 0}%` }} transition={{ duration: 0.3 }} />
             </div>
-            <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-              {dlProgress.done}/{dlProgress.total}
-            </span>
+            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">{dlProgress.done}/{dlProgress.total}</span>
           </div>
         </div>
       )}
 
-      {/* Song list */}
-      <div className="px-4">
-        {songs.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">
-            Cette playlist est vide. Ajoutez des morceaux depuis la recherche !
-          </p>
+      {/* ─── TRACK LIST ─── */}
+      <div className="px-4 md:px-8">
+        {displaySongs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-4 rounded-full bg-white/[0.04] mb-4"><Music className="w-8 h-8 text-muted-foreground/30" /></div>
+            <p className="text-muted-foreground text-sm mb-1">Playlist vide</p>
+            <p className="text-muted-foreground/50 text-xs">Ajoutez des morceaux depuis la recherche</p>
+          </div>
         ) : (
-          <div className="glass-panel-light rounded-xl p-1">
+          <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
             {displaySongs.map((song, i) => (
-              <div
+              <motion.div
                 key={song.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.03 * Math.min(i, 15), duration: 0.3 }}
                 draggable={!isDeezerPlaylist}
                 onDragStart={!isDeezerPlaylist ? () => handleDragStart(i) : undefined}
                 onDragOver={!isDeezerPlaylist ? (e) => handleDragOver(e, i) : undefined}
                 onDrop={!isDeezerPlaylist ? () => handleDrop(i) : undefined}
                 onDragEnd={!isDeezerPlaylist ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
-                className={`flex items-center gap-1 group ${
-                  overIdx === i ? "border-t-2 border-primary" : ""
-                } ${dragIdx === i ? "opacity-40" : ""}`}
+                className={`flex items-center gap-1 group border-b border-white/[0.04] last:border-b-0 ${overIdx === i ? "border-t-2 !border-t-primary" : ""} ${dragIdx === i ? "opacity-40" : ""}`}
               >
                 {!isDeezerPlaylist && (
-                  <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                  <div className="cursor-grab active:cursor-grabbing p-1 pl-2 text-muted-foreground/30 hover:text-muted-foreground transition-colors">
                     <GripVertical className="w-4 h-4" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <SongCard song={song} index={i} showIndex />
                 </div>
-                {cachedIds.has(song.id) && (
-                  <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                )}
+                {cachedIds.has(song.id) && <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0 mr-1" />}
                 {!isDeezerPlaylist && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
-                    className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    className="p-1.5 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/40 hover:text-destructive"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
