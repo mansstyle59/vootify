@@ -7,7 +7,7 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2, Trash2 } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2, Trash2, ListMusic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
 
@@ -290,6 +290,16 @@ const SearchPage = () => {
   });
 
   const albumResults = dzAlbumResults || [];
+
+  // Deezer playlist search
+  const { data: dzPlaylistResults } = useQuery({
+    queryKey: ["playlist-search-dz", debouncedQuery],
+    queryFn: () => deezerApi.searchPlaylists(debouncedQuery, 12),
+    enabled: debouncedQuery.length >= 2,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const playlistResults = dzPlaylistResults || [];
 
   const mergedResults = useMemo(() => {
     const results = [...allDzResults];
@@ -660,6 +670,36 @@ const SearchPage = () => {
                     <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                       {albumResults.map((album) => (
                         <AlbumCard key={album.id} album={album} onClick={() => navigate(`/album/${album.id}`)} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Playlists Deezer section */}
+                {playlistResults.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ListMusic className="w-4 h-4 text-accent" />
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Playlists</h2>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                      {playlistResults.map((pl) => (
+                        <button
+                          key={pl.id}
+                          onClick={() => navigate(`/playlist/dz-${pl.id}`)}
+                          className="flex-shrink-0 w-40 group text-left"
+                        >
+                          <div className="relative w-40 h-40 rounded-2xl overflow-hidden mb-2.5 shadow-lg ring-1 ring-border/10">
+                            <img src={pl.picture} alt={pl.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <div className="absolute inset-0 bg-background/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                              <div className="w-11 h-11 rounded-full liquid-glass flex items-center justify-center shadow-xl" style={{ boxShadow: "0 0 20px hsl(280 60% 60% / 0.3)" }}>
+                                <ListMusic className="w-5 h-5 text-primary-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-sm font-semibold text-foreground truncate">{pl.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pl.nb_tracks} titres · {pl.user}</p>
+                        </button>
                       ))}
                     </div>
                   </div>

@@ -366,18 +366,18 @@ const RadioPage = () => {
           <img
             src={displayCover}
             alt={station.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
           />
 
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Play button */}
+          {/* Liquid glass play button */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className={`w-10 h-10 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-xl transition-all duration-300 ${
+            <div className={`w-11 h-11 rounded-full liquid-glass flex items-center justify-center shadow-xl transition-all duration-300 ${
               isActivePlaying ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
-            }`}>
+            }`} style={{ boxShadow: isActivePlaying ? "0 0 20px hsl(141 73% 42% / 0.4)" : undefined }}>
               {isActivePlaying ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
             </div>
           </div>
