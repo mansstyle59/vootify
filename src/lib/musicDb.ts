@@ -1,5 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
+
+/** Throws if userId is missing or is the anonymous placeholder */
+function assertValidUserId(userId: string): asserts userId is string {
+  if (!userId || userId === ANONYMOUS_USER_ID) {
+    throw new Error("Cannot perform DB operation with anonymous user ID. User must be authenticated.");
+  }
+}
 
 function songToRow(song: Song, userId: string) {
   return {
@@ -40,6 +48,7 @@ export const musicDb = {
   },
 
   async likeSong(userId: string, song: Song): Promise<void> {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("liked_songs")
       .upsert(songToRow(song, userId), { onConflict: "user_id,song_id" });
@@ -47,6 +56,7 @@ export const musicDb = {
   },
 
   async unlikeSong(userId: string, songId: string): Promise<void> {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("liked_songs")
       .delete()
@@ -67,6 +77,7 @@ export const musicDb = {
   },
 
   async createPlaylist(userId: string, name: string) {
+    assertValidUserId(userId);
     const { data, error } = await supabase
       .from("playlists")
       .insert({ user_id: userId, name })
@@ -122,6 +133,7 @@ export const musicDb = {
 
   // Recently played
   async addRecentlyPlayed(userId: string, song: Song) {
+    assertValidUserId(userId);
     // Remove previous entry for same song to avoid duplicates
     await supabase
       .from("recently_played")
@@ -167,6 +179,7 @@ export const musicDb = {
   },
 
   async saveSearchQuery(userId: string, query: string): Promise<void> {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("search_history")
       .upsert(

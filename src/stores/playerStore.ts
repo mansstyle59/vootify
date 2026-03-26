@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ANONYMOUS_USER_ID } from "@/lib/constants";
+
 
 
 interface PlayerState {
@@ -63,7 +63,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playlists: [],
   recentlyPlayed: [],
   playlistSongs: {},
-  userId: ANONYMOUS_USER_ID,
+  userId: null,
   crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "false"),
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "12"),
   _seekTime: null,

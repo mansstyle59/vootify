@@ -11,7 +11,6 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
-import { ANONYMOUS_USER_ID } from "@/lib/constants";
 import { hdCache } from "@/lib/hdCache";
 
 // Clear HD cache on app startup
@@ -40,9 +39,11 @@ function AppContent() {
 
   useEffect(() => {
     if (loading) return;
-    const userId = user?.id || ANONYMOUS_USER_ID;
+    const userId = user?.id || null;
     setUserId(userId);
-    loadUserData(userId);
+    if (userId) {
+      loadUserData(userId);
+    }
   }, [user, loading, loadUserData, setUserId]);
 
   const handleRefresh = useCallback(async () => {
