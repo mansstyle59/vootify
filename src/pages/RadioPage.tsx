@@ -315,7 +315,6 @@ const RadioPage = () => {
   /* ── Station Grid Card ── */
   const StationCard = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
     const isSaved = savedIds.has(station.id);
-    const isEditing = editingId === station.id;
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
 
