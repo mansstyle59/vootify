@@ -16,8 +16,56 @@ const PlaylistDetailPage = () => {
   const navigate = useNavigate();
   const { playlistSongs, loadPlaylistSongs, play, setQueue, removeSongFromPlaylist, playlists } = usePlayerStore();
 
-  const playlist = playlists.find((p) => p.id === id);
-  const songs: Song[] = id ? playlistSongs[id] || [] : [];
+  const isDeezerPlaylist = id?.startsWith("dz-");
+  const deezerRawId = isDeezerPlaylist ? id!.replace("dz-", "") : null;
+
+  // Local user playlist lookup
+  const userPlaylist = playlists.find((p) => p.id === id);
+
+  // Deezer playlist state
+  const [dzInfo, setDzInfo] = useState<{ title: string; picture: string } | null>(null);
+  const [dzSongs, setDzSongs] = useState<Song[]>([]);
+  const [dzLoading, setDzLoading] = useState(false);
+  const [dzError, setDzError] = useState(false);
+
+  // Fetch Deezer playlist
+  useEffect(() => {
+    if (!isDeezerPlaylist || !deezerRawId) return;
+    let cancelled = false;
+    const fetchDz = async (retry = false) => {
+      setDzLoading(true);
+      setDzError(false);
+      try {
+        console.log("[playlist] Fetching Deezer playlist:", deezerRawId);
+        const [info, tracks] = await Promise.all([
+          deezerApi.getPlaylistInfo(deezerRawId),
+          deezerApi.getPlaylistTracks(deezerRawId, 50),
+        ]);
+        if (cancelled) return;
+        console.log("[playlist] Deezer response:", { info, trackCount: tracks.length });
+        setDzInfo({ title: info.title, picture: info.picture });
+        setDzSongs(tracks);
+      } catch (e) {
+        console.error("[playlist] Deezer fetch error:", e);
+        if (!retry && !cancelled) {
+          console.log("[playlist] Retrying...");
+          await fetchDz(true);
+          return;
+        }
+        if (!cancelled) setDzError(true);
+      } finally {
+        if (!cancelled) setDzLoading(false);
+      }
+    };
+    fetchDz();
+    return () => { cancelled = true; };
+  }, [isDeezerPlaylist, deezerRawId]);
+
+  // Determine playlist data source
+  const playlist = isDeezerPlaylist
+    ? dzInfo ? { id: id!, name: dzInfo.title, cover_url: dzInfo.picture, created_at: "" } : null
+    : userPlaylist;
+  const songs: Song[] = isDeezerPlaylist ? dzSongs : (id ? playlistSongs[id] || [] : []);
 
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -34,9 +82,10 @@ const PlaylistDetailPage = () => {
     );
   }, [songs]);
 
+  // Load user playlist songs
   useEffect(() => {
-    if (id) loadPlaylistSongs(id);
-  }, [id]);
+    if (id && !isDeezerPlaylist) loadPlaylistSongs(id);
+  }, [id, isDeezerPlaylist]);
 
   // Background HD resolution for playlist tracks
   useEffect(() => {
@@ -184,6 +233,30 @@ const PlaylistDetailPage = () => {
     reader.readAsDataURL(file);
   };
 
+  // Loading state for Deezer playlists
+  if (isDeezerPlaylist && dzLoading) {
+    return (
+      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Chargement de la playlist…</p>
+      </div>
+    );
+  }
+
+  // Error state with retry
+  if (isDeezerPlaylist && dzError) {
+    return (
+      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground mb-2">Playlist indisponible</p>
+        <p className="text-xs text-muted-foreground/60 mb-4">Vérifiez votre connexion et réessayez</p>
+        <div className="flex gap-3">
+          <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm rounded-full bg-secondary text-secondary-foreground">Retour</button>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm rounded-full bg-primary text-primary-foreground">Réessayer</button>
+        </div>
+      </div>
+    );
+  }
+
   if (!playlist) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
@@ -205,17 +278,19 @@ const PlaylistDetailPage = () => {
         </div>
 
         <button
-          onClick={() => navigate("/library")}
+          onClick={() => navigate(-1)}
           className="absolute left-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <label className="absolute right-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground cursor-pointer hover:bg-background/70 transition-colors" style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-          <ImageIcon className="w-5 h-5" />
-          <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
-        </label>
+        {!isDeezerPlaylist && (
+          <label className="absolute right-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground cursor-pointer hover:bg-background/70 transition-colors" style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
+            <ImageIcon className="w-5 h-5" />
+            <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
+          </label>
+        )}
 
         <div className="absolute bottom-4 left-4 right-4">
           <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">{playlist.name}</h1>
@@ -298,30 +373,34 @@ const PlaylistDetailPage = () => {
             {displaySongs.map((song, i) => (
               <div
                 key={song.id}
-                draggable
-                onDragStart={() => handleDragStart(i)}
-                onDragOver={(e) => handleDragOver(e, i)}
-                onDrop={() => handleDrop(i)}
-                onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                draggable={!isDeezerPlaylist}
+                onDragStart={!isDeezerPlaylist ? () => handleDragStart(i) : undefined}
+                onDragOver={!isDeezerPlaylist ? (e) => handleDragOver(e, i) : undefined}
+                onDrop={!isDeezerPlaylist ? () => handleDrop(i) : undefined}
+                onDragEnd={!isDeezerPlaylist ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
                 className={`flex items-center gap-1 group ${
                   overIdx === i ? "border-t-2 border-primary" : ""
                 } ${dragIdx === i ? "opacity-40" : ""}`}
               >
-                <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                  <GripVertical className="w-4 h-4" />
-                </div>
+                {!isDeezerPlaylist && (
+                  <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    <GripVertical className="w-4 h-4" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <SongCard song={song} index={i} showIndex />
                 </div>
                 {cachedIds.has(song.id) && (
                   <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                 )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
-                  className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {!isDeezerPlaylist && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
+                    className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
