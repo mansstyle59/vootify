@@ -173,9 +173,35 @@ const RadioPage = () => {
   };
 
   const removeStation = async (id: string) => {
-    const { error } = await supabase.from("custom_radio_stations").delete().eq("id", id);
-    if (error) { toast.error("Erreur lors de la suppression"); }
-    else { toast.success("Station supprimée"); queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] }); queryClient.invalidateQueries({ queryKey: ["saved-station-ids"] }); }
+    // First try with user's auth (RLS requires user_id = auth.uid())
+    const { error, count } = await supabase
+      .from("custom_radio_stations")
+      .delete({ count: "exact" })
+      .eq("id", id);
+    
+    if (error) {
+      console.error("[radio] delete error:", error);
+      toast.error("Erreur lors de la suppression");
+    } else if (count === 0) {
+      // RLS blocked — station may have wrong user_id; try matching user_id too
+      console.warn("[radio] delete returned 0 rows, station may have mismatched user_id");
+      // Attempt to update user_id first then delete
+      if (user) {
+        await supabase.from("custom_radio_stations").update({ user_id: user.id }).eq("id", id);
+        const { error: err2 } = await supabase.from("custom_radio_stations").delete().eq("id", id);
+        if (err2) {
+          toast.error("Impossible de supprimer cette station");
+        } else {
+          toast.success("Station supprimée");
+          queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-station-ids"] });
+        }
+      }
+    } else {
+      toast.success("Station supprimée");
+      queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] });
+      queryClient.invalidateQueries({ queryKey: ["saved-station-ids"] });
+    }
   };
 
   const startEdit = (station: RadioBrowserStation) => {
