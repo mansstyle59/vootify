@@ -541,6 +541,57 @@ const RadioPage = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier la station</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nom</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom de la station" />
+            </div>
+            <div className="space-y-2">
+              <Label>Genre</Label>
+              <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Pop, Rock, Jazz..." />
+            </div>
+            <div className="space-y-2">
+              <Label>URL du flux</Label>
+              <Input value={editForm.streamUrl} onChange={(e) => setEditForm((f) => ({ ...f, streamUrl: e.target.value }))} placeholder="https://..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Pochette</Label>
+              <CoverImagePicker value={editForm.coverUrl} onChange={(v) => setEditForm((f) => ({ ...f, coverUrl: v }))} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingId(null)}>Annuler</Button>
+            <Button onClick={saveEdit} disabled={!editForm.name.trim()}>
+              <Check className="w-4 h-4 mr-1" /> Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingStation} onOpenChange={(open) => { if (!open) setDeletingStation(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Supprimer la station</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Voulez-vous vraiment supprimer <strong>{deletingStation?.name}</strong> ? Cette action est irréversible.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeletingStation(null)}>Annuler</Button>
+            <Button variant="destructive" onClick={executeDelete}>
+              <Trash2 className="w-4 h-4 mr-1" /> Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
