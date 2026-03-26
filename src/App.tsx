@@ -13,6 +13,7 @@ import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PageTransition } from "@/components/PageTransition";
 import { PageLoader } from "@/components/PageLoader";
+import { NetworkStatus } from "@/components/NetworkStatus";
 import { hdCache } from "@/lib/hdCache";
 
 // Clear HD cache on app startup
