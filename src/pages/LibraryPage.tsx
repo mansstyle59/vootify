@@ -228,6 +228,8 @@ const LibraryPage = () => {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
