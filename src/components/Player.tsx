@@ -46,6 +46,7 @@ export function MiniPlayer() {
   const crossfadeRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
+  const loadAbortRef = useRef<AbortController | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
@@ -117,8 +118,21 @@ export function MiniPlayer() {
 
     const isNewTrack = prevSongId !== null && prevSongId !== currentSong.id;
 
+    // Abort any in-flight load for a previous track (rapid clicking protection)
+    loadAbortRef.current?.abort();
+    const abortController = new AbortController();
+    loadAbortRef.current = abortController;
+
+    if (isNewTrack) {
+      // Immediately stop current audio to prevent overlap
+      console.log(`[player] STOP CURRENT TRACK: "${prevSongId}"`);
+      audio.pause();
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
+      console.log(`[player] LOAD NEW TRACK: "${songToPlay.title}" (id: ${songToPlay.id})`);
 
       // PRIORITY: check offline cache first — essential for airplane mode
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
