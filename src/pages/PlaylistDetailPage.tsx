@@ -233,6 +233,30 @@ const PlaylistDetailPage = () => {
     reader.readAsDataURL(file);
   };
 
+  // Loading state for Deezer playlists
+  if (isDeezerPlaylist && dzLoading) {
+    return (
+      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Chargement de la playlist…</p>
+      </div>
+    );
+  }
+
+  // Error state with retry
+  if (isDeezerPlaylist && dzError) {
+    return (
+      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground mb-2">Playlist indisponible</p>
+        <p className="text-xs text-muted-foreground/60 mb-4">Vérifiez votre connexion et réessayez</p>
+        <div className="flex gap-3">
+          <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm rounded-full bg-secondary text-secondary-foreground">Retour</button>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm rounded-full bg-primary text-primary-foreground">Réessayer</button>
+        </div>
+      </div>
+    );
+  }
+
   if (!playlist) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
