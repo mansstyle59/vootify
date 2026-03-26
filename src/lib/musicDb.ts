@@ -1,5 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
+import { ANONYMOUS_USER_ID } from "@/lib/constants";
+
+/** Throws if userId is missing or is the anonymous placeholder */
+function assertValidUserId(userId: string): asserts userId is string {
+  if (!userId || userId === ANONYMOUS_USER_ID) {
+    throw new Error("Cannot perform DB operation with anonymous user ID. User must be authenticated.");
+  }
+}
 
 function songToRow(song: Song, userId: string) {
   return {
