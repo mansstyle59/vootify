@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2, AlertTriangle, WifiOff
+  Download, Check, Loader2, WifiOff
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,16 +80,22 @@ export function MiniPlayer() {
         }
       } else {
         // Only attempt network resolution if not cached
-        if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
+        if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
           try {
-            const originalPreview = songToPlay.streamUrl;
             const resolved = await deezerApi.resolveFullStream(songToPlay);
             if (resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
-              usePlayerStore.setState({ currentSong: resolved, originalStreamUrl: originalPreview });
+              usePlayerStore.setState({ currentSong: resolved });
             }
           } catch (e) {
             console.error("Failed to resolve full stream:", e);
+          }
+          // After resolution attempt, if still a 30s preview → block playback
+          if (songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
+            console.warn("Blocked 30s preview playback for:", songToPlay.title);
+            const { next: nextTrack } = usePlayerStore.getState();
+            nextTrack();
+            return;
           }
         }
 
@@ -648,7 +654,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     togglePlay, next, previous, seekTo: storeSeekTo,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue,
     crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
-    originalStreamUrl, revertToPreview
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
@@ -919,17 +924,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 />
               </button>
 
-              {/* Wrong song button */}
-              {originalStreamUrl && currentSong.id.startsWith("dz-") && (
-                <button
-                  onClick={revertToPreview}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all active:scale-95 bg-destructive/15 text-destructive border border-destructive/25 hover:bg-destructive/25"
-                  title="Ce n'est pas le bon morceau — revenir à l'extrait 30s"
-                >
-                  <AlertTriangle className="w-4 h-4" />
-                  Mauvais titre
-                </button>
-              )}
 
               {/* Download button */}
               <button
@@ -959,7 +953,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </button>
 
               {/* Auto mix toggle */}
-              {!originalStreamUrl && (
+              {(
                 <button
                   onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase transition-all active:scale-95 ${

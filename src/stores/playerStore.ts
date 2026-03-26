@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ANONYMOUS_USER_ID } from "@/lib/constants";
-import { hdCache } from "@/lib/hdCache";
+
 
 interface PlayerState {
   currentSong: Song | null;
@@ -21,13 +21,11 @@ interface PlayerState {
   crossfadeEnabled: boolean;
   crossfadeDuration: number; // in seconds
   _seekTime: number | null;
-  originalStreamUrl: string | null; // original Deezer preview before HD resolve
+  
 
   setUserId: (id: string | null) => void;
   setCrossfadeEnabled: (enabled: boolean) => void;
   setCrossfadeDuration: (duration: number) => void;
-  setOriginalStreamUrl: (url: string | null) => void;
-  revertToPreview: () => void;
   loadUserData: (userId: string) => Promise<void>;
   play: (song: Song) => void;
   togglePlay: () => void;
@@ -68,37 +66,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "false"),
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "12"),
   _seekTime: null,
-  originalStreamUrl: null,
 
   setUserId: (id) => set({ userId: id }),
   setCrossfadeEnabled: (enabled) => { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); set({ crossfadeEnabled: enabled }); },
   setCrossfadeDuration: (duration) => { localStorage.setItem("crossfadeDuration", JSON.stringify(duration)); set({ crossfadeDuration: duration }); },
-  setOriginalStreamUrl: (url) => set({ originalStreamUrl: url }),
-  revertToPreview: () => {
-    const { currentSong, originalStreamUrl } = get();
-    if (currentSong && originalStreamUrl && currentSong.streamUrl) {
-      // Blacklist this bad JioSaavn match
-      try {
-        const key = `${currentSong.title}|||${currentSong.artist}`;
-        const stored = localStorage.getItem("hd-blacklist");
-        const blacklist: Record<string, string[]> = stored ? JSON.parse(stored) : {};
-        if (!blacklist[key]) blacklist[key] = [];
-        if (!blacklist[key].includes(currentSong.streamUrl)) {
-          blacklist[key].push(currentSong.streamUrl);
-        }
-        localStorage.setItem("hd-blacklist", JSON.stringify(blacklist));
-        // Invalidate HD cache for this song
-        if (currentSong.id) hdCache.remove(currentSong.id);
-      } catch (e) {
-        console.error("Failed to save blacklist:", e);
-      }
-      set({
-        currentSong: { ...currentSong, streamUrl: originalStreamUrl },
-        originalStreamUrl: null,
-        progress: 0,
-      });
-    }
-  },
+
+
 
   loadUserData: async (userId) => {
     try {

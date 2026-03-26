@@ -51,7 +51,11 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, [showPlaylistMenu]);
 
+  const sourceType = getSongSourceType(song);
+  const isBlocked = sourceType === "no-hd";
+
   const handleClick = () => {
+    if (isBlocked) return;
     if (isCurrentSong) {
       togglePlay();
     } else {
@@ -64,9 +68,9 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: (index || 0) * 0.05 }}
-      className={`group flex items-center gap-3 px-3 py-2 rounded-lg hover-glass cursor-pointer ${
-        isCurrentSong ? "bg-primary/5" : ""
-      }`}
+      className={`group flex items-center gap-3 px-3 py-2 rounded-lg hover-glass ${
+        isBlocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+      } ${isCurrentSong ? "bg-primary/5" : ""}`}
       onClick={handleClick}
     >
       {showIndex && (
