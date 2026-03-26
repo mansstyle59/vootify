@@ -89,6 +89,7 @@ function AppContent() {
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
+    toast.success("Contenu mis à jour ✨");
   }, [queryClient]);
 
   return (
