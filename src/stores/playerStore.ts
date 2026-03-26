@@ -67,6 +67,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "false"),
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "12"),
   _seekTime: null,
+  resolveStep: null,
 
   setUserId: (id) => set({ userId: id }),
   setCrossfadeEnabled: (enabled) => { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); set({ crossfadeEnabled: enabled }); },
