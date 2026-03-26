@@ -292,13 +292,13 @@ const RadioPage = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
           {isCustomTab ? (
             <>
               <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-1.5 rounded-full hover:bg-secondary transition-colors">
                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
-              <button onClick={(e) => { e.stopPropagation(); removeStation(station.id); }} className="p-1.5 rounded-full hover:bg-destructive/20 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }} className="p-1.5 rounded-full hover:bg-destructive/20 transition-colors">
                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
               </button>
             </>
