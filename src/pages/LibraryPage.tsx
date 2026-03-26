@@ -235,6 +235,7 @@ const LibraryPage = () => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const {
     likedSongs, playlists, recentlyPlayed, playlistSongs,
     createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
