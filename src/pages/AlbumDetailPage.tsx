@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, ListPlus } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, ListPlus, RotateCcw } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
@@ -45,7 +45,8 @@ const AlbumDetailPage = () => {
   const album = data?.album;
   const rawTracks = data?.tracks || [];
   const [resolvedTracks, setResolvedTracks] = useState<Song[]>([]);
-
+  const [resolveKey, setResolveKey] = useState(0);
+  const [resolving, setResolving] = useState(false);
   useEffect(() => {
     if (rawTracks.length === 0) {
       setResolvedTracks([]);
@@ -54,6 +55,7 @@ const AlbumDetailPage = () => {
 
     const controller = new AbortController();
     setResolvedTracks(rawTracks);
+    setResolving(true);
 
     const dzTracksNeedingResolve = rawTracks.filter(
       (t) =>
@@ -62,6 +64,7 @@ const AlbumDetailPage = () => {
     );
 
     if (dzTracksNeedingResolve.length === 0) {
+      setResolving(false);
       return () => controller.abort();
     }
 
@@ -95,13 +98,18 @@ const AlbumDetailPage = () => {
         setResolvedTracks([...updated]);
       }
 
-      if (upgraded > 0) {
-        toast.success(`${upgraded} titre${upgraded > 1 ? "s" : ""} résolu${upgraded > 1 ? "s" : ""} en HD`);
+      if (!controller.signal.aborted) {
+        setResolving(false);
+        if (upgraded > 0) {
+          toast.success(`${upgraded} titre${upgraded > 1 ? "s" : ""} résolu${upgraded > 1 ? "s" : ""} en HD`);
+        } else {
+          toast("Aucun nouveau titre HD trouvé");
+        }
       }
     })();
 
     return () => controller.abort();
-  }, [rawTracks, id]);
+  }, [rawTracks, id, resolveKey]);
 
   const tracks = resolvedTracks.length > 0 ? resolvedTracks : rawTracks;
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
@@ -261,6 +269,14 @@ const AlbumDetailPage = () => {
             {isSaved ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
           </button>
         )}
+        <button
+          onClick={() => { setResolveKey((k) => k + 1); toast("Relance de la résolution HD…"); }}
+          disabled={resolving}
+          className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
+          title="Relancer la résolution HD"
+        >
+          <RotateCcw className={`w-5 h-5 ${resolving ? "animate-spin" : ""}`} />
+        </button>
       </motion.div>
 
       {/* ─── TRACK LIST ─── */}
