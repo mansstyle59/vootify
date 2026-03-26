@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +7,7 @@ import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -35,6 +36,7 @@ function AppContent() {
   const loadUserData = usePlayerStore((s) => s.loadUserData);
   const setUserId = usePlayerStore((s) => s.setUserId);
   const { user, loading } = useAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (loading) return;
@@ -43,10 +45,14 @@ function AppContent() {
     loadUserData(userId);
   }, [user, loading, loadUserData, setUserId]);
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <main className="flex-1 overflow-y-auto scrollbar-hide">
+      <PullToRefresh onRefresh={handleRefresh} className="flex-1 scrollbar-hide">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<SearchPage />} />
@@ -61,7 +67,7 @@ function AppContent() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </main>
+      </PullToRefresh>
       <MiniPlayer />
       <MobileNav />
       <AnimatePresence>
