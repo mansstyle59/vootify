@@ -33,7 +33,7 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, index, showIndex }: SongCardProps) {
-  const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked } = usePlayerStore();
+  const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked, queue, setQueue } = usePlayerStore();
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
