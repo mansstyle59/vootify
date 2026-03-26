@@ -179,7 +179,7 @@ export function MiniPlayer() {
       const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
 
-      console.log(`[player] ${isNewTrack ? "Track change" : "Play/pause"}: "${songToPlay.title}" | bg=${document.hidden}`);
+      console.log(`[player] PLAY TRACK ID: ${songToPlay.id} | "${songToPlay.title}" | ${isNewTrack ? "NEW" : "TOGGLE"} | bg=${document.hidden}`);
 
       if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
         // Crossfade: move current audio to crossfade ref and fade it out
