@@ -99,11 +99,19 @@ export function Section({ title, children, songs, onPlayAll }: SectionProps) {
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="mb-8"
     >
-      <div className="flex items-center justify-between px-4 md:px-8 mb-3">
+      <motion.div
+        initial={{ opacity: 0, x: -16 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+        className="flex items-center justify-between px-4 md:px-8 mb-3"
+      >
         <h2 className="text-lg md:text-xl font-display font-bold text-foreground truncate mr-2">{title}</h2>
         {hasSongs && (
           <div className="flex items-center gap-1.5 relative flex-shrink-0">
@@ -132,8 +140,15 @@ export function Section({ title, children, songs, onPlayAll }: SectionProps) {
             </AnimatePresence>
           </div>
         )}
-      </div>
-      {children}
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+      >
+        {children}
+      </motion.div>
     </motion.section>
   );
 }
