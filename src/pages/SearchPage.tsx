@@ -7,7 +7,7 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2, Trash2 } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2, Trash2, ListMusic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
 
@@ -290,6 +290,16 @@ const SearchPage = () => {
   });
 
   const albumResults = dzAlbumResults || [];
+
+  // Deezer playlist search
+  const { data: dzPlaylistResults } = useQuery({
+    queryKey: ["playlist-search-dz", debouncedQuery],
+    queryFn: () => deezerApi.searchPlaylists(debouncedQuery, 12),
+    enabled: debouncedQuery.length >= 2,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const playlistResults = dzPlaylistResults || [];
 
   const mergedResults = useMemo(() => {
     const results = [...allDzResults];
