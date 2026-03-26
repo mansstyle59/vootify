@@ -190,16 +190,19 @@ const LibraryPage = () => {
     { key: "downloads", label: "Téléchargés", icon: Download },
   ];
 
-  // Auth gate — show only downloads tab when not logged in OR offline
+  // Auth gate — show only downloads + custom tabs when not logged in; only downloads when offline
   const isGuest = !authLoading && !user;
-  const offlineMode = isOffline || isGuest;
+  const offlineMode = isOffline;
 
-  // Auto-switch to downloads tab when offline or guest
+  // Auto-switch to custom tab when guest (not offline)
   useEffect(() => {
-    if (offlineMode && tab !== "downloads") {
+    if (isGuest && !isOffline && !["downloads", "custom"].includes(tab)) {
+      setTab("custom");
+    }
+    if (isOffline && tab !== "downloads") {
       setTab("downloads");
     }
-  }, [offlineMode]);
+  }, [isGuest, isOffline]);
 
   // Also load cached songs immediately when going offline
   useEffect(() => {
@@ -216,9 +219,11 @@ const LibraryPage = () => {
     }
   }, [isOffline]);
 
-  const visibleTabs = offlineMode
+  const visibleTabs = isOffline
     ? tabs.filter((t) => t.key === "downloads")
-    : tabs;
+    : isGuest
+      ? tabs.filter((t) => t.key === "downloads" || t.key === "custom")
+      : tabs;
 
   return (
     <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
