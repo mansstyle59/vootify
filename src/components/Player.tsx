@@ -766,7 +766,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 <div className="relative">
                   <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-lg" />
                   <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-black/30">
-                    <AudioVisualizer isPlaying={isPlaying} color="white" size={18} />
+                    <AudioVisualizer isPlaying={isPlaying} size={18} />
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
