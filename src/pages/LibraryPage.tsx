@@ -130,7 +130,7 @@ const LibraryPage = () => {
       return songs as Song[];
     },
     staleTime: 60 * 1000,
-    enabled: tab === "custom" && !!user,
+    enabled: tab === "custom",
   });
 
   const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
