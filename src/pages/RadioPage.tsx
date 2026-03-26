@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ANONYMOUS_USER_ID } from "@/lib/constants";
+import { useAuth } from "@/hooks/useAuth";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, X, Check, Waves, LayoutGrid, List, Volume2 } from "lucide-react";
@@ -132,6 +132,7 @@ function NowPlayingHero({
 
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
@@ -160,7 +161,7 @@ const RadioPage = () => {
 
   const saveStation = async (station: RadioBrowserStation) => {
     const { error } = await supabase.from("custom_radio_stations").upsert({
-      id: station.id, user_id: ANONYMOUS_USER_ID, name: station.name,
+      id: station.id, user_id: user!.id, name: station.name,
       genre: station.genre, cover_url: station.coverUrl, stream_url: station.streamUrl,
     }, { onConflict: "id" });
     if (error) { toast.error("Erreur lors de la sauvegarde"); }
@@ -190,7 +191,7 @@ const RadioPage = () => {
   const { data: savedIds = new Set<string>() } = useQuery({
     queryKey: ["saved-station-ids"],
     queryFn: async () => {
-      const { data } = await supabase.from("custom_radio_stations").select("id").eq("user_id", ANONYMOUS_USER_ID);
+      const { data } = await supabase.from("custom_radio_stations").select("id");
       return new Set((data || []).map((r) => r.id));
     },
     staleTime: 2 * 60 * 1000,
