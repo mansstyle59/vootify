@@ -157,8 +157,10 @@ export const deezerApi = {
    * Works for any song (dz-, custom-, js-, or no prefix).
    * Returns song with resolved streamUrl or streamUrl="" if nothing found.
    */
-  async resolveFullStream(song: Song): Promise<Song> {
+  async resolveFullStream(song: Song, onStep?: (step: string) => void): Promise<Song> {
+    const step = onStep || (() => {});
     // ── 1. HD Cache ──
+    step("Cache…");
     const cached = hdCache.get(song.id);
     if (cached) {
       console.log("[resolve] cache hit:", song.title);
@@ -203,6 +205,7 @@ export const deezerApi = {
     };
 
     // ── 2. Custom songs (priority) ──
+    step("Custom…");
     try {
       const { data: customSongs } = await supabase
         .from("custom_songs")
@@ -252,6 +255,7 @@ export const deezerApi = {
     }
 
     // ── 3. JioSaavn HD search ──
+    step("Recherche HD…");
     try {
       const mainArtist = song.artist.split(",")[0].trim();
       const cleanTitle = song.title.replace(/\(.*?\)/g, "").trim();

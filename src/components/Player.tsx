@@ -47,6 +47,7 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const [resolveStep, setResolveStep] = useState<string | null>(null);
 
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
@@ -85,8 +86,9 @@ export function MiniPlayer() {
           (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
 
         if (needsResolution) {
+          setResolveStep("Recherche Custom…");
           try {
-            const resolved = await deezerApi.resolveFullStream(songToPlay);
+            const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
@@ -94,6 +96,7 @@ export function MiniPlayer() {
           } catch (e) {
             console.error("Stream resolution failed:", e);
           }
+          setResolveStep(null);
 
           // If still a 30s preview or no stream → skip
           if (!songToPlay.streamUrl || (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
@@ -402,12 +405,21 @@ export function MiniPlayer() {
                   {currentSong.title}
                 </p>
                 <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
-                  {currentSong.artist}
-                  {playingFromCache && (
-                    <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
-                      <WifiOff className="w-2.5 h-2.5" />
-                      <span className="font-semibold text-[10px]">OFFLINE</span>
+                  {resolveStep ? (
+                    <span className="inline-flex items-center gap-1 text-primary animate-pulse">
+                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      <span className="font-semibold text-[10px]">{resolveStep}</span>
                     </span>
+                  ) : (
+                    <>
+                      {currentSong.artist}
+                      {playingFromCache && (
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                          <WifiOff className="w-2.5 h-2.5" />
+                          <span className="font-semibold text-[10px]">OFFLINE</span>
+                        </span>
+                      )}
+                    </>
                   )}
                 </p>
               </div>
