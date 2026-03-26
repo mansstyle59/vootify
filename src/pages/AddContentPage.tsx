@@ -1,23 +1,23 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlayerStore } from "@/stores/playerStore";
 import { getEffectiveUserId } from "@/lib/deviceId";
 
-import { Music, Disc3, Radio, Loader2, CheckCircle, Sparkles, Upload, FileAudio, X, Trash2 } from "lucide-react";
+import { Music, ListMusic, Radio, Loader2, CheckCircle, Sparkles, Upload, FileAudio, X, Trash2, Plus, Play } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
-import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { extractID3 } from "@/lib/id3Utils";
 import { deezerApi } from "@/lib/deezerApi";
 
-type Tab = "song" | "album" | "radio";
+type Tab = "song" | "playlist" | "radio";
 
-const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "song", label: "Chanson", icon: Music },
-  { key: "album", label: "Album", icon: Disc3 },
-  { key: "radio", label: "Station Radio", icon: Radio },
+const tabs: { key: Tab; label: string; icon: React.ElementType; desc: string }[] = [
+  { key: "song", label: "Chansons", icon: Music, desc: "Importez vos fichiers audio" },
+  { key: "playlist", label: "Playlist", icon: ListMusic, desc: "Créez une playlist avec vos titres" },
+  { key: "radio", label: "Radio", icon: Radio, desc: "Ajoutez une station radio" },
 ];
 
 function FieldInput({ label, value, onChange, placeholder, type = "text", required = false, autoFilled = false }: {
@@ -25,12 +25,11 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
-        {label} {required && <span className="text-destructive">*</span>}
+      <span className="text-sm font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+        {label} {required && <span className="text-destructive text-xs">*</span>}
         {autoFilled && (
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
-            <Sparkles className="w-2.5 h-2.5" />
-            ID3
+            <Sparkles className="w-2.5 h-2.5" /> Auto
           </span>
         )}
       </span>
@@ -40,15 +39,13 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-3 py-2.5 rounded-lg bg-secondary border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
-          autoFilled ? "border-primary/40" : "border-border"
+        className={`w-full px-4 py-3 rounded-xl bg-secondary/50 border text-foreground placeholder:text-muted-foreground/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all ${
+          autoFilled ? "border-primary/30" : "border-border/50"
         }`}
       />
     </label>
   );
 }
-
-
 
 const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
 
@@ -78,21 +75,15 @@ function SongForm() {
     const entries: SongEntry[] = [];
 
     for (const file of Array.from(files)) {
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`${file.name} trop lourd (max 50 Mo)`);
-        continue;
-      }
-
+      if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd (max 50 Mo)`); continue; }
       const id3 = await extractID3(file, file.name);
       let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
       const id3Filled = new Set<string>();
-
       if (meta.title) id3Filled.add("title");
       if (meta.artist) id3Filled.add("artist");
       if (meta.album) id3Filled.add("album");
       if (meta.coverUrl) id3Filled.add("coverUrl");
 
-      // Duration
       let duration = id3.duration && id3.duration > 0 ? Math.round(id3.duration) : 0;
       if (!duration) {
         try {
@@ -101,17 +92,13 @@ function SongForm() {
             const audio = new Audio();
             audio.preload = "metadata";
             audio.src = objectUrl;
-            audio.addEventListener("loadedmetadata", () => {
-              resolve(audio.duration && isFinite(audio.duration) ? Math.round(audio.duration) : 0);
-              URL.revokeObjectURL(objectUrl);
-            }, { once: true });
+            audio.addEventListener("loadedmetadata", () => { resolve(audio.duration && isFinite(audio.duration) ? Math.round(audio.duration) : 0); URL.revokeObjectURL(objectUrl); }, { once: true });
             audio.addEventListener("error", () => { resolve(0); URL.revokeObjectURL(objectUrl); }, { once: true });
           });
         } catch { duration = 0; }
       }
       if (duration) id3Filled.add("duration");
 
-      // Deezer lookup for missing fields
       if (!meta.title || !meta.artist || !meta.coverUrl) {
         const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
         const query = meta.title && meta.artist ? `${meta.artist} ${meta.title}` : meta.title || cleanName;
@@ -128,19 +115,10 @@ function SongForm() {
       }
 
       entries.push({
-        file,
-        title: meta.title || file.name.replace(/\.[^.]+$/, ""),
-        artist: meta.artist || "",
-        album: meta.album || "",
-        duration,
-        coverUrl: meta.coverUrl || "",
-        streamUrl: "",
-        uploading: false,
-        uploaded: false,
-        id3Filled,
+        file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
+        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
       });
     }
-
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
     if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} analysé${entries.length > 1 ? "s" : ""}`);
@@ -150,87 +128,45 @@ function SongForm() {
     setSongs((prev) => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   };
 
-  const removeSong = (idx: number) => {
-    setSongs((prev) => prev.filter((_, i) => i !== idx));
-  };
+  const removeSong = (idx: number) => { setSongs((prev) => prev.filter((_, i) => i !== idx)); };
 
   const handleSubmit = async () => {
     const toUpload = songs.filter((s) => !s.uploaded && s.title.trim() && s.artist.trim());
     if (toUpload.length === 0) return;
-
     setSubmitting(true);
 
     for (let i = 0; i < songs.length; i++) {
       const song = songs[i];
       if (song.uploaded || !song.title.trim() || !song.artist.trim()) continue;
-
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: true } : s));
 
-      // Upload audio file
       const ext = song.file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("audio").upload(path, song.file, {
-        contentType: song.file.type || "audio/mpeg",
-      });
-
-      if (uploadErr) {
-        toast.error(`Erreur upload: ${song.title}`);
-        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s));
-        continue;
-      }
+      const { error: uploadErr } = await supabase.storage.from("audio").upload(path, song.file, { contentType: song.file.type || "audio/mpeg" });
+      if (uploadErr) { toast.error(`Erreur upload: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
 
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
       const streamUrl = urlData.publicUrl;
 
-      // Check for duplicate (same title + artist)
-      const { data: existing } = await supabase.from("custom_songs")
-        .select("id")
-        .eq("title", song.title.trim())
-        .eq("artist", song.artist.trim())
-        .limit(1);
-
+      const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", song.title.trim()).eq("artist", song.artist.trim()).limit(1);
       if (existing && existing.length > 0) {
-        // Update existing song instead of blocking
-        const existingId = existing[0].id;
         const { error: updateErr } = await supabase.from("custom_songs").update({
-          album: song.album.trim() || null,
-          duration: song.duration || 0,
-          cover_url: song.coverUrl.trim() || null,
-          stream_url: streamUrl,
-        }).eq("id", existingId);
-
-        if (updateErr) {
-          toast.error(`Erreur mise à jour: ${song.title}`);
-          await supabase.storage.from("audio").remove([path]);
-        } else {
-          toast.success(`"${song.title}" mis à jour`);
-        }
+          album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+        }).eq("id", existing[0].id);
+        if (updateErr) { toast.error(`Erreur mise à jour: ${song.title}`); await supabase.storage.from("audio").remove([path]); }
+        else toast.success(`"${song.title}" mis à jour`);
         setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: !updateErr } : s));
         continue;
       }
 
-      // Insert into DB
       const { error: dbErr } = await supabase.from("custom_songs").insert({
-        user_id: effectiveUserId,
-        title: song.title.trim(),
-        artist: song.artist.trim(),
-        album: song.album.trim() || null,
-        duration: song.duration || 0,
-        cover_url: song.coverUrl.trim() || null,
-        stream_url: streamUrl,
+        user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
+        album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
       });
-
-      if (dbErr) {
-        toast.error(`Erreur DB: ${song.title}`);
-        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s));
-        continue;
-      }
-
+      if (dbErr) { toast.error(`Erreur DB: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: true, streamUrl } : s));
     }
-
     setSubmitting(false);
-    const uploadedCount = songs.filter((s) => s.uploaded).length + toUpload.length;
     toast.success(`${toUpload.length} chanson${toUpload.length > 1 ? "s" : ""} ajoutée${toUpload.length > 1 ? "s" : ""} !`);
   };
 
@@ -238,217 +174,265 @@ function SongForm() {
 
   return (
     <div className="space-y-4">
-      {/* File picker */}
       <input ref={fileRef} type="file" accept={ACCEPTED_AUDIO} multiple onChange={(e) => e.target.files && processFiles(e.target.files)} className="hidden" />
-      <button
+      
+      <motion.button
         type="button"
+        whileTap={{ scale: 0.98 }}
         onClick={() => fileRef.current?.click()}
         disabled={processing}
-        className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-border hover:border-primary/50 bg-secondary/30 hover:bg-secondary/50 transition-all text-sm font-medium text-muted-foreground hover:text-foreground"
+        className="w-full flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border-2 border-dashed border-border/50 hover:border-primary/40 bg-secondary/20 hover:bg-secondary/30 transition-all"
       >
-        {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-        {processing ? "Analyse en cours..." : "Sélectionner des fichiers audio"}
-      </button>
+        <div className="p-3 rounded-2xl bg-primary/10">
+          {processing ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary" />}
+        </div>
+        <span className="text-sm font-medium text-foreground">{processing ? "Analyse en cours..." : "Sélectionner des fichiers audio"}</span>
+        <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Max 50 Mo</span>
+      </motion.button>
 
-      {/* Song list */}
       {songs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">{songs.length} fichier{songs.length > 1 ? "s" : ""}</p>
+          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider px-1">
+            {songs.length} fichier{songs.length > 1 ? "s" : ""} • {songs.filter(s => s.uploaded).length} importé{songs.filter(s => s.uploaded).length > 1 ? "s" : ""}
+          </p>
           {songs.map((song, idx) => (
-            <div
+            <motion.div
               key={idx}
-              className={`rounded-xl border p-3 space-y-2 transition-all ${
-                song.uploaded
-                  ? "border-primary/30 bg-primary/5 opacity-70"
-                  : "border-border bg-card"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className={`rounded-2xl p-3.5 space-y-2.5 transition-all ${
+                song.uploaded ? "liquid-glass opacity-60" : "liquid-glass"
               }`}
             >
-              <div className="flex items-center gap-2">
-                <FileAudio className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-xs text-muted-foreground truncate flex-1">{song.file.name}</span>
-                {song.uploaded && <CheckCircle className="w-4 h-4 text-primary shrink-0" />}
-                {song.uploading && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
+              <div className="flex items-center gap-2.5">
+                {song.coverUrl ? (
+                  <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow-md" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <FileAudio className="w-4 h-4 text-muted-foreground/50" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{song.title || song.file.name}</p>
+                  <p className="text-[10px] text-muted-foreground/60 truncate">{song.artist || "Artiste inconnu"}</p>
+                </div>
+                {song.uploaded && <CheckCircle className="w-5 h-5 text-primary shrink-0" />}
+                {song.uploading && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
                 {!song.uploaded && !song.uploading && (
-                  <button type="button" onClick={() => removeSong(idx)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                  <button type="button" onClick={() => removeSong(idx)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
-
               {!song.uploaded && (
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    value={song.title}
-                    onChange={(e) => updateSong(idx, "title", e.target.value)}
-                    placeholder="Titre *"
-                    className={`px-2.5 py-1.5 rounded-lg bg-secondary border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 ${
-                      song.id3Filled.has("title") ? "border-primary/40" : "border-border"
-                    }`}
-                  />
-                  <input
-                    value={song.artist}
-                    onChange={(e) => updateSong(idx, "artist", e.target.value)}
-                    placeholder="Artiste *"
-                    className={`px-2.5 py-1.5 rounded-lg bg-secondary border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 ${
-                      song.id3Filled.has("artist") ? "border-primary/40" : "border-border"
-                    }`}
-                  />
-                  <input
-                    value={song.album}
-                    onChange={(e) => updateSong(idx, "album", e.target.value)}
-                    placeholder="Album"
-                    className={`px-2.5 py-1.5 rounded-lg bg-secondary border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 ${
-                      song.id3Filled.has("album") ? "border-primary/40" : "border-border"
-                    }`}
-                  />
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    {song.duration > 0 && <span>{Math.floor(song.duration / 60)}:{String(song.duration % 60).padStart(2, "0")}</span>}
-                    {song.coverUrl && <span className="text-primary">• Pochette</span>}
-                    {song.id3Filled.size > 0 && (
-                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-primary/15 text-primary">
-                        <Sparkles className="w-2 h-2" /> ID3
-                      </span>
-                    )}
-                  </div>
+                  <input value={song.title} onChange={(e) => updateSong(idx, "title", e.target.value)} placeholder="Titre *"
+                    className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("title") ? "border-primary/30" : "border-border/30"}`} />
+                  <input value={song.artist} onChange={(e) => updateSong(idx, "artist", e.target.value)} placeholder="Artiste *"
+                    className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("artist") ? "border-primary/30" : "border-border/30"}`} />
                 </div>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
-      {/* Submit */}
       {pendingCount > 0 && (
-        <button
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.97 }}
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/25 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-          Ajouter {pendingCount} chanson{pendingCount > 1 ? "s" : ""}
-        </button>
+          Importer {pendingCount} chanson{pendingCount > 1 ? "s" : ""}
+        </motion.button>
       )}
     </div>
   );
 }
 
-function AlbumForm() {
+function PlaylistForm() {
   const { user } = useAuth();
   const effectiveUserId = getEffectiveUserId(user?.id);
+  const { createPlaylist, playlists, addSongToPlaylist } = usePlayerStore();
+  const [name, setName] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
-  const [tracks, setTracks] = useState<UploadedTrack[]>([]);
-  const [id3Fields, setId3Fields] = useState<Set<string>>(new Set());
+  const [songs, setSongs] = useState<SongEntry[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleTracksUploaded = (uploaded: UploadedTrack[]) => {
-    setTracks(uploaded);
-    if (uploaded.length === 0) return;
+  const processFiles = async (files: FileList) => {
+    setProcessing(true);
+    const entries: SongEntry[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd`); continue; }
+      const id3 = await extractID3(file, file.name);
+      const id3Filled = new Set<string>();
+      let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
+      if (meta.title) id3Filled.add("title");
+      if (meta.artist) id3Filled.add("artist");
 
-    const filled = new Set<string>();
+      let duration = id3.duration && id3.duration > 0 ? Math.round(id3.duration) : 0;
+      if (!duration) {
+        try {
+          const objectUrl = URL.createObjectURL(file);
+          duration = await new Promise<number>((resolve) => {
+            const audio = new Audio();
+            audio.preload = "metadata"; audio.src = objectUrl;
+            audio.addEventListener("loadedmetadata", () => { resolve(audio.duration && isFinite(audio.duration) ? Math.round(audio.duration) : 0); URL.revokeObjectURL(objectUrl); }, { once: true });
+            audio.addEventListener("error", () => { resolve(0); URL.revokeObjectURL(objectUrl); }, { once: true });
+          });
+        } catch { duration = 0; }
+      }
 
-    setForm((f) => {
-      const updated = { ...f };
-      // Auto-fill artist from first track's ID3 artist if empty
-      const firstArtist = uploaded.find((t) => t.artist)?.artist;
-      if (!f.artist && firstArtist) { updated.artist = firstArtist; filled.add("artist"); }
+      if (!meta.title || !meta.artist || !meta.coverUrl) {
+        const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
+        try {
+          const results = await deezerApi.searchTracks(meta.title || cleanName, 3);
+          if (results.length > 0) {
+            if (!meta.title) meta.title = results[0].title;
+            if (!meta.artist) meta.artist = results[0].artist;
+            if (!meta.coverUrl) meta.coverUrl = results[0].coverUrl;
+          }
+        } catch {}
+      }
 
-      // Auto-fill cover from first track's ID3 cover
-      const firstCover = uploaded.find((t) => t.coverUrl)?.coverUrl;
-      if (!f.coverUrl && firstCover) { updated.coverUrl = firstCover; filled.add("coverUrl"); }
-
-      return updated;
-    });
-
-    setId3Fields((prev) => {
-      const next = new Set(prev);
-      filled.forEach((f) => next.add(f));
-      return next;
-    });
-
-    if (filled.size > 0) {
-      toast.success(`${filled.size} champ${filled.size > 1 ? "s" : ""} rempli${filled.size > 1 ? "s" : ""} via ID3`);
+      entries.push({
+        file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
+        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
+      });
     }
+    setSongs((prev) => [...prev, ...entries]);
+    setProcessing(false);
+    if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} prêt${entries.length > 1 ? "s" : ""}`);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim() || !form.artist.trim()) return;
+  const handleSubmit = async () => {
+    if (!name.trim()) { toast.error("Donnez un nom à la playlist"); return; }
     setLoading(true);
 
-    const { data: album, error } = await supabase.from("custom_albums").insert({
-      user_id: effectiveUserId,
-      title: form.title.trim(),
-      artist: form.artist.trim(),
-      cover_url: form.coverUrl.trim() || null,
-      year: parseInt(form.year) || null,
-    }).select("id").single();
+    // Create the playlist
+    await createPlaylist(name.trim());
+    // Find the newly created playlist
+    const newPlaylists = usePlayerStore.getState().playlists;
+    const created = newPlaylists.find((p) => p.name === name.trim());
+    if (!created) { toast.error("Erreur création playlist"); setLoading(false); return; }
 
-    if (error) { toast.error("Erreur: " + error.message); setLoading(false); return; }
+    // Update cover if provided
+    if (coverUrl.trim()) {
+      await supabase.from("playlists").update({ cover_url: coverUrl.trim() }).eq("id", created.id);
+    }
 
-    if (tracks.length > 0 && album) {
-      // Filter out duplicates
-      const dupeChecks = await Promise.all(tracks.map(async (t) => {
-        const { data } = await supabase.from("custom_songs")
-          .select("id")
-          .eq("title", t.title)
-          .eq("artist", t.artist || form.artist.trim())
-          .limit(1);
-        return { track: t, isDupe: !!(data && data.length > 0) };
-      }));
+    // Upload songs and add to playlist
+    let addedCount = 0;
+    for (let i = 0; i < songs.length; i++) {
+      const song = songs[i];
+      if (!song.title.trim() || !song.artist.trim()) continue;
+      setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: true } : s));
 
-      const newTracks = dupeChecks.filter((c) => !c.isDupe).map((c) => c.track);
-      const dupeCount = dupeChecks.filter((c) => c.isDupe).length;
-      if (dupeCount > 0) toast.info(`${dupeCount} piste${dupeCount > 1 ? "s" : ""} déjà existante${dupeCount > 1 ? "s" : ""}, ignorée${dupeCount > 1 ? "s" : ""}`);
+      // Upload audio
+      const ext = song.file.name.split(".").pop()?.toLowerCase() || "mp3";
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("audio").upload(path, song.file, { contentType: song.file.type || "audio/mpeg" });
+      if (uploadErr) { setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
 
-      if (newTracks.length > 0) {
-        const songInserts = newTracks.map((t) => ({
-          user_id: effectiveUserId,
-          title: t.title,
-          artist: t.artist || form.artist.trim(),
-          album: form.title.trim(),
-          duration: t.duration,
-          cover_url: form.coverUrl.trim() || null,
-          stream_url: t.streamUrl,
-        }));
+      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
+      const streamUrl = urlData.publicUrl;
 
-        const { error: songsError } = await supabase.from("custom_songs").insert(songInserts);
-        if (songsError) {
-          toast.error("Album créé mais erreur sur les pistes: " + songsError.message);
-          setLoading(false);
-          return;
-        }
-      }
+      // Also save to custom_songs
+      await supabase.from("custom_songs").upsert({
+        user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
+        album: song.album.trim() || null, duration: song.duration || 0,
+        cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+      }, { onConflict: "title,artist" });
+
+      // Add to playlist
+      await addSongToPlaylist(created.id, {
+        id: `custom-${Date.now()}-${i}`, title: song.title.trim(), artist: song.artist.trim(),
+        album: song.album.trim(), duration: song.duration, coverUrl: song.coverUrl, streamUrl, liked: false,
+      });
+
+      setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: true } : s));
+      addedCount++;
     }
 
     setLoading(false);
-    const trackCount = tracks.length;
-    toast.success(`Album ajouté${trackCount > 0 ? ` avec ${trackCount} piste${trackCount > 1 ? "s" : ""}` : ""} !`);
-    setForm({ title: "", artist: "", coverUrl: "", year: "" });
-    setTracks([]);
-    setId3Fields(new Set());
+    toast.success(`Playlist "${name.trim()}" créée${addedCount > 0 ? ` avec ${addedCount} titre${addedCount > 1 ? "s" : ""}` : ""} !`);
+    setName(""); setCoverUrl(""); setSongs([]);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <FieldInput label="Titre" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Nom de l'album" required />
-      <FieldInput label="Artiste" value={form.artist} onChange={(v) => setForm({ ...form, artist: v })} placeholder="Nom de l'artiste" required autoFilled={id3Fields.has("artist")} />
-      <FieldInput label="Année" value={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2025" type="number" />
-      <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
-      {id3Fields.has("coverUrl") && form.coverUrl && (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold -mt-2">
-          <Sparkles className="w-2.5 h-2.5" /> Pochette ID3
-        </span>
-      )}
-      <AlbumFolderPicker
-        albumArtist={form.artist}
-        onTracksUploaded={handleTracksUploaded}
-      />
-      <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-        Ajouter l'album
-      </button>
-    </form>
+    <div className="space-y-5">
+      <FieldInput label="Nom de la playlist" value={name} onChange={setName} placeholder="Ma playlist" required />
+      <CoverImagePicker value={coverUrl} onChange={setCoverUrl} />
+
+      {/* Add songs section */}
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-foreground flex items-center gap-2">
+          <Music className="w-4 h-4 text-primary" />
+          Ajouter des titres
+          <span className="text-[10px] text-muted-foreground/50">(optionnel)</span>
+        </p>
+
+        <input ref={fileRef} type="file" accept={ACCEPTED_AUDIO} multiple onChange={(e) => e.target.files && processFiles(e.target.files)} className="hidden" />
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.98 }}
+          onClick={() => fileRef.current?.click()}
+          disabled={processing}
+          className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-border/40 hover:border-primary/30 bg-secondary/10 transition-all text-sm text-muted-foreground hover:text-foreground"
+        >
+          {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {processing ? "Analyse..." : "Ajouter des fichiers audio"}
+        </motion.button>
+
+        {songs.length > 0 && (
+          <div className="space-y-1.5">
+            {songs.map((song, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${song.uploaded ? "opacity-50" : "liquid-glass"}`}
+              >
+                <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
+                {song.coverUrl ? (
+                  <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center"><Music className="w-3.5 h-3.5 text-muted-foreground/40" /></div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <input value={song.title} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, title: e.target.value } : s))}
+                    className="w-full text-xs font-semibold text-foreground bg-transparent focus:outline-none" placeholder="Titre" />
+                  <input value={song.artist} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, artist: e.target.value } : s))}
+                    className="w-full text-[10px] text-muted-foreground/60 bg-transparent focus:outline-none" placeholder="Artiste" />
+                </div>
+                {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
+                  <button onClick={() => setSongs(p => p.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.97 }}
+        onClick={handleSubmit}
+        disabled={loading || !name.trim()}
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/25 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+        Créer la playlist{songs.length > 0 ? ` (${songs.length} titre${songs.length > 1 ? "s" : ""})` : ""}
+      </motion.button>
+    </div>
   );
 }
 
@@ -463,11 +447,8 @@ function RadioForm() {
     if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: effectiveUserId,
-      name: form.name.trim(),
-      genre: form.genre.trim() || null,
-      cover_url: form.coverUrl.trim() || null,
-      stream_url: form.streamUrl.trim() || null,
+      user_id: effectiveUserId, name: form.name.trim(), genre: form.genre.trim() || null,
+      cover_url: form.coverUrl.trim() || null, stream_url: form.streamUrl.trim() || null,
     });
     setLoading(false);
     if (error) { toast.error("Erreur: " + error.message); return; }
@@ -476,15 +457,20 @@ function RadioForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <FieldInput label="Nom de la station" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="France Inter" required />
       <FieldInput label="Genre" value={form.genre} onChange={(v) => setForm({ ...form, genre: v })} placeholder="Pop, Jazz, Info..." />
       <CoverImagePicker value={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
       <FieldInput label="URL du flux audio" value={form.streamUrl} onChange={(v) => setForm({ ...form, streamUrl: v })} placeholder="https://..." />
-      <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+      <motion.button
+        type="submit"
+        whileTap={{ scale: 0.97 }}
+        disabled={loading}
+        className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/25 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
         Ajouter la station
-      </button>
+      </motion.button>
     </form>
   );
 }
@@ -493,40 +479,51 @@ const AddContentPage = () => {
   const [tab, setTab] = useState<Tab>("song");
 
   return (
-    <div className="p-4 md:p-8 pb-40 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Ajouter du contenu</h1>
+    <div className="pb-40 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
+      {/* Header */}
+      <div className="px-4 md:px-8 mb-6">
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Ajouter</h1>
+        <p className="text-xs text-muted-foreground/60 mt-1">Importez votre musique et créez vos playlists</p>
       </div>
 
-      <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              tab === key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            }`}
+      {/* Tabs */}
+      <div className="px-4 md:px-8 mb-6">
+        <div className="grid grid-cols-3 gap-2">
+          {tabs.map(({ key, label, icon: Icon, desc }) => (
+            <motion.button
+              key={key}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setTab(key)}
+              className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl text-center transition-all ${
+                tab === key
+                  ? "bg-primary/10 ring-1 ring-primary/25 text-primary"
+                  : "liquid-glass text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-xs font-semibold">{label}</span>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 md:px-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="rounded-2xl liquid-glass p-5"
           >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
+            {tab === "song" && <SongForm />}
+            {tab === "playlist" && <PlaylistForm />}
+            {tab === "radio" && <RadioForm />}
+          </motion.div>
+        </AnimatePresence>
       </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="glass-panel-light rounded-xl p-6"
-        >
-          {tab === "song" && <SongForm />}
-          {tab === "album" && <AlbumForm />}
-          {tab === "radio" && <RadioForm />}
-        </motion.div>
-      </AnimatePresence>
     </div>
   );
 };

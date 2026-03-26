@@ -230,6 +230,7 @@ const LibraryPage = () => {
   const [newName, setNewName] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -237,7 +238,7 @@ const LibraryPage = () => {
     likedSongs, playlists, recentlyPlayed, playlistSongs,
     createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
     currentSong, isPlaying, togglePlay, clearRecentlyPlayed, loadUserData, userId,
-    toggleLike
+    toggleLike, addSongToPlaylist
   } = usePlayerStore();
   const queryClient = useQueryClient();
 
@@ -724,6 +725,58 @@ const LibraryPage = () => {
                                 >
                                   <ListPlus className="w-3 h-3" /> File
                                 </button>
+                                <div className="relative">
+                                  <button
+                                    onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium"
+                                  >
+                                    <ListMusic className="w-3 h-3" /> Playlist
+                                  </button>
+                                  <AnimatePresence>
+                                    {showPlaylistPicker && (
+                                      <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                                        className="absolute left-0 bottom-full mb-1 z-50 w-56 rounded-xl border border-border bg-popover shadow-xl overflow-hidden"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <div className="p-2 border-b border-border">
+                                          <p className="text-xs font-semibold text-muted-foreground px-2 py-1">Ajouter {selectedIds.size} titre{selectedIds.size > 1 ? "s" : ""} à</p>
+                                        </div>
+                                        <div className="max-h-48 overflow-y-auto p-1">
+                                          {playlists.length === 0 ? (
+                                            <p className="text-xs text-muted-foreground text-center py-4">Aucune playlist</p>
+                                          ) : (
+                                            playlists.map((p) => (
+                                              <button
+                                                key={p.id}
+                                                onClick={async () => {
+                                                  const sel = sortedCustomSongs.filter((s) => selectedIds.has(s.id));
+                                                  const existing = playlistSongs[p.id] || [];
+                                                  let added = 0;
+                                                  for (const s of sel) {
+                                                    if (!existing.some((e) => e.id === s.id)) {
+                                                      await addSongToPlaylist(p.id, s);
+                                                      added++;
+                                                    }
+                                                  }
+                                                  toast.success(`${added} titre${added > 1 ? "s" : ""} ajouté${added > 1 ? "s" : ""} à "${p.name}"`);
+                                                  setShowPlaylistPicker(false);
+                                                  setSelectMode(false); setSelectedIds(new Set());
+                                                }}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-lg hover:bg-accent transition-colors"
+                                              >
+                                                <ListMusic className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                <span className="flex-1 truncate text-foreground">{p.name}</span>
+                                              </button>
+                                            ))
+                                          )}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
                               </>
                             )}
                           </div>
