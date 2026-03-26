@@ -177,7 +177,7 @@ const SearchPage = () => {
 
     const previewTracks = allDzResults.filter(
       (s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
-    ).slice(0, 20);
+    ).slice(0, 40);
     if (previewTracks.length === 0) {
       setResolveProgress(null);
       return;
@@ -191,9 +191,9 @@ const SearchPage = () => {
 
     const resolveInBackground = async () => {
       let upgradedCount = 0;
-      for (let i = 0; i < previewTracks.length; i += 4) {
+      for (let i = 0; i < previewTracks.length; i += 6) {
         if (controller.signal.aborted) return;
-        const batch = previewTracks.slice(i, i + 4);
+        const batch = previewTracks.slice(i, i + 6);
         const resolved = await Promise.all(
           batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s))
         );
