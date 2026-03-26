@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
@@ -234,6 +235,7 @@ const LibraryPage = () => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const {
     likedSongs, playlists, recentlyPlayed, playlistSongs,
     createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
@@ -371,26 +373,27 @@ const LibraryPage = () => {
   const headerSong = tab === "recent" ? recentMusic[0] : tab === "liked" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
   const headerColor = useDominantColor(headerSong?.coverUrl);
 
-  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+  const allTabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "recent", label: "Récents", icon: Clock },
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
-    { key: "custom", label: "Mes titres", icon: Music },
+    ...(isAdmin ? [{ key: "custom" as Tab, label: "Mes titres", icon: Music }] : []),
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
 
   const isGuest = !authLoading && !user;
 
   useEffect(() => {
-    if (isGuest && !isOffline && !["downloads", "custom"].includes(tab)) setTab("custom");
+    if (isGuest && !isOffline && tab !== "downloads") setTab("downloads");
     if (isOffline && tab !== "downloads") setTab("downloads");
-  }, [isGuest, isOffline]);
+    if (!isAdmin && tab === "custom") setTab("recent");
+  }, [isGuest, isOffline, isAdmin]);
 
   const visibleTabs = isOffline
-    ? tabs.filter((t) => t.key === "downloads")
+    ? allTabs.filter((t) => t.key === "downloads")
     : isGuest
-      ? tabs.filter((t) => t.key === "downloads" || t.key === "custom")
-      : tabs;
+      ? allTabs.filter((t) => t.key === "downloads")
+      : allTabs;
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative">
