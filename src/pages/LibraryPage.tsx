@@ -83,8 +83,20 @@ function PremiumSongRow({
         selected ? "bg-primary/12 ring-1 ring-primary/25" : isActive ? "bg-primary/8 ring-1 ring-primary/15" : "hover:bg-secondary/50"
       }`}
     >
-      {/* Index or equalizer */}
-      {showIndex && (
+      {/* Selection checkbox or index */}
+      {selectable ? (
+        <div className="w-7 flex-shrink-0 flex items-center justify-center">
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+            selected ? "bg-primary border-primary" : "border-muted-foreground/30"
+          }`}>
+            {selected && (
+              <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        </div>
+      ) : showIndex ? (
         <div className="w-7 flex-shrink-0 flex items-center justify-center">
           {isActive && isPlaying ? (
             <div className="flex items-end gap-[2px] h-4">
@@ -98,22 +110,24 @@ function PremiumSongRow({
             </span>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Cover */}
       <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md transition-shadow ${
         isActive ? "shadow-primary/20 ring-1 ring-primary/30" : "shadow-black/20"
       }`}>
         <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
-        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-          isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
-        }`}>
-          {isActive && isPlaying ? (
-            <Pause className="w-4 h-4 text-white" />
-          ) : (
-            <Play className="w-4 h-4 text-white ml-0.5" />
-          )}
-        </div>
+        {!selectable && (
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+            isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
+          }`}>
+            {isActive && isPlaying ? (
+              <Pause className="w-4 h-4 text-white" />
+            ) : (
+              <Play className="w-4 h-4 text-white ml-0.5" />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Title & Artist */}
