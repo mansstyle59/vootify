@@ -265,12 +265,15 @@ export const deezerApi = {
         `${mainArtist} ${song.title}`,
         song.title,
         `${song.title} ${mainArtist}`,
+        // Additional broader queries for better hit rate
+        song.title.replace(/\(.*?\)/g, "").trim(),
+        `${mainArtist} ${song.title.replace(/\(.*?\)/g, "").trim()}`,
       ];
 
       const seen = new Set<string>();
       const uniqueQueries = queries.filter((q) => {
         const n = norm(q);
-        if (seen.has(n)) return false;
+        if (seen.has(n) || n.length < 3) return false;
         seen.add(n);
         return true;
       });
@@ -280,7 +283,7 @@ export const deezerApi = {
 
       for (const q of uniqueQueries) {
         try {
-          const results = await jiosaavnApi.search(q, 10);
+          const results = await jiosaavnApi.search(q, 15);
           for (const r of results) {
             const s = scoreCandidate(r);
             if (s > bestScore) {
@@ -288,18 +291,20 @@ export const deezerApi = {
               bestMatch = r;
             }
           }
-          if (bestScore >= 200) break;
+          if (bestScore >= 180) break;
         } catch {
           // continue with next query
         }
       }
 
-      if (bestMatch?.streamUrl && bestScore >= 80) {
+      // Lowered threshold from 80 to 50 for more HD matches
+      if (bestMatch?.streamUrl && bestScore >= 50) {
         hdCache.set(song.id, {
           streamUrl: bestMatch.streamUrl,
+          coverUrl: bestMatch.coverUrl || undefined,
           ts: Date.now(),
         });
-        return { ...song, streamUrl: bestMatch.streamUrl };
+        return { ...song, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || song.coverUrl };
       }
     } catch (e) {
       console.error("JioSaavn resolve failed:", e);
