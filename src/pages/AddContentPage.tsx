@@ -563,20 +563,7 @@ function RadioForm() {
 }
 
 const AddContentPage = () => {
-  const { isAdmin, loading, signOut } = useAdminAuth();
   const [tab, setTab] = useState<Tab>("song");
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return <AdminLoginForm />;
-  }
 
   return (
     <div className="p-4 md:p-8 pb-40 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
