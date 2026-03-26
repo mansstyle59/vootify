@@ -1168,19 +1168,28 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   </AnimatePresence>
                 </div>
               </div>
-              <button
-                onClick={() => toggleLike(currentSong)}
-                className="p-1 active:scale-90 transition-transform"
+              <motion.button
+                whileTap={{ scale: 1.3 }}
+                onClick={() => {
+                  toggleLike(currentSong);
+                  if (navigator.vibrate) navigator.vibrate(10);
+                }}
+                className="p-1 transition-transform"
               >
-                <PlusCircle className={`w-7 h-7 ${liked ? "text-primary" : "text-foreground/40"}`} />
-              </button>
+                <motion.div
+                  animate={liked ? { scale: [1, 1.3, 1] } : {}}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(141_73%_42%/0.4)]" : "text-foreground/40"}`} />
+                </motion.div>
+              </motion.button>
             </div>
 
-            {/* Progress bar - Spotify style, smooth */}
+            {/* Progress bar - ultra premium with time preview */}
             <div className="mb-5">
               <div
                 ref={progressBarRef}
-                className="h-[4px] rounded-full cursor-pointer relative group py-3 -my-3"
+                className="h-[5px] rounded-full cursor-pointer relative group py-3 -my-3"
                 style={{ touchAction: "none" }}
                 onClick={handleSeek}
                 onTouchStart={handleTouchSeek}
@@ -1190,19 +1199,45 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 onMouseUp={() => setIsSeeking(false)}
                 onMouseLeave={() => setIsSeeking(false)}
               >
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[4px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.15)" }}>
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[5px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.12)" }}>
                   <div
                     className="h-full rounded-full relative"
-                    style={{ width: `${progressPct}%`, background: "hsl(0 0% 100% / 0.85)", transition: isSeeking ? "none" : "width 0.3s linear" }}
+                    style={{
+                      width: `${progressPct}%`,
+                      background: "linear-gradient(90deg, hsl(141 73% 42% / 0.8), hsl(0 0% 100% / 0.85))",
+                      transition: isSeeking ? "none" : "width 0.3s linear",
+                    }}
                   >
-                    <div
-                      className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm shadow-black/30"
+                    {/* Thumb with glow */}
+                    <motion.div
+                      animate={{ scale: isSeeking ? 1 : 0.6 }}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-[16px] h-[16px] rounded-full bg-foreground"
                       style={{
-                        width: isSeeking ? 14 : 7,
-                        height: isSeeking ? 14 : 7,
-                        transition: "width 0.15s, height 0.15s",
+                        boxShadow: isSeeking
+                          ? "0 0 12px hsl(141 73% 42% / 0.5), 0 2px 8px rgba(0,0,0,0.3)"
+                          : "0 2px 6px rgba(0,0,0,0.3)",
+                        transition: "box-shadow 0.2s",
                       }}
                     />
+                    {/* Time preview bubble */}
+                    <AnimatePresence>
+                      {isSeeking && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5, scale: 0.8 }}
+                          animate={{ opacity: 1, y: -8, scale: 1 }}
+                          exit={{ opacity: 0, y: 5, scale: 0.8 }}
+                          className="absolute -right-5 -top-10 px-2 py-1 rounded-lg text-[11px] font-bold text-foreground tabular-nums"
+                          style={{
+                            background: "hsl(240 8% 14% / 0.8)",
+                            backdropFilter: "blur(12px)",
+                            WebkitBackdropFilter: "blur(12px)",
+                            border: "1px solid hsl(0 0% 100% / 0.1)",
+                          }}
+                        >
+                          {formatDuration(Math.floor(progress))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
@@ -1212,43 +1247,61 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Transport controls */}
+            {/* Transport controls — ultra premium */}
             <div className="flex items-center justify-between w-full mb-6">
-              <button onClick={toggleShuffle} className="active:scale-90 transition-transform">
-                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary" : "text-foreground/50"}`} />
-              </button>
-              <button onClick={previous} className="active:scale-90 transition-transform">
+              <motion.button whileTap={{ scale: 0.85 }} onClick={toggleShuffle} className="transition-all">
+                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" : "text-foreground/50"}`} />
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.8 }} onClick={previous} className="transition-all">
                 <SkipBack className="w-9 h-9 text-foreground fill-current" />
-              </button>
-              <button
-                onClick={togglePlay}
-                className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={() => {
+                  togglePlay();
+                  if (navigator.vibrate) navigator.vibrate(8);
+                }}
+                className="w-[76px] h-[76px] rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: "linear-gradient(145deg, hsl(0 0% 100% / 0.95), hsl(0 0% 85% / 0.9))",
+                  boxShadow: isPlaying
+                    ? "0 0 30px hsl(141 73% 42% / 0.25), 0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)"
+                    : "0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
+                }}
               >
-                {isPlaying ? (
-                  <Pause className="w-9 h-9 text-background fill-current" />
-                ) : (
-                  <Play className="w-9 h-9 text-background fill-current ml-1" />
-                )}
-              </button>
-              <button onClick={next} className="active:scale-90 transition-transform">
+                <AnimatePresence mode="wait" initial={false}>
+                  {isPlaying ? (
+                    <motion.div key="pause" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Pause className="w-9 h-9 text-background fill-current" />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="play" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Play className="w-9 h-9 text-background fill-current ml-1" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.8 }} onClick={next} className="transition-all">
                 <SkipForward className="w-9 h-9 text-foreground fill-current" />
-              </button>
-              <button onClick={cycleRepeat} className="active:scale-90 transition-transform">
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.85 }} onClick={cycleRepeat} className="transition-all">
                 {repeat === "one" ? (
-                  <Repeat1 className="w-6 h-6 text-primary" />
+                  <Repeat1 className="w-6 h-6 text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" />
                 ) : (
-                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary" : "text-foreground/50"}`} />
+                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" : "text-foreground/50"}`} />
                 )}
-              </button>
+              </motion.button>
             </div>
 
             {/* Bottom actions */}
             <div className="flex items-center justify-between">
-              <button className="p-1.5 active:scale-90 transition-transform">
-                <Heart className={`w-6 h-6 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
-                  onClick={() => toggleLike(currentSong)}
-                />
-              </button>
+              <motion.button whileTap={{ scale: 1.2 }} className="p-1.5 transition-transform">
+                <motion.div animate={liked ? { scale: [1, 1.25, 1] } : {}} transition={{ duration: 0.3 }}>
+                  <Heart className={`w-6 h-6 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
+                    onClick={() => { toggleLike(currentSong); if (navigator.vibrate) navigator.vibrate(10); }}
+                  />
+                </motion.div>
+              </motion.button>
 
 
               {/* Download button */}
