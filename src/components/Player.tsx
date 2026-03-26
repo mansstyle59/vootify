@@ -86,8 +86,9 @@ export function MiniPlayer() {
           (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
 
         if (needsResolution) {
+          setResolveStep("Recherche Custom…");
           try {
-            const resolved = await deezerApi.resolveFullStream(songToPlay);
+            const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
@@ -95,6 +96,7 @@ export function MiniPlayer() {
           } catch (e) {
             console.error("Stream resolution failed:", e);
           }
+          setResolveStep(null);
 
           // If still a 30s preview or no stream → skip
           if (!songToPlay.streamUrl || (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
