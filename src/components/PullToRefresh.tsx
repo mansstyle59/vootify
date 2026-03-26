@@ -88,4 +88,4 @@ export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(func
       </motion.div>
     </div>
   );
-}
+});
