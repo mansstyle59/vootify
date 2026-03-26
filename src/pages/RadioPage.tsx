@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getEffectiveUserId } from "@/lib/deviceId";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, X, Check, Waves, LayoutGrid, List, Volume2 } from "lucide-react";
@@ -164,8 +165,9 @@ const RadioPage = () => {
   };
 
   const saveStation = async (station: RadioBrowserStation) => {
+    const effectiveUserId = getEffectiveUserId(user?.id);
     const { error } = await supabase.from("custom_radio_stations").upsert({
-      id: station.id, user_id: user!.id, name: station.name,
+      id: station.id, user_id: effectiveUserId, name: station.name,
       genre: station.genre, cover_url: station.coverUrl, stream_url: station.streamUrl,
     }, { onConflict: "id" });
     if (error) { toast.error("Erreur lors de la sauvegarde"); }
