@@ -75,33 +75,69 @@ const PlaylistDetailPage = () => {
 
   useEffect(() => {
     resolveAbortRef.current?.abort();
-    if (songs.length === 0) return;
-    const needsResolve = songs.filter((s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview")));
-    if (needsResolve.length === 0) return;
+    setResolvedSongs(new Map());
+
+    if (songs.length === 0) {
+      setResolveProgress(null);
+      return;
+    }
+
+    const needsResolve = songs.filter(
+      (s) =>
+        s.id.startsWith("dz-") &&
+        (!s.streamUrl || s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
+    );
+
+    if (needsResolve.length === 0) {
+      setResolveProgress(null);
+      return;
+    }
+
     const controller = new AbortController();
     resolveAbortRef.current = controller;
     setResolveProgress({ done: 0, total: needsResolve.length });
+
     const resolve = async () => {
-      let done = 0, upgraded = 0;
+      let done = 0;
+      let upgraded = 0;
+
       for (let i = 0; i < needsResolve.length; i += 4) {
         if (controller.signal.aborted) return;
+
         const batch = needsResolve.slice(i, i + 4);
         const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s)));
+
         if (controller.signal.aborted) return;
+
         done += batch.length;
         setResolveProgress({ done, total: needsResolve.length });
-        const newResolved = new Map(resolvedSongs);
-        results.forEach((r, idx) => { if (r.streamUrl && r.streamUrl !== batch[idx].streamUrl) { newResolved.set(r.id, r); upgraded++; } });
-        if (newResolved.size > resolvedSongs.size) setResolvedSongs(new Map(newResolved));
+
+        setResolvedSongs((prev) => {
+          const next = new Map(prev);
+          results.forEach((r, idx) => {
+            const isHd =
+              !!r.streamUrl &&
+              !r.streamUrl.includes("dzcdn.net") &&
+              !r.streamUrl.includes("cdn-preview");
+
+            if (isHd && r.streamUrl !== batch[idx].streamUrl) {
+              next.set(r.id, r);
+              upgraded++;
+            }
+          });
+          return next;
+        });
       }
+
       if (!controller.signal.aborted) {
         if (upgraded > 0) toast.success(`${upgraded} morceau${upgraded > 1 ? "x" : ""} HD`);
-        setTimeout(() => setResolveProgress(null), 1500);
+        setTimeout(() => setResolveProgress(null), 1200);
       }
     };
+
     resolve();
     return () => controller.abort();
-  }, [songs.length, id]);
+  }, [songs, id]);
 
   const displaySongs = songs.map((s) => resolvedSongs.get(s.id) || s);
   const totalDuration = displaySongs.reduce((sum, t) => sum + t.duration, 0);
