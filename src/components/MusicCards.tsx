@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus } from "lucide-react";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
+import { toast } from "sonner";
 
 /** Determine the source badge type for a song */
 function getSongSourceType(song: Song): "custom" | "hd" | "no-hd" | null {
