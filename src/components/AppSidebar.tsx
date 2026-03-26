@@ -3,6 +3,7 @@ import { Home, Search, Library, Radio, PlusCircle, LogOut } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useCallback } from "react";
 
 const navItems = [
   { to: "/", icon: Home, label: "Accueil" },
@@ -14,6 +15,26 @@ const navItems = [
 const adminItems = [
   { to: "/add", icon: PlusCircle, label: "Ajouter" },
 ];
+
+// Route → lazy chunk mapping for prefetch
+const routeImports: Record<string, () => Promise<unknown>> = {
+  "/": () => import("@/pages/Home"),
+  "/search": () => import("@/pages/SearchPage"),
+  "/library": () => import("@/pages/LibraryPage"),
+  "/radio": () => import("@/pages/RadioPage"),
+  "/add": () => import("@/pages/AddContentPage"),
+};
+
+const prefetched = new Set<string>();
+
+function prefetchRoute(to: string) {
+  if (prefetched.has(to)) return;
+  const loader = routeImports[to];
+  if (loader) {
+    prefetched.add(to);
+    loader();
+  }
+}
 
 export function AppSidebar() {
   const { isAdmin } = useAdminAuth();
@@ -38,6 +59,8 @@ export function AppSidebar() {
             key={item.to}
             to={item.to}
             end={item.to === "/"}
+            onMouseEnter={() => prefetchRoute(item.to)}
+            onTouchStart={() => prefetchRoute(item.to)}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
@@ -92,6 +115,7 @@ export function MobileNav() {
             key={item.to}
             to={item.to}
             end={item.to === "/"}
+            onTouchStart={() => prefetchRoute(item.to)}
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors ${
                 isActive ? "text-primary" : "text-muted-foreground"
