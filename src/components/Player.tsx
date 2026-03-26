@@ -46,6 +46,7 @@ export function MiniPlayer() {
   const crossfadeRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
+  const loadAbortRef = useRef<AbortController | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
@@ -117,11 +118,25 @@ export function MiniPlayer() {
 
     const isNewTrack = prevSongId !== null && prevSongId !== currentSong.id;
 
+    // Abort any in-flight load for a previous track (rapid clicking protection)
+    loadAbortRef.current?.abort();
+    const abortController = new AbortController();
+    loadAbortRef.current = abortController;
+
+    if (isNewTrack) {
+      // Immediately stop current audio to prevent overlap
+      console.log(`[player] STOP CURRENT TRACK: "${prevSongId}"`);
+      audio.pause();
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
+      console.log(`[player] LOAD NEW TRACK: "${songToPlay.title}" (id: ${songToPlay.id})`);
 
       // PRIORITY: check offline cache first — essential for airplane mode
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
+      if (abortController.signal.aborted) return; // User clicked another track
 
       if (cachedUrl) {
         // Also resolve cached cover art for offline display
@@ -140,6 +155,7 @@ export function MiniPlayer() {
           setResolveStep("Recherche Custom…");
           try {
             const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
+            if (abortController.signal.aborted) return; // User clicked another track
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
@@ -163,7 +179,7 @@ export function MiniPlayer() {
       const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
 
-      console.log(`[player] ${isNewTrack ? "Track change" : "Play/pause"}: "${songToPlay.title}" | bg=${document.hidden}`);
+      console.log(`[player] PLAY TRACK ID: ${songToPlay.id} | "${songToPlay.title}" | ${isNewTrack ? "NEW" : "TOGGLE"} | bg=${document.hidden}`);
 
       if (crossfadeEnabled && isNewTrack && audio.src && !audio.paused) {
         // Crossfade: move current audio to crossfade ref and fade it out
