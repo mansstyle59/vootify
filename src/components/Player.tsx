@@ -821,20 +821,32 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                           </button>
                         )}
                       </div>
-                      <div className="space-y-0.5">
+                      <Reorder.Group
+                        axis="y"
+                        values={upcoming}
+                        onReorder={(newUpcoming) => {
+                          const newQueue = [...played, currentSong, ...newUpcoming];
+                          setQueue(newQueue);
+                        }}
+                        className="space-y-0.5"
+                      >
                         {upcoming.map((song, i) => (
-                          <motion.div
+                          <Reorder.Item
                             key={song.id}
+                            value={song}
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: i * 0.02 }}
-                            className="group"
+                            whileDrag={{ scale: 1.03, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}
+                            className="group cursor-grab active:cursor-grabbing"
+                            style={{ touchAction: "pan-x" }}
                           >
-                            <button
+                            <div
                               onClick={() => { play(song); setQueue(queue); }}
-                              className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left hover:bg-white/5 active:bg-white/10 transition-colors"
+                              className="w-full flex items-center gap-2 p-2.5 rounded-xl text-left hover:bg-white/5 active:bg-white/10 transition-colors"
                             >
-                              <span className="w-5 text-center text-[11px] text-foreground/30 tabular-nums font-medium">{i + 1}</span>
+                              <GripVertical className="w-4 h-4 text-foreground/20 shrink-0 touch-none" />
+                              <span className="w-4 text-center text-[11px] text-foreground/30 tabular-nums font-medium">{i + 1}</span>
                               <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" />
                               <div className="min-w-0 flex-1">
                                 <p className="text-[13px] text-foreground truncate font-medium">{song.title}</p>
@@ -851,10 +863,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
-                            </button>
-                          </motion.div>
+                            </div>
+                          </Reorder.Item>
                         ))}
-                      </div>
+                      </Reorder.Group>
                     </div>
                   )}
 
