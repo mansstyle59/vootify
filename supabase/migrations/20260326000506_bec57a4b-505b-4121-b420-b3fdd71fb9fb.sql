@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_songs ADD CONSTRAINT custom_songs_title_artist_unique UNIQUE (title, artist);
