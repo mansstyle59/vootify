@@ -391,6 +391,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      owns_playlist: {
+        Args: { _playlist_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
