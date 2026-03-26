@@ -149,14 +149,19 @@ export const deezerApi = {
     return { album, tracks };
   },
 
-  /** Search JioSaavn for a full stream URL matching a Deezer track */
+  /**
+   * Unified stream resolution pipeline:
+   *   1. HD cache (instant)
+   *   2. Custom songs DB (priority — user-uploaded full tracks)
+   *   3. JioSaavn search (HD fallback)
+   * Works for any song (dz-, custom-, js-, or no prefix).
+   * Returns song with resolved streamUrl or streamUrl="" if nothing found.
+   */
   async resolveFullStream(song: Song): Promise<Song> {
-    if (!song.id.startsWith("dz-")) return song;
-
-    // Check HD cache first
+    // ── 1. HD Cache ──
     const cached = hdCache.get(song.id);
     if (cached) {
-      console.log("HD cache hit:", song.title);
+      console.log("[resolve] cache hit:", song.title);
       return {
         ...song,
         streamUrl: cached.streamUrl,
@@ -165,47 +170,39 @@ export const deezerApi = {
       };
     }
 
-    // Load blacklist for this song
+    const targetTitle = norm(song.title);
+    const targetArtist = norm(song.artist.split(",")[0]);
+    const targetDuration = song.duration;
+
+    // Load blacklist
     let blacklistedUrls: string[] = [];
     try {
       const stored = localStorage.getItem("hd-blacklist");
       if (stored) {
-        const blacklist: Record<string, string[]> = JSON.parse(stored);
-        const key = `${song.title}|||${song.artist}`;
-        blacklistedUrls = blacklist[key] || [];
+        const bl: Record<string, string[]> = JSON.parse(stored);
+        blacklistedUrls = bl[`${song.title}|||${song.artist}`] || [];
       }
     } catch {}
 
-    const targetTitle = norm(song.title);
-    const targetArtist = norm(song.artist.split(",")[0]);
-    const targetDuration = song.duration; // seconds
-
-    /** Score a candidate result against the target song */
-    const scoreCandidate = (r: Song): number => {
+    /** Score a candidate */
+    const scoreCandidate = (r: { title: string; artist: string; duration: number; streamUrl: string }): number => {
       if (!r.streamUrl || blacklistedUrls.includes(r.streamUrl)) return -1;
       const t = norm(r.title);
       const a = norm(r.artist.split(",")[0]);
       let score = 0;
-
-      // Title match (most important)
       score += matchScore(t, targetTitle) * 2;
-
-      // Artist match
       score += matchScore(a, targetArtist) * 1.5;
-
-      // Duration proximity bonus (within 10s = great, within 30s = ok)
       if (r.duration > 0 && targetDuration > 0) {
         const diff = Math.abs(r.duration - targetDuration);
         if (diff <= 5) score += 40;
         else if (diff <= 15) score += 25;
         else if (diff <= 30) score += 10;
-        else if (diff > 60) score -= 20; // penalty for very different durations
+        else if (diff > 60) score -= 20;
       }
-
       return score;
     };
 
-    // PRIORITY 1: Check admin custom_songs first
+    // ── 2. Custom songs (priority) ──
     try {
       const { data: customSongs } = await supabase
         .from("custom_songs")
@@ -218,12 +215,9 @@ export const deezerApi = {
         let bestTitleScore = 0;
 
         for (const c of customSongs) {
-          const ct = norm(c.title);
-          const ca = norm(c.artist.split(",")[0]);
-          const titleScore = matchScore(ct, targetTitle);
-          let score = 0;
-          score += titleScore * 2;
-          score += matchScore(ca, targetArtist) * 1.5;
+          const titleScore = matchScore(norm(c.title), targetTitle);
+          let score = titleScore * 2
+            + matchScore(norm(c.artist.split(",")[0]), targetArtist) * 1.5;
           if (c.duration > 0 && targetDuration > 0) {
             const diff = Math.abs(c.duration - targetDuration);
             if (diff <= 15) score += 30;
@@ -236,9 +230,8 @@ export const deezerApi = {
           }
         }
 
-        // Require a meaningful title match (>= 50) to avoid artist-only matches
         if (bestCustom?.stream_url && bestScore >= 80 && bestTitleScore >= 50) {
-          console.log("Resolved via admin custom song (priority):", bestCustom.title, `(score: ${bestScore})`);
+          console.log("[resolve] custom match:", bestCustom.title, `(score: ${bestScore})`);
           const resolved = {
             ...song,
             streamUrl: bestCustom.stream_url,
@@ -255,19 +248,19 @@ export const deezerApi = {
         }
       }
     } catch (e) {
-      console.error("Custom songs check failed:", e);
+      console.error("[resolve] custom check failed:", e);
     }
 
-    // PRIORITY 2: Search JioSaavn for full stream
+    // ── 3. JioSaavn HD search ──
     try {
       const mainArtist = song.artist.split(",")[0].trim();
+      const cleanTitle = song.title.replace(/\(.*?\)/g, "").trim();
       const queries = [
         `${mainArtist} ${song.title}`,
         song.title,
         `${song.title} ${mainArtist}`,
-        // Additional broader queries for better hit rate
-        song.title.replace(/\(.*?\)/g, "").trim(),
-        `${mainArtist} ${song.title.replace(/\(.*?\)/g, "").trim()}`,
+        cleanTitle,
+        `${mainArtist} ${cleanTitle}`,
       ];
 
       const seen = new Set<string>();
@@ -286,19 +279,14 @@ export const deezerApi = {
           const results = await jiosaavnApi.search(q, 15);
           for (const r of results) {
             const s = scoreCandidate(r);
-            if (s > bestScore) {
-              bestScore = s;
-              bestMatch = r;
-            }
+            if (s > bestScore) { bestScore = s; bestMatch = r; }
           }
-          if (bestScore >= 180) break;
-        } catch {
-          // continue with next query
-        }
+          if (bestScore >= 180) break; // excellent match, stop early
+        } catch { /* continue */ }
       }
 
-      // Lowered threshold from 80 to 50 for more HD matches
       if (bestMatch?.streamUrl && bestScore >= 50) {
+        console.log("[resolve] JioSaavn HD:", bestMatch.title, `(score: ${bestScore})`);
         hdCache.set(song.id, {
           streamUrl: bestMatch.streamUrl,
           coverUrl: bestMatch.coverUrl || undefined,
@@ -307,14 +295,15 @@ export const deezerApi = {
         return { ...song, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || song.coverUrl };
       }
     } catch (e) {
-      console.error("JioSaavn resolve failed:", e);
+      console.error("[resolve] JioSaavn failed:", e);
     }
 
     // No full stream found
+    console.warn("[resolve] no source found for:", song.title);
     return { ...song, streamUrl: "" };
   },
 
-  /** Resolve full streams for an array of Deezer tracks */
+  /** Resolve full streams for an array of tracks */
   async resolveFullStreams(songs: Song[]): Promise<Song[]> {
     return Promise.all(songs.map((s) => deezerApi.resolveFullStream(s)));
   },
