@@ -206,12 +206,13 @@ const PlaylistDetailPage = () => {
 
         <button
           onClick={() => navigate("/library")}
-          className="absolute top-4 left-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground"
+          className="absolute left-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <label className="absolute top-4 right-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground cursor-pointer hover:bg-background/70 transition-colors">
+        <label className="absolute right-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground cursor-pointer hover:bg-background/70 transition-colors" style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
           <ImageIcon className="w-5 h-5" />
           <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
         </label>

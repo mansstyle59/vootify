@@ -156,7 +156,7 @@ const AlbumDetailPage = () => {
   if (isLoading) {
     return (
       <div className="pb-40">
-        <div className="px-4 md:px-8 pt-6">
+        <div className="px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}>
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" /> Retour
           </button>
@@ -170,7 +170,7 @@ const AlbumDetailPage = () => {
 
   if (!album) {
     return (
-      <div className="pb-40 px-4 md:px-8 pt-6">
+      <div className="pb-40 px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}>
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="w-4 h-4" /> Retour
         </button>
@@ -189,7 +189,7 @@ const AlbumDetailPage = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         </div>
 
-        <div className="relative px-4 md:px-8 pt-6 pb-6">
+        <div className="relative px-4 md:px-8 pb-6" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}>
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" /> Retour
           </button>
