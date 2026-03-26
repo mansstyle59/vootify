@@ -363,13 +363,13 @@ const RadioPage = () => {
           )}
 
           {/* Action buttons */}
-          <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+           <div className="absolute top-2 right-2 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
             {isCustomTab ? (
               <>
                 <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-black/70 transition-colors">
                   <Pencil className="w-3.5 h-3.5 text-white" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); removeStation(station.id); }} className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-destructive/80 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }} className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-destructive/80 transition-colors">
                   <Trash2 className="w-3.5 h-3.5 text-white" />
                 </button>
               </>
