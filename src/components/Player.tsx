@@ -47,6 +47,7 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const [resolveStep, setResolveStep] = useState<string | null>(null);
 
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
