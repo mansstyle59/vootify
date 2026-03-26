@@ -119,6 +119,22 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
 
+      {/* Add to queue */}
+      {!isBlocked && song.duration > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            const newQueue = [...queue.filter((s) => s.id !== song.id), song];
+            setQueue(newQueue);
+            toast.success(`"${song.title}" ajouté à la file`);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Ajouter à la file d'attente"
+        >
+          <ListEnd className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+        </button>
+      )}
+
       {/* Add to playlist */}
       {song.duration > 0 && (
         <div className="relative" ref={menuRef}>
