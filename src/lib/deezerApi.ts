@@ -305,7 +305,7 @@ export const deezerApi = {
         } catch { /* continue */ }
       }
 
-      if (bestMatch?.streamUrl && bestScore >= 50) {
+      if (bestMatch?.streamUrl && bestScore >= 40) {
         console.log("[resolve] JioSaavn HD:", bestMatch.title, `(score: ${bestScore})`);
         hdCache.set(song.id, {
           streamUrl: bestMatch.streamUrl,
