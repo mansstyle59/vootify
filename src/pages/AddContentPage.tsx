@@ -567,15 +567,8 @@ const AddContentPage = () => {
 
   return (
     <div className="p-4 md:p-8 pb-40 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Ajouter du contenu</h1>
-        <button
-          onClick={signOut}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Déconnexion
-        </button>
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
