@@ -270,14 +270,18 @@ export const deezerApi = {
     step("Recherche HD…");
     try {
       const mainArtist = song.artist.split(",")[0].trim();
-      const cleanTitle = song.title.replace(/\(.*?\)/g, "").trim();
+      const cleanTitle = song.title.replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").trim();
+      // Strip "feat." from title for better matching
+      const noFeatTitle = song.title.replace(/\s*(feat\.?|ft\.?|featuring)\s*.*/i, "").trim();
       const queries = [
         `${mainArtist} ${song.title}`,
+        `${mainArtist} ${cleanTitle}`,
         song.title,
         `${song.title} ${mainArtist}`,
         cleanTitle,
-        `${mainArtist} ${cleanTitle}`,
-      ];
+        noFeatTitle !== cleanTitle ? `${mainArtist} ${noFeatTitle}` : null,
+        noFeatTitle !== cleanTitle ? noFeatTitle : null,
+      ].filter(Boolean) as string[];
 
       const seen = new Set<string>();
       const uniqueQueries = queries.filter((q) => {
