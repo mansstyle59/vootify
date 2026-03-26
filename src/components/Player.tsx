@@ -405,12 +405,21 @@ export function MiniPlayer() {
                   {currentSong.title}
                 </p>
                 <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
-                  {currentSong.artist}
-                  {playingFromCache && (
-                    <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
-                      <WifiOff className="w-2.5 h-2.5" />
-                      <span className="font-semibold text-[10px]">OFFLINE</span>
+                  {resolveStep ? (
+                    <span className="inline-flex items-center gap-1 text-primary animate-pulse">
+                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      <span className="font-semibold text-[10px]">{resolveStep}</span>
                     </span>
+                  ) : (
+                    <>
+                      {currentSong.artist}
+                      {playingFromCache && (
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                          <WifiOff className="w-2.5 h-2.5" />
+                          <span className="font-semibold text-[10px]">OFFLINE</span>
+                        </span>
+                      )}
+                    </>
                   )}
                 </p>
               </div>
