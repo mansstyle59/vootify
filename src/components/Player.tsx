@@ -1212,34 +1212,50 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Transport controls */}
+            {/* Transport controls — ultra premium */}
             <div className="flex items-center justify-between w-full mb-6">
-              <button onClick={toggleShuffle} className="active:scale-90 transition-transform">
-                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary" : "text-foreground/50"}`} />
-              </button>
-              <button onClick={previous} className="active:scale-90 transition-transform">
+              <motion.button whileTap={{ scale: 0.85 }} onClick={toggleShuffle} className="transition-all">
+                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" : "text-foreground/50"}`} />
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.8 }} onClick={previous} className="transition-all">
                 <SkipBack className="w-9 h-9 text-foreground fill-current" />
-              </button>
-              <button
-                onClick={togglePlay}
-                className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={() => {
+                  togglePlay();
+                  if (navigator.vibrate) navigator.vibrate(8);
+                }}
+                className="w-[76px] h-[76px] rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: "linear-gradient(145deg, hsl(0 0% 100% / 0.95), hsl(0 0% 85% / 0.9))",
+                  boxShadow: isPlaying
+                    ? "0 0 30px hsl(141 73% 42% / 0.25), 0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)"
+                    : "0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
+                }}
               >
-                {isPlaying ? (
-                  <Pause className="w-9 h-9 text-background fill-current" />
-                ) : (
-                  <Play className="w-9 h-9 text-background fill-current ml-1" />
-                )}
-              </button>
-              <button onClick={next} className="active:scale-90 transition-transform">
+                <AnimatePresence mode="wait" initial={false}>
+                  {isPlaying ? (
+                    <motion.div key="pause" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Pause className="w-9 h-9 text-background fill-current" />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="play" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Play className="w-9 h-9 text-background fill-current ml-1" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.8 }} onClick={next} className="transition-all">
                 <SkipForward className="w-9 h-9 text-foreground fill-current" />
-              </button>
-              <button onClick={cycleRepeat} className="active:scale-90 transition-transform">
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.85 }} onClick={cycleRepeat} className="transition-all">
                 {repeat === "one" ? (
-                  <Repeat1 className="w-6 h-6 text-primary" />
+                  <Repeat1 className="w-6 h-6 text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" />
                 ) : (
-                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary" : "text-foreground/50"}`} />
+                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" : "text-foreground/50"}`} />
                 )}
-              </button>
+              </motion.button>
             </div>
 
             {/* Bottom actions */}
