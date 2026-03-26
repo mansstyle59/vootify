@@ -174,7 +174,7 @@ const HomePage = () => {
 
       case "titresDuMoment":
         return isVisible("titresDuMoment") ? (
-          <Section key="titresDuMoment" title={sectionTitle(section)} songs={titresDuMoment} onPlayAll={() => { if (titresDuMoment?.length) { setQueue(titresDuMoment); play(titresDuMoment[0]); } }}>
+          <Section key="titresDuMoment" title={sectionTitle(section)} songs={titresDuMoment} viewAllLink={`/playlist/dz-${PLAYLISTS.titresDuMoment}`} onPlayAll={() => { if (titresDuMoment?.length) { setQueue(titresDuMoment); play(titresDuMoment[0]); } }}>
             <HorizontalScroll>
               {loadingTitres ? <CoverSkeleton /> : titresDuMoment?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, titresDuMoment)} />
