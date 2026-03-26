@@ -79,43 +79,28 @@ export function MiniPlayer() {
           usePlayerStore.setState({ currentSong: songToPlay });
         }
       } else {
-        // Only attempt network resolution if not cached
-        if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
+        // Unified resolution: Custom → JioSaavn HD (handles all song types)
+        const needsResolution =
+          !songToPlay.streamUrl ||
+          (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
+
+        if (needsResolution) {
           try {
             const resolved = await deezerApi.resolveFullStream(songToPlay);
-            if (resolved.streamUrl !== songToPlay.streamUrl) {
+            if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
             }
           } catch (e) {
-            console.error("Failed to resolve full stream:", e);
+            console.error("Stream resolution failed:", e);
           }
-          // After resolution attempt, if still a 30s preview → block playback
-          if (songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
-            console.warn("Blocked 30s preview playback for:", songToPlay.title);
+
+          // If still a 30s preview or no stream → skip
+          if (!songToPlay.streamUrl || (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net"))) {
+            console.warn("No playable source for:", songToPlay.title);
             const { next: nextTrack } = usePlayerStore.getState();
             nextTrack();
             return;
-          }
-        }
-
-        // Fallback: if song has no stream URL (e.g. custom song without file), search JioSaavn
-        if (!songToPlay.streamUrl) {
-          try {
-            const mainArtist = songToPlay.artist.split(",")[0].trim();
-            const query = `${mainArtist} ${songToPlay.title}`;
-            const results = await jiosaavnApi.search(query, 5);
-            const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-            const targetTitle = norm(songToPlay.title);
-            const bestMatch = results.find((r) => r.streamUrl && norm(r.title).includes(targetTitle))
-              || results.find((r) => !!r.streamUrl);
-            if (bestMatch?.streamUrl) {
-              console.log("Custom song resolved via JioSaavn:", bestMatch.title);
-              songToPlay = { ...songToPlay, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || songToPlay.coverUrl };
-              usePlayerStore.setState({ currentSong: songToPlay });
-            }
-          } catch (e) {
-            console.error("JioSaavn fallback failed:", e);
           }
         }
       }
