@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2, AlertTriangle, WifiOff
+  Download, Check, Loader2, WifiOff
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence } from "framer-motion";
