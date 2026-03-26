@@ -48,7 +48,7 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
   );
 }
 
-}
+
 
 const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
 
