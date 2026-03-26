@@ -377,22 +377,21 @@ const LibraryPage = () => {
     { key: "recent", label: "Récents", icon: Clock },
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
-    ...(isAdmin ? [{ key: "custom" as Tab, label: "Mes titres", icon: Music }] : []),
+    { key: "custom", label: "Mes titres", icon: Music },
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
 
   const isGuest = !authLoading && !user;
 
   useEffect(() => {
-    if (isGuest && !isOffline && tab !== "downloads") setTab("downloads");
+    if (isGuest && !isOffline && !["downloads", "custom"].includes(tab)) setTab("custom");
     if (isOffline && tab !== "downloads") setTab("downloads");
-    if (!isAdmin && tab === "custom") setTab("recent");
-  }, [isGuest, isOffline, isAdmin]);
+  }, [isGuest, isOffline]);
 
   const visibleTabs = isOffline
     ? allTabs.filter((t) => t.key === "downloads")
     : isGuest
-      ? allTabs.filter((t) => t.key === "downloads")
+      ? allTabs.filter((t) => t.key === "downloads" || t.key === "custom")
       : allTabs;
 
   return (
