@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus } from "lucide-react";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
+import { toast } from "sonner";
 
 /** Determine the source badge type for a song */
 function getSongSourceType(song: Song): "custom" | "hd" | "no-hd" | null {
@@ -32,7 +33,7 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, index, showIndex }: SongCardProps) {
-  const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked } = usePlayerStore();
+  const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked, queue, setQueue } = usePlayerStore();
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
@@ -117,6 +118,22 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       >
         <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </button>
+
+      {/* Add to queue */}
+      {!isBlocked && song.duration > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            const newQueue = [...queue.filter((s) => s.id !== song.id), song];
+            setQueue(newQueue);
+            toast.success(`"${song.title}" ajouté à la file`);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Ajouter à la file d'attente"
+        >
+          <ListEnd className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+        </button>
+      )}
 
       {/* Add to playlist */}
       {song.duration > 0 && (
