@@ -185,7 +185,7 @@ const HomePage = () => {
 
       case "popHits":
         return isVisible("popHits") ? (
-          <Section key="popHits" title={sectionTitle(section)} songs={popHits} onPlayAll={() => { if (popHits?.length) { setQueue(popHits); play(popHits[0]); } }}>
+          <Section key="popHits" title={sectionTitle(section)} songs={popHits} viewAllLink={`/playlist/dz-${PLAYLISTS.popHits}`} onPlayAll={() => { if (popHits?.length) { setQueue(popHits); play(popHits[0]); } }}>
             <HorizontalScroll>
               {loadingPop ? <CoverSkeleton /> : popHits?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, popHits)} />
@@ -196,7 +196,7 @@ const HomePage = () => {
 
       case "rapstars":
         return isVisible("rapstars") ? (
-          <Section key="rapstars" title={sectionTitle(section)} songs={rapstars} onPlayAll={() => { if (rapstars?.length) { setQueue(rapstars); play(rapstars[0]); } }}>
+          <Section key="rapstars" title={sectionTitle(section)} songs={rapstars} viewAllLink={`/playlist/dz-${PLAYLISTS.rapstars}`} onPlayAll={() => { if (rapstars?.length) { setQueue(rapstars); play(rapstars[0]); } }}>
             <HorizontalScroll>
               {loadingRap ? <CoverSkeleton /> : rapstars?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, rapstars)} />
@@ -207,7 +207,7 @@ const HomePage = () => {
 
       case "chillVibes":
         return isVisible("chillVibes") ? (
-          <Section key="chillVibes" title={sectionTitle(section)} songs={chillVibes} onPlayAll={() => { if (chillVibes?.length) { setQueue(chillVibes); play(chillVibes[0]); } }}>
+          <Section key="chillVibes" title={sectionTitle(section)} songs={chillVibes} viewAllLink={`/playlist/dz-${PLAYLISTS.chillVibes}`} onPlayAll={() => { if (chillVibes?.length) { setQueue(chillVibes); play(chillVibes[0]); } }}>
             <HorizontalScroll>
               {loadingChill ? <CoverSkeleton /> : chillVibes?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, chillVibes)} />
@@ -218,7 +218,7 @@ const HomePage = () => {
 
       case "afrobeats":
         return isVisible("afrobeats") ? (
-          <Section key="afrobeats" title={sectionTitle(section)} songs={afrobeats} onPlayAll={() => { if (afrobeats?.length) { setQueue(afrobeats); play(afrobeats[0]); } }}>
+          <Section key="afrobeats" title={sectionTitle(section)} songs={afrobeats} viewAllLink={`/playlist/dz-${PLAYLISTS.afrobeats}`} onPlayAll={() => { if (afrobeats?.length) { setQueue(afrobeats); play(afrobeats[0]); } }}>
             <HorizontalScroll>
               {loadingAfro ? <CoverSkeleton /> : afrobeats?.map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, afrobeats)} />
