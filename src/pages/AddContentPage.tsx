@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
+import { getEffectiveUserId } from "@/lib/deviceId";
 
 import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles, Upload, FileAudio, X, Trash2 } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
