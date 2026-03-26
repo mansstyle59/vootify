@@ -29,12 +29,16 @@ const filterMusicOnly = (songs: Song[]) =>
 /* ── Premium Song Row ── */
 function PremiumSongRow({
   song, index, showIndex, isActive, isPlaying, onClick, onSwipeLeft, onSwipeRight,
+  selectable, selected, onSelect,
 }: {
   song: Song; index: number; showIndex?: boolean;
   isActive: boolean; isPlaying: boolean;
   onClick: () => void;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
