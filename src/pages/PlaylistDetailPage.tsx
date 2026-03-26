@@ -65,6 +65,8 @@ const PlaylistDetailPage = () => {
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [resolvedSongs, setResolvedSongs] = useState<Map<string, Song>>(new Map());
   const [resolveProgress, setResolveProgress] = useState<{ done: number; total: number } | null>(null);
+  const [resolveKey, setResolveKey] = useState(0);
+  const [resolving, setResolving] = useState(false);
   const resolveAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -79,6 +81,7 @@ const PlaylistDetailPage = () => {
   useEffect(() => {
     resolveAbortRef.current?.abort();
     setResolvedSongs(new Map());
+    setResolving(false);
 
     if (songs.length === 0) {
       setResolveProgress(null);
@@ -99,6 +102,7 @@ const PlaylistDetailPage = () => {
     const controller = new AbortController();
     resolveAbortRef.current = controller;
     setResolveProgress({ done: 0, total: needsResolve.length });
+    setResolving(true);
 
     const resolve = async () => {
       let done = 0;
@@ -133,14 +137,16 @@ const PlaylistDetailPage = () => {
       }
 
       if (!controller.signal.aborted) {
+        setResolving(false);
         if (upgraded > 0) toast.success(`${upgraded} morceau${upgraded > 1 ? "x" : ""} HD`);
+        else toast("Aucun nouveau titre HD trouvé");
         setTimeout(() => setResolveProgress(null), 1200);
       }
     };
 
     resolve();
     return () => controller.abort();
-  }, [songs, id]);
+  }, [songs, id, resolveKey]);
 
   const displaySongs = songs.map((s) => resolvedSongs.get(s.id) || s);
   const totalDuration = displaySongs.reduce((sum, t) => sum + t.duration, 0);
@@ -400,6 +406,14 @@ const PlaylistDetailPage = () => {
           className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
         >
           <Download className={`w-5 h-5 ${downloading ? "animate-bounce" : ""}`} />
+        </button>
+        <button
+          onClick={() => { setResolveKey((k) => k + 1); toast("Relance de la résolution HD…"); }}
+          disabled={resolving || displaySongs.length === 0}
+          className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
+          title="Relancer la résolution HD"
+        >
+          <RotateCcw className={`w-5 h-5 ${resolving ? "animate-spin" : ""}`} />
         </button>
       </motion.div>
 
