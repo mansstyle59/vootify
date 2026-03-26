@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
-import { Play, ListPlus, ListMusic, Plus, Check } from "lucide-react";
+import { Play, ListPlus, ListMusic, Plus, Check, ChevronRight } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 
@@ -11,6 +12,7 @@ interface SectionProps {
   children: ReactNode;
   songs?: Song[];
   onPlayAll?: () => void;
+  viewAllLink?: string;
 }
 
 function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () => void }) {
@@ -93,8 +95,9 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
   );
 }
 
-export function Section({ title, children, songs, onPlayAll }: SectionProps) {
+export function Section({ title, children, songs, onPlayAll, viewAllLink }: SectionProps) {
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
+  const navigate = useNavigate();
   const hasSongs = songs && songs.length > 0;
 
   return (
@@ -112,7 +115,17 @@ export function Section({ title, children, songs, onPlayAll }: SectionProps) {
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
         className="flex items-center justify-between px-4 md:px-8 mb-3"
       >
-        <h2 className="text-lg md:text-xl font-display font-bold text-foreground truncate mr-2">{title}</h2>
+        <div className="flex items-center gap-2 mr-2">
+          <h2 className="text-lg md:text-xl font-display font-bold text-foreground truncate">{title}</h2>
+          {viewAllLink && (
+            <button
+              onClick={() => navigate(viewAllLink)}
+              className="flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-medium text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+            >
+              Voir tout <ChevronRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
         {hasSongs && (
           <div className="flex items-center gap-1.5 relative flex-shrink-0">
             {onPlayAll && (

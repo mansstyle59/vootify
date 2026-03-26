@@ -25,6 +25,7 @@ export function CustomPlaylistSection({ playlistId, label, onPlayTrack }: Props)
     <Section
       title={label}
       songs={tracks}
+      viewAllLink={`/playlist/dz-${playlistId}`}
       onPlayAll={() => {
         if (tracks?.length) {
           setQueue(tracks);
