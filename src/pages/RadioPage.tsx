@@ -140,6 +140,7 @@ const RadioPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [deletingStation, setDeletingStation] = useState<{ id: string; name: string } | null>(null);
   const queryClient = useQueryClient();
 
   // Live metadata
