@@ -230,6 +230,7 @@ const LibraryPage = () => {
   const [newName, setNewName] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -237,7 +238,7 @@ const LibraryPage = () => {
     likedSongs, playlists, recentlyPlayed, playlistSongs,
     createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
     currentSong, isPlaying, togglePlay, clearRecentlyPlayed, loadUserData, userId,
-    toggleLike
+    toggleLike, addSongToPlaylist
   } = usePlayerStore();
   const queryClient = useQueryClient();
 
