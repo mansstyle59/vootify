@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
-import { Play, ListPlus, ListMusic, Plus, Check } from "lucide-react";
+import { Play, ListPlus, ListMusic, Plus, Check, ChevronRight } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 
@@ -11,6 +12,7 @@ interface SectionProps {
   children: ReactNode;
   songs?: Song[];
   onPlayAll?: () => void;
+  viewAllLink?: string;
 }
 
 function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () => void }) {
