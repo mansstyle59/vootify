@@ -300,43 +300,112 @@ const LibraryPage = () => {
             <div>
               <button
                 onClick={() => setShowCreate(!showCreate)}
-                className="flex items-center gap-2 mb-4 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm"
+                className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 text-sm font-medium transition-all"
               >
                 <Plus className="w-4 h-4" /> Nouvelle Playlist
               </button>
               {showCreate && (
-                <div className="flex gap-2 mb-4">
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex gap-2 mb-4 overflow-hidden"
+                >
                   <input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                     placeholder="Nom de la playlist..."
-                    className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="flex-1 px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     autoFocus
                   />
-                  <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Créer</button>
-                </div>
+                  <button onClick={handleCreate} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium">Créer</button>
+                </motion.div>
               )}
               {playlists.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">Pas encore de playlists</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <ListMusic className="w-14 h-14 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground">Pas encore de playlists</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Créez votre première playlist ci-dessus</p>
+                </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {playlists.map((p) => (
-                    <div key={p.id} className="relative group">
-                      <ContentCard
-                        title={p.name}
-                        subtitle={`${(playlistSongs[p.id] || []).length} titres${playlistCachedCounts[p.id] ? ` · ${playlistCachedCounts[p.id]} ⬇` : ""}`}
-                        imageUrl={p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop"}
-                        onClick={() => navigate(`/playlist/${p.id}`)}
-                      />
-                      <button
-                        onClick={() => deletePlaylist(p.id)}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                <div className="space-y-2">
+                  {playlists.map((p, idx) => {
+                    const pSongs = playlistSongs[p.id] || [];
+                    const cachedCount = playlistCachedCounts[p.id] || 0;
+                    const coverImg = p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
+                    // Show up to 4 song covers as a mosaic if no custom cover
+                    const songCovers = !p.cover_url && pSongs.length >= 4
+                      ? pSongs.slice(0, 4).map((s) => s.coverUrl).filter(Boolean)
+                      : null;
+
+                    return (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.04 }}
+                        className="group relative"
                       >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
+                        <button
+                          onClick={() => navigate(`/playlist/${p.id}`)}
+                          className="w-full flex items-center gap-3.5 p-3 rounded-2xl bg-secondary/40 hover:bg-secondary/70 border border-border/50 transition-all active:scale-[0.98]"
+                        >
+                          {/* Cover: mosaic or single */}
+                          <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-md shrink-0">
+                            {songCovers && songCovers.length >= 4 ? (
+                              <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
+                                {songCovers.map((url, ci) => (
+                                  <img key={ci} src={url} alt="" className="w-full h-full object-cover" />
+                                ))}
+                              </div>
+                            ) : (
+                              <img src={coverImg} alt={p.name} className="w-full h-full object-cover" />
+                            )}
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Play className="w-5 h-5 text-white fill-white" />
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 flex-1 text-left">
+                            <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {pSongs.length} titre{pSongs.length !== 1 ? "s" : ""}
+                              {cachedCount > 0 && (
+                                <span className="text-primary"> · {cachedCount} ⬇</span>
+                              )}
+                            </p>
+                          </div>
+
+                          {/* Mini artists avatars */}
+                          {pSongs.length > 0 && (
+                            <div className="flex -space-x-2 shrink-0">
+                              {pSongs.slice(0, 3).map((s, si) => (
+                                <img
+                                  key={si}
+                                  src={s.coverUrl}
+                                  alt=""
+                                  className="w-6 h-6 rounded-full border-2 border-secondary object-cover"
+                                />
+                              ))}
+                              {pSongs.length > 3 && (
+                                <div className="w-6 h-6 rounded-full border-2 border-secondary bg-muted flex items-center justify-center">
+                                  <span className="text-[8px] font-bold text-muted-foreground">+{pSongs.length - 3}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => deletePlaylist(p.id)}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>

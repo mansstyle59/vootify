@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2 } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
+import { deezerApi } from "@/lib/deezerApi";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,9 @@ const PlaylistDetailPage = () => {
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
+  const [resolvedSongs, setResolvedSongs] = useState<Map<string, Song>>(new Map());
+  const [resolveProgress, setResolveProgress] = useState<{ done: number; total: number } | null>(null);
+  const resolveAbortRef = useRef<AbortController | null>(null);
 
   // Check which songs are cached offline
   useEffect(() => {
@@ -34,15 +38,66 @@ const PlaylistDetailPage = () => {
     if (id) loadPlaylistSongs(id);
   }, [id]);
 
-  const handlePlayAll = () => {
+  // Background HD resolution for playlist tracks
+  useEffect(() => {
+    resolveAbortRef.current?.abort();
     if (songs.length === 0) return;
-    setQueue(songs);
-    play(songs[0]);
+
+    const needsResolve = songs.filter(
+      (s) => s.id.startsWith("dz-") && s.streamUrl &&
+        (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
+    );
+    if (needsResolve.length === 0) return;
+
+    const controller = new AbortController();
+    resolveAbortRef.current = controller;
+    setResolveProgress({ done: 0, total: needsResolve.length });
+
+    const resolve = async () => {
+      let done = 0;
+      let upgraded = 0;
+      for (let i = 0; i < needsResolve.length; i += 4) {
+        if (controller.signal.aborted) return;
+        const batch = needsResolve.slice(i, i + 4);
+        const results = await Promise.all(
+          batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s))
+        );
+        if (controller.signal.aborted) return;
+        done += batch.length;
+        setResolveProgress({ done, total: needsResolve.length });
+
+        const newResolved = new Map(resolvedSongs);
+        results.forEach((r, idx) => {
+          if (r.streamUrl && r.streamUrl !== batch[idx].streamUrl) {
+            newResolved.set(r.id, r);
+            upgraded++;
+          }
+        });
+        if (newResolved.size > resolvedSongs.size) {
+          setResolvedSongs(new Map(newResolved));
+        }
+      }
+      if (!controller.signal.aborted) {
+        if (upgraded > 0) toast.success(`${upgraded} morceau${upgraded > 1 ? "x" : ""} upgradé${upgraded > 1 ? "s" : ""} en HD`);
+        setTimeout(() => setResolveProgress(null), 1500);
+      }
+    };
+    resolve();
+    return () => controller.abort();
+  }, [songs.length, id]);
+
+  // Merge resolved songs with original
+  const displaySongs = songs.map((s) => resolvedSongs.get(s.id) || s);
+
+  const handlePlayAll = () => {
+    if (displaySongs.length === 0) return;
+    setQueue(displaySongs);
+    play(displaySongs[0]);
   };
 
   const handleShufflePlay = () => {
-    if (songs.length === 0) return;
-    const shuffled = [...songs].sort(() => Math.random() - 0.5);
+    if (displaySongs.length === 0) return;
+    const shuffled = [...displaySongs].sort(() => Math.random() - 0.5);
     setQueue(shuffled);
     play(shuffled[0]);
   };
@@ -51,12 +106,12 @@ const PlaylistDetailPage = () => {
   const [dlProgress, setDlProgress] = useState({ done: 0, total: 0 });
 
   const handleDownloadAll = async () => {
-    if (songs.length === 0) return;
+    if (displaySongs.length === 0) return;
     setDownloading(true);
-    const total = songs.length;
+    const total = displaySongs.length;
     setDlProgress({ done: 0, total });
     let done = 0;
-    for (const song of songs) {
+    for (const song of displaySongs) {
       try {
         const cached = await offlineCache.isCached(song.id);
         if (!cached && song.streamUrl) {
@@ -71,7 +126,7 @@ const PlaylistDetailPage = () => {
       }
     }
     setDownloading(false);
-    setCachedIds(new Set(songs.map((s) => s.id)));
+    setCachedIds(new Set(displaySongs.map((s) => s.id)));
     toast.success("Tous les morceaux ont été téléchargés !");
   };
 
@@ -93,7 +148,6 @@ const PlaylistDetailPage = () => {
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(targetIdx, 0, moved);
 
-    // Update positions in DB
     const updates = reordered.map((song, i) =>
       supabase
         .from("playlist_songs")
@@ -112,7 +166,6 @@ const PlaylistDetailPage = () => {
     const file = e.target.files?.[0];
     if (!file || !id) return;
 
-    // Convert to base64 data URL for simplicity (no storage bucket needed)
     const reader = new FileReader();
     reader.onload = async () => {
       const dataUrl = reader.result as string;
@@ -124,7 +177,6 @@ const PlaylistDetailPage = () => {
         toast.error("Erreur lors de la mise à jour de la couverture");
       } else {
         toast.success("Couverture mise à jour");
-        // Reload playlists to reflect change
         const uid = usePlayerStore.getState().userId;
         if (uid) usePlayerStore.getState().loadUserData(uid);
       }
@@ -159,7 +211,6 @@ const PlaylistDetailPage = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        {/* Cover change button */}
         <label className="absolute top-4 right-4 p-2 rounded-full bg-background/50 backdrop-blur-md text-foreground cursor-pointer hover:bg-background/70 transition-colors">
           <ImageIcon className="w-5 h-5" />
           <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
@@ -172,7 +223,7 @@ const PlaylistDetailPage = () => {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 px-4 py-4">
+      <div className="flex gap-3 px-4 py-4 flex-wrap">
         <button
           onClick={handlePlayAll}
           disabled={songs.length === 0}
@@ -195,6 +246,26 @@ const PlaylistDetailPage = () => {
           <Download className={`w-4 h-4 ${downloading ? "animate-bounce" : ""}`} /> {downloading ? "..." : "Télécharger"}
         </button>
       </div>
+
+      {/* HD resolve progress */}
+      {resolveProgress && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
+            <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${resolveProgress.total > 0 ? (resolveProgress.done / resolveProgress.total) * 100 : 0}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {resolveProgress.done}/{resolveProgress.total} HD
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Download progress bar */}
       {downloading && (
@@ -223,7 +294,7 @@ const PlaylistDetailPage = () => {
           </p>
         ) : (
           <div className="glass-panel-light rounded-xl p-1">
-            {songs.map((song, i) => (
+            {displaySongs.map((song, i) => (
               <div
                 key={song.id}
                 draggable
