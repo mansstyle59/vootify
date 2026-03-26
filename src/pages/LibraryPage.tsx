@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
