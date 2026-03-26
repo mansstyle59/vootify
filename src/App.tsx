@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -89,6 +90,7 @@ function AppContent() {
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
+    toast.success("Contenu mis à jour ✨");
   }, [queryClient]);
 
   return (
