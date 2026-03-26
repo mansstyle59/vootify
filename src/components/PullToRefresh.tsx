@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, type ReactNode } from "react";
+import { useState, useRef, useCallback, forwardRef, type ReactNode } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Loader2, ArrowDown } from "lucide-react";
 
@@ -11,7 +11,7 @@ interface PullToRefreshProps {
 const THRESHOLD = 80;
 const MAX_PULL = 120;
 
-export function PullToRefresh({ onRefresh, children, className = "" }: PullToRefreshProps) {
+export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(function PullToRefresh({ onRefresh, children, className = "" }, ref) {
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const pulling = useRef(false);
