@@ -373,30 +373,34 @@ const PlaylistDetailPage = () => {
             {displaySongs.map((song, i) => (
               <div
                 key={song.id}
-                draggable
-                onDragStart={() => handleDragStart(i)}
-                onDragOver={(e) => handleDragOver(e, i)}
-                onDrop={() => handleDrop(i)}
-                onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                draggable={!isDeezerPlaylist}
+                onDragStart={!isDeezerPlaylist ? () => handleDragStart(i) : undefined}
+                onDragOver={!isDeezerPlaylist ? (e) => handleDragOver(e, i) : undefined}
+                onDrop={!isDeezerPlaylist ? () => handleDrop(i) : undefined}
+                onDragEnd={!isDeezerPlaylist ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
                 className={`flex items-center gap-1 group ${
                   overIdx === i ? "border-t-2 border-primary" : ""
                 } ${dragIdx === i ? "opacity-40" : ""}`}
               >
-                <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                  <GripVertical className="w-4 h-4" />
-                </div>
+                {!isDeezerPlaylist && (
+                  <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    <GripVertical className="w-4 h-4" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <SongCard song={song} index={i} showIndex />
                 </div>
                 {cachedIds.has(song.id) && (
                   <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                 )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
-                  className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {!isDeezerPlaylist && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
+                    className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
