@@ -204,7 +204,7 @@ export const deezerApi = {
       return score;
     };
 
-    // ── 2. Custom songs (priority) ──
+    // ── 2. Custom songs (priority — always check first) ──
     step("Custom…");
     try {
       const { data: customSongs } = await supabase
@@ -215,25 +215,37 @@ export const deezerApi = {
       if (customSongs && customSongs.length > 0) {
         let bestCustom: typeof customSongs[0] | null = null;
         let bestScore = 0;
-        let bestTitleScore = 0;
 
         for (const c of customSongs) {
-          const titleScore = matchScore(norm(c.title), targetTitle);
-          let score = titleScore * 2
-            + matchScore(norm(c.artist.split(",")[0]), targetArtist) * 1.5;
+          const cTitle = norm(c.title);
+          const cArtist = norm(c.artist.split(",")[0]);
+          const titleScore = matchScore(cTitle, targetTitle);
+          const artistScore = matchScore(cArtist, targetArtist);
+          
+          // Exact title match is a strong signal
+          let score = titleScore * 2 + artistScore * 1.5;
+          
+          // Duration proximity bonus
           if (c.duration > 0 && targetDuration > 0) {
             const diff = Math.abs(c.duration - targetDuration);
-            if (diff <= 15) score += 30;
+            if (diff <= 5) score += 40;
+            else if (diff <= 15) score += 30;
             else if (diff <= 30) score += 15;
           }
+          
+          // Bonus: if title contains the target or vice-versa
+          if (cTitle.includes(targetTitle) || targetTitle.includes(cTitle)) {
+            score += 30;
+          }
+
           if (score > bestScore) {
             bestScore = score;
-            bestTitleScore = titleScore;
             bestCustom = c;
           }
         }
 
-        if (bestCustom?.stream_url && bestScore >= 80 && bestTitleScore >= 50) {
+        // Lower threshold: score >= 60 is enough (was 80)
+        if (bestCustom?.stream_url && bestScore >= 60) {
           console.log("[resolve] custom match:", bestCustom.title, `(score: ${bestScore})`);
           const resolved = {
             ...song,
@@ -258,14 +270,18 @@ export const deezerApi = {
     step("Recherche HD…");
     try {
       const mainArtist = song.artist.split(",")[0].trim();
-      const cleanTitle = song.title.replace(/\(.*?\)/g, "").trim();
+      const cleanTitle = song.title.replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").trim();
+      // Strip "feat." from title for better matching
+      const noFeatTitle = song.title.replace(/\s*(feat\.?|ft\.?|featuring)\s*.*/i, "").trim();
       const queries = [
         `${mainArtist} ${song.title}`,
+        `${mainArtist} ${cleanTitle}`,
         song.title,
         `${song.title} ${mainArtist}`,
         cleanTitle,
-        `${mainArtist} ${cleanTitle}`,
-      ];
+        noFeatTitle !== cleanTitle ? `${mainArtist} ${noFeatTitle}` : null,
+        noFeatTitle !== cleanTitle ? noFeatTitle : null,
+      ].filter(Boolean) as string[];
 
       const seen = new Set<string>();
       const uniqueQueries = queries.filter((q) => {
@@ -289,7 +305,7 @@ export const deezerApi = {
         } catch { /* continue */ }
       }
 
-      if (bestMatch?.streamUrl && bestScore >= 50) {
+      if (bestMatch?.streamUrl && bestScore >= 40) {
         console.log("[resolve] JioSaavn HD:", bestMatch.title, `(score: ${bestScore})`);
         hdCache.set(song.id, {
           streamUrl: bestMatch.streamUrl,
