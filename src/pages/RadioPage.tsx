@@ -12,6 +12,9 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
 import { useRef, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 
 
@@ -137,6 +140,7 @@ const RadioPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [deletingStation, setDeletingStation] = useState<{ id: string; name: string } | null>(null);
   const queryClient = useQueryClient();
 
   // Live metadata
@@ -180,12 +184,22 @@ const RadioPage = () => {
   };
 
   const saveEdit = async () => {
-    if (!editingId) return;
+    if (!editingId || !editForm.name.trim()) return;
     const { error } = await supabase.from("custom_radio_stations").update({
-      name: editForm.name, genre: editForm.genre, stream_url: editForm.streamUrl, cover_url: editForm.coverUrl,
+      name: editForm.name.trim(), genre: editForm.genre.trim(), stream_url: editForm.streamUrl.trim(), cover_url: editForm.coverUrl,
     }).eq("id", editingId);
     if (error) { toast.error("Erreur lors de la modification"); }
     else { toast.success("Station modifiée"); setEditingId(null); queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] }); }
+  };
+
+  const confirmDelete = async (id: string, name: string) => {
+    setDeletingStation({ id, name });
+  };
+
+  const executeDelete = async () => {
+    if (!deletingStation) return;
+    await removeStation(deletingStation.id);
+    setDeletingStation(null);
   };
 
   const { data: savedIds = new Set<string>() } = useQuery({
@@ -278,13 +292,13 @@ const RadioPage = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
           {isCustomTab ? (
             <>
               <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-1.5 rounded-full hover:bg-secondary transition-colors">
                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
-              <button onClick={(e) => { e.stopPropagation(); removeStation(station.id); }} className="p-1.5 rounded-full hover:bg-destructive/20 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }} className="p-1.5 rounded-full hover:bg-destructive/20 transition-colors">
                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
               </button>
             </>
@@ -301,7 +315,6 @@ const RadioPage = () => {
   /* ── Station Grid Card ── */
   const StationCard = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
     const isSaved = savedIds.has(station.id);
-    const isEditing = editingId === station.id;
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
 
@@ -313,26 +326,6 @@ const RadioPage = () => {
       ? `${radioMetadata.artist} — ${radioMetadata.title}`
       : null;
 
-    if (isEditing) {
-      return (
-        <div
-          className="rounded-2xl border border-border bg-card p-4 space-y-2.5"
-        >
-          <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm bg-secondary border-border/50" />
-          <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Genre" className="text-sm bg-secondary border-border/50" />
-          <Input value={editForm.streamUrl} onChange={(e) => setEditForm((f) => ({ ...f, streamUrl: e.target.value }))} placeholder="URL du flux" className="text-sm bg-secondary border-border/50" />
-          <CoverImagePicker value={editForm.coverUrl} onChange={(v) => setEditForm((f) => ({ ...f, coverUrl: v }))} />
-          <div className="flex gap-2 pt-1">
-            <button onClick={saveEdit} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:brightness-110 transition-all">
-              <Check className="w-3.5 h-3.5" /> Enregistrer
-            </button>
-            <button onClick={() => setEditingId(null)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-xs font-semibold hover:bg-secondary/80 transition-all">
-              <X className="w-3.5 h-3.5" /> Annuler
-            </button>
-          </div>
-        </div>
-      );
-    }
 
     return (
       <div
@@ -370,13 +363,13 @@ const RadioPage = () => {
           )}
 
           {/* Action buttons */}
-          <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+           <div className="absolute top-2 right-2 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
             {isCustomTab ? (
               <>
                 <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-black/70 transition-colors">
                   <Pencil className="w-3.5 h-3.5 text-white" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); removeStation(station.id); }} className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-destructive/80 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }} className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-destructive/80 transition-colors">
                   <Trash2 className="w-3.5 h-3.5 text-white" />
                 </button>
               </>
@@ -424,7 +417,7 @@ const RadioPage = () => {
         </div>
       </div>
     );
-  }, [savedIds, editingId, currentSong?.id, isPlaying, radioMetadata, editForm, isCustomTab]);
+  }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
 
   return (
     <div className="pb-40 max-w-7xl mx-auto">
@@ -548,6 +541,57 @@ const RadioPage = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier la station</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nom</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom de la station" />
+            </div>
+            <div className="space-y-2">
+              <Label>Genre</Label>
+              <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Pop, Rock, Jazz..." />
+            </div>
+            <div className="space-y-2">
+              <Label>URL du flux</Label>
+              <Input value={editForm.streamUrl} onChange={(e) => setEditForm((f) => ({ ...f, streamUrl: e.target.value }))} placeholder="https://..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Pochette</Label>
+              <CoverImagePicker value={editForm.coverUrl} onChange={(v) => setEditForm((f) => ({ ...f, coverUrl: v }))} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingId(null)}>Annuler</Button>
+            <Button onClick={saveEdit} disabled={!editForm.name.trim()}>
+              <Check className="w-4 h-4 mr-1" /> Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingStation} onOpenChange={(open) => { if (!open) setDeletingStation(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Supprimer la station</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Voulez-vous vraiment supprimer <strong>{deletingStation?.name}</strong> ? Cette action est irréversible.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeletingStation(null)}>Annuler</Button>
+            <Button variant="destructive" onClick={executeDelete}>
+              <Trash2 className="w-4 h-4 mr-1" /> Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
