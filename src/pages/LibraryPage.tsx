@@ -414,17 +414,59 @@ const LibraryPage = () => {
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={async () => {
-                        for (const s of cachedSongs) await offlineCache.removeCached(s.id);
-                        setCachedSongs([]);
-                        setCacheSize(0);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Tout supprimer
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled={isRedownloading}
+                        onClick={async () => {
+                          setIsRedownloading(true);
+                          setRedownloadProgress({ current: 0, total: cachedSongs.length });
+                          try {
+                            for (let i = 0; i < cachedSongs.length; i++) {
+                              const s = cachedSongs[i];
+                              setRedownloadProgress({ current: i + 1, total: cachedSongs.length });
+                              try {
+                                await offlineCache.cacheSong(s);
+                              } catch (e) {
+                                console.error("Re-download failed for:", s.title, e);
+                              }
+                            }
+                            // Refresh list with new cover URLs
+                            const [songs, size] = await Promise.all([
+                              offlineCache.getAllCached(),
+                              offlineCache.getCacheSize(),
+                            ]);
+                            setCachedSongs(songs);
+                            setCacheSize(size);
+                          } finally {
+                            setIsRedownloading(false);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-all disabled:opacity-50"
+                      >
+                        {isRedownloading ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            {redownloadProgress.current}/{redownloadProgress.total}
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Rafraîchir
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          for (const s of cachedSongs) await offlineCache.removeCached(s.id);
+                          setCachedSongs([]);
+                          setCacheSize(0);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Tout supprimer
+                      </button>
+                    </div>
                   </div>
                   <div className="w-full bg-secondary rounded-full h-1.5">
                     <div
