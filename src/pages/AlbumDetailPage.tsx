@@ -45,37 +45,63 @@ const AlbumDetailPage = () => {
   const album = data?.album;
   const rawTracks = data?.tracks || [];
   const [resolvedTracks, setResolvedTracks] = useState<Song[]>([]);
-  const resolvingRef = useRef(false);
 
   useEffect(() => {
-    if (rawTracks.length === 0 || resolvingRef.current) return;
-    const dzTracks = rawTracks.filter((t) => t.id.startsWith("dz-"));
-    if (dzTracks.length === 0) { setResolvedTracks(rawTracks); return; }
-
-    resolvingRef.current = true;
-    setResolvedTracks(rawTracks);
+    if (rawTracks.length === 0) {
+      setResolvedTracks([]);
+      return;
+    }
 
     const controller = new AbortController();
+    setResolvedTracks(rawTracks);
+
+    const dzTracksNeedingResolve = rawTracks.filter(
+      (t) =>
+        t.id.startsWith("dz-") &&
+        (!t.streamUrl || t.streamUrl.includes("dzcdn.net") || t.streamUrl.includes("cdn-preview"))
+    );
+
+    if (dzTracksNeedingResolve.length === 0) {
+      return () => controller.abort();
+    }
+
     (async () => {
       let upgraded = 0;
       const updated = [...rawTracks];
+
       for (let i = 0; i < updated.length; i += 4) {
         if (controller.signal.aborted) return;
         const batch = updated.slice(i, i + 4);
         const resolved = await Promise.all(
-          batch.map((s) => s.id.startsWith("dz-") ? deezerApi.resolveFullStream(s).catch(() => s) : Promise.resolve(s))
+          batch.map((s) =>
+            s.id.startsWith("dz-") ? deezerApi.resolveFullStream(s).catch(() => s) : Promise.resolve(s)
+          )
         );
         if (controller.signal.aborted) return;
+
         for (let j = 0; j < resolved.length; j++) {
           const idx = i + j;
-          if (resolved[j].streamUrl && resolved[j].streamUrl !== updated[idx].streamUrl) { updated[idx] = resolved[j]; upgraded++; }
+          const isHd =
+            !!resolved[j].streamUrl &&
+            !resolved[j].streamUrl.includes("dzcdn.net") &&
+            !resolved[j].streamUrl.includes("cdn-preview");
+
+          if (isHd && resolved[j].streamUrl !== updated[idx].streamUrl) {
+            updated[idx] = resolved[j];
+            upgraded++;
+          }
         }
+
         setResolvedTracks([...updated]);
       }
-      if (upgraded > 0) toast.success(`${upgraded} titre${upgraded > 1 ? "s" : ""} résolu${upgraded > 1 ? "s" : ""} en HD`);
+
+      if (upgraded > 0) {
+        toast.success(`${upgraded} titre${upgraded > 1 ? "s" : ""} résolu${upgraded > 1 ? "s" : ""} en HD`);
+      }
     })();
-    return () => { controller.abort(); };
-  }, [rawTracks]);
+
+    return () => controller.abort();
+  }, [rawTracks, id]);
 
   const tracks = resolvedTracks.length > 0 ? resolvedTracks : rawTracks;
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
