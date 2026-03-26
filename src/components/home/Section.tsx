@@ -115,7 +115,17 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink }: Sect
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
         className="flex items-center justify-between px-4 md:px-8 mb-3"
       >
-        <h2 className="text-lg md:text-xl font-display font-bold text-foreground truncate mr-2">{title}</h2>
+        <div className="flex items-center gap-2 mr-2">
+          <h2 className="text-lg md:text-xl font-display font-bold text-foreground truncate">{title}</h2>
+          {viewAllLink && (
+            <button
+              onClick={() => navigate(viewAllLink)}
+              className="flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-medium text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+            >
+              Voir tout <ChevronRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
         {hasSongs && (
           <div className="flex items-center gap-1.5 relative flex-shrink-0">
             {onPlayAll && (
