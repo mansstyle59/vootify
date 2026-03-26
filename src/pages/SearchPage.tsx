@@ -169,15 +169,27 @@ const SearchPage = () => {
     setHasMoreDz((dzResults?.length || 0) >= PAGE_SIZE || extraDzResults.length > 0);
   }, [dzResults, extraDzResults]);
 
-  // Background HD resolution
+  // Background HD resolution — triggered only when dzResults change, NOT allDzResults
   const resolveAbortRef = useRef<AbortController | null>(null);
+  const resolvedIdsRef = useRef<Set<string>>(new Set());
+
+  // Reset resolved tracking when query changes
+  useEffect(() => {
+    resolvedIdsRef.current.clear();
+  }, [debouncedQuery]);
 
   useEffect(() => {
     resolveAbortRef.current?.abort();
 
-    const previewTracks = allDzResults.filter(
-      (s) => s.id.startsWith("dz-") && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
+    if (!dzResults || dzResults.length === 0) {
+      setResolveProgress(null);
+      return;
+    }
+
+    const previewTracks = dzResults.filter(
+      (s) => s.id.startsWith("dz-") && !resolvedIdsRef.current.has(s.id) && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
     ).slice(0, 40);
+
     if (previewTracks.length === 0) {
       setResolveProgress(null);
       return;
@@ -199,6 +211,8 @@ const SearchPage = () => {
         );
         if (controller.signal.aborted) return;
 
+        // Mark as resolved so we don't re-process
+        batch.forEach((s) => resolvedIdsRef.current.add(s.id));
         resolvedCount += batch.length;
         setResolveProgress({ resolved: resolvedCount, total });
 
@@ -220,7 +234,7 @@ const SearchPage = () => {
 
     resolveInBackground();
     return () => { controller.abort(); setResolveProgress(null); };
-  }, [allDzResults.length, debouncedQuery]);
+  }, [dzResults, debouncedQuery]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !debouncedQuery || !hasMoreDz) return;
