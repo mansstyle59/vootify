@@ -818,17 +818,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   {currentSong.title}
                 </h2>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {usePlayerStore.getState().resolveStep ? (
+                  {resolveStep ? (
                     <span className="inline-flex items-center gap-1.5 text-primary animate-pulse">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span className="font-semibold text-[13px]">{usePlayerStore.getState().resolveStep}</span>
+                      <span className="font-semibold text-[13px]">{resolveStep}</span>
                     </span>
                   ) : (
                     <p className="text-[15px] text-foreground/60 truncate">
                       {currentSong.artist}
                     </p>
                   )}
-                  {!usePlayerStore.getState().resolveStep && (isCached ? (
+                  {!resolveStep && (isCached ? (
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       <WifiOff className="w-2.5 h-2.5" />
                       OFFLINE
