@@ -746,7 +746,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           </p>
         </div>
         <button onClick={() => setShowQueue(!showQueue)} className="p-1 active:scale-90 transition-transform">
-          <MoreHorizontal className="w-6 h-6 text-foreground" />
+          {showQueue ? <X className="w-6 h-6 text-foreground" /> : <ListMusic className="w-6 h-6 text-foreground" />}
         </button>
       </div>
 
@@ -759,32 +759,123 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             exit={{ opacity: 0, y: -20 }}
             className="relative z-10 flex-1 overflow-y-auto px-5 pb-4 scrollbar-hide"
           >
-            <h3 className="text-base font-semibold text-foreground mb-3 sticky top-0 pt-2 pb-2"
-                style={{ background: `${bgColor}ee` }}
-            >
-              File d'attente
-            </h3>
-            <div className="space-y-1">
-              {queue.map((song) => {
-                const isCurrent = song.id === currentSong.id;
-                return (
-                  <button
-                    key={song.id}
-                    onClick={() => { play(song); setQueue(queue); }}
-                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${isCurrent ? "bg-white/10" : "hover:bg-white/5"}`}
-                  >
-                    <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-[13px] truncate ${isCurrent ? "text-primary font-semibold" : "text-foreground"}`}>
-                        {song.title}
-                      </p>
-                      <p className="text-[11px] text-foreground/50 truncate">{song.artist}</p>
-                    </div>
-                    <span className="text-[11px] text-foreground/40 tabular-nums">{formatDuration(song.duration)}</span>
-                  </button>
-                );
-              })}
+            {/* Now Playing */}
+            <div className="sticky top-0 z-10 pt-2 pb-3" style={{ background: `${bgColor}ee` }}>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/40 mb-2">En cours de lecture</h3>
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 border border-white/10">
+                <div className="relative">
+                  <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-lg" />
+                  <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-black/30">
+                    {isPlaying && <AudioVisualizer isPlaying={isPlaying} />}
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-primary truncate">{currentSong.title}</p>
+                  <p className="text-xs text-foreground/50 truncate">{currentSong.artist}</p>
+                </div>
+                <span className="text-xs text-foreground/40 tabular-nums">{formatDuration(currentSong.duration)}</span>
+              </div>
             </div>
+
+            {/* Upcoming */}
+            {(() => {
+              const currentIdx = queue.findIndex((s) => s.id === currentSong.id);
+              const upcoming = currentIdx >= 0 ? queue.slice(currentIdx + 1) : [];
+              const played = currentIdx > 0 ? queue.slice(0, currentIdx) : [];
+
+              return (
+                <>
+                  {upcoming.length > 0 && (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/40">
+                          À suivre · {upcoming.length} titre{upcoming.length > 1 ? "s" : ""}
+                        </h3>
+                        {queue.length > 1 && (
+                          <button
+                            onClick={() => {
+                              const shuffled = [...upcoming].sort(() => Math.random() - 0.5);
+                              const newQueue = [...played, currentSong, ...shuffled];
+                              setQueue(newQueue);
+                            }}
+                            className="text-[10px] font-semibold text-primary/70 hover:text-primary px-2 py-1 rounded-full bg-primary/10 active:scale-95 transition-all flex items-center gap-1"
+                          >
+                            <Shuffle className="w-3 h-3" />
+                            Mélanger
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-0.5">
+                        {upcoming.map((song, i) => (
+                          <motion.div
+                            key={song.id}
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.02 }}
+                            className="group"
+                          >
+                            <button
+                              onClick={() => { play(song); setQueue(queue); }}
+                              className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left hover:bg-white/5 active:bg-white/10 transition-colors"
+                            >
+                              <span className="w-5 text-center text-[11px] text-foreground/30 tabular-nums font-medium">{i + 1}</span>
+                              <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[13px] text-foreground truncate font-medium">{song.title}</p>
+                                <p className="text-[11px] text-foreground/40 truncate">{song.artist}</p>
+                              </div>
+                              <span className="text-[11px] text-foreground/30 tabular-nums">{formatDuration(song.duration)}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newQueue = queue.filter((s) => s.id !== song.id);
+                                  setQueue(newQueue);
+                                }}
+                                className="p-1 rounded-full opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-destructive transition-all active:scale-90"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {played.length > 0 && (
+                    <div className="mt-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/20 mb-2">
+                        Déjà joué · {played.length}
+                      </h3>
+                      <div className="space-y-0.5">
+                        {played.map((song) => (
+                          <button
+                            key={song.id}
+                            onClick={() => { play(song); setQueue(queue); }}
+                            className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-white/5 transition-colors opacity-40 hover:opacity-70"
+                          >
+                            <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[12px] text-foreground truncate">{song.title}</p>
+                              <p className="text-[10px] text-foreground/40 truncate">{song.artist}</p>
+                            </div>
+                            <span className="text-[10px] text-foreground/30 tabular-nums">{formatDuration(song.duration)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {upcoming.length === 0 && played.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-foreground/30">
+                      <ListMusic className="w-10 h-10 mb-3 opacity-50" />
+                      <p className="text-sm font-medium">File d'attente vide</p>
+                      <p className="text-xs mt-1 opacity-60">Ajoutez des morceaux depuis la recherche</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </motion.div>
         ) : (
           <motion.div
