@@ -47,7 +47,8 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
-  const [resolveStep, setResolveStep] = useState<string | null>(null);
+  const resolveStep = usePlayerStore((s) => s.resolveStep);
+  const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
 
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
@@ -654,6 +655,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
+  const resolveStep = usePlayerStore((s) => s.resolveStep);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -816,10 +818,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   {currentSong.title}
                 </h2>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-[15px] text-foreground/60 truncate">
-                    {currentSong.artist}
-                  </p>
-                  {isCached ? (
+                  {resolveStep ? (
+                    <span className="inline-flex items-center gap-1.5 text-primary animate-pulse">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span className="font-semibold text-[13px]">{resolveStep}</span>
+                    </span>
+                  ) : (
+                    <p className="text-[15px] text-foreground/60 truncate">
+                      {currentSong.artist}
+                    </p>
+                  )}
+                  {!resolveStep && (isCached ? (
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       <WifiOff className="w-2.5 h-2.5" />
                       OFFLINE
@@ -836,7 +845,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30">
                       No HD
                     </span>
-                  ) : null}
+                  ) : null)}
                 </div>
               </div>
               <button
