@@ -405,24 +405,40 @@ export function MiniPlayer() {
                 <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
                   {currentSong.title}
                 </p>
-                <p className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5">
-                  {resolveStep ? (
-                    <span className="inline-flex items-center gap-1 text-primary animate-pulse">
-                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                      <span className="font-semibold text-[10px]">{resolveStep}</span>
-                    </span>
-                  ) : (
-                    <>
-                      {currentSong.artist}
-                      {playingFromCache && (
-                        <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
-                          <WifiOff className="w-2.5 h-2.5" />
-                          <span className="font-semibold text-[10px]">OFFLINE</span>
-                        </span>
-                      )}
-                    </>
-                  )}
-                </p>
+                <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 relative overflow-hidden h-4">
+                  <AnimatePresence mode="wait">
+                    {resolveStep ? (
+                      <motion.span
+                        key={resolveStep}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute inset-0 inline-flex items-center gap-1 text-primary"
+                      >
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                        <span className="font-semibold text-[10px]">{resolveStep}</span>
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="artist"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute inset-0 inline-flex items-center truncate"
+                      >
+                        {currentSong.artist}
+                        {playingFromCache && (
+                          <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                            <WifiOff className="w-2.5 h-2.5" />
+                            <span className="font-semibold text-[10px]">OFFLINE</span>
+                          </span>
+                        )}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
 
@@ -908,35 +924,53 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                   {currentSong.title}
                 </h2>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {resolveStep ? (
-                    <span className="inline-flex items-center gap-1.5 text-primary animate-pulse">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span className="font-semibold text-[13px]">{resolveStep}</span>
-                    </span>
-                  ) : (
-                    <p className="text-[15px] text-foreground/60 truncate">
-                      {currentSong.artist}
-                    </p>
-                  )}
-                  {!resolveStep && (isCached ? (
-                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      <WifiOff className="w-2.5 h-2.5" />
-                      OFFLINE
-                    </span>
-                  ) : currentSong.resolvedViaCustom ? (
-                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground border border-secondary">
-                      Custom
-                    </span>
-                  ) : currentSong.streamUrl && !currentSong.streamUrl.includes("dzcdn.net") && currentSong.id.startsWith("dz-") ? (
-                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
-                      HD
-                    </span>
-                  ) : currentSong.id.startsWith("dz-") ? (
-                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30">
-                      No HD
-                    </span>
-                  ) : null)}
+                <div className="flex items-center gap-2 mt-0.5 relative overflow-hidden h-6">
+                  <AnimatePresence mode="wait">
+                    {resolveStep ? (
+                      <motion.span
+                        key={resolveStep}
+                        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
+                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="absolute inset-0 inline-flex items-center gap-1.5 text-primary"
+                      >
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span className="font-semibold text-[13px]">{resolveStep}</span>
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="artist-badge"
+                        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
+                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="absolute inset-0 inline-flex items-center gap-2"
+                      >
+                        <p className="text-[15px] text-foreground/60 truncate">
+                          {currentSong.artist}
+                        </p>
+                        {isCached ? (
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            <WifiOff className="w-2.5 h-2.5" />
+                            OFFLINE
+                          </span>
+                        ) : currentSong.resolvedViaCustom ? (
+                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground border border-secondary">
+                            Custom
+                          </span>
+                        ) : currentSong.streamUrl && !currentSong.streamUrl.includes("dzcdn.net") && currentSong.id.startsWith("dz-") ? (
+                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                            HD
+                          </span>
+                        ) : currentSong.id.startsWith("dz-") ? (
+                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30">
+                            No HD
+                          </span>
+                        ) : null}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
               <button
