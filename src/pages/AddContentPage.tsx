@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
+import { getEffectiveUserId } from "@/lib/deviceId";
 
-import { Music, Disc3, Radio, Loader2, CheckCircle, Lock, LogOut, Sparkles, Upload, FileAudio, X, Trash2 } from "lucide-react";
+import { Music, Disc3, Radio, Loader2, CheckCircle, Sparkles, Upload, FileAudio, X, Trash2 } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import AlbumFolderPicker, { type UploadedTrack } from "@/components/AlbumFolderPicker";
@@ -47,80 +48,7 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
   );
 }
 
-function AdminLoginForm() {
-  const { signIn } = useAdminAuth();
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    // Convert identifier to email format
-    const email = identifier.includes("@") ? identifier : `${identifier}@voomusic.app`;
-    const result = await signIn(email, password);
-    setLoading(false);
-    if (result.error) {
-      setError("Identifiants incorrects");
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="glass-panel rounded-2xl p-8 w-full max-w-sm"
-      >
-        <div className="flex flex-col items-center mb-6">
-          <div className="p-3 rounded-full bg-primary/10 mb-3">
-            <Lock className="w-6 h-6 text-primary" />
-          </div>
-          <h2 className="text-xl font-display font-bold text-foreground">Accès Admin</h2>
-          <p className="text-sm text-muted-foreground mt-1">Connectez-vous pour gérer le contenu</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <FieldInput
-            label="Identifiant"
-            value={identifier}
-            onChange={setIdentifier}
-            placeholder="adminvoo"
-            required
-          />
-          <label className="block">
-            <span className="text-sm font-medium text-foreground mb-1 block">
-              Mot de passe <span className="text-destructive">*</span>
-            </span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••"
-              required
-              className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-            />
-          </label>
-
-          {error && (
-            <p className="text-sm text-destructive text-center">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-            Se connecter
-          </button>
-        </form>
-      </motion.div>
-    </div>
-  );
-}
 
 const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
 
@@ -138,7 +66,8 @@ interface SongEntry {
 }
 
 function SongForm() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const [songs, setSongs] = useState<SongEntry[]>([]);
   const [processing, setProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -282,7 +211,7 @@ function SongForm() {
 
       // Insert into DB
       const { error: dbErr } = await supabase.from("custom_songs").insert({
-        user_id: user!.id,
+        user_id: effectiveUserId,
         title: song.title.trim(),
         artist: song.artist.trim(),
         album: song.album.trim() || null,
@@ -405,7 +334,8 @@ function SongForm() {
 }
 
 function AlbumForm() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
@@ -447,7 +377,7 @@ function AlbumForm() {
     setLoading(true);
 
     const { data: album, error } = await supabase.from("custom_albums").insert({
-      user_id: user!.id,
+      user_id: effectiveUserId,
       title: form.title.trim(),
       artist: form.artist.trim(),
       cover_url: form.coverUrl.trim() || null,
@@ -473,7 +403,7 @@ function AlbumForm() {
 
       if (newTracks.length > 0) {
         const songInserts = newTracks.map((t) => ({
-          user_id: user!.id,
+          user_id: effectiveUserId,
           title: t.title,
           artist: t.artist || form.artist.trim(),
           album: form.title.trim(),
@@ -523,7 +453,8 @@ function AlbumForm() {
 }
 
 function RadioForm() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", genre: "", coverUrl: "", streamUrl: "" });
 
@@ -532,7 +463,7 @@ function RadioForm() {
     if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: user!.id,
+      user_id: effectiveUserId,
       name: form.name.trim(),
       genre: form.genre.trim() || null,
       cover_url: form.coverUrl.trim() || null,
@@ -559,32 +490,12 @@ function RadioForm() {
 }
 
 const AddContentPage = () => {
-  const { isAdmin, loading, signOut } = useAdminAuth();
   const [tab, setTab] = useState<Tab>("song");
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return <AdminLoginForm />;
-  }
 
   return (
     <div className="p-4 md:p-8 pb-40 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Ajouter du contenu</h1>
-        <button
-          onClick={signOut}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Déconnexion
-        </button>
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">

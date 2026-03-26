@@ -5,6 +5,7 @@ import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
+import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck } from "lucide-react";
@@ -91,29 +92,30 @@ const AlbumDetailPage = () => {
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
 
   // Check if album is saved in library
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const { data: isSaved = false } = useQuery({
-    queryKey: ["saved-album", id, user?.id],
+    queryKey: ["saved-album", id, effectiveUserId],
     queryFn: async () => {
-      if (!user || !id) return false;
+      if (!id) return false;
       const { count } = await supabase
         .from("custom_albums")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .eq("id", id);
       return (count ?? 0) > 0;
     },
-    enabled: !!user && !!id,
+    enabled: !!id,
   });
 
   const toggleSave = useMutation({
     mutationFn: async () => {
-      if (!user || !album || !id) return;
+      if (!album || !id) return;
       if (isSaved) {
-        await supabase.from("custom_albums").delete().eq("id", id).eq("user_id", user.id);
+        await supabase.from("custom_albums").delete().eq("id", id).eq("user_id", effectiveUserId);
       } else {
         await supabase.from("custom_albums").insert({
           id,
-          user_id: user.id,
+          user_id: effectiveUserId,
           title: album.title,
           artist: album.artist,
           cover_url: album.coverUrl,
