@@ -326,26 +326,6 @@ const RadioPage = () => {
       ? `${radioMetadata.artist} — ${radioMetadata.title}`
       : null;
 
-    if (isEditing) {
-      return (
-        <div
-          className="rounded-2xl border border-border bg-card p-4 space-y-2.5"
-        >
-          <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom" className="text-sm bg-secondary border-border/50" />
-          <Input value={editForm.genre} onChange={(e) => setEditForm((f) => ({ ...f, genre: e.target.value }))} placeholder="Genre" className="text-sm bg-secondary border-border/50" />
-          <Input value={editForm.streamUrl} onChange={(e) => setEditForm((f) => ({ ...f, streamUrl: e.target.value }))} placeholder="URL du flux" className="text-sm bg-secondary border-border/50" />
-          <CoverImagePicker value={editForm.coverUrl} onChange={(v) => setEditForm((f) => ({ ...f, coverUrl: v }))} />
-          <div className="flex gap-2 pt-1">
-            <button onClick={saveEdit} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:brightness-110 transition-all">
-              <Check className="w-3.5 h-3.5" /> Enregistrer
-            </button>
-            <button onClick={() => setEditingId(null)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-xs font-semibold hover:bg-secondary/80 transition-all">
-              <X className="w-3.5 h-3.5" /> Annuler
-            </button>
-          </div>
-        </div>
-      );
-    }
 
     return (
       <div
