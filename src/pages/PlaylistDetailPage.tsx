@@ -4,7 +4,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { deezerApi } from "@/lib/deezerApi";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -17,6 +17,9 @@ const PlaylistDetailPage = () => {
   const navigate = useNavigate();
   const { playlistSongs, loadPlaylistSongs, play, setQueue, removeSongFromPlaylist, playlists } = usePlayerStore();
   const heroRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
 
   const { scrollY } = useScroll();
   const bgY = useTransform(scrollY, [0, 400], [0, 120]);
@@ -234,7 +237,7 @@ const PlaylistDetailPage = () => {
 
         {/* Navigation bar */}
         <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-          <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all">
+          <button onClick={() => navigate("/")} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <motion.div style={{ opacity: headerOpacity }} className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-foreground truncate max-w-[200px]">
@@ -247,9 +250,78 @@ const PlaylistDetailPage = () => {
                 <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </label>
             )}
-            <button className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all">
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: -8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -8 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl bg-card/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/40 overflow-hidden"
+                  >
+                    <div className="p-1.5 space-y-0.5">
+                      <button
+                        onClick={() => { handlePlayAll(); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                      >
+                        <Play className="w-4 h-4 text-primary" />
+                        Tout lire
+                      </button>
+                      <button
+                        onClick={() => { handleShufflePlay(); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                      >
+                        <Shuffle className="w-4 h-4 text-primary" />
+                        Lecture aléatoire
+                      </button>
+                      <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                      <button
+                        onClick={() => { handleDownloadAll(); setMenuOpen(false); }}
+                        disabled={downloading}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors disabled:opacity-40"
+                      >
+                        <Download className="w-4 h-4 text-muted-foreground" />
+                        Télécharger tout
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({ title: playlist?.name, url: window.location.href }).catch(() => {});
+                          } else {
+                            navigator.clipboard.writeText(window.location.href);
+                            toast.success("Lien copié !");
+                          }
+                          setMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                      >
+                        <Share2 className="w-4 h-4 text-muted-foreground" />
+                        Partager
+                      </button>
+                      {!isDeezerPlaylist && (
+                        <>
+                          <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                          <label className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors cursor-pointer">
+                            <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                            Changer la couverture
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleCoverChange(e); setMenuOpen(false); }} />
+                          </label>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
