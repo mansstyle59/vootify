@@ -128,7 +128,7 @@ const ProfilePage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-primary/5 to-background" />
         <div className="absolute top-0 right-0 w-60 h-60 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" />
 
-        <div className="relative px-4 md:px-8 pt-6 pb-8">
+        <div className="relative px-4 md:px-8 pb-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}>
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
