@@ -1,9 +1,10 @@
 import { Song } from "@/data/mockData";
 
 const DB_NAME = "music-offline-cache";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const AUDIO_STORE = "audio";
 const META_STORE = "meta";
+const COVER_STORE = "covers";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -16,10 +17,24 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(META_STORE)) {
         db.createObjectStore(META_STORE);
       }
+      if (!db.objectStoreNames.contains(COVER_STORE)) {
+        db.createObjectStore(COVER_STORE);
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+/** Fetch an image URL and return it as a Blob */
+async function fetchCoverBlob(url: string): Promise<Blob | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.blob();
+  } catch {
+    return null;
+  }
 }
 
 export const offlineCache = {
@@ -35,7 +50,7 @@ export const offlineCache = {
     });
   },
 
-  /** Download and cache a song's audio + metadata */
+  /** Download and cache a song's audio + metadata + cover art */
   async cacheSong(song: Song, onProgress?: (pct: number) => void): Promise<void> {
     if (!song.streamUrl) throw new Error("No stream URL");
 
@@ -51,6 +66,9 @@ export const offlineCache = {
 
     if (!reader) throw new Error("No readable stream");
 
+    // Download cover in parallel with audio
+    const coverPromise = song.coverUrl ? fetchCoverBlob(song.coverUrl) : Promise.resolve(null);
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -61,13 +79,19 @@ export const offlineCache = {
       }
     }
 
-    const blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
+    const audioBlob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
+    const coverBlob = await coverPromise;
     const db = await openDb();
 
     // Store audio blob
     await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(AUDIO_STORE, "readwrite");
-      tx.objectStore(AUDIO_STORE).put(blob, song.id);
+      const stores = [AUDIO_STORE];
+      if (coverBlob) stores.push(COVER_STORE);
+      const tx = db.transaction(stores, "readwrite");
+      tx.objectStore(AUDIO_STORE).put(audioBlob, song.id);
+      if (coverBlob) {
+        tx.objectStore(COVER_STORE).put(coverBlob, song.id);
+      }
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -108,58 +132,95 @@ export const offlineCache = {
     });
   },
 
-  /** Get all cached songs metadata */
-  async getAllCached(): Promise<(Song & { cachedAt: number })[]> {
+  /** Get a cached song's cover art as an object URL */
+  async getCachedCoverUrl(songId: string): Promise<string | null> {
     const db = await openDb();
     return new Promise((resolve) => {
+      const tx = db.transaction(COVER_STORE, "readonly");
+      const req = tx.objectStore(COVER_STORE).get(songId);
+      req.onsuccess = () => {
+        if (req.result instanceof Blob) {
+          resolve(URL.createObjectURL(req.result));
+        } else {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    });
+  },
+
+  /** Get all cached songs metadata, with cover blob URLs resolved */
+  async getAllCached(): Promise<(Song & { cachedAt: number })[]> {
+    const db = await openDb();
+    const metas: any[] = await new Promise((resolve) => {
       const tx = db.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const req = store.getAll();
-      req.onsuccess = () => {
-        const metas = req.result || [];
-        resolve(
-          metas.map((m: any) => ({
-            id: m.id,
-            title: m.title,
-            artist: m.artist,
-            album: m.album,
-            duration: m.duration,
-            coverUrl: m.coverUrl,
-            streamUrl: m.streamUrl || "",
-            liked: false,
-            cachedAt: m.cachedAt,
-          }))
-        );
-      };
+      req.onsuccess = () => resolve(req.result || []);
       req.onerror = () => resolve([]);
     });
+
+    // Resolve cover blob URLs for each cached song
+    const songs = await Promise.all(
+      metas.map(async (m: any) => {
+        let coverUrl = m.coverUrl;
+        try {
+          const cachedCover = await offlineCache.getCachedCoverUrl(m.id);
+          if (cachedCover) coverUrl = cachedCover;
+        } catch {}
+        return {
+          id: m.id,
+          title: m.title,
+          artist: m.artist,
+          album: m.album,
+          duration: m.duration,
+          coverUrl,
+          streamUrl: m.streamUrl || "",
+          liked: false,
+          cachedAt: m.cachedAt,
+        };
+      })
+    );
+    return songs;
   },
 
   /** Remove a cached song */
   async removeCached(songId: string): Promise<void> {
     const db = await openDb();
     await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction([AUDIO_STORE, META_STORE], "readwrite");
+      const tx = db.transaction([AUDIO_STORE, META_STORE, COVER_STORE], "readwrite");
       tx.objectStore(AUDIO_STORE).delete(songId);
       tx.objectStore(META_STORE).delete(songId);
+      tx.objectStore(COVER_STORE).delete(songId);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
   },
 
-  /** Get total cache size in bytes */
+  /** Get total cache size in bytes (audio + covers) */
   async getCacheSize(): Promise<number> {
     const db = await openDb();
     return new Promise((resolve) => {
-      const tx = db.transaction(AUDIO_STORE, "readonly");
-      const store = tx.objectStore(AUDIO_STORE);
-      const req = store.getAll();
-      req.onsuccess = () => {
-        const blobs = req.result || [];
-        const total = blobs.reduce((sum: number, b: Blob) => sum + (b.size || 0), 0);
-        resolve(total);
+      const tx = db.transaction([AUDIO_STORE, COVER_STORE], "readonly");
+      let total = 0;
+      let pending = 2;
+      const done = () => { pending--; if (pending === 0) resolve(total); };
+
+      const audioReq = tx.objectStore(AUDIO_STORE).getAll();
+      audioReq.onsuccess = () => {
+        const blobs = audioReq.result || [];
+        total += blobs.reduce((sum: number, b: Blob) => sum + (b.size || 0), 0);
+        done();
       };
-      req.onerror = () => resolve(0);
+      audioReq.onerror = done;
+
+      const coverReq = tx.objectStore(COVER_STORE).getAll();
+      coverReq.onsuccess = () => {
+        const blobs = coverReq.result || [];
+        total += blobs.reduce((sum: number, b: Blob) => sum + (b.size || 0), 0);
+        done();
+      };
+      coverReq.onerror = done;
     });
   },
 };
