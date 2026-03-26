@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
 import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown } from "lucide-react";
+import { Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown, RefreshCw, Loader2 } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
