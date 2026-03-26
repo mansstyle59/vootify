@@ -163,7 +163,7 @@ const HomePage = () => {
 
       case "coupsDeCœur":
         return likedSongs.length > 0 && isVisible("coupsDeCœur") ? (
-          <Section key="coupsDeCœur" title={sectionTitle(section)} songs={likedSongs.slice(0, 20)} onPlayAll={() => { setQueue(likedSongs); play(likedSongs[0]); }}>
+          <Section key="coupsDeCœur" title={sectionTitle(section)} songs={likedSongs.slice(0, 20)} onPlayAll={() => { setQueue(likedSongs); play(likedSongs[0]); }} viewAllLink="/library">
             <HorizontalScroll>
               {likedSongs.slice(0, 20).map((song, i) => (
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, likedSongs)} />
