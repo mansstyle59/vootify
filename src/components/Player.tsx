@@ -136,6 +136,7 @@ export function MiniPlayer() {
 
       // PRIORITY: check offline cache first — essential for airplane mode
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
+      if (abortController.signal.aborted) return; // User clicked another track
 
       if (cachedUrl) {
         // Also resolve cached cover art for offline display
@@ -154,6 +155,7 @@ export function MiniPlayer() {
           setResolveStep("Recherche Custom…");
           try {
             const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
+            if (abortController.signal.aborted) return; // User clicked another track
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
