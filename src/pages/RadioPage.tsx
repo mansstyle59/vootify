@@ -417,7 +417,7 @@ const RadioPage = () => {
         </div>
       </div>
     );
-  }, [savedIds, editingId, currentSong?.id, isPlaying, radioMetadata, editForm, isCustomTab]);
+  }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
 
   return (
     <div className="pb-40 max-w-7xl mx-auto">
