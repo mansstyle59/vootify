@@ -381,18 +381,23 @@ const LibraryPage = () => {
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
 
+  const tabs = isAdmin ? allTabs : allTabs.filter((t) => t.key !== "custom");
   const isGuest = !authLoading && !user;
 
   useEffect(() => {
-    if (isGuest && !isOffline && !["downloads", "custom"].includes(tab)) setTab("custom");
+    if (!isAdmin && tab === "custom") {
+      setTab(isOffline ? "downloads" : "recent");
+      return;
+    }
+    if (isGuest && !isOffline && tab !== "downloads") setTab("downloads");
     if (isOffline && tab !== "downloads") setTab("downloads");
-  }, [isGuest, isOffline]);
+  }, [isGuest, isOffline, isAdmin, tab]);
 
   const visibleTabs = isOffline
-    ? allTabs.filter((t) => t.key === "downloads")
+    ? tabs.filter((t) => t.key === "downloads")
     : isGuest
-      ? allTabs.filter((t) => t.key === "downloads" || t.key === "custom")
-      : allTabs;
+      ? tabs.filter((t) => t.key === "downloads")
+      : tabs;
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative">
