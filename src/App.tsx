@@ -40,9 +40,11 @@ function AppContent() {
 
   useEffect(() => {
     if (loading) return;
-    const userId = user?.id || ANONYMOUS_USER_ID;
+    const userId = user?.id || null;
     setUserId(userId);
-    loadUserData(userId);
+    if (userId) {
+      loadUserData(userId);
+    }
   }, [user, loading, loadUserData, setUserId]);
 
   const handleRefresh = useCallback(async () => {
