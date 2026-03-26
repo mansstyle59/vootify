@@ -183,12 +183,22 @@ const RadioPage = () => {
   };
 
   const saveEdit = async () => {
-    if (!editingId) return;
+    if (!editingId || !editForm.name.trim()) return;
     const { error } = await supabase.from("custom_radio_stations").update({
-      name: editForm.name, genre: editForm.genre, stream_url: editForm.streamUrl, cover_url: editForm.coverUrl,
+      name: editForm.name.trim(), genre: editForm.genre.trim(), stream_url: editForm.streamUrl.trim(), cover_url: editForm.coverUrl,
     }).eq("id", editingId);
     if (error) { toast.error("Erreur lors de la modification"); }
     else { toast.success("Station modifiée"); setEditingId(null); queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] }); }
+  };
+
+  const confirmDelete = async (id: string, name: string) => {
+    setDeletingStation({ id, name });
+  };
+
+  const executeDelete = async () => {
+    if (!deletingStation) return;
+    await removeStation(deletingStation.id);
+    setDeletingStation(null);
   };
 
   const { data: savedIds = new Set<string>() } = useQuery({
