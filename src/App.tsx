@@ -116,6 +116,7 @@ const App = () => {
         <AuthProvider>
           <AdminAuthProvider>
             <Sonner />
+            <NetworkStatus />
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
             <BrowserRouter>
               <AppContent />
