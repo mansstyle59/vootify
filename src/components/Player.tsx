@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2, WifiOff, GripVertical
+  Download, Check, Loader2, WifiOff, GripVertical, Trash2
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -807,19 +807,32 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/40">
                           À suivre · {upcoming.length} titre{upcoming.length > 1 ? "s" : ""}
                         </h3>
-                        {queue.length > 1 && (
-                          <button
-                            onClick={() => {
-                              const shuffled = [...upcoming].sort(() => Math.random() - 0.5);
-                              const newQueue = [...played, currentSong, ...shuffled];
-                              setQueue(newQueue);
-                            }}
-                            className="text-[10px] font-semibold text-primary/70 hover:text-primary px-2 py-1 rounded-full bg-primary/10 active:scale-95 transition-all flex items-center gap-1"
-                          >
-                            <Shuffle className="w-3 h-3" />
-                            Mélanger
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {upcoming.length > 0 && (
+                            <button
+                              onClick={() => {
+                                setQueue(currentSong ? [currentSong] : []);
+                              }}
+                              className="text-[10px] font-semibold text-destructive/70 hover:text-destructive px-2 py-1 rounded-full bg-destructive/10 active:scale-95 transition-all flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Vider
+                            </button>
+                          )}
+                          {queue.length > 1 && (
+                            <button
+                              onClick={() => {
+                                const shuffled = [...upcoming].sort(() => Math.random() - 0.5);
+                                const newQueue = [...played, currentSong, ...shuffled];
+                                setQueue(newQueue);
+                              }}
+                              className="text-[10px] font-semibold text-primary/70 hover:text-primary px-2 py-1 rounded-full bg-primary/10 active:scale-95 transition-all flex items-center gap-1"
+                            >
+                              <Shuffle className="w-3 h-3" />
+                              Mélanger
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <Reorder.Group
                         axis="y"
