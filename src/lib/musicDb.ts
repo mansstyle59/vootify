@@ -77,6 +77,7 @@ export const musicDb = {
   },
 
   async createPlaylist(userId: string, name: string) {
+    assertValidUserId(userId);
     const { data, error } = await supabase
       .from("playlists")
       .insert({ user_id: userId, name })
@@ -132,6 +133,7 @@ export const musicDb = {
 
   // Recently played
   async addRecentlyPlayed(userId: string, song: Song) {
+    assertValidUserId(userId);
     // Remove previous entry for same song to avoid duplicates
     await supabase
       .from("recently_played")
@@ -177,6 +179,7 @@ export const musicDb = {
   },
 
   async saveSearchQuery(userId: string, query: string): Promise<void> {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("search_history")
       .upsert(
