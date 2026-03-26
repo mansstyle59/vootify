@@ -1,21 +1,207 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
-import { SongCard, ContentCard } from "@/components/MusicCards";
-import { Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download, HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown, RefreshCw, Loader2 } from "lucide-react";
-
+import { useDominantColor } from "@/hooks/useDominantColor";
+import { formatDuration } from "@/data/mockData";
+import {
+  Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download,
+  HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown,
+  RefreshCw, Loader2, MoreHorizontal, ChevronRight
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
+import { useOfflineCache } from "@/hooks/useOfflineCache";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
   songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview"));
+
+/** Filter out radio stations (duration === 0) from recently played */
+const filterMusicOnly = (songs: Song[]) =>
+  songs.filter((s) => s.duration > 0);
+
+/* ── Premium Song Row ── */
+function PremiumSongRow({
+  song, index, showIndex, isActive, isPlaying, onClick, onSwipeLeft, onSwipeRight,
+}: {
+  song: Song; index: number; showIndex?: boolean;
+  isActive: boolean; isPlaying: boolean;
+  onClick: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
+  const [swiped, setSwiped] = useState<"left" | "right" | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    setSwiped(null);
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = e.changedTouches[0].clientX - startXRef.current;
+    if (diff < -80 && onSwipeLeft) { setSwiped("left"); setTimeout(() => { onSwipeLeft(); setSwiped(null); }, 300); }
+    else if (diff > 80 && onSwipeRight) { setSwiped("right"); setTimeout(() => { onSwipeRight(); setSwiped(null); }, 300); }
+  };
+
+  // Format artist with feat styling
+  const formatArtist = (artist: string) => {
+    const parts = artist.split(/\s*(feat\.?|ft\.?|featuring)\s*/i);
+    if (parts.length <= 1) return <span>{artist}</span>;
+    return (
+      <>
+        <span>{parts[0].trim()}</span>
+        <span className="text-muted-foreground/50 font-normal"> feat. </span>
+        <span className="text-muted-foreground/70">{parts.slice(2).join(", ").trim()}</span>
+      </>
+    );
+  };
+
+  return (
+    <motion.div
+      ref={containerRef}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{
+        opacity: 1,
+        x: swiped === "left" ? -80 : swiped === "right" ? 80 : 0,
+      }}
+      transition={{ duration: 0.2 }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onClick={onClick}
+      className={`group flex items-center gap-3.5 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+        isActive ? "bg-primary/8 ring-1 ring-primary/15" : "hover:bg-secondary/50"
+      }`}
+    >
+      {/* Index or equalizer */}
+      {showIndex && (
+        <div className="w-7 flex-shrink-0 flex items-center justify-center">
+          {isActive && isPlaying ? (
+            <div className="flex items-end gap-[2px] h-4">
+              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-1" />
+              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-2" />
+              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-3" />
+            </div>
+          ) : (
+            <span className={`text-xs tabular-nums font-medium ${isActive ? "text-primary" : "text-muted-foreground/60"}`}>
+              {index + 1}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Cover */}
+      <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md transition-shadow ${
+        isActive ? "shadow-primary/20 ring-1 ring-primary/30" : "shadow-black/20"
+      }`}>
+        <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+          isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
+        }`}>
+          {isActive && isPlaying ? (
+            <Pause className="w-4 h-4 text-white" />
+          ) : (
+            <Play className="w-4 h-4 text-white ml-0.5" />
+          )}
+        </div>
+      </div>
+
+      {/* Title & Artist */}
+      <div className="flex-1 min-w-0">
+        <p className={`text-[13px] font-semibold leading-tight truncate ${
+          isActive ? "text-primary" : "text-foreground"
+        }`}>
+          {song.title}
+        </p>
+        <p className="text-[11px] text-muted-foreground/70 leading-tight mt-1 truncate">
+          {formatArtist(song.artist)}
+        </p>
+      </div>
+
+      {/* Duration */}
+      <span className="text-[11px] text-muted-foreground/50 tabular-nums flex-shrink-0 font-medium">
+        {formatDuration(song.duration)}
+      </span>
+    </motion.div>
+  );
+}
+
+/* ── Animated Tab Pill ── */
+function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
+  tab: Tab; activeTab: Tab; label: string; icon: React.ElementType; onClick: () => void;
+}) {
+  const isActive = tab === activeTab;
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+        isActive ? "text-primary-foreground" : "text-secondary-foreground hover:bg-secondary/80"
+      }`}
+    >
+      {isActive && (
+        <motion.div
+          layoutId="libraryTab"
+          className="absolute inset-0 bg-primary rounded-full shadow-lg shadow-primary/25"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
+      )}
+      <span className="relative z-10 flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5" />
+        {label}
+      </span>
+    </button>
+  );
+}
+
+/* ── Action Buttons Row ── */
+function ActionButtons({ onPlayAll, onShuffle, extra }: {
+  onPlayAll: () => void; onShuffle: () => void; extra?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={onPlayAll}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:brightness-110 transition-all"
+      >
+        <Play className="w-4 h-4" />
+        Tout lire
+      </motion.button>
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={onShuffle}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full liquid-glass text-foreground text-sm font-medium transition-all"
+      >
+        <Shuffle className="w-4 h-4" />
+        Aléatoire
+      </motion.button>
+      {extra}
+    </div>
+  );
+}
+
+/* ── Empty State ── */
+function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center py-20 text-center"
+    >
+      <div className="p-5 rounded-3xl liquid-glass mb-4">
+        <Icon className="w-10 h-10 text-muted-foreground/40" />
+      </div>
+      <p className="text-foreground font-semibold text-sm">{title}</p>
+      <p className="text-xs text-muted-foreground/60 mt-1 max-w-[220px]">{subtitle}</p>
+    </motion.div>
+  );
+}
 
 const LibraryPage = () => {
   const [tab, setTab] = useState<Tab>("recent");
@@ -26,22 +212,23 @@ const LibraryPage = () => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { likedSongs, playlists, recentlyPlayed, playlistSongs, createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs, currentSong, isPlaying, togglePlay, clearRecentlyPlayed, loadUserData, userId } = usePlayerStore();
+  const {
+    likedSongs, playlists, recentlyPlayed, playlistSongs,
+    createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
+    currentSong, isPlaying, togglePlay, clearRecentlyPlayed, loadUserData, userId,
+    toggleLike
+  } = usePlayerStore();
   const queryClient = useQueryClient();
 
-  // Track online/offline status
+  // Online/offline tracking
   useEffect(() => {
     const goOffline = () => setIsOffline(true);
     const goOnline = () => setIsOffline(false);
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", goOnline);
-    return () => {
-      window.removeEventListener("offline", goOffline);
-      window.removeEventListener("online", goOnline);
-    };
+    return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
   }, []);
 
-  // Refresh data when app returns to foreground
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -57,9 +244,7 @@ const LibraryPage = () => {
 
   useEffect(() => {
     if (tab === "playlists") {
-      playlists.forEach((p) => {
-        if (!playlistSongs[p.id]) loadPlaylistSongs(p.id);
-      });
+      playlists.forEach((p) => { if (!playlistSongs[p.id]) loadPlaylistSongs(p.id); });
     }
   }, [tab, playlists]);
 
@@ -70,9 +255,7 @@ const LibraryPage = () => {
       for (const p of playlists) {
         const songs = playlistSongs[p.id] || [];
         let count = 0;
-        for (const s of songs) {
-          if (await offlineCache.isCached(s.id)) count++;
-        }
+        for (const s of songs) { if (await offlineCache.isCached(s.id)) count++; }
         counts[p.id] = count;
       }
       setPlaylistCachedCounts(counts);
@@ -80,53 +263,33 @@ const LibraryPage = () => {
     countCached();
   }, [tab, playlists, playlistSongs]);
 
-
   const { data: customSongs = [] } = useQuery({
     queryKey: ["custom-songs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("custom_songs").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       const songs = (data || []).map((s: any): Song & { _dbId: string } => ({
-        _dbId: s.id,
-        id: `custom-${s.id}`,
-        title: s.title,
-        artist: s.artist,
-        album: s.album || "",
-        duration: s.duration,
-        coverUrl: s.cover_url || "",
-        streamUrl: s.stream_url || "",
-        liked: false,
+        _dbId: s.id, id: `custom-${s.id}`, title: s.title, artist: s.artist,
+        album: s.album || "", duration: s.duration, coverUrl: s.cover_url || "",
+        streamUrl: s.stream_url || "", liked: false,
       }));
 
-      // Auto-fix missing durations in background
+      // Auto-fix missing durations
       const toFix = songs.filter((s) => !s.duration && s.streamUrl);
       if (toFix.length > 0) {
-        Promise.all(
-          toFix.map((s) =>
-            new Promise<void>((resolve) => {
-              const audio = new Audio();
-              audio.preload = "metadata";
-              audio.src = s.streamUrl;
-              audio.addEventListener("loadedmetadata", () => {
-                const dur = audio.duration && isFinite(audio.duration) ? Math.round(audio.duration) : 0;
-                if (dur > 0) {
-                  s.duration = dur;
-                  supabase.from("custom_songs").update({ duration: dur }).eq("id", s._dbId).then(() => {});
-                }
-                resolve();
-              }, { once: true });
-              audio.addEventListener("error", () => resolve(), { once: true });
-              setTimeout(() => resolve(), 5000);
-            })
-          )
-        ).then(() => {
-          queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
-        });
+        Promise.all(toFix.map((s) => new Promise<void>((resolve) => {
+          const audio = new Audio();
+          audio.preload = "metadata";
+          audio.src = s.streamUrl;
+          audio.addEventListener("loadedmetadata", () => {
+            const dur = audio.duration && isFinite(audio.duration) ? Math.round(audio.duration) : 0;
+            if (dur > 0) { s.duration = dur; supabase.from("custom_songs").update({ duration: dur }).eq("id", s._dbId).then(() => {}); }
+            resolve();
+          }, { once: true });
+          audio.addEventListener("error", () => resolve(), { once: true });
+          setTimeout(() => resolve(), 5000);
+        }))).then(() => queryClient.invalidateQueries({ queryKey: ["custom-songs"] }));
       }
-
       return songs as Song[];
     },
     staleTime: 60 * 1000,
@@ -139,17 +302,14 @@ const LibraryPage = () => {
   const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
-    if (tab !== "downloads") return;
+    if (tab !== "downloads" && !isOffline) return;
     const load = async () => {
-      const [songs, size] = await Promise.all([
-        offlineCache.getAllCached(),
-        offlineCache.getCacheSize(),
-      ]);
+      const [songs, size] = await Promise.all([offlineCache.getAllCached(), offlineCache.getCacheSize()]);
       setCachedSongs(songs);
       setCacheSize(size);
     };
     load();
-  }, [tab]);
+  }, [tab, isOffline]);
 
   const sortedCustomSongs = useMemo(() => {
     const arr = [...customSongs];
@@ -157,10 +317,9 @@ const LibraryPage = () => {
       case "alpha": return arr.sort((a, b) => a.title.localeCompare(b.title, "fr"));
       case "artist": return arr.sort((a, b) => a.artist.localeCompare(b.artist, "fr"));
       case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
-      default: return arr; // already sorted by recent from query
+      default: return arr;
     }
   }, [customSongs, customSort]);
-
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
@@ -175,49 +334,35 @@ const LibraryPage = () => {
   };
 
   const handleCreate = () => {
-    if (newName.trim()) {
-      createPlaylist(newName.trim());
-      setNewName("");
-      setShowCreate(false);
-    }
+    if (newName.trim()) { createPlaylist(newName.trim()); setNewName(""); setShowCreate(false); }
   };
+
+  // Filtered recent: music only (no radios)
+  const recentMusic = useMemo(() => {
+    const music = filterMusicOnly(filterFullStreams(recentlyPlayed));
+    // Deduplicate
+    const seen = new Set<string>();
+    return music.filter((s) => { if (seen.has(s.id)) return false; seen.add(s.id); return true; });
+  }, [recentlyPlayed]);
+
+  // Dynamic header color from first song
+  const headerSong = tab === "recent" ? recentMusic[0] : tab === "liked" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
+  const headerColor = useDominantColor(headerSong?.coverUrl);
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "recent", label: "Récents", icon: Clock },
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
     { key: "custom", label: "Mes titres", icon: Music },
-    { key: "downloads", label: "Téléchargés", icon: Download },
+    { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
 
-  // Auth gate — show only downloads + custom tabs when not logged in; only downloads when offline
   const isGuest = !authLoading && !user;
-  const offlineMode = isOffline;
 
-  // Auto-switch to custom tab when guest (not offline)
   useEffect(() => {
-    if (isGuest && !isOffline && !["downloads", "custom"].includes(tab)) {
-      setTab("custom");
-    }
-    if (isOffline && tab !== "downloads") {
-      setTab("downloads");
-    }
+    if (isGuest && !isOffline && !["downloads", "custom"].includes(tab)) setTab("custom");
+    if (isOffline && tab !== "downloads") setTab("downloads");
   }, [isGuest, isOffline]);
-
-  // Also load cached songs immediately when going offline
-  useEffect(() => {
-    if (isOffline) {
-      const load = async () => {
-        const [songs, size] = await Promise.all([
-          offlineCache.getAllCached(),
-          offlineCache.getCacheSize(),
-        ]);
-        setCachedSongs(songs);
-        setCacheSize(size);
-      };
-      load();
-    }
-  }, [isOffline]);
 
   const visibleTabs = isOffline
     ? tabs.filter((t) => t.key === "downloads")
@@ -226,445 +371,400 @@ const LibraryPage = () => {
       : tabs;
 
   return (
-    <div className="p-4 md:p-8 pb-40 max-w-7xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-      {isOffline && (
-        <div className="flex items-center gap-2 px-3 py-2 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-amber-400 font-medium">Mode hors-ligne — seuls les morceaux téléchargés sont disponibles</p>
-        </div>
-      )}
-      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
-        {isOffline ? "Mode Hors-ligne" : "Votre Bibliothèque"}
-      </h1>
-      <p className="text-sm text-muted-foreground mb-5">
-        {isOffline ? "Écoutez vos morceaux téléchargés sans connexion" : offlineMode ? "Vos morceaux téléchargés sont disponibles hors-ligne" : "Vos morceaux, playlists et stations sauvegardés"}
-      </p>
-
-      <div className="flex gap-1.5 mb-5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
-        {visibleTabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-              tab === key
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-                : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
-            }`}
-          >
-            <Icon className="w-3.5 h-3.5" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {tab === "liked" && (
-            <div>
-              {filterFullStreams(likedSongs).length === 0 ? (
-                <div className="glass-panel-light rounded-xl p-2">
-                  <p className="text-center text-muted-foreground py-12">Pas encore de titres aimés. Likez des chansons en naviguant !</p>
-                </div>
-              ) : (
-                <>
-                  <div className="flex gap-2 mb-3">
-                    <button
-                      onClick={() => { const full = filterFullStreams(likedSongs); setQueue(full); play(full[0]); }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
-                    >
-                      <Play className="w-4 h-4" />
-                      Tout lire
-                    </button>
-                    <button
-                      onClick={() => {
-                        const shuffled = filterFullStreams([...likedSongs]).sort(() => Math.random() - 0.5);
-                        setQueue(shuffled);
-                        play(shuffled[0]);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-all"
-                    >
-                      <Shuffle className="w-4 h-4" />
-                      Aléatoire
-                    </button>
-                  </div>
-                  <div className="glass-panel-light rounded-xl p-2">
-                    {filterFullStreams(likedSongs).map((s, i) => <SongCard key={s.id} song={s} index={i} showIndex />)}
-                  </div>
-                </>
-              )}
+    <div className="pb-40 max-w-7xl mx-auto relative">
+      {/* Dynamic gradient header */}
+      <div
+        className="sticky top-0 z-20 transition-colors duration-700"
+        style={{
+          background: headerColor
+            ? `linear-gradient(180deg, ${headerColor}40 0%, hsl(240 10% 6%) 100%)`
+            : undefined,
+        }}
+      >
+        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3" style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+          {isOffline && (
+            <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <p className="text-xs text-amber-400 font-medium">Mode hors-ligne — seuls les morceaux téléchargés sont disponibles</p>
             </div>
           )}
 
-          {tab === "playlists" && (
-            <div>
-              <button
-                onClick={() => setShowCreate(!showCreate)}
-                className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 text-sm font-medium transition-all"
-              >
-                <Plus className="w-4 h-4" /> Nouvelle Playlist
-              </button>
-              {showCreate && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="flex gap-2 mb-4 overflow-hidden"
-                >
-                  <input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                    placeholder="Nom de la playlist..."
-                    className="flex-1 px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    autoFocus
-                  />
-                  <button onClick={handleCreate} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium">Créer</button>
-                </motion.div>
-              )}
-              {playlists.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <ListMusic className="w-14 h-14 text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">Pas encore de playlists</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Créez votre première playlist ci-dessus</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {playlists.map((p, idx) => {
-                    const pSongs = playlistSongs[p.id] || [];
-                    const cachedCount = playlistCachedCounts[p.id] || 0;
-                    const coverImg = p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
-                    // Show up to 4 song covers as a mosaic if no custom cover
-                    const songCovers = !p.cover_url && pSongs.length >= 4
-                      ? pSongs.slice(0, 4).map((s) => s.coverUrl).filter(Boolean)
-                      : null;
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
+            {isOffline ? "Mode Hors-ligne" : "Bibliothèque"}
+          </h1>
+          <p className="text-xs text-muted-foreground/70 mb-4">
+            {isOffline ? "Écoutez vos morceaux sans connexion" : "Vos morceaux, playlists et favoris"}
+          </p>
 
-                    return (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.04 }}
-                        className="group relative"
-                      >
-                        <button
-                          onClick={() => navigate(`/playlist/${p.id}`)}
-                          className="w-full flex items-center gap-3.5 p-3 rounded-2xl bg-secondary/40 hover:bg-secondary/70 border border-border/50 transition-all active:scale-[0.98]"
+          {/* Tab pills */}
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+            {visibleTabs.map(({ key, label, icon }) => (
+              <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 md:px-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            {/* ── RECENT ── */}
+            {tab === "recent" && (
+              <div>
+                {recentMusic.length === 0 ? (
+                  <EmptyState icon={Clock} title="Rien d'écouté récemment" subtitle="Vos morceaux écoutés apparaîtront ici" />
+                ) : (
+                  <>
+                    <ActionButtons
+                      onPlayAll={() => { setQueue(recentMusic); play(recentMusic[0]); }}
+                      onShuffle={() => { const s = [...recentMusic].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
+                      extra={
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => clearRecentlyPlayed()}
+                          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full bg-destructive/10 text-destructive text-xs font-medium"
                         >
-                          {/* Cover: mosaic or single */}
-                          <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-md shrink-0">
-                            {songCovers && songCovers.length >= 4 ? (
-                              <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-                                {songCovers.map((url, ci) => (
-                                  <img key={ci} src={url} alt="" className="w-full h-full object-cover" />
-                                ))}
-                              </div>
-                            ) : (
-                              <img src={coverImg} alt={p.name} className="w-full h-full object-cover" />
-                            )}
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Play className="w-5 h-5 text-white fill-white" />
-                            </div>
-                          </div>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </motion.button>
+                      }
+                    />
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
+                      {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
+                    </p>
+                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                      {recentMusic.map((s, i) => (
+                        <PremiumSongRow
+                          key={`${s.id}-${i}`}
+                          song={s}
+                          index={i}
+                          showIndex
+                          isActive={currentSong?.id === s.id}
+                          isPlaying={currentSong?.id === s.id && isPlaying}
+                          onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(recentMusic); play(s); } }}
+                          onSwipeRight={() => toggleLike(s)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
-                          <div className="min-w-0 flex-1 text-left">
-                            <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">
-                              {pSongs.length} titre{pSongs.length !== 1 ? "s" : ""}
-                              {cachedCount > 0 && (
-                                <span className="text-primary"> · {cachedCount} ⬇</span>
-                              )}
-                            </p>
-                          </div>
+            {/* ── LIKED ── */}
+            {tab === "liked" && (
+              <div>
+                {filterFullStreams(likedSongs).length === 0 ? (
+                  <EmptyState icon={Heart} title="Pas encore de favoris" subtitle="Likez des morceaux pour les retrouver ici" />
+                ) : (
+                  <>
+                    <ActionButtons
+                      onPlayAll={() => { const full = filterFullStreams(likedSongs); setQueue(full); play(full[0]); }}
+                      onShuffle={() => { const s = filterFullStreams([...likedSongs]).sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
+                    />
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
+                      {filterFullStreams(likedSongs).length} titre{filterFullStreams(likedSongs).length > 1 ? "s" : ""}
+                    </p>
+                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                      {filterFullStreams(likedSongs).map((s, i) => (
+                        <PremiumSongRow
+                          key={s.id}
+                          song={s}
+                          index={i}
+                          showIndex
+                          isActive={currentSong?.id === s.id}
+                          isPlaying={currentSong?.id === s.id && isPlaying}
+                          onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(filterFullStreams(likedSongs)); play(s); } }}
+                          onSwipeLeft={() => toggleLike(s)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
-                          {/* Mini artists avatars */}
-                          {pSongs.length > 0 && (
-                            <div className="flex -space-x-2 shrink-0">
-                              {pSongs.slice(0, 3).map((s, si) => (
-                                <img
-                                  key={si}
-                                  src={s.coverUrl}
-                                  alt=""
-                                  className="w-6 h-6 rounded-full border-2 border-secondary object-cover"
-                                />
-                              ))}
-                              {pSongs.length > 3 && (
-                                <div className="w-6 h-6 rounded-full border-2 border-secondary bg-muted flex items-center justify-center">
-                                  <span className="text-[8px] font-bold text-muted-foreground">+{pSongs.length - 3}</span>
+            {/* ── PLAYLISTS ── */}
+            {tab === "playlists" && (
+              <div>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setShowCreate(!showCreate)}
+                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl liquid-glass text-foreground text-sm font-medium transition-all w-full"
+                >
+                  <div className="p-1.5 rounded-xl bg-primary/15">
+                    <Plus className="w-4 h-4 text-primary" />
+                  </div>
+                  Nouvelle Playlist
+                </motion.button>
+
+                <AnimatePresence>
+                  {showCreate && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex gap-2 mb-4 overflow-hidden"
+                    >
+                      <input
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                        placeholder="Nom de la playlist..."
+                        className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        autoFocus
+                      />
+                      <button onClick={handleCreate} className="px-5 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold">Créer</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {playlists.length === 0 ? (
+                  <EmptyState icon={ListMusic} title="Pas encore de playlists" subtitle="Créez votre première playlist ci-dessus" />
+                ) : (
+                  <div className="space-y-2.5">
+                    {playlists.map((p, idx) => {
+                      const pSongs = playlistSongs[p.id] || [];
+                      const cachedCount = playlistCachedCounts[p.id] || 0;
+                      const coverImg = p.cover_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
+                      const songCovers = !p.cover_url && pSongs.length >= 4
+                        ? pSongs.slice(0, 4).map((s) => s.coverUrl).filter(Boolean)
+                        : null;
+
+                      return (
+                        <motion.div
+                          key={p.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.04 }}
+                          className="group relative"
+                        >
+                          <motion.button
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => navigate(`/playlist/${p.id}`)}
+                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl liquid-glass transition-all"
+                          >
+                            {/* Cover */}
+                            <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
+                              {songCovers && songCovers.length >= 4 ? (
+                                <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
+                                  {songCovers.map((url, ci) => (
+                                    <img key={ci} src={url} alt="" className="w-full h-full object-cover" />
+                                  ))}
                                 </div>
+                              ) : (
+                                <img src={coverImg} alt={p.name} className="w-full h-full object-cover" />
                               )}
                             </div>
+
+                            <div className="min-w-0 flex-1 text-left">
+                              <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
+                              <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                                {pSongs.length} titre{pSongs.length !== 1 ? "s" : ""}
+                                {cachedCount > 0 && <span className="text-primary"> · {cachedCount} hors-ligne</span>}
+                              </p>
+                            </div>
+
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+                          </motion.button>
+
+                          <button
+                            onClick={() => deletePlaylist(p.id)}
+                            className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── CUSTOM ── */}
+            {tab === "custom" && (
+              <div>
+                {customSongs.length === 0 ? (
+                  <EmptyState icon={Music} title="Aucun titre ajouté" subtitle="Les titres ajoutés par l'admin apparaissent ici" />
+                ) : (
+                  <>
+                    {/* Sort */}
+                    <div className="relative flex items-center justify-between px-1 mb-3">
+                      <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
+                        {customSongs.length} titre{customSongs.length > 1 ? "s" : ""}
+                      </p>
+                      <button
+                        onClick={() => setShowSortMenu(!showSortMenu)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground liquid-glass transition-colors"
+                      >
+                        <ArrowUpDown className="w-3 h-3" />
+                        {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
+                      </button>
+                      <AnimatePresence>
+                        {showSortMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                            className="absolute right-0 top-8 z-20 bg-card border border-border rounded-2xl shadow-xl py-1.5 min-w-[150px] overflow-hidden"
+                          >
+                            {([
+                              { key: "recent" as SortOption, label: "Plus récent" },
+                              { key: "alpha" as SortOption, label: "Titre A→Z" },
+                              { key: "artist" as SortOption, label: "Artiste A→Z" },
+                              { key: "duration" as SortOption, label: "Durée" },
+                            ]).map((opt) => (
+                              <button
+                                key={opt.key}
+                                onClick={() => { setCustomSort(opt.key); setShowSortMenu(false); }}
+                                className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${
+                                  customSort === opt.key ? "text-primary font-semibold bg-primary/5" : "text-foreground hover:bg-secondary"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                      {sortedCustomSongs.map((s, i) => (
+                        <PremiumSongRow
+                          key={s.id}
+                          song={s}
+                          index={i}
+                          showIndex
+                          isActive={currentSong?.id === s.id}
+                          isPlaying={currentSong?.id === s.id && isPlaying}
+                          onClick={() => { setQueue(sortedCustomSongs); play(s); }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── DOWNLOADS ── */}
+            {tab === "downloads" && (
+              <div>
+                {cacheSize > 0 && (
+                  <div className="rounded-2xl liquid-glass p-4 mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-primary/10">
+                          <HardDrive className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} hors-ligne
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/60">
+                            {formatSize(cacheSize)} utilisé{cachedSongs.length > 0 ? ` · ~${formatSize(Math.round(cacheSize / cachedSongs.length))}/titre` : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          disabled={isRedownloading}
+                          onClick={async () => {
+                            setIsRedownloading(true);
+                            setRedownloadProgress({ current: 0, total: cachedSongs.length });
+                            try {
+                              for (let i = 0; i < cachedSongs.length; i++) {
+                                setRedownloadProgress({ current: i + 1, total: cachedSongs.length });
+                                try { await offlineCache.cacheSong(cachedSongs[i]); } catch (e) { console.error("Re-download failed:", e); }
+                              }
+                              const [songs, size] = await Promise.all([offlineCache.getAllCached(), offlineCache.getCacheSize()]);
+                              setCachedSongs(songs);
+                              setCacheSize(size);
+                            } finally { setIsRedownloading(false); }
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium disabled:opacity-50"
+                        >
+                          {isRedownloading ? (
+                            <><Loader2 className="w-3 h-3 animate-spin" />{redownloadProgress.current}/{redownloadProgress.total}</>
+                          ) : (
+                            <><RefreshCw className="w-3 h-3" />Rafraîchir</>
                           )}
                         </button>
-
                         <button
-                          onClick={() => deletePlaylist(p.id)}
-                          className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={async () => {
+                            for (const s of cachedSongs) await offlineCache.removeCached(s.id);
+                            setCachedSongs([]);
+                            setCacheSize(0);
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-destructive/10 text-destructive text-[11px] font-medium"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === "custom" && (
-            <div className="glass-panel-light rounded-xl p-2">
-              {customSongs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Music className="w-14 h-14 text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">Aucun titre ajouté.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Les titres ajoutés par l'admin apparaissent ici</p>
-                </div>
-              ) : (
-                <>
-                  {/* Sort menu */}
-                  <div className="relative flex items-center justify-between px-2 py-1.5 mb-1">
-                    <span className="text-xs text-muted-foreground">{customSongs.length} titre{customSongs.length > 1 ? "s" : ""}</span>
-                    <button
-                      onClick={() => setShowSortMenu(!showSortMenu)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                    >
-                      <ArrowUpDown className="w-3 h-3" />
-                      {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
-                    </button>
-                    {showSortMenu && (
-                      <div className="absolute right-2 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
-                        {([
-                          { key: "recent" as SortOption, label: "Plus récent" },
-                          { key: "alpha" as SortOption, label: "Titre A→Z" },
-                          { key: "artist" as SortOption, label: "Artiste A→Z" },
-                          { key: "duration" as SortOption, label: "Durée" },
-                        ]).map((opt) => (
-                          <button
-                            key={opt.key}
-                            onClick={() => { setCustomSort(opt.key); setShowSortMenu(false); }}
-                            className={`w-full text-left px-3 py-2 text-xs transition-colors ${
-                              customSort === opt.key ? "text-primary font-semibold bg-primary/5" : "text-foreground hover:bg-secondary"
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
                       </div>
-                    )}
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                      <motion.div
+                        className="bg-primary rounded-full h-1.5"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((cacheSize / (500 * 1024 * 1024)) * 100, 100)}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1.5 text-right">{formatSize(cacheSize)} / 500 Mo</p>
                   </div>
-                  {sortedCustomSongs.map((s, i) => (
-                    <div key={s.id} onClick={() => { setQueue(sortedCustomSongs); play(s); }}>
-                      <SongCard song={s} index={i} showIndex />
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          )}
+                )}
 
-
-
-
-          {tab === "downloads" && (
-            <div>
-              {cacheSize > 0 && (
-                <div className="glass-panel-light rounded-xl p-4 mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 rounded-xl bg-primary/10">
-                        <HardDrive className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} hors-ligne
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatSize(cacheSize)} utilisé{cachedSongs.length > 0 ? ` · ~${formatSize(Math.round(cacheSize / cachedSongs.length))}/titre` : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        disabled={isRedownloading}
-                        onClick={async () => {
-                          setIsRedownloading(true);
-                          setRedownloadProgress({ current: 0, total: cachedSongs.length });
-                          try {
-                            for (let i = 0; i < cachedSongs.length; i++) {
-                              const s = cachedSongs[i];
-                              setRedownloadProgress({ current: i + 1, total: cachedSongs.length });
-                              try {
-                                await offlineCache.cacheSong(s);
-                              } catch (e) {
-                                console.error("Re-download failed for:", s.title, e);
-                              }
-                            }
-                            // Refresh list with new cover URLs
-                            const [songs, size] = await Promise.all([
-                              offlineCache.getAllCached(),
-                              offlineCache.getCacheSize(),
-                            ]);
-                            setCachedSongs(songs);
-                            setCacheSize(size);
-                          } finally {
-                            setIsRedownloading(false);
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-all disabled:opacity-50"
-                      >
-                        {isRedownloading ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            {redownloadProgress.current}/{redownloadProgress.total}
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            Rafraîchir
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          for (const s of cachedSongs) await offlineCache.removeCached(s.id);
-                          setCachedSongs([]);
-                          setCacheSize(0);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-all"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Tout supprimer
-                      </button>
-                    </div>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-1.5">
-                    <div
-                      className="bg-primary rounded-full h-1.5 transition-all"
-                      style={{ width: `${Math.min((cacheSize / (500 * 1024 * 1024)) * 100, 100)}%` }}
+                {cachedSongs.length === 0 ? (
+                  <EmptyState icon={Download} title="Aucun morceau téléchargé" subtitle="Téléchargez des morceaux pour les écouter hors-ligne" />
+                ) : (
+                  <>
+                    <ActionButtons
+                      onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
+                      onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground/60 mt-1 text-right">{formatSize(cacheSize)} / 500 Mo</p>
-                </div>
-              )}
-              {cachedSongs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Download className="w-14 h-14 text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">Aucun morceau téléchargé.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Téléchargez des morceaux pour les écouter hors-ligne</p>
-                </div>
-              ) : (
-                <>
-                  <div className="flex gap-2 mb-3">
-                    <button
-                      onClick={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
-                    >
-                      <Play className="w-4 h-4" />
-                      Tout lire
-                    </button>
-                    <button
-                      onClick={() => {
-                        const shuffled = [...cachedSongs].sort(() => Math.random() - 0.5);
-                        setQueue(shuffled);
-                        play(shuffled[0]);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-all"
-                    >
-                      <Shuffle className="w-4 h-4" />
-                      Aléatoire
-                    </button>
-                  </div>
-                  <div className="glass-panel-light rounded-xl p-2">
-                    {cachedSongs.map((s, i) => (
-                      <div key={s.id} className="flex items-center group">
-                        <div className="flex-1 min-w-0" onClick={() => { setQueue(cachedSongs); play(s); }}>
-                          <SongCard song={s} index={i} />
-                        </div>
-                        <button
-                          onClick={() => removeCached(s.id)}
-                          className="p-2 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                          title="Supprimer du cache"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-              {isGuest && (
-                <div className="mt-6 p-4 rounded-xl bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Connectez-vous pour accéder à vos playlists, morceaux aimés et historique
-                  </p>
-                  <button
-                    onClick={() => navigate("/auth")}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm shadow-md shadow-primary/25 hover:brightness-110 transition-all"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Se connecter
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                      {cachedSongs.map((s, i) => (
+                        <PremiumSongRow
+                          key={s.id}
+                          song={s}
+                          index={i}
+                          isActive={currentSong?.id === s.id}
+                          isPlaying={currentSong?.id === s.id && isPlaying}
+                          onClick={() => { setQueue(cachedSongs); play(s); }}
+                          onSwipeLeft={() => removeCached(s.id)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
 
-          {tab === "recent" && (
-            <div>
-              {filterFullStreams(recentlyPlayed).length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Clock className="w-14 h-14 text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">Rien d'écouté récemment.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Vos morceaux écoutés apparaîtront ici</p>
-                </div>
-              ) : (
-                <>
-                  <div className="flex gap-2 mb-3">
-                    <button
-                      onClick={() => { const full = filterFullStreams(recentlyPlayed); setQueue(full); play(full[0]); }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-md shadow-primary/25 hover:brightness-110 transition-all"
+                {isGuest && (
+                  <div className="mt-8 p-5 rounded-2xl liquid-glass text-center">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Connectez-vous pour accéder à vos playlists et favoris
+                    </p>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate("/auth")}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/30"
                     >
-                      <Play className="w-4 h-4" />
-                      Tout lire
-                    </button>
-                    <button
-                      onClick={() => {
-                        const shuffled = filterFullStreams([...recentlyPlayed]).sort(() => Math.random() - 0.5);
-                        setQueue(shuffled);
-                        play(shuffled[0]);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-all"
-                    >
-                      <Shuffle className="w-4 h-4" />
-                      Aléatoire
-                    </button>
-                    <button
-                      onClick={() => clearRecentlyPlayed()}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Vider
-                    </button>
-                    <span className="ml-auto flex items-center text-xs text-muted-foreground">
-                      {filterFullStreams(recentlyPlayed).length} titre{filterFullStreams(recentlyPlayed).length > 1 ? "s" : ""}
-                    </span>
+                      <LogIn className="w-4 h-4" />
+                      Se connecter
+                    </motion.button>
                   </div>
-                  <div className="glass-panel-light rounded-xl p-2">
-                    {filterFullStreams(recentlyPlayed)
-                      .filter((song, i, arr) => arr.findIndex((s) => s.id === song.id) === i)
-                      .map((s, i) => <SongCard key={`${s.id}-${i}`} song={s} index={i} showIndex />)}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
