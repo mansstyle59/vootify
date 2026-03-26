@@ -21,6 +21,7 @@ interface PlayerState {
   crossfadeEnabled: boolean;
   crossfadeDuration: number; // in seconds
   _seekTime: number | null;
+  resolveStep: string | null;
   
 
   setUserId: (id: string | null) => void;
