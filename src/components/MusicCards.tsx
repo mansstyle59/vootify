@@ -5,6 +5,7 @@ import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd }
 import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
+import { LongPressMenu } from "./LongPressMenu";
 import { toast } from "sonner";
 
 /** Determine the source badge type for a song */
@@ -64,7 +65,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
     }
   };
 
-  return (
+  const cardContent = (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -202,6 +203,12 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
     </motion.div>
   );
+
+  // Wrap with long-press menu for music tracks
+  if (song.duration > 0) {
+    return <LongPressMenu song={song}>{cardContent}</LongPressMenu>;
+  }
+  return cardContent;
 }
 
 interface ContentCardProps {
