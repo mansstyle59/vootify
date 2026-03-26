@@ -71,7 +71,14 @@ export function MiniPlayer() {
       // PRIORITY: check offline cache first — essential for airplane mode
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
 
-      if (!cachedUrl) {
+      if (cachedUrl) {
+        // Also resolve cached cover art for offline display
+        const cachedCover = await offlineCache.getCachedCoverUrl(songToPlay.id);
+        if (cachedCover) {
+          songToPlay = { ...songToPlay, coverUrl: cachedCover };
+          usePlayerStore.setState({ currentSong: songToPlay });
+        }
+      } else {
         // Only attempt network resolution if not cached
         if (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && songToPlay.streamUrl.includes("cdn-preview")) {
           try {
