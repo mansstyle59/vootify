@@ -616,20 +616,33 @@ const LibraryPage = () => {
                   <EmptyState icon={Music} title="Aucun titre ajouté" subtitle="Les titres ajoutés par l'admin apparaissent ici" />
                 ) : (
                   <>
-                    {/* Sort */}
+                    {/* Sort + Select toggle */}
                     <div className="relative flex items-center justify-between px-1 mb-3">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
-                        {customSongs.length} titre{customSongs.length > 1 ? "s" : ""}
+                        {selectMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : `${customSongs.length} titre${customSongs.length > 1 ? "s" : ""}`}
                       </p>
-                      <button
-                        onClick={() => setShowSortMenu(!showSortMenu)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground liquid-glass transition-colors"
-                      >
-                        <ArrowUpDown className="w-3 h-3" />
-                        {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            selectMode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground liquid-glass"
+                          }`}
+                        >
+                          {selectMode ? <X className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
+                          {selectMode ? "Annuler" : "Sélectionner"}
+                        </button>
+                        {!selectMode && (
+                          <button
+                            onClick={() => setShowSortMenu(!showSortMenu)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground liquid-glass transition-colors"
+                          >
+                            <ArrowUpDown className="w-3 h-3" />
+                            {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
+                          </button>
+                        )}
+                      </div>
                       <AnimatePresence>
-                        {showSortMenu && (
+                        {showSortMenu && !selectMode && (
                           <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: -4 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -657,13 +670,83 @@ const LibraryPage = () => {
                       </AnimatePresence>
                     </div>
 
+                    {/* Select all / actions bar */}
+                    <AnimatePresence>
+                      {selectMode && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden mb-3"
+                        >
+                          <div className="flex items-center gap-2 px-1">
+                            <button
+                              onClick={() => {
+                                if (selectedIds.size === sortedCustomSongs.length) setSelectedIds(new Set());
+                                else setSelectedIds(new Set(sortedCustomSongs.map((s) => s.id)));
+                              }}
+                              className="px-3 py-1.5 rounded-full text-xs font-medium liquid-glass text-foreground"
+                            >
+                              {selectedIds.size === sortedCustomSongs.length ? "Tout désélectionner" : "Tout sélectionner"}
+                            </button>
+                            {selectedIds.size > 0 && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    const sel = sortedCustomSongs.filter((s) => selectedIds.has(s.id));
+                                    setQueue(sel); play(sel[0]);
+                                    setSelectMode(false); setSelectedIds(new Set());
+                                  }}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md shadow-primary/25"
+                                >
+                                  <Play className="w-3 h-3" /> Lire
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const sel = sortedCustomSongs.filter((s) => selectedIds.has(s.id));
+                                    sel.forEach((s) => toggleLike(s));
+                                    toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} aux favoris`);
+                                    setSelectMode(false); setSelectedIds(new Set());
+                                  }}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium"
+                                >
+                                  <Heart className="w-3 h-3" /> Favoris
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const sel = sortedCustomSongs.filter((s) => selectedIds.has(s.id));
+                                    const current = usePlayerStore.getState().queue;
+                                    setQueue([...current, ...sel]);
+                                    toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} à la file`);
+                                    setSelectMode(false); setSelectedIds(new Set());
+                                  }}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium"
+                                >
+                                  <ListPlus className="w-3 h-3" /> File
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <div className="rounded-2xl liquid-glass overflow-hidden">
                       {sortedCustomSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
                           song={s}
                           index={i}
-                          showIndex
+                          showIndex={!selectMode}
+                          selectable={selectMode}
+                          selected={selectedIds.has(s.id)}
+                          onSelect={() => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(s.id)) next.delete(s.id); else next.add(s.id);
+                              return next;
+                            });
+                          }}
                           isActive={currentSong?.id === s.id}
                           isPlaying={currentSong?.id === s.id && isPlaying}
                           onClick={() => { setQueue(sortedCustomSongs); play(s); }}
