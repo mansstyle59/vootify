@@ -49,7 +49,7 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
 }
 
 function AdminLoginForm() {
-  const { signIn } = useAdminAuth();
+  const { signIn } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -139,7 +139,8 @@ interface SongEntry {
 }
 
 function SongForm() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const [songs, setSongs] = useState<SongEntry[]>([]);
   const [processing, setProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -283,7 +284,7 @@ function SongForm() {
 
       // Insert into DB
       const { error: dbErr } = await supabase.from("custom_songs").insert({
-        user_id: user!.id,
+        user_id: effectiveUserId,
         title: song.title.trim(),
         artist: song.artist.trim(),
         album: song.album.trim() || null,
@@ -406,7 +407,8 @@ function SongForm() {
 }
 
 function AlbumForm() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", artist: "", coverUrl: "", year: "" });
   const [tracks, setTracks] = useState<UploadedTrack[]>([]);
@@ -448,7 +450,7 @@ function AlbumForm() {
     setLoading(true);
 
     const { data: album, error } = await supabase.from("custom_albums").insert({
-      user_id: user!.id,
+      user_id: effectiveUserId,
       title: form.title.trim(),
       artist: form.artist.trim(),
       cover_url: form.coverUrl.trim() || null,
@@ -474,7 +476,7 @@ function AlbumForm() {
 
       if (newTracks.length > 0) {
         const songInserts = newTracks.map((t) => ({
-          user_id: user!.id,
+          user_id: effectiveUserId,
           title: t.title,
           artist: t.artist || form.artist.trim(),
           album: form.title.trim(),
@@ -524,7 +526,8 @@ function AlbumForm() {
 }
 
 function RadioForm() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
+  const effectiveUserId = getEffectiveUserId(user?.id);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", genre: "", coverUrl: "", streamUrl: "" });
 
@@ -533,7 +536,7 @@ function RadioForm() {
     if (!form.name.trim()) return;
     setLoading(true);
     const { error } = await supabase.from("custom_radio_stations").insert({
-      user_id: user!.id,
+      user_id: effectiveUserId,
       name: form.name.trim(),
       genre: form.genre.trim() || null,
       cover_url: form.coverUrl.trim() || null,
