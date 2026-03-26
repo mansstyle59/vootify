@@ -205,6 +205,7 @@ export const deezerApi = {
     };
 
     // ── 2. Custom songs (priority) ──
+    step("Custom…");
     try {
       const { data: customSongs } = await supabase
         .from("custom_songs")
@@ -254,6 +255,7 @@ export const deezerApi = {
     }
 
     // ── 3. JioSaavn HD search ──
+    step("Recherche HD…");
     try {
       const mainArtist = song.artist.split(",")[0].trim();
       const cleanTitle = song.title.replace(/\(.*?\)/g, "").trim();
