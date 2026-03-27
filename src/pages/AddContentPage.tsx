@@ -60,6 +60,7 @@ interface SongEntry {
   streamUrl: string;
   uploading: boolean;
   uploaded: boolean;
+  skipped: boolean;
   id3Filled: Set<string>;
 }
 
