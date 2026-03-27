@@ -1159,7 +1159,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/40 mb-2">En cours de lecture</h3>
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-foreground/10 border border-foreground/10">
                 <div className="relative">
-                  <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-lg" />
+                  {currentSong.coverUrl ? (
+                    <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-lg" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 shadow-lg">
+                      <Music className="w-6 h-6 text-primary/40" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-background/30">
                     {isPlaying && <AudioVisualizer isPlaying={isPlaying} />}
                   </div>
@@ -1239,7 +1245,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                             >
                               <GripVertical className="w-4 h-4 text-foreground/20 shrink-0 touch-none" />
                               <span className="w-4 text-center text-[11px] text-foreground/30 tabular-nums font-medium">{i + 1}</span>
-                              <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" />
+                              {song.coverUrl ? (
+                                <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 shadow">
+                                  <Music className="w-4 h-4 text-primary/40" />
+                                </div>
+                              )}
                               <div className="min-w-0 flex-1">
                                 <p className="text-[13px] text-foreground truncate font-medium">{song.title}</p>
                                 <p className="text-[11px] text-foreground/40 truncate">{song.artist}</p>
@@ -1274,7 +1286,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                             onClick={() => { play(song); setQueue(queue); }}
                             className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-foreground/5 transition-colors opacity-40 hover:opacity-70"
                           >
-                            <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                            {song.coverUrl ? (
+                              <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                            ) : (
+                              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                                <Music className="w-4 h-4 text-primary/40" />
+                              </div>
+                            )}
                             <div className="min-w-0 flex-1">
                               <p className="text-[12px] text-foreground truncate">{song.title}</p>
                               <p className="text-[10px] text-foreground/40 truncate">{song.artist}</p>
@@ -1308,17 +1326,31 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {/* Cover art - cinematic transitions */}
             <div className="flex-1 flex items-center justify-center py-4 perspective-[1200px]">
               <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentSong.id}
-                  src={currentSong.coverUrl}
-                  alt={currentSong.title}
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="w-full max-w-[340px] aspect-square rounded-2xl object-cover"
-                  style={{ boxShadow: `0 24px 80px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)` }}
-                />
+                {currentSong.coverUrl ? (
+                  <motion.img
+                    key={currentSong.id}
+                    src={currentSong.coverUrl}
+                    alt={currentSong.title}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="w-full max-w-[340px] aspect-square rounded-2xl object-cover"
+                    style={{ boxShadow: `0 24px 80px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)` }}
+                  />
+                ) : (
+                  <motion.div
+                    key={currentSong.id + "-placeholder"}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="w-full max-w-[340px] aspect-square rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5"
+                    style={{ boxShadow: `0 24px 80px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)` }}
+                  >
+                    <Music className="w-20 h-20 text-primary/30" />
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
 
