@@ -65,6 +65,23 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const { data: stats } = useQuery({
+    queryKey: ["hero-stats"],
+    queryFn: async () => {
+      const [songs, radios, playlists] = await Promise.all([
+        supabase.from("custom_songs").select("id", { count: "exact", head: true }),
+        supabase.from("custom_radio_stations").select("id", { count: "exact", head: true }),
+        supabase.from("playlists").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        songs: songs.count || 0,
+        radios: radios.count || 0,
+        playlists: playlists.count || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
