@@ -118,7 +118,7 @@ const AuthPage = () => {
 
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/request-access")}
           className="w-full mt-3 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2"
         >
           <Send className="w-4 h-4" />
