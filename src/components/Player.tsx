@@ -596,7 +596,7 @@ export function MiniPlayer() {
     if (now - lastPositionSyncRef.current < interval) return;
     lastPositionSyncRef.current = now;
 
-    // Use the ACTUAL audio duration (not Deezer metadata which can be wrong)
+    // Use the ACTUAL audio duration (not metadata which can be wrong)
     const audio = audioRef.current;
     const realDuration = audio && isFinite(audio.duration) && audio.duration > 0
       ? audio.duration

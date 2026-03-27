@@ -12,7 +12,6 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { deezerApi } from "@/lib/deezerApi";
 import { Music } from "lucide-react";
 
 const HomePage = () => {
@@ -23,16 +22,6 @@ const HomePage = () => {
   const { data: recentlyListened, isLoading: loadingListened } = useRecentlyListened(20);
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
-
-  const [deezerChart, setDeezerChart] = useState<Song[]>([]);
-  const [loadingChart, setLoadingChart] = useState(true);
-
-  useEffect(() => {
-    deezerApi.getChartTracks(20)
-      .then(setDeezerChart)
-      .catch(() => setDeezerChart([]))
-      .finally(() => setLoadingChart(false));
-  }, []);
 
   const handlePlayTrack = useCallback(
     (song: Song, allSongs: Song[]) => {
@@ -46,21 +35,18 @@ const HomePage = () => {
     [currentSong?.id, togglePlay, setQueue, play]
   );
 
-  // Map section IDs to their data
   const sectionDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
     recently_added: { songs: recentlyAdded, loading: loadingAdded },
     recently_listened: { songs: recentlyListened, loading: loadingListened },
     most_played: { songs: mostPlayed, loading: loadingMost },
     recommended: { songs: recommended, loading: loadingRecommended },
-    deezer_chart: { songs: deezerChart, loading: loadingChart },
-  }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended, deezerChart, loadingChart]);
+  }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
-  // Get ordered visible sections from config
   const visibleSections = useMemo(() => {
     if (!homeConfig) return [];
     return [...homeConfig.sections]
-      .sort((a, b) => a.order - b.order)
-      .filter((s) => s.visible);
+      .filter((s) => s.visible && s.id !== "deezer_chart")
+      .sort((a, b) => a.order - b.order);
   }, [homeConfig]);
 
   const renderSection = (
@@ -119,7 +105,7 @@ const HomePage = () => {
       })}
 
       {/* Empty state */}
-      {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && !loadingChart && deezerChart.length === 0 && (
+      {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <div className="px-4 md:px-8 py-20 text-center">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Music className="w-10 h-10 text-primary/40" />
