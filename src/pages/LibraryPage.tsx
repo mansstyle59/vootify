@@ -324,7 +324,7 @@ const LibraryPage = () => {
         if (data.length < PAGE) break;
         from += PAGE;
       }
-      const songs = (data || []).map((s: any): Song & { _dbId: string } => ({
+      const songs = (allData).map((s: any): Song & { _dbId: string } => ({
         _dbId: s.id, id: `custom-${s.id}`,
         title: normalizeTitle(s.title),
         artist: normalizeArtist(s.artist),
