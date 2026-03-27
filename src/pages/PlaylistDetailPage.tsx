@@ -223,7 +223,7 @@ const PlaylistDetailPage = () => {
     : [];
 
   return (
-    <div className="pb-40 max-w-4xl mx-auto">
+    <div className="pb-40 max-w-4xl mx-auto animate-fade-in">
       {/* ─── ULTRA PREMIUM HERO ─── */}
       <div ref={heroRef} className="relative overflow-hidden">
         {/* Parallax blurred background */}
