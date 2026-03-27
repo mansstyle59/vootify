@@ -80,6 +80,30 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_images: {
+        Row: {
+          artist_name: string
+          id: string
+          image_url: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          artist_name: string
+          id?: string
+          image_url: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          artist_name?: string
+          id?: string
+          image_url?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       custom_albums: {
         Row: {
           artist: string
