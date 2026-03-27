@@ -278,7 +278,27 @@ const PlaylistDetailPage = () => {
         </div>
       </div>
 
-      {/* ─── ACTION BAR ─── */}
+      {/* Cover URL input */}
+      {showCoverUrlInput && (
+        <div className="px-4 md:px-8 mb-3">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={coverUrlInput}
+              onChange={(e) => setCoverUrlInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCoverUrlSubmit())}
+              placeholder="https://... URL de l'image"
+              className="flex-1 px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
+              autoFocus
+            />
+            <button onClick={handleCoverUrlSubmit} className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">OK</button>
+            <button onClick={() => setShowCoverUrlInput(false)} className="p-2.5 rounded-xl bg-secondary text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
