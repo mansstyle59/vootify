@@ -8,7 +8,7 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, RotateCcw } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
@@ -190,15 +190,6 @@ const AlbumDetailPage = () => {
                       Télécharger tout
                     </button>
                     <button
-                      onClick={() => { setResolveKey((k) => k + 1); setMenuOpen(false); }}
-                      disabled={resolving}
-                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors disabled:opacity-40"
-                    >
-                      <RotateCcw className={`w-4 h-4 text-muted-foreground ${resolving ? "animate-spin" : ""}`} />
-                      Résolution HD
-                    </button>
-                    <div className="h-px bg-white/[0.06] mx-2 my-1" />
-                    <button
                       onClick={() => {
                         if (navigator.share) {
                           navigator.share({ title: album.title, url: window.location.href }).catch(() => {});
@@ -292,14 +283,6 @@ const AlbumDetailPage = () => {
             {isSaved ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
           </button>
         )}
-        <button
-          onClick={() => setResolveKey((k) => k + 1)}
-          disabled={resolving}
-          className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
-          title="Relancer la résolution HD"
-        >
-          <RotateCcw className={`w-5 h-5 ${resolving ? "animate-spin" : ""}`} />
-        </button>
       </motion.div>
 
       {/* ─── TRACK LIST ─── */}

@@ -8,6 +8,7 @@ import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ const PlaylistDetailPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { isAdmin } = useAdminAuth();
 
 
   const { scrollY } = useScroll();
@@ -106,6 +108,19 @@ const PlaylistDetailPage = () => {
     else { toast.success("Couverture mise à jour"); setCoverUrlInput(""); setShowCoverUrlInput(false); const uid = usePlayerStore.getState().userId; if (uid) usePlayerStore.getState().loadUserData(uid); }
   };
 
+
+  const handleDeletePlaylist = async () => {
+    if (!id) return;
+    const confirmed = window.confirm("Supprimer cette playlist et tous ses morceaux ?");
+    if (!confirmed) return;
+    await supabase.from("playlist_songs").delete().eq("playlist_id", id);
+    const { error } = await supabase.from("playlists").delete().eq("id", id);
+    if (error) { toast.error("Erreur suppression"); return; }
+    toast.success("Playlist supprimée");
+    const uid = usePlayerStore.getState().userId;
+    if (uid) usePlayerStore.getState().loadUserData(uid);
+    navigate("/library");
+  };
 
   if (!playlist) {
     return (
@@ -224,6 +239,18 @@ const PlaylistDetailPage = () => {
                         <Link className="w-4 h-4 text-muted-foreground" />
                         Changer la couverture (URL)
                       </button>
+                      {isAdmin && (
+                        <>
+                          <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                          <button
+                            onClick={() => { handleDeletePlaylist(); setMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Supprimer la playlist
+                          </button>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 </>
