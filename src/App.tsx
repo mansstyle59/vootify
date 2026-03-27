@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { PageTransition } from "@/components/PageTransition";
 import { PageLoader } from "@/components/PageLoader";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { AuthGate } from "@/components/AuthGate";
 import { hdCache } from "@/lib/hdCache";
 
 // Clear HD cache on app startup
@@ -119,7 +120,9 @@ const App = () => {
               <NetworkStatus />
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
-                <AppContent />
+                <AuthGate>
+                  <AppContent />
+                </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
           </AuthProvider>

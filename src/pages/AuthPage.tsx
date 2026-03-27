@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { Music, Mail, Lock, User, Loader2, ArrowLeft } from "lucide-react";
@@ -21,10 +21,12 @@ const AuthPage = () => {
   const [resetSent, setResetSent] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from || "/";
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(from, { replace: true });
+  }, [user, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +57,7 @@ const AuthPage = () => {
       if (mode === "login") {
         localStorage.setItem("vootify_remember_me", rememberMe ? "true" : "false");
       }
-      navigate("/");
+      navigate(from);
     }
     setLoading(false);
   };
