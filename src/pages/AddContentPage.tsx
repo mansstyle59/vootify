@@ -198,6 +198,28 @@ function SongForm() {
       }
     }
 
+    // Auto-search Deezer for songs still missing covers after ID3 + cross-ref
+    const needsOnline = entries.filter((e) => !e.coverUrl && e.artist);
+    if (needsOnline.length > 0) {
+      try {
+        const results = await batchSearchCovers(
+          entries.map((e) => ({
+            artist: e.artist, album: e.album, title: e.title,
+            coverUrl: e.coverUrl, year: e.year,
+          })),
+        );
+        let found = 0;
+        for (const [idx, meta] of results.entries()) {
+          const e = entries[idx];
+          if (meta.coverUrl && !e.coverUrl) { e.coverUrl = meta.coverUrl; e.id3Filled.add("coverUrl"); found++; }
+          if (meta.album && !e.album) { e.album = meta.album; e.id3Filled.add("album"); }
+          if (meta.genre && !e.genre) { e.genre = meta.genre; }
+          if (meta.year && !e.year) { e.year = meta.year; }
+        }
+        if (found > 0) toast.success(`${found} pochette${found > 1 ? "s" : ""} trouvée${found > 1 ? "s" : ""} via Deezer`);
+      } catch { /* silent */ }
+    }
+
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
     if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} analysé${entries.length > 1 ? "s" : ""}`);
