@@ -133,10 +133,10 @@
   }
 
   .glass-panel-light {
-    background: hsl(240 8% 15% / 0.4);
+    background: hsl(220 14% 13% / 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(240 6% 25% / 0.2);
+    border: 1px solid hsl(220 10% 22% / 0.2);
   }
 
   .gradient-text-primary {
@@ -157,7 +157,7 @@
     @apply transition-all duration-300;
   }
   .hover-glass:hover {
-    background: hsl(240 8% 18% / 0.6);
+    background: hsl(220 12% 16% / 0.6);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 
@@ -190,7 +190,7 @@
   }
 
   .glow-radio {
-    box-shadow: 0 0 30px hsl(350 80% 55% / 0.3), 0 0 80px hsl(350 80% 55% / 0.1);
+    box-shadow: 0 0 30px hsl(155 72% 46% / 0.3), 0 0 80px hsl(155 72% 46% / 0.1);
   }
 }
 
