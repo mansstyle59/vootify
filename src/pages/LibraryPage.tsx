@@ -417,16 +417,61 @@ const LibraryPage = () => {
     enabled: tab === "custom",
   });
 
-  // Albums query
+  // Albums query — derived from custom_songs + custom_albums
   const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
     queryKey: ["library-albums"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch albums from songs
+      const { data: songs, error: songsErr } = await supabase
+        .from("custom_songs")
+        .select("album, artist, cover_url, year")
+        .not("stream_url", "is", null)
+        .not("album", "is", null);
+      if (songsErr) throw songsErr;
+
+      // Fetch explicit custom_albums
+      const { data: explicit, error: expErr } = await supabase
         .from("custom_albums")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
+      if (expErr) throw expErr;
+
+      // Build album map from songs
+      const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
+      for (const row of songs || []) {
+        if (!row.album || row.album.trim() === "") continue;
+        const key = `${row.artist.toLowerCase()}|||${row.album.toLowerCase()}`;
+        const existing = albumMap.get(key);
+        if (existing) {
+          existing.count++;
+          if (!existing.cover_url && row.cover_url) existing.cover_url = row.cover_url;
+          if (!existing.year && row.year) existing.year = row.year;
+        } else {
+          albumMap.set(key, {
+            id: `derived-${key}`,
+            title: row.album,
+            artist: row.artist,
+            cover_url: row.cover_url || null,
+            year: row.year || null,
+            count: 1,
+          });
+        }
+      }
+
+      // Merge explicit custom_albums (override derived ones)
+      for (const album of explicit || []) {
+        const key = `${album.artist.toLowerCase()}|||${album.title.toLowerCase()}`;
+        albumMap.set(key, {
+          id: album.id,
+          title: album.title,
+          artist: album.artist,
+          cover_url: album.cover_url,
+          year: album.year,
+          count: albumMap.get(key)?.count || 0,
+        });
+      }
+
+      return Array.from(albumMap.values()).sort((a, b) => a.title.localeCompare(b.title, "fr"));
     },
     staleTime: 2 * 60 * 1000,
     enabled: tab === "albums",
