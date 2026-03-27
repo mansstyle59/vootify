@@ -103,6 +103,42 @@ const SearchPage = () => {
     return () => { cancelled = true; };
   }, []);
 
+  // Play a Friday release album
+  const playFridayRelease = useCallback(async (release: DeezerNewRelease) => {
+    try {
+      const { data } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/album/${release.albumId}/tracks?limit=50` },
+      });
+      const tracks: Song[] = (data?.data || []).map((t: any) => ({
+        id: `deezer-${t.id}`,
+        title: t.title || "",
+        artist: t.artist?.name || release.artist,
+        album: release.title,
+        duration: t.duration || 0,
+        coverUrl: release.coverUrl,
+        streamUrl: t.preview || "",
+        liked: false,
+      }));
+      if (tracks.length > 0) {
+        setQueue(tracks);
+        play(tracks[0]);
+      }
+    } catch {
+      // If album fetch fails, create a single track entry
+      const single: Song = {
+        id: `deezer-album-${release.albumId}`,
+        title: release.title,
+        artist: release.artist,
+        album: release.title,
+        duration: 30,
+        coverUrl: release.coverUrl,
+        streamUrl: "",
+        liked: false,
+      };
+      play(single);
+    }
+  }, [play, setQueue]);
+
   const { data: allSongs, isLoading } = useAllLocalSongs();
 
   const recentIds = useMemo(
