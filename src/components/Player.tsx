@@ -1163,11 +1163,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             key={currentSong.id}
             src={currentSong.coverUrl}
             alt=""
-            initial={{ opacity: 0, scale: 2.2 }}
-            animate={{ opacity: 0.25, scale: 2 }}
-            exit={{ opacity: 0, scale: 1.8 }}
-            transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="absolute inset-0 w-full h-full object-cover blur-[120px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.25 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
           />
         </AnimatePresence>
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 60%, hsl(var(--background) / 0.7) 100%)" }} />
@@ -1363,10 +1363,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   key={currentSong.id}
                   src={currentSong.coverUrl}
                   alt={currentSong.title}
-                  initial={{ opacity: 0, scale: 0.85, rotateY: -12, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, scale: 1, rotateY: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, scale: 0.9, rotateY: 12, filter: "blur(6px)" }}
-                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   className="w-full max-w-[340px] aspect-square rounded-2xl object-cover"
                   style={{ boxShadow: `0 24px 80px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)` }}
                 />
@@ -1392,10 +1392,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     {resolveStep ? (
                       <motion.span
                         key={resolveStep}
-                        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
                         className="absolute inset-0 inline-flex items-center gap-1.5 text-primary"
                       >
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1404,10 +1404,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     ) : (
                       <motion.span
                         key="artist-badge"
-                        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
                         className="absolute inset-0 inline-flex items-center gap-2"
                       >
                         <p className="text-[15px] text-foreground/60 truncate">
