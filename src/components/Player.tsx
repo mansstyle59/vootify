@@ -1162,14 +1162,14 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       <div className="absolute inset-0 overflow-hidden">
         <AnimatePresence mode="popLayout">
           <motion.img
-            key={currentSong.coverUrl}
+            key={currentSong.id}
             src={currentSong.coverUrl}
             alt=""
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.25 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
+            initial={{ opacity: 0, scale: 2.2 }}
+            animate={{ opacity: 0.25, scale: 2 }}
+            exit={{ opacity: 0, scale: 1.8 }}
+            transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="absolute inset-0 w-full h-full object-cover blur-[120px]"
           />
         </AnimatePresence>
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 60%, hsl(var(--background) / 0.7) 100%)" }} />
@@ -1358,25 +1358,33 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             exit={{ opacity: 0, y: -20 }}
             className="relative z-10 flex-1 flex flex-col px-7 pb-8"
           >
-            {/* Cover art - large, Spotify style */}
-            <div className="flex-1 flex items-center justify-center py-4">
+            {/* Cover art - cinematic transitions */}
+            <div className="flex-1 flex items-center justify-center py-4 perspective-[1200px]">
               <AnimatePresence mode="wait">
                 <motion.img
-                  key={currentSong.coverUrl}
+                  key={currentSong.id}
                   src={currentSong.coverUrl}
                   alt={currentSong.title}
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.92 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="w-full max-w-[340px] aspect-square rounded-xl object-cover"
-                  style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+                  initial={{ opacity: 0, scale: 0.85, rotateY: -12, filter: "blur(8px)" }}
+                  animate={{ opacity: 1, scale: 1, rotateY: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, scale: 0.9, rotateY: 12, filter: "blur(6px)" }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="w-full max-w-[340px] aspect-square rounded-2xl object-cover"
+                  style={{ boxShadow: `0 24px 80px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)` }}
                 />
               </AnimatePresence>
             </div>
 
-            {/* Title + Artist + Like */}
-            <div className="flex items-center justify-between gap-3 mb-6">
+            {/* Title + Artist + Like — slide in from bottom */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSong.id + "-info"}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35, delay: 0.1, ease: "easeOut" }}
+                className="flex items-center justify-between gap-3 mb-6"
+              >
               <div className="min-w-0 flex-1">
                 <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                   {currentSong.title}
@@ -1445,7 +1453,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(141_73%_42%/0.4)]" : "text-foreground/40"}`} />
                 </motion.div>
               </motion.button>
-            </div>
+              </motion.div>
+            </AnimatePresence>
 
             {/* Progress bar - ultra premium with time preview */}
             <div className="mb-5">
