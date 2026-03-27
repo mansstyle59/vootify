@@ -442,7 +442,7 @@ const SearchPage = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {genreCards.map((g, i) => {
-                    const colors = genreColors[g.genre] || defaultGenreColor;
+                    const def = genreDefs[g.genre] || defaultGenreColor;
                     return (
                       <motion.button
                         key={g.genre}
@@ -451,24 +451,37 @@ const SearchPage = () => {
                         transition={{ delay: i * 0.03, duration: 0.3 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => commitSearch(g.genre)}
-                        className="relative h-24 rounded-xl overflow-hidden text-left group"
+                        className="relative h-[100px] rounded-2xl overflow-hidden text-left group"
                         style={{
-                          background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`,
+                          background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
                         }}
                       >
-                        {g.coverUrl && (
+                        {/* Cover art tilted */}
+                        {g.coverUrl ? (
                           <img
                             src={g.coverUrl}
                             alt=""
-                            className="absolute -right-3 -bottom-3 w-16 h-16 rounded-lg object-cover rotate-[20deg] opacity-60 group-hover:opacity-80 transition-opacity shadow-lg"
+                            className="absolute -right-2 -bottom-2 w-[72px] h-[72px] rounded-xl object-cover rotate-[25deg] opacity-50 group-active:opacity-70 transition-opacity shadow-2xl"
                           />
+                        ) : (
+                          <span className="absolute -right-1 -bottom-1 text-[52px] rotate-[20deg] opacity-20 select-none">
+                            {def.emoji}
+                          </span>
                         )}
-                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
-                          <h3 className="text-[15px] font-bold text-white drop-shadow-sm">
-                            {g.genre}
-                          </h3>
-                          <p className="text-[11px] text-white/60">{g.count} titres</p>
+                        {/* Content */}
+                        <div className="relative z-10 p-3.5 h-full flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-lg">{def.emoji}</span>
+                            <h3 className="text-[15px] font-bold text-white drop-shadow-md leading-tight">
+                              {g.genre}
+                            </h3>
+                          </div>
+                          {g.count > 0 && (
+                            <p className="text-[11px] text-white/50 font-medium">{g.count} titres</p>
+                          )}
                         </div>
+                        {/* Shine overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
                       </motion.button>
                     );
                   })}
