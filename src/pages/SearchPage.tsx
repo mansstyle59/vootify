@@ -53,20 +53,42 @@ const SearchPage = () => {
     let cancelled = false;
     const fetchNew = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
-          body: { path: "/chart/0/albums?limit=20" },
-        });
-        if (error || !data?.data) return;
+        // Fetch new releases from France (genre 85) and Belgium (genre 129) editorial
+        const [frRes, beRes] = await Promise.allSettled([
+          supabase.functions.invoke("deezer-proxy", { body: { path: "/editorial/85/releases?limit=15" } }),
+          supabase.functions.invoke("deezer-proxy", { body: { path: "/editorial/129/releases?limit=10" } }),
+        ]);
         if (cancelled) return;
-        setNewReleases(
-          data.data.map((a: any) => ({
-            id: a.id,
-            title: a.title || "",
-            artist: a.artist?.name || "",
-            coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "",
-            albumId: a.id,
-          }))
-        );
+        const seen = new Set<number>();
+        const releases: DeezerNewRelease[] = [];
+        for (const r of [frRes, beRes]) {
+          if (r.status !== "fulfilled" || r.value.error || !r.value.data?.data) continue;
+          for (const a of r.value.data.data) {
+            if (seen.has(a.id)) continue;
+            seen.add(a.id);
+            releases.push({
+              id: a.id,
+              title: a.title || "",
+              artist: a.artist?.name || "",
+              coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "",
+              albumId: a.id,
+            });
+          }
+        }
+        if (releases.length === 0) {
+          // Fallback to global chart
+          const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+            body: { path: "/chart/0/albums?limit=20" },
+          });
+          if (!error && data?.data) {
+            setNewReleases(data.data.map((a: any) => ({
+              id: a.id, title: a.title || "", artist: a.artist?.name || "",
+              coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "", albumId: a.id,
+            })));
+          }
+        } else {
+          setNewReleases(releases.slice(0, 20));
+        }
       } catch { /* silent */ }
     };
     fetchNew();
