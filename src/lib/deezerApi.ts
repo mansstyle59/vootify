@@ -160,11 +160,9 @@ export const deezerApi = {
    */
   async resolveFullStream(song: Song, onStep?: (step: string) => void): Promise<Song> {
     const step = onStep || (() => {});
-    // ── 1. HD Cache ──
-    step("Cache…");
+    // ── 1. HD Cache (instant, synchronous lookup) ──
     const cached = hdCache.get(song.id);
     if (cached) {
-      console.log("[resolve] cache hit:", song.title);
       return {
         ...song,
         streamUrl: cached.streamUrl,
