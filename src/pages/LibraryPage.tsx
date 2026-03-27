@@ -954,7 +954,13 @@ const LibraryPage = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.03 }}
                           whileTap={{ scale: 0.97 }}
-                          onClick={() => navigate(`/album/${album.id}`)}
+                          onClick={() => {
+                            if (album.id.startsWith("derived-")) {
+                              navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
+                            } else {
+                              navigate(`/album/${album.id}`);
+                            }
+                          }}
                           className="text-left group"
                         >
                           <div className="aspect-square rounded-2xl overflow-hidden bg-secondary shadow-lg mb-2 relative">
