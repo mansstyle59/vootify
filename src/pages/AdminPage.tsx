@@ -173,6 +173,12 @@ function UsersTab() {
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [editingCreds, setEditingCreds] = useState(false);
 
   const loadUsers = async () => {
     const { data: profiles } = await supabase
@@ -252,6 +258,30 @@ function UsersTab() {
       toast.error(err.message || "Erreur lors de la création");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleUpdateCredentials = async () => {
+    if (!editUserId) return;
+    if (!editEmail.trim() && !editPassword.trim()) return;
+    setEditingCreds(true);
+    try {
+      const payload: Record<string, any> = { target_user_id: editUserId };
+      if (editEmail.trim()) payload.email = editEmail.includes("@") ? editEmail : `${editEmail}@vootify.app`;
+      if (editPassword.trim()) payload.password = editPassword;
+
+      const { data, error } = await supabase.functions.invoke("admin-update-user", { body: payload });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Identifiants mis à jour");
+      setShowEditDialog(false);
+      setEditEmail("");
+      setEditPassword("");
+      setEditUserId(null);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la mise à jour");
+    } finally {
+      setEditingCreds(false);
     }
   };
 
@@ -344,6 +374,68 @@ function UsersTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit credentials dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" />
+              Modifier les identifiants
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Nouvel identifiant</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="edit-email"
+                  type="text"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="Laisser vide pour ne pas changer"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-password">Nouveau mot de passe</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="edit-password"
+                  type={showEditPassword ? "text" : "password"}
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="Laisser vide pour ne pas changer"
+                  className="pl-9 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEditPassword(!showEditPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleUpdateCredentials}
+              disabled={editingCreds || (!editEmail.trim() && !editPassword.trim())}
+            >
+              {editingCreds && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {users.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Aucun utilisateur</p>
       ) : (
@@ -405,7 +497,19 @@ function UsersTab() {
                         <Shield className="w-4 h-4" />
                       )}
                     </button>
-                  )}
+                   )}
+                  <button
+                    onClick={() => {
+                      setEditUserId(u.user_id);
+                      setEditEmail("");
+                      setEditPassword("");
+                      setShowEditDialog(true);
+                    }}
+                    className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                    title="Modifier identifiants"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => {
                       if (confirm(`Supprimer ${u.display_name || "cet utilisateur"} ? Cette action est irréversible.`)) {
