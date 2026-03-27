@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { usePlayerStore } from "@/stores/playerStore";
-import { usePlayerStore } from "@/stores/playerStore";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
@@ -18,7 +17,6 @@ const HomePage = () => {
   const { sections, saveConfig } = useGlobalHomeConfig();
   const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
   const [showCustomizer, setShowCustomizer] = useState(false);
-  const queryClient = useQueryClient();
 
   // Removed aggressive refetch on visibility change — staleTime handles freshness
 
