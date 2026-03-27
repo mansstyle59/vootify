@@ -522,29 +522,42 @@ export function MiniPlayer() {
 
     const ms = navigator.mediaSession;
 
-    ms.setActionHandler("play", () => {
-      const store = usePlayerStore.getState();
-      if (!store.isPlaying) store.togglePlay();
-    });
-    ms.setActionHandler("pause", () => {
-      const store = usePlayerStore.getState();
-      if (store.isPlaying) store.togglePlay();
-    });
-    ms.setActionHandler("previoustrack", () => {
-      usePlayerStore.getState().previous();
-    });
-    ms.setActionHandler("nexttrack", () => {
-      usePlayerStore.getState().next();
-    });
-    ms.setActionHandler("stop", () => {
-      usePlayerStore.getState().closePlayer();
-    });
+    try {
+      ms.setActionHandler("play", () => {
+        const store = usePlayerStore.getState();
+        if (!store.isPlaying) store.togglePlay();
+      });
+    } catch { /* unsupported */ }
 
-    // CRITICAL for iOS: set seekbackward/seekforward to no-op functions (not null).
-    // Setting to null causes iOS to show its default 10s skip UI.
-    // Setting to a function that calls previous/next forces iOS to show the track skip buttons.
-    try { ms.setActionHandler("seekbackward", () => { usePlayerStore.getState().previous(); }); } catch { /* unsupported */ }
-    try { ms.setActionHandler("seekforward", () => { usePlayerStore.getState().next(); }); } catch { /* unsupported */ }
+    try {
+      ms.setActionHandler("pause", () => {
+        const store = usePlayerStore.getState();
+        if (store.isPlaying) store.togglePlay();
+      });
+    } catch { /* unsupported */ }
+
+    try {
+      ms.setActionHandler("previoustrack", () => {
+        usePlayerStore.getState().previous();
+      });
+    } catch { /* unsupported */ }
+
+    try {
+      ms.setActionHandler("nexttrack", () => {
+        usePlayerStore.getState().next();
+      });
+    } catch { /* unsupported */ }
+
+    try {
+      ms.setActionHandler("stop", () => {
+        usePlayerStore.getState().closePlayer();
+      });
+    } catch { /* unsupported */ }
+
+    // iOS lock screen: disable seek actions to avoid default ±10s controls.
+    // Keep only previous/next track actions for music-style controls.
+    try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
+    try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
 
     ms.setActionHandler("seekto", (details) => {
       if (details.seekTime != null && audioRef.current) {
@@ -561,7 +574,7 @@ export function MiniPlayer() {
         }
       }
     });
-  }, [currentSong?.id, isPlaying]);
+  }, [currentSong?.id]);
 
   // Update metadata whenever song/radio changes
   useEffect(() => {
