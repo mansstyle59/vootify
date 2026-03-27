@@ -23,6 +23,10 @@ import {
   Disc3,
   Sparkles,
   Play,
+  PlusCircle,
+  ListMusic,
+  Plus,
+  Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,11 +42,15 @@ const SearchPage = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const userId = usePlayerStore((s) => s.userId);
   const recentlyPlayed = usePlayerStore((s) => s.recentlyPlayed);
-  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, playlists, playlistSongs, addSongToPlaylist, createPlaylist } = usePlayerStore();
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
-
+  const [addToPlaylistRelease, setAddToPlaylistRelease] = useState<DeezerNewRelease | null>(null);
+  const [addToPlaylistTracks, setAddToPlaylistTracks] = useState<Song[]>([]);
+  const [loadingPlaylistAdd, setLoadingPlaylistAdd] = useState(false);
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
   // Deezer new releases
   interface DeezerNewRelease {
     id: number;
@@ -154,6 +162,67 @@ const SearchPage = () => {
       toast.error("Impossible de charger cet album");
     }
   }, [play, setQueue, allSongs]);
+
+  // Open add-to-playlist menu for a Friday release
+  const openAddToPlaylist = useCallback(async (release: DeezerNewRelease) => {
+    setLoadingPlaylistAdd(true);
+    setAddToPlaylistRelease(release);
+    try {
+      const { data } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/album/${release.albumId}/tracks?limit=50` },
+      });
+      const deezerTracks = data?.data || [];
+      const library = allSongs || [];
+      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      const tracks: Song[] = [];
+      for (const t of deezerTracks) {
+        const dTitle = normalize(t.title || "");
+        const dArtist = normalize(t.artist?.name || release.artist);
+        const match = library.find((s) => {
+          const sTitle = normalize(s.title);
+          const sArtist = normalize(s.artist);
+          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
+                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
+        });
+        if (match && match.streamUrl) {
+          tracks.push({ ...match, album: release.title, coverUrl: release.coverUrl || match.coverUrl });
+        }
+      }
+      if (tracks.length === 0) {
+        toast.info("Aucun morceau disponible en version complète");
+        setAddToPlaylistRelease(null);
+      }
+      setAddToPlaylistTracks(tracks);
+    } catch {
+      toast.error("Impossible de charger les morceaux");
+      setAddToPlaylistRelease(null);
+    }
+    setLoadingPlaylistAdd(false);
+  }, [allSongs]);
+
+  const handleAddAlbumToPlaylist = async (playlistId: string, playlistName: string) => {
+    const existing = playlistSongs[playlistId] || [];
+    let added = 0;
+    for (const song of addToPlaylistTracks) {
+      if (!existing.some((s) => s.id === song.id)) {
+        await addSongToPlaylist(playlistId, song);
+        added++;
+      }
+    }
+    toast.success(`${added} morceau${added > 1 ? "x" : ""} ajouté${added > 1 ? "s" : ""} à "${playlistName}"`);
+    setAddToPlaylistRelease(null);
+    setAddToPlaylistTracks([]);
+  };
+
+  const handleCreateAndAdd = async () => {
+    if (!newPlaylistName.trim()) return;
+    await createPlaylist(newPlaylistName.trim());
+    toast.success(`Playlist "${newPlaylistName.trim()}" créée — ajoutez les morceaux après rechargement`);
+    setNewPlaylistName("");
+    setShowCreatePlaylist(false);
+    setAddToPlaylistRelease(null);
+  };
 
   const recentIds = useMemo(
     () => new Set(recentlyPlayed.map((s) => s.id)),
@@ -592,38 +661,48 @@ const SearchPage = () => {
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                   {newReleases.map((release, i) => (
-                    <motion.button
-                      key={release.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.03 }}
-                      onClick={() => playFridayRelease(release)}
-                      className="flex-shrink-0 w-[110px] group text-left snap-start"
-                    >
-                      <div className="relative w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
-                        {release.coverUrl ? (
-                          <img
-                            src={release.coverUrl}
-                            alt={release.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-secondary flex items-center justify-center">
-                            <Music className="w-6 h-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                    <div key={release.id} className="flex-shrink-0 w-[110px] snap-start">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="group"
+                      >
+                        <div className="relative w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
+                          <button onClick={() => playFridayRelease(release)} className="w-full h-full">
+                            {release.coverUrl ? (
+                              <img
+                                src={release.coverUrl}
+                                alt={release.title}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-secondary flex items-center justify-center">
+                                <Music className="w-6 h-6 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                              <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                            </div>
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
+                          >
+                            <PlusCircle className="w-4 h-4 text-white" />
+                          </button>
                         </div>
-                      </div>
-                      <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
-                        {release.title}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground/70 truncate">
-                        {release.artist}
-                      </p>
-                    </motion.button>
+                        <button onClick={() => playFridayRelease(release)} className="text-left w-full">
+                          <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
+                            {release.title}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/70 truncate">
+                            {release.artist}
+                          </p>
+                        </button>
+                      </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -891,6 +970,98 @@ const SearchPage = () => {
                 )}
               </>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add album to playlist modal */}
+      <AnimatePresence>
+        {addToPlaylistRelease && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => { setAddToPlaylistRelease(null); setAddToPlaylistTracks([]); setShowCreatePlaylist(false); }}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-t-2xl border border-border bg-card shadow-2xl overflow-hidden"
+              style={{ maxHeight: "70vh" }}
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 p-4 border-b border-border">
+                {addToPlaylistRelease.coverUrl && (
+                  <img src={addToPlaylistRelease.coverUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{addToPlaylistRelease.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{addToPlaylistRelease.artist}</p>
+                  {!loadingPlaylistAdd && (
+                    <p className="text-[10px] text-primary mt-0.5">
+                      {addToPlaylistTracks.length} morceau{addToPlaylistTracks.length !== 1 ? "x" : ""} disponible{addToPlaylistTracks.length !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+                <button onClick={() => { setAddToPlaylistRelease(null); setAddToPlaylistTracks([]); }} className="p-1">
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {loadingPlaylistAdd ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : addToPlaylistTracks.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">Aucun morceau disponible</div>
+              ) : (
+                <>
+                  <div className="max-h-[40vh] overflow-y-auto p-2">
+                    {playlists.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-6">Aucune playlist</p>
+                    ) : (
+                      playlists.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => handleAddAlbumToPlaylist(p.id, p.name)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left rounded-xl hover:bg-accent transition-colors"
+                        >
+                          <ListMusic className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                          <span className="flex-1 truncate text-foreground font-medium">{p.name}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className="p-2 border-t border-border">
+                    {showCreatePlaylist ? (
+                      <div className="flex gap-2 p-1">
+                        <input
+                          value={newPlaylistName}
+                          onChange={(e) => setNewPlaylistName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleCreateAndAdd()}
+                          placeholder="Nom de la playlist..."
+                          className="flex-1 px-3 py-2 rounded-lg bg-secondary text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                          autoFocus
+                        />
+                        <button onClick={handleCreateAndAdd} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Créer</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowCreatePlaylist(true)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-accent transition-colors text-foreground"
+                      >
+                        <Plus className="w-5 h-5" />
+                        <span>Nouvelle playlist</span>
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
