@@ -174,9 +174,7 @@ const GenrePage = () => {
           <div className="rounded-2xl bg-card/30 border border-border overflow-hidden">
             <VirtualSongList
               songs={filteredSongs}
-              onPlay={handlePlay}
-              currentSongId={currentSong?.id}
-              isPlaying={isPlaying}
+              onClickSong={(song) => handlePlay(song)}
             />
           </div>
         )}
