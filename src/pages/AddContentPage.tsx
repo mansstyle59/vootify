@@ -79,6 +79,7 @@ function SongForm() {
   const [songs, setSongs] = useState<SongEntry[]>([]);
   const [processing, setProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const processFiles = async (files: FileList) => {
