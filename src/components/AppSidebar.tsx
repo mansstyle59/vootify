@@ -15,6 +15,7 @@ const navItems = [
 
 const adminItems = [
   { to: "/add", icon: PlusCircle, label: "Ajouter" },
+  { to: "/admin", icon: Shield, label: "Admin" },
 ];
 
 // Route → lazy chunk mapping for prefetch
