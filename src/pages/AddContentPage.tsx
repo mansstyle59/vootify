@@ -269,87 +269,6 @@ function PlaylistForm() {
   const [processing, setProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Deezer import state
-  const [deezerUrl, setDeezerUrl] = useState("");
-  const [deezerLoading, setDeezerLoading] = useState(false);
-  const [deezerTracks, setDeezerTracks] = useState<{ id: string; title: string; artist: string; album: string; duration: number; coverUrl: string; streamUrl: string }[]>([]);
-  const [deezerInfo, setDeezerInfo] = useState<{ title: string; picture: string } | null>(null);
-
-  const extractPlaylistId = async (input: string): Promise<string | null> => {
-    const trimmed = input.trim();
-    // Direct ID
-    if (/^\d+$/.test(trimmed)) return trimmed;
-    // Standard URL: deezer.com/.../playlist/123
-    const stdMatch = trimmed.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
-    if (stdMatch) return stdMatch[1];
-    // Short link: dz.page.link or link.deezer.com
-    if (trimmed.includes("dz.page.link") || trimmed.includes("link.deezer.com") || trimmed.includes("dzr.page.link")) {
-      try {
-        const data = await callDeezerProxy({ action: "resolve_short_link", url: trimmed });
-        if (data.playlist_id) return data.playlist_id;
-      } catch {}
-    }
-    return null;
-  };
-
-  const callDeezerProxy = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke("deezer-proxy", { body });
-    if (error) throw new Error(error.message);
-    if (data?.error) throw new Error(data.error);
-    return data;
-  };
-
-  const handleDeezerImport = async () => {
-    if (!deezerUrl.trim()) return;
-    setDeezerLoading(true);
-    setDeezerTracks([]);
-    setDeezerInfo(null);
-
-    try {
-      const playlistId = await extractPlaylistId(deezerUrl);
-      if (!playlistId) {
-        toast.error("Lien de playlist Deezer invalide");
-        setDeezerLoading(false);
-        return;
-      }
-
-      console.log("DEEZER IMPORT: playlist ID =", playlistId);
-      const data = await callDeezerProxy({ action: "playlist", id: playlistId });
-
-      if (!data || !data.tracks?.data?.length) {
-        toast.error("Playlist vide ou introuvable");
-        setDeezerLoading(false);
-        return;
-      }
-
-      const info = {
-        title: data.title || "Playlist Deezer",
-        picture: data.picture_medium || data.picture_big || data.picture || "",
-      };
-      setDeezerInfo(info);
-
-      // Auto-fill name and cover if empty
-      if (!name.trim()) setName(info.title);
-      if (!coverUrl.trim() && info.picture) setCoverUrl(info.picture);
-
-      const tracks = (data.tracks.data as any[]).map((t: any) => ({
-        id: `dz-${t.id}`,
-        title: t.title || "Sans titre",
-        artist: t.artist?.name || "Inconnu",
-        album: t.album?.title || "",
-        duration: t.duration || 0,
-        coverUrl: t.album?.cover_medium || t.album?.cover_big || "",
-        streamUrl: t.preview || "",
-      }));
-
-      setDeezerTracks(tracks);
-      toast.success(`${tracks.length} titres trouvés dans "${info.title}"`);
-    } catch (e: any) {
-      console.error("Deezer import error:", e);
-      toast.error("Erreur lors de l'import: " + (e.message || "Erreur inconnue"));
-    }
-    setDeezerLoading(false);
-  };
 
   const processFiles = async (files: FileList) => {
     setProcessing(true);
@@ -433,15 +352,6 @@ function PlaylistForm() {
       addedCount++;
     }
 
-    // Add Deezer tracks to playlist
-    for (let i = 0; i < deezerTracks.length; i++) {
-      const t = deezerTracks[i];
-      await addSongToPlaylist(created.id, {
-        id: t.id, title: t.title, artist: t.artist, album: t.album,
-        duration: t.duration, coverUrl: t.coverUrl, streamUrl: t.streamUrl, liked: false,
-      });
-      addedCount++;
-    }
 
     setLoading(false);
     toast.success(`Playlist "${name.trim()}" créée avec ${addedCount} titre${addedCount > 1 ? "s" : ""} !`);
