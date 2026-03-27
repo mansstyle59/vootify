@@ -147,9 +147,24 @@ const SearchPage = () => {
     return artists.slice(0, 6);
   }, [allSongs, searchResults, debouncedQuery]);
 
+  // Trending artists with cover photo from their songs
   const trendingArtists = useMemo(() => {
     if (!allSongs) return [];
-    return extractArtists(allSongs).slice(0, 15);
+    const map = new Map<string, { name: string; cover: string; count: number }>();
+    for (const s of allSongs) {
+      s.artist.split(",").forEach((a) => {
+        const name = a.trim();
+        if (!name) return;
+        if (!map.has(name)) {
+          map.set(name, { name, cover: s.coverUrl, count: 1 });
+        } else {
+          map.get(name)!.count++;
+        }
+      });
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
   }, [allSongs]);
 
   // Build a lowercase→groupName lookup (from shared module)
