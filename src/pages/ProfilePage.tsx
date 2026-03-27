@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { hdCache } from "@/lib/hdCache";
+import { offlineCache } from "@/lib/offlineCache";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -9,7 +10,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, Sun, Moon, Monitor } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, Sun, Moon, Monitor, HardDrive, Database } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
