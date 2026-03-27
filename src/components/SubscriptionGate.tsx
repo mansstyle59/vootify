@@ -47,6 +47,7 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
     { label: "1 mois", value: 1, unit: "months" as const },
     { label: "6 mois", value: 6, unit: "months" as const },
     { label: "1 an", value: 12, unit: "months" as const },
+    { label: "Illimité", value: 0, unit: "months" as const },
   ];
 
   useEffect(() => {
