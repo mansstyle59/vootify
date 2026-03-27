@@ -368,6 +368,7 @@ const LibraryPage = () => {
     ).then((ids) => setLibraryCachedIds(new Set(ids.filter(Boolean) as string[])));
   }, [tab, recentlyPlayed, likedSongs, customSongs]);
 
+  const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
   const [cacheSize, setCacheSize] = useState(0);
   const [isRedownloading, setIsRedownloading] = useState(false);
   const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
