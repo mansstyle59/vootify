@@ -63,52 +63,49 @@ export function MiniPlayer() {
     audioRef.current.muted = false;
   }, [volume]);
 
-  // ── Web Lock API — prevent iOS from suspending the tab in background ──
+  // ── Web Lock API — prevent iOS/browser from suspending the tab ──
   useEffect(() => {
     if (!isPlaying || !currentSong) return;
     if (!("locks" in navigator)) return;
 
     let released = false;
-    const lockPromise = (navigator as any).locks.request(
+    (navigator as any).locks.request(
       "vootify-audio-bg",
-      { mode: "exclusive", ifAvailable: false },
+      { mode: "exclusive" },
       () => new Promise<void>((resolve) => {
-        // Hold the lock until playback stops
         const check = setInterval(() => {
           if (released) { clearInterval(check); resolve(); }
-        }, 1000);
+        }, 2000);
       })
     );
-
     return () => { released = true; };
   }, [isPlaying, currentSong?.id]);
 
-  // ── Visibility change — resume playback when returning to app ──
+  // ── Visibility change — resume playback + re-sync media session ──
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        const audio = audioRef.current;
-        const state = usePlayerStore.getState();
-        if (audio && state.isPlaying && state.currentSong) {
-          // Ensure audio is actually playing after returning from background
-          if (audio.paused && audio.src) {
-            console.log("[bg-resume] Resuming audio after visibility change");
-            audio.volume = state.volume ?? volume;
-            audio.muted = false;
-            audio.play().catch(console.error);
-          }
-          // Re-sync media session
-          if ("mediaSession" in navigator) {
-            navigator.mediaSession.playbackState = "playing";
-          }
-        }
+      if (document.visibilityState !== "visible") return;
+      const audio = audioRef.current;
+      const state = usePlayerStore.getState();
+      if (!audio || !state.isPlaying || !state.currentSong) return;
+
+      // Resume if audio got paused by OS
+      if (audio.paused && audio.src) {
+        console.log("[bg-resume] Resuming audio after visibility change");
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }
+      // Re-sync media session state
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [volume]);
 
-  // ── Silent playback watchdog (iOS bug detector) — throttled in background ──
+  // ── Watchdog — detect stuck audio, throttled in background ──
   const watchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTimeCheckRef = useRef<{ time: number; ts: number } | null>(null);
 
@@ -118,53 +115,46 @@ export function MiniPlayer() {
 
     lastTimeCheckRef.current = null;
 
-    // Use longer interval in background to save CPU
-    const getInterval = () => document.visibilityState === "visible" ? 2500 : 5000;
-
-    const startWatchdog = () => {
+    const runWatchdog = () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
+      // Longer interval in background = less CPU
+      const interval = document.visibilityState === "visible" ? 3000 : 8000;
       watchdogRef.current = setInterval(() => {
         const audio = audioRef.current;
-        if (!audio || audio.paused || !audio.src || audio.duration === 0) return;
+        if (!audio || audio.paused || !audio.src || !isFinite(audio.duration)) return;
 
         const now = Date.now();
-        const currentTime = audio.currentTime;
+        const ct = audio.currentTime;
         const prev = lastTimeCheckRef.current;
 
         if (prev) {
-          const wallElapsed = now - prev.ts;
-          const audioElapsed = (currentTime - prev.time) * 1000;
-
-          if (wallElapsed > 4000 && audioElapsed < 500 && !audio.paused) {
-            console.warn("[watchdog] Audio stuck — attempting reload");
+          const wall = now - prev.ts;
+          const audioD = (ct - prev.time) * 1000;
+          // Stuck detection: wall advanced but audio didn't
+          if (wall > 5000 && audioD < 500 && !audio.paused) {
+            console.warn("[watchdog] Audio stuck — reloading");
             const src = audio.src;
-            const time = audio.currentTime;
+            const pos = ct;
             audio.src = "";
-            audio.load();
             setTimeout(() => {
               audio.src = src;
-              audio.load();
-              audio.currentTime = Math.max(0, time - 0.5);
+              audio.currentTime = Math.max(0, pos - 0.3);
               audio.volume = volume;
               audio.muted = false;
-              audio.play().catch((e) => console.error("[watchdog] Reload play failed:", e));
-            }, 100);
+              audio.play().catch(console.error);
+            }, 80);
           }
         }
-
-        lastTimeCheckRef.current = { time: currentTime, ts: now };
-      }, getInterval());
+        lastTimeCheckRef.current = { time: ct, ts: now };
+      }, interval);
     };
 
-    startWatchdog();
-
-    // Adjust watchdog frequency on visibility change
-    const onVisChange = () => startWatchdog();
-    document.addEventListener("visibilitychange", onVisChange);
-
+    runWatchdog();
+    const onVis = () => runWatchdog();
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
-      document.removeEventListener("visibilitychange", onVisChange);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, [isPlaying, currentSong?.id, volume]);
 
