@@ -106,24 +106,35 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Supabase Edge Functions — network first with fast fallback
+          // Supabase Edge Functions — network first with 1.5s timeout
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "supabase-functions",
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 2 },
-              networkTimeoutSeconds: 2,
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 4 },
+              networkTimeoutSeconds: 1.5,
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Supabase REST API — stale-while-revalidate for snappy UX
+          // Supabase REST API — stale-while-revalidate for instant UX
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "supabase-api",
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 3 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Supabase Auth — network first, short cache
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-auth",
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 3,
               cacheableResponse: { statuses: [0, 200] },
             },
           },
