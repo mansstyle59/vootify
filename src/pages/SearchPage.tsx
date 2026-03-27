@@ -163,7 +163,67 @@ const SearchPage = () => {
     }
   }, [play, setQueue, allSongs]);
 
-  const recentIds = useMemo(
+  // Open add-to-playlist menu for a Friday release
+  const openAddToPlaylist = useCallback(async (release: DeezerNewRelease) => {
+    setLoadingPlaylistAdd(true);
+    setAddToPlaylistRelease(release);
+    try {
+      const { data } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/album/${release.albumId}/tracks?limit=50` },
+      });
+      const deezerTracks = data?.data || [];
+      const library = allSongs || [];
+      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      const tracks: Song[] = [];
+      for (const t of deezerTracks) {
+        const dTitle = normalize(t.title || "");
+        const dArtist = normalize(t.artist?.name || release.artist);
+        const match = library.find((s) => {
+          const sTitle = normalize(s.title);
+          const sArtist = normalize(s.artist);
+          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
+                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
+        });
+        if (match && match.streamUrl) {
+          tracks.push({ ...match, album: release.title, coverUrl: release.coverUrl || match.coverUrl });
+        }
+      }
+      if (tracks.length === 0) {
+        toast.info("Aucun morceau disponible en version complète");
+        setAddToPlaylistRelease(null);
+      }
+      setAddToPlaylistTracks(tracks);
+    } catch {
+      toast.error("Impossible de charger les morceaux");
+      setAddToPlaylistRelease(null);
+    }
+    setLoadingPlaylistAdd(false);
+  }, [allSongs]);
+
+  const handleAddAlbumToPlaylist = async (playlistId: string, playlistName: string) => {
+    const existing = playlistSongs[playlistId] || [];
+    let added = 0;
+    for (const song of addToPlaylistTracks) {
+      if (!existing.some((s) => s.id === song.id)) {
+        await addSongToPlaylist(playlistId, song);
+        added++;
+      }
+    }
+    toast.success(`${added} morceau${added > 1 ? "x" : ""} ajouté${added > 1 ? "s" : ""} à "${playlistName}"`);
+    setAddToPlaylistRelease(null);
+    setAddToPlaylistTracks([]);
+  };
+
+  const handleCreateAndAdd = async () => {
+    if (!newPlaylistName.trim()) return;
+    await createPlaylist(newPlaylistName.trim());
+    toast.success(`Playlist "${newPlaylistName.trim()}" créée — ajoutez les morceaux après rechargement`);
+    setNewPlaylistName("");
+    setShowCreatePlaylist(false);
+    setAddToPlaylistRelease(null);
+  };
+
     () => new Set(recentlyPlayed.map((s) => s.id)),
     [recentlyPlayed]
   );
