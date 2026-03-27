@@ -30,8 +30,9 @@ import { searchArtistImage } from "@/lib/coverArtSearch";
 
 const SearchPage = () => {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [debouncedQuery, setDebouncedQuery] = useState(searchParams.get("q") || "");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const userId = usePlayerStore((s) => s.userId);
