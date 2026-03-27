@@ -338,14 +338,21 @@ export function MiniPlayer() {
         oldAudio.volume = volume;
         oldAudio.play().catch(() => {});
 
+        // Exponential fade curves for smooth Apple Music-style transitions
         const steps = CROSSFADE_MS / FADE_STEP;
         let step = 0;
         fadeIntervalRef.current = setInterval(() => {
           step++;
-          oldAudio.volume = Math.max(0, volume * (1 - step / steps));
+          const t = step / steps; // 0→1
+          // Equal-power crossfade: energy-preserving curves
+          const fadeOut = Math.cos(t * Math.PI * 0.5); // cos curve: smooth deceleration
+          const fadeIn = Math.sin(t * Math.PI * 0.5);  // sin curve: smooth acceleration
+          oldAudio.volume = Math.max(0, volume * fadeOut);
+          audio.volume = Math.min(volume, volume * fadeIn);
           if (step >= steps) {
             oldAudio.pause();
             oldAudio.removeAttribute("src");
+            audio.volume = volume;
             if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
             fadeIntervalRef.current = null;
           }
@@ -358,15 +365,6 @@ export function MiniPlayer() {
           console.error("[player] Crossfade play failed:", e);
           setTimeout(() => audio.play().catch(() => {}), 200);
         });
-        let fadeInStep = 0;
-        const fadeInInterval = setInterval(() => {
-          fadeInStep++;
-          audio.volume = Math.min(volume, volume * (fadeInStep / steps));
-          if (fadeInStep >= steps) {
-            audio.volume = volume;
-            clearInterval(fadeInInterval);
-          }
-        }, FADE_STEP);
       } else {
         // Direct load — instant play
         audio.src = srcToUse;
@@ -484,12 +482,14 @@ export function MiniPlayer() {
     ) {
       preemptiveTriggeredRef.current = true;
 
+      // Equal-power fade-out curve for preemptive crossfade
       const steps = (crossfadeDuration * 1000) / FADE_STEP;
       let step = 0;
       const fadeOutInterval = setInterval(() => {
         step++;
+        const t = step / steps;
         if (audioRef.current) {
-          audioRef.current.volume = Math.max(0, volume * (1 - step / steps));
+          audioRef.current.volume = Math.max(0, volume * Math.cos(t * Math.PI * 0.5));
         }
         if (step >= steps) clearInterval(fadeOutInterval);
       }, FADE_STEP);
