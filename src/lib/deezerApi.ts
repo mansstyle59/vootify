@@ -61,6 +61,23 @@ interface DeezerAlbum {
 }
 
 
+// ── In-memory cache for custom songs (avoids repeated DB queries) ──
+let _customSongsCache: { data: any[] | null; ts: number } = { data: null, ts: 0 };
+const CUSTOM_CACHE_TTL = 60_000; // 60 seconds
+
+async function getCachedCustomSongs() {
+  const now = Date.now();
+  if (_customSongsCache.data && now - _customSongsCache.ts < CUSTOM_CACHE_TTL) {
+    return _customSongsCache.data;
+  }
+  const { data } = await supabase
+    .from("custom_songs")
+    .select("*")
+    .not("stream_url", "is", null);
+  _customSongsCache = { data: data || [], ts: now };
+  return _customSongsCache.data;
+}
+
 async function callDeezer(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke("deezer-proxy", { body });
   if (error) throw new Error(error.message);
