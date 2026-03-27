@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
@@ -52,38 +52,25 @@ const queryClient = new QueryClient({
 });
 
 const AnimatedRoutes = memo(function AnimatedRoutes() {
-  const location = useLocation();
-
   return (
     <Suspense fallback={<PageLoader />}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.12, ease: "easeOut" }}
-          className="min-h-screen will-change-[opacity]"
-        >
-          <Routes location={location}>
-            <Route path="/" element={<Home />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/library" element={<LibraryPage />} />
-            <Route path="/radio" element={<RadioPage />} />
-            <Route path="/add" element={<AddContentPage />} />
-            <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
-            <Route path="/album/:id" element={<AlbumDetailPage />} />
-            <Route path="/artist/:name" element={<ArtistPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/request-access" element={<RequestAccessPage />} />
-            <Route path="/genre/:name" element={<GenrePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </motion.div>
-      </AnimatePresence>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/library" element={<LibraryPage />} />
+        <Route path="/radio" element={<RadioPage />} />
+        <Route path="/add" element={<AddContentPage />} />
+        <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
+        <Route path="/album/:id" element={<AlbumDetailPage />} />
+        <Route path="/artist/:name" element={<ArtistPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/request-access" element={<RequestAccessPage />} />
+        <Route path="/genre/:name" element={<GenrePage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </Suspense>
   );
 });
