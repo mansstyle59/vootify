@@ -250,11 +250,13 @@ function UsersTab() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Utilisateur créé avec succès");
+      // Store credentials for popup
+      setCreatedCreds({ identifier: createEmail.trim(), password: createPassword, displayName: createDisplayName.trim() || createEmail.trim() });
       setShowCreateDialog(false);
       setCreateEmail("");
       setCreatePassword("");
       setCreateDisplayName("");
+      setShowCredsDialog(true);
       await loadUsers();
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création");
