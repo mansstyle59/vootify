@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
 import { Music, Disc3 } from "lucide-react";
+import { searchArtistImage } from "@/lib/coverArtSearch";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
@@ -237,15 +238,7 @@ const HomePage = () => {
               <CoverSkeleton count={6} />
             ) : (
               artists?.map((artist, i) => (
-                <CoverCard
-                  key={artist.name}
-                  title={artist.name}
-                  subtitle=""
-                  imageUrl={artist.cover}
-                  index={i}
-                  rounded
-                  onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                />
+                <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
               ))
             )}
           </HorizontalScroll>
@@ -287,5 +280,25 @@ const HomePage = () => {
     </div>
   );
 };
+
+/** Artist card that fetches real Deezer photo */
+function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const { data: deezerImage } = useQuery({
+    queryKey: ["artist-image", artist.name],
+    queryFn: () => searchArtistImage(artist.name),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  return (
+    <CoverCard
+      title={artist.name}
+      subtitle=""
+      imageUrl={deezerImage || artist.cover}
+      index={index}
+      rounded
+      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+    />
+  );
+}
 
 export default HomePage;
