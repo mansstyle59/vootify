@@ -61,18 +61,20 @@ const HomePage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custom_songs")
-        .select("artist, cover_url")
-        .not("stream_url", "is", null);
+        .select("artist, cover_url, created_at")
+        .not("stream_url", "is", null)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      const artistMap = new Map<string, string>();
+      // Keep order by most recent song per artist
+      const artistMap = new Map<string, { cover: string; latestAt: string }>();
       for (const row of data || []) {
-        if (!artistMap.has(row.artist) && row.cover_url) {
-          artistMap.set(row.artist, row.cover_url);
-        } else if (!artistMap.has(row.artist)) {
-          artistMap.set(row.artist, "");
+        if (!artistMap.has(row.artist)) {
+          artistMap.set(row.artist, { cover: row.cover_url || "", latestAt: row.created_at });
         }
       }
-      return Array.from(artistMap.entries()).map(([name, cover]) => ({ name, cover }));
+      return Array.from(artistMap.entries())
+        .sort((a, b) => new Date(b[1].latestAt).getTime() - new Date(a[1].latestAt).getTime())
+        .map(([name, { cover }]) => ({ name, cover }));
     },
     staleTime: 2 * 60 * 1000,
   });
