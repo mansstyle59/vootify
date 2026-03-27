@@ -222,8 +222,29 @@ const ProfilePage = () => {
             Cliquez pour changer la photo
           </p>
         </motion.div>
+        {/* Subscription badge */}
+        {isActive && subscription && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Crown className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground capitalize">{subscription.plan}</p>
+              <p className="text-xs text-muted-foreground">
+                {subscription.expires_at
+                  ? `Expire le ${new Date(subscription.expires_at).toLocaleDateString("fr-FR")}`
+                  : "Abonnement illimité"}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Form */}
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
