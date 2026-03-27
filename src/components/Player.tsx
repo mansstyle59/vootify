@@ -391,13 +391,21 @@ export function MiniPlayer() {
   }, [currentSong?.id]);
 
   const preemptiveTriggeredRef = useRef(false);
+  const lastProgressUpdateRef = useRef(0);
 
   const handleTimeUpdate = useCallback(() => {
     if (!audioRef.current) return;
     const audio = audioRef.current;
     const t = audio.currentTime;
-    // Use fractional time for smooth progress
-    setProgress(t);
+
+    // ── Throttle UI progress updates in background to save CPU ──
+    const now = Date.now();
+    const isVisible = document.visibilityState === "visible";
+    const throttleMs = isVisible ? 0 : 2000; // Update every 2s in background
+    if (now - lastProgressUpdateRef.current >= throttleMs) {
+      setProgress(t);
+      lastProgressUpdateRef.current = now;
+    }
 
     // Preemptive crossfade: start next track before current ends
     const { crossfadeEnabled, crossfadeDuration, repeat } = usePlayerStore.getState();
@@ -405,13 +413,12 @@ export function MiniPlayer() {
       crossfadeEnabled &&
       !preemptiveTriggeredRef.current &&
       audio.duration > 0 &&
-      audio.duration - audio.currentTime <= crossfadeDuration &&
-      audio.duration - audio.currentTime > 0.5 &&
+      audio.duration - t <= crossfadeDuration &&
+      audio.duration - t > 0.5 &&
       repeat !== "one"
     ) {
       preemptiveTriggeredRef.current = true;
 
-      // Start fading out current track
       const steps = (crossfadeDuration * 1000) / FADE_STEP;
       let step = 0;
       const fadeOutInterval = setInterval(() => {
@@ -419,12 +426,9 @@ export function MiniPlayer() {
         if (audioRef.current) {
           audioRef.current.volume = Math.max(0, volume * (1 - step / steps));
         }
-        if (step >= steps) {
-          clearInterval(fadeOutInterval);
-        }
+        if (step >= steps) clearInterval(fadeOutInterval);
       }, FADE_STEP);
 
-      // Trigger next song (crossfade logic in the main effect will handle fade-in)
       next();
     }
   }, [setProgress, volume, next]);
