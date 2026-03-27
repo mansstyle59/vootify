@@ -1319,6 +1319,25 @@ function HomeTab() {
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroBgColor, setHeroBgColor] = useState("");
   const [heroBgImage, setHeroBgImage] = useState("");
+  const [uploadingBgImage, setUploadingBgImage] = useState(false);
+  const bgImageFileRef = useRef<HTMLInputElement>(null);
+
+  const handleBgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (max 5 Mo)"); return; }
+    setUploadingBgImage(true);
+    const ext = file.name.split(".").pop();
+    const path = `hero-bg/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("covers").upload(path, file);
+    if (error) { toast.error("Erreur d'upload"); setUploadingBgImage(false); return; }
+    const { data: urlData } = supabase.storage.from("covers").getPublicUrl(path);
+    setHeroBgImage(urlData.publicUrl);
+    setUploadingBgImage(false);
+    toast.success("Image uploadée !");
+    if (bgImageFileRef.current) bgImageFileRef.current.value = "";
+  };
   const [editingCustom, setEditingCustom] = useState<string | null>(null);
   const [songPickerOpen, setSongPickerOpen] = useState(false);
 
