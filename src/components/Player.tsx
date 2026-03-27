@@ -82,27 +82,63 @@ export function MiniPlayer() {
   }, [isPlaying, currentSong?.id]);
 
   // ── Visibility change — resume playback + re-sync media session ──
+  // Handles: returning from background, phone call interruption, app switching
   useEffect(() => {
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleVisibility = () => {
       if (document.visibilityState !== "visible") return;
       const audio = audioRef.current;
       const state = usePlayerStore.getState();
       if (!audio || !state.isPlaying || !state.currentSong) return;
 
-      // Resume if audio got paused by OS
-      if (audio.paused && audio.src) {
-        console.log("[bg-resume] Resuming audio after visibility change");
-        audio.volume = volume;
-        audio.muted = false;
-        audio.play().catch(console.error);
-      }
-      // Re-sync media session state
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "playing";
+      // Small delay to let iOS audio session re-activate
+      resumeTimer = setTimeout(() => {
+        if (audio.paused && audio.src) {
+          const isRadio = state.currentSong && state.currentSong.duration === 0;
+          console.log("[bg-resume] Resuming", isRadio ? "radio stream" : "track");
+
+          if (isRadio) {
+            // Radio: reload stream to get fresh data (stale buffer = silence)
+            const src = audio.src;
+            audio.src = "";
+            audio.src = src;
+            audio.load();
+          }
+
+          audio.volume = volume;
+          audio.muted = false;
+          audio.play().catch((e) => {
+            console.warn("[bg-resume] Play failed, retrying:", e);
+            setTimeout(() => audio.play().catch(console.error), 500);
+          });
+        }
+        // Re-sync media session state
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.playbackState = "playing";
+        }
+      }, 300);
+    };
+
+    // Handle audio interruptions (phone calls, Siri, etc.)
+    const handleInterrupt = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      const state = usePlayerStore.getState();
+      // If we were playing but got paused externally → mark for resume
+      if (state.isPlaying && audio.paused) {
+        console.log("[interrupt] Audio paused externally — will resume on focus");
       }
     };
+
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    // 'pause' event on audio catches OS-level interruptions
+    audioRef.current?.addEventListener("pause", handleInterrupt);
+
+    return () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [volume]);
 
   // ── Watchdog — detect stuck audio, throttled in background ──
@@ -152,18 +188,40 @@ export function MiniPlayer() {
     runWatchdog();
     const onVis = () => runWatchdog();
     document.addEventListener("visibilitychange", onVis);
+
+    // ── Network recovery: auto-reconnect when connection returns ──
+    const handleOnline = () => {
+      const audio = audioRef.current;
+      const state = usePlayerStore.getState();
+      if (!audio || !state.isPlaying || !state.currentSong) return;
+      if (audio.paused || audio.readyState < 2) {
+        console.log("[network] Back online — reconnecting audio");
+        const isRadio = state.currentSong.duration === 0;
+        const src = audio.src;
+        if (isRadio) {
+          // Radio: full reload for fresh stream
+          audio.src = "";
+          audio.src = src;
+          audio.load();
+        }
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }
+    };
+    window.addEventListener("online", handleOnline);
+
     return () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", handleOnline);
     };
   }, [isPlaying, currentSong?.id, volume]);
 
   // ── Separate play/pause control from track loading ──
-  // Play/pause toggle for SAME track — no reload needed
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentSong || !audio.src) return;
-    // Only handle play/pause for current track (not new loads)
     if (lastSongIdRef.current === currentSong.id) {
       if (isPlaying) {
         audio.play().catch(console.error);
@@ -541,12 +599,43 @@ export function MiniPlayer() {
     }
   }, [next, volume]);
 
+  const errorRetryCountRef = useRef(0);
+
   const handleAudioError = useCallback(async () => {
     if (!audioRef.current || !currentSong) return;
     const audio = audioRef.current;
-    console.error("[player] Audio error for:", currentSong.title, "readyState:", audio.readyState, "networkState:", audio.networkState);
+    const isRadio = currentSong.duration === 0;
 
-    // Try local cache fallback
+    console.error("[player] Audio error for:", currentSong.title,
+      "readyState:", audio.readyState, "networkState:", audio.networkState,
+      isRadio ? "(radio)" : "(track)");
+
+    // Radio streams: progressive retry with backoff (don't skip)
+    if (isRadio) {
+      const retries = errorRetryCountRef.current;
+      if (retries >= 5) {
+        console.error("[player] Radio: max retries reached");
+        errorRetryCountRef.current = 0;
+        return;
+      }
+      const delay = Math.min(1000 * Math.pow(2, retries), 10000); // 1s, 2s, 4s, 8s, 10s
+      errorRetryCountRef.current = retries + 1;
+      console.warn(`[player] Radio: retry ${retries + 1}/5 in ${delay}ms`);
+      setTimeout(() => {
+        if (!audio || !usePlayerStore.getState().isPlaying) return;
+        const src = currentSong.streamUrl;
+        if (!src) return;
+        audio.src = "";
+        audio.src = src;
+        audio.load();
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }, delay);
+      return;
+    }
+
+    // Music tracks: try cache → retry URL → skip
     const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
     if (cachedUrl && !audio.src.includes("blob:")) {
       console.warn("[player] Falling back to local cache");
@@ -558,7 +647,6 @@ export function MiniPlayer() {
       return;
     }
 
-    // If we have a stream URL, retry once
     if (currentSong.streamUrl) {
       console.warn("[player] Retrying stream URL");
       audio.src = currentSong.streamUrl;
@@ -567,13 +655,19 @@ export function MiniPlayer() {
       audio.muted = false;
       setTimeout(() => {
         audio.play().catch((e) => {
-          console.error("[player] Retry also failed:", e);
-          // Skip to next track as last resort
+          console.error("[player] Retry failed — skipping:", e);
           next();
         });
       }, 500);
+    } else {
+      next();
     }
   }, [currentSong, volume, next]);
+
+  // Reset error retry counter on track change
+  useEffect(() => {
+    errorRetryCountRef.current = 0;
+  }, [currentSong?.id]);
 
   if (!currentSong) return null;
 
