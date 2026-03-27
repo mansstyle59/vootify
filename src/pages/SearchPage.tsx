@@ -661,38 +661,48 @@ const SearchPage = () => {
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                   {newReleases.map((release, i) => (
-                    <motion.button
-                      key={release.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.03 }}
-                      onClick={() => playFridayRelease(release)}
-                      className="flex-shrink-0 w-[110px] group text-left snap-start"
-                    >
-                      <div className="relative w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
-                        {release.coverUrl ? (
-                          <img
-                            src={release.coverUrl}
-                            alt={release.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-secondary flex items-center justify-center">
-                            <Music className="w-6 h-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                    <div key={release.id} className="flex-shrink-0 w-[110px] snap-start">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="group"
+                      >
+                        <div className="relative w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
+                          <button onClick={() => playFridayRelease(release)} className="w-full h-full">
+                            {release.coverUrl ? (
+                              <img
+                                src={release.coverUrl}
+                                alt={release.title}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-secondary flex items-center justify-center">
+                                <Music className="w-6 h-6 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                              <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                            </div>
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
+                          >
+                            <PlusCircle className="w-4 h-4 text-white" />
+                          </button>
                         </div>
-                      </div>
-                      <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
-                        {release.title}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground/70 truncate">
-                        {release.artist}
-                      </p>
-                    </motion.button>
+                        <button onClick={() => playFridayRelease(release)} className="text-left w-full">
+                          <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
+                            {release.title}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/70 truncate">
+                            {release.artist}
+                          </p>
+                        </button>
+                      </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
