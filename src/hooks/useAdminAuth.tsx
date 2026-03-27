@@ -32,31 +32,41 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const u = session?.user ?? null;
-        setUser(u);
-        if (u) {
-          const admin = await checkAdmin(u.id);
-          setIsAdmin(admin);
-        } else {
-          setIsAdmin(false);
-        }
-        setLoading(false);
-      }
-    );
+    let mounted = true;
+    let initialDone = false;
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    const resolve = async (session: import("@supabase/supabase-js").Session | null) => {
+      if (!mounted) return;
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
         const admin = await checkAdmin(u.id);
-        setIsAdmin(admin);
+        if (mounted) setIsAdmin(admin);
+      } else {
+        setIsAdmin(false);
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
+    };
+
+    // Set up listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        initialDone = true;
+        await resolve(session);
+      }
+    );
+
+    // Then get session — skip if listener already fired
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!initialDone) {
+        await resolve(session);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
