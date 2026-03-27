@@ -4,8 +4,9 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
+import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
 import { deezerApi } from "@/lib/deezerApi";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
@@ -150,17 +151,17 @@ const PlaylistDetailPage = () => {
   const handlePlayAll = () => { if (displaySongs.length > 0) { setQueue(displaySongs); play(displaySongs[0]); } };
   const handleShufflePlay = () => { if (displaySongs.length > 0) { const s = [...displaySongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); } };
 
-  const [downloading, setDownloading] = useState(false);
-  const [dlProgress, setDlProgress] = useState({ done: 0, total: 0 });
-  const handleDownloadAll = async () => {
-    if (displaySongs.length === 0) return;
-    setDownloading(true); const total = displaySongs.length; setDlProgress({ done: 0, total }); let done = 0;
-    for (const song of displaySongs) {
-      try { const cached = await offlineCache.isCached(song.id); if (!cached && song.streamUrl) await offlineCache.cacheSong(song); done++; setDlProgress({ done, total }); }
-      catch { done++; setDlProgress({ done, total }); }
-    }
-    setDownloading(false); setCachedIds(new Set(displaySongs.map((s) => s.id)));
-    toast.success("Téléchargement terminé !");
+  const { isDownloading: downloading, songs: dlSongs, completed: dlCompleted, failed: dlFailed, skipped: dlSkipped, total: dlTotal, overallProgress, downloadPlaylist, cancel: cancelDownload } = usePlaylistDownload();
+
+  const handleDownloadAll = () => {
+    if (displaySongs.length === 0 || downloading) return;
+    downloadPlaylist(displaySongs).then(() => {
+      // Refresh cached IDs after download
+      Promise.all(displaySongs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
+        (ids) => setCachedIds(new Set(ids.filter(Boolean) as string[]))
+      );
+      toast.success("Téléchargement terminé !");
+    });
   };
 
   const handleRemove = async (songId: string) => { if (!id) return; await removeSongFromPlaylist(id, songId); toast.success("Morceau retiré"); };
@@ -426,15 +427,54 @@ const PlaylistDetailPage = () => {
         </div>
       )}
 
-      {/* Download progress */}
+      {/* Download progress — enhanced */}
       {downloading && (
-        <div className="px-4 md:px-8 pb-3">
+        <div className="px-4 md:px-8 pb-3 space-y-2">
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-              <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }} animate={{ width: `${dlProgress.total > 0 ? (dlProgress.done / dlProgress.total) * 100 : 0}%` }} transition={{ duration: 0.3 }} />
+            <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+                initial={{ width: 0 }}
+                animate={{ width: `${overallProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
             </div>
-            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">{dlProgress.done}/{dlProgress.total}</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {dlCompleted + dlSkipped}/{dlTotal}
+            </span>
+            <button
+              onClick={cancelDownload}
+              className="p-1 rounded-full text-muted-foreground hover:text-destructive transition-colors active:scale-90"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
+          {/* Per-song status — show active downloads */}
+          <div className="space-y-1 max-h-32 overflow-y-auto scrollbar-hide">
+            {dlSongs
+              .filter((s) => s.status === "resolving" || s.status === "downloading" || s.status === "error")
+              .slice(0, 5)
+              .map((s) => (
+                <div key={s.songId} className="flex items-center gap-2 text-[10px]">
+                  {s.status === "resolving" && <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />}
+                  {s.status === "downloading" && <Download className="w-3 h-3 text-primary animate-bounce shrink-0" />}
+                  {s.status === "error" && <AlertCircle className="w-3 h-3 text-destructive shrink-0" />}
+                  <span className="truncate text-foreground/60">{s.title}</span>
+                  {s.status === "downloading" && (
+                    <span className="text-primary tabular-nums ml-auto">{s.progress}%</span>
+                  )}
+                  {s.status === "resolving" && (
+                    <span className="text-muted-foreground ml-auto">HD…</span>
+                  )}
+                  {s.status === "error" && (
+                    <span className="text-destructive ml-auto">Échec</span>
+                  )}
+                </div>
+              ))}
+          </div>
+          {dlFailed > 0 && !downloading && (
+            <p className="text-[10px] text-destructive/70">{dlFailed} échec{dlFailed > 1 ? "s" : ""}</p>
+          )}
         </div>
       )}
 
