@@ -453,7 +453,8 @@ const LibraryPage = () => {
     }
     if (isGuest && !isOffline && tab !== "downloads") setTab("downloads");
     if (isOffline && tab !== "downloads") setTab("downloads");
-  }, [isGuest, isOffline, isAdmin, tab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGuest, isOffline, isAdmin]);
 
   const visibleTabs = isOffline
     ? tabs.filter((t) => t.key === "downloads")
