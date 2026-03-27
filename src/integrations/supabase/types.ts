@@ -506,6 +506,7 @@ export type Database = {
           playlist_name: string
           shared_by: string
           shared_to: string
+          status: string
         }
         Insert: {
           cover_url?: string | null
@@ -514,6 +515,7 @@ export type Database = {
           playlist_name: string
           shared_by: string
           shared_to: string
+          status?: string
         }
         Update: {
           cover_url?: string | null
@@ -522,6 +524,7 @@ export type Database = {
           playlist_name?: string
           shared_by?: string
           shared_to?: string
+          status?: string
         }
         Relationships: []
       }
