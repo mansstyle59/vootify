@@ -1321,8 +1321,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   )}
                 </AnimatePresence>
               </motion.button>
-              <motion.button whileTap={{ scale: 0.8 }} onClick={next} className="transition-all">
+              <motion.button whileTap={{ scale: 0.8 }} onClick={next} className="relative transition-all">
                 <SkipForward className="w-9 h-9 text-foreground fill-current" />
+                {nextPreloaded && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                )}
               </motion.button>
               <motion.button whileTap={{ scale: 0.85 }} onClick={cycleRepeat} className="transition-all">
                 {repeat === "one" ? (
