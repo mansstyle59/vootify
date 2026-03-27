@@ -151,49 +151,64 @@ const SearchPage = () => {
     return extractArtists(allSongs).slice(0, 15);
   }, [allSongs]);
 
-  // Genre color palette for browse cards
-  const genreColors: Record<string, { from: string; to: string }> = {
-    "Rap": { from: "hsl(0 70% 45%)", to: "hsl(15 80% 35%)" },
-    "Hip-Hop": { from: "hsl(280 60% 45%)", to: "hsl(300 50% 35%)" },
-    "R&B": { from: "hsl(200 70% 40%)", to: "hsl(220 60% 30%)" },
-    "Pop": { from: "hsl(330 70% 50%)", to: "hsl(350 60% 40%)" },
-    "Rock": { from: "hsl(0 0% 35%)", to: "hsl(0 0% 20%)" },
-    "Jazz": { from: "hsl(35 70% 45%)", to: "hsl(25 60% 30%)" },
-    "Classique": { from: "hsl(45 50% 45%)", to: "hsl(40 40% 30%)" },
-    "Électro": { from: "hsl(170 70% 40%)", to: "hsl(190 60% 30%)" },
-    "Reggae": { from: "hsl(120 50% 40%)", to: "hsl(140 40% 28%)" },
-    "Afro": { from: "hsl(30 80% 45%)", to: "hsl(15 70% 32%)" },
-    "Latino": { from: "hsl(50 80% 50%)", to: "hsl(35 70% 35%)" },
-    "Soul": { from: "hsl(260 50% 45%)", to: "hsl(280 40% 30%)" },
-    "Funk": { from: "hsl(310 60% 50%)", to: "hsl(290 50% 35%)" },
-    "Country": { from: "hsl(25 60% 45%)", to: "hsl(20 50% 30%)" },
-    "Metal": { from: "hsl(0 0% 25%)", to: "hsl(0 0% 12%)" },
-    "Blues": { from: "hsl(210 60% 40%)", to: "hsl(230 50% 28%)" },
+  // Genre definitions with emoji, vibrant colors
+  const genreDefs: Record<string, { emoji: string; from: string; to: string }> = {
+    "Rap":       { emoji: "🎤", from: "hsl(0 75% 48%)",   to: "hsl(20 85% 30%)" },
+    "Hip-hop":   { emoji: "🔥", from: "hsl(275 65% 50%)", to: "hsl(295 55% 32%)" },
+    "R&b":       { emoji: "💜", from: "hsl(240 60% 50%)", to: "hsl(260 50% 32%)" },
+    "Pop":       { emoji: "🎵", from: "hsl(330 75% 55%)", to: "hsl(345 65% 38%)" },
+    "Rock":      { emoji: "🎸", from: "hsl(210 20% 38%)", to: "hsl(210 15% 20%)" },
+    "Jazz":      { emoji: "🎷", from: "hsl(35 75% 48%)",  to: "hsl(25 65% 28%)" },
+    "Classique": { emoji: "🎻", from: "hsl(45 55% 48%)",  to: "hsl(40 45% 28%)" },
+    "Électro":   { emoji: "⚡", from: "hsl(175 75% 42%)", to: "hsl(195 65% 28%)" },
+    "Reggae":    { emoji: "🌴", from: "hsl(130 55% 42%)", to: "hsl(150 45% 25%)" },
+    "Afro":      { emoji: "🌍", from: "hsl(30 85% 48%)",  to: "hsl(15 75% 30%)" },
+    "Latino":    { emoji: "💃", from: "hsl(50 85% 52%)",  to: "hsl(35 75% 32%)" },
+    "Soul":      { emoji: "🎙️", from: "hsl(260 55% 48%)", to: "hsl(280 45% 28%)" },
+    "Funk":      { emoji: "🪩", from: "hsl(310 65% 52%)", to: "hsl(290 55% 32%)" },
+    "Country":   { emoji: "🤠", from: "hsl(25 65% 48%)",  to: "hsl(18 55% 28%)" },
+    "Metal":     { emoji: "🤘", from: "hsl(0 0% 30%)",    to: "hsl(0 0% 10%)" },
+    "Blues":     { emoji: "🎹", from: "hsl(215 65% 45%)", to: "hsl(235 55% 25%)" },
+    "Drill":     { emoji: "🔫", from: "hsl(0 0% 22%)",    to: "hsl(0 0% 8%)" },
+    "Trap":      { emoji: "💎", from: "hsl(270 70% 45%)", to: "hsl(285 60% 25%)" },
+    "Dancehall": { emoji: "🇯🇲", from: "hsl(55 80% 45%)",  to: "hsl(120 50% 30%)" },
+    "Gospel":    { emoji: "🙏", from: "hsl(45 70% 50%)",  to: "hsl(30 60% 30%)" },
   };
 
-  const defaultGenreColor = { from: "hsl(var(--primary))", to: "hsl(var(--primary) / 0.6)" };
+  const defaultGenreColor = { emoji: "🎶", from: "hsl(var(--primary))", to: "hsl(var(--primary) / 0.5)" };
 
   const genreCards = useMemo(() => {
-    if (!allSongs) return [];
+    // Build from library songs
     const map = new Map<string, { genre: string; count: number; coverUrl: string }>();
-    for (const s of allSongs) {
-      const genre = (s as any).genre;
-      if (!genre) continue;
-      // Split multi-genre entries
-      genre.split(/[,/|]/).forEach((g: string) => {
-        const name = g.trim();
-        if (!name || name.length < 2) return;
-        const key = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-        if (!map.has(key)) {
-          map.set(key, { genre: key, count: 1, coverUrl: s.coverUrl });
-        } else {
-          map.get(key)!.count++;
-        }
-      });
+    if (allSongs) {
+      for (const s of allSongs) {
+        const genre = (s as any).genre;
+        if (!genre) continue;
+        genre.split(/[,/|]/).forEach((g: string) => {
+          const name = g.trim();
+          if (!name || name.length < 2) return;
+          const key = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+          if (!map.has(key)) {
+            map.set(key, { genre: key, count: 1, coverUrl: s.coverUrl });
+          } else {
+            map.get(key)!.count++;
+          }
+        });
+      }
     }
-    return Array.from(map.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 12);
+
+    const fromLib = Array.from(map.values()).sort((a, b) => b.count - a.count);
+
+    // Always show default genres even if library is empty
+    const defaultGenres = ["Rap", "Hip-hop", "R&b", "Pop", "Électro", "Afro", "Rock", "Jazz", "Trap", "Drill", "Reggae", "Latino"];
+    const seen = new Set(fromLib.map((g) => g.genre));
+    for (const dg of defaultGenres) {
+      if (!seen.has(dg)) {
+        fromLib.push({ genre: dg, count: 0, coverUrl: "" });
+      }
+    }
+
+    return fromLib.slice(0, 12);
   }, [allSongs]);
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
@@ -427,7 +442,7 @@ const SearchPage = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {genreCards.map((g, i) => {
-                    const colors = genreColors[g.genre] || defaultGenreColor;
+                    const def = genreDefs[g.genre] || defaultGenreColor;
                     return (
                       <motion.button
                         key={g.genre}
@@ -436,24 +451,37 @@ const SearchPage = () => {
                         transition={{ delay: i * 0.03, duration: 0.3 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => commitSearch(g.genre)}
-                        className="relative h-24 rounded-xl overflow-hidden text-left group"
+                        className="relative h-[100px] rounded-2xl overflow-hidden text-left group"
                         style={{
-                          background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`,
+                          background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
                         }}
                       >
-                        {g.coverUrl && (
+                        {/* Cover art tilted */}
+                        {g.coverUrl ? (
                           <img
                             src={g.coverUrl}
                             alt=""
-                            className="absolute -right-3 -bottom-3 w-16 h-16 rounded-lg object-cover rotate-[20deg] opacity-60 group-hover:opacity-80 transition-opacity shadow-lg"
+                            className="absolute -right-2 -bottom-2 w-[72px] h-[72px] rounded-xl object-cover rotate-[25deg] opacity-50 group-active:opacity-70 transition-opacity shadow-2xl"
                           />
+                        ) : (
+                          <span className="absolute -right-1 -bottom-1 text-[52px] rotate-[20deg] opacity-20 select-none">
+                            {def.emoji}
+                          </span>
                         )}
-                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
-                          <h3 className="text-[15px] font-bold text-white drop-shadow-sm">
-                            {g.genre}
-                          </h3>
-                          <p className="text-[11px] text-white/60">{g.count} titres</p>
+                        {/* Content */}
+                        <div className="relative z-10 p-3.5 h-full flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-lg">{def.emoji}</span>
+                            <h3 className="text-[15px] font-bold text-white drop-shadow-md leading-tight">
+                              {g.genre}
+                            </h3>
+                          </div>
+                          {g.count > 0 && (
+                            <p className="text-[11px] text-white/50 font-medium">{g.count} titres</p>
+                          )}
                         </div>
+                        {/* Shine overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
                       </motion.button>
                     );
                   })}
