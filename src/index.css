@@ -260,4 +260,25 @@
     @apply min-h-screen overscroll-y-none;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* GPU acceleration hints for animated elements */
+  .gpu-layer {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+
+  /* iOS notch-safe spacing helpers */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Prevent text size adjustment on iOS rotation */
+  .ios-text-stable {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 }

@@ -1,6 +1,6 @@
 /**
  * Service Worker registration guard.
- * Prevents SW from running inside iframes or Lovable preview hosts
+ * Prevents SW from running inside iframes or development preview hosts
  * where it would cause stale content issues.
  */
 export function guardServiceWorker() {
@@ -14,7 +14,7 @@ export function guardServiceWorker() {
 
   const isPreviewHost =
     window.location.hostname.includes("id-preview--") ||
-    window.location.hostname.includes("lovableproject.com");
+    window.location.hostname.includes(".lovableproject.com");
 
   if (isPreviewHost || isInIframe) {
     navigator.serviceWorker?.getRegistrations().then((regs) => {
