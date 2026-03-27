@@ -1,25 +1,16 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { lovable } from "@/integrations/lovable/index";
-import { supabase } from "@/integrations/supabase/client";
-import { Music, Mail, Lock, User, Loader2, ArrowLeft } from "lucide-react";
+import { Music, Lock, User, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-
-type Mode = "login" | "signup" | "forgot";
 
 const AuthPage = () => {
-  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from || "/";
@@ -33,55 +24,15 @@ const AuthPage = () => {
     setError("");
     setLoading(true);
 
-    if (mode === "forgot") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) {
-        setError(error.message);
-      } else {
-        setResetSent(true);
-        toast.success("Email de réinitialisation envoyé !");
-      }
-      setLoading(false);
-      return;
-    }
-
-    const result = mode === "login"
-      ? await signIn(email, password)
-      : await signUp(email, password, displayName);
+    const result = await signIn(email, password);
 
     if (result.error) {
-      setError(result.error.message);
+      setError("Identifiant ou mot de passe incorrect");
     } else {
-      if (mode === "login") {
-        localStorage.setItem("vootify_remember_me", rememberMe ? "true" : "false");
-      }
+      localStorage.setItem("vootify_remember_me", rememberMe ? "true" : "false");
       navigate(from);
     }
     setLoading(false);
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError("");
-    setGoogleLoading(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) {
-        setError(result.error.message || "Erreur de connexion Google");
-      }
-    } catch (e) {
-      setError("Erreur de connexion Google");
-    }
-    setGoogleLoading(false);
-  };
-
-  const switchMode = (m: Mode) => {
-    setMode(m);
-    setError("");
-    setResetSent(false);
   };
 
   return (
@@ -100,161 +51,58 @@ const AuthPage = () => {
             <Music className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-display font-bold text-foreground">Vootify</h1>
           </div>
-          <p className="text-muted-foreground">
-            {mode === "login" && "Connectez-vous pour continuer"}
-            {mode === "signup" && "Créez votre compte"}
-            {mode === "forgot" && "Réinitialiser le mot de passe"}
-          </p>
+          <p className="text-muted-foreground">Connectez-vous pour continuer</p>
         </div>
 
-        {/* Google Sign-In (login/signup only) */}
-        {mode !== "forgot" && (
-          <>
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={googleLoading}
-              className="w-full py-3 rounded-xl bg-secondary border border-border text-foreground font-medium text-sm hover:bg-secondary/80 transition-colors disabled:opacity-50 flex items-center justify-center gap-3 mb-4"
-            >
-              {googleLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-              )}
-              Continuer avec Google
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Identifiant"
+              required
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+            />
+          </div>
 
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground">ou</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-          </>
-        )}
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mot de passe"
+              required
+              minLength={6}
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+            />
+          </div>
 
-        {/* Forgot password: back button */}
-        {mode === "forgot" && (
+          {error && (
+            <p className="text-destructive text-sm text-center">{error}</p>
+          )}
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded border-border bg-secondary text-primary accent-primary"
+            />
+            <span className="text-xs text-muted-foreground">Se souvenir de moi</span>
+          </label>
+
           <button
-            onClick={() => switchMode("login")}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Retour à la connexion
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            Se connecter
           </button>
-        )}
-
-        {resetSent ? (
-          <div className="text-center py-6">
-            <Mail className="w-12 h-12 text-primary mx-auto mb-3" />
-            <p className="text-foreground font-medium">Email envoyé !</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Vérifiez votre boîte mail pour réinitialiser votre mot de passe.
-            </p>
-            <button
-              onClick={() => switchMode("login")}
-              className="mt-4 text-sm text-primary font-medium hover:underline"
-            >
-              Retour à la connexion
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "signup" && (
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Nom d'affichage"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                />
-              </div>
-            )}
-
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-              />
-            </div>
-
-            {mode !== "forgot" && (
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mot de passe"
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                />
-              </div>
-            )}
-
-            {error && (
-              <p className="text-destructive text-sm text-center">{error}</p>
-            )}
-
-            {/* Forgot password link + Remember me */}
-            {mode === "login" && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-border bg-secondary text-primary accent-primary"
-                  />
-                  <span className="text-xs text-muted-foreground">Se souvenir de moi</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => switchMode("forgot")}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Mot de passe oublié ?
-                </button>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {mode === "login" && "Se connecter"}
-              {mode === "signup" && "Créer un compte"}
-              {mode === "forgot" && "Envoyer le lien"}
-            </button>
-          </form>
-        )}
-
-        {mode !== "forgot" && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => switchMode(mode === "login" ? "signup" : "login")}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {mode === "login" ? "Pas de compte ? " : "Déjà un compte ? "}
-              <span className="text-primary font-medium">
-                {mode === "login" ? "S'inscrire" : "Se connecter"}
-              </span>
-            </button>
-          </div>
-        )}
+        </form>
       </motion.div>
     </div>
   );
