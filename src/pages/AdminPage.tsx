@@ -1431,12 +1431,19 @@ function RequestsTab() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{r.display_name || r.user_email}</p>
-                    <p className="text-xs text-muted-foreground">{r.user_email}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {r.user_email}
+                    </p>
+                    <p className="text-xs text-primary font-medium flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {r.requested_duration || 30} {r.requested_duration_unit === "months" ? "mois" : "jours"}
+                    </p>
                     <p className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => handleAction(r.id, "approved", r.user_id)}
+                      onClick={() => handleAction(r.id, "approved", r)}
                       disabled={!!actionLoading}
                       className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
                       title="Approuver"
