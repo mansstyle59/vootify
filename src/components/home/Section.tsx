@@ -106,14 +106,14 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink }: Sect
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-7"
+      className="mb-4"
     >
       <motion.div
         initial={{ opacity: 0, x: -16 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-        className="flex items-center justify-between px-4 md:px-8 mb-3"
+        className="flex items-center justify-between px-4 md:px-8 mb-2"
       >
         <div className="flex items-center gap-2 mr-2 min-w-0">
           <h2 className="text-base md:text-lg font-display font-bold text-foreground leading-tight line-clamp-2 break-words">{title}</h2>
