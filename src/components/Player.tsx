@@ -8,6 +8,7 @@ import {
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
