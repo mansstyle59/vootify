@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { genreGroups, genreDefs, defaultGenreColor, buildTagToGroupMap } from "@/lib/genreGroups";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { usePlayerStore } from "@/stores/playerStore";
