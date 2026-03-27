@@ -268,6 +268,54 @@ const LibraryPage = () => {
   } = usePlayerStore();
   const queryClient = useQueryClient();
 
+  // Shared playlists from admin
+  const { data: sharedPlaylists = [] } = useQuery({
+    queryKey: ["shared-playlists", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("shared_playlists")
+        .select("*")
+        .eq("shared_to", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: sharedPlaylistSongsMap = {} } = useQuery({
+    queryKey: ["shared-playlist-songs", sharedPlaylists.map((p: any) => p.id).join(",")],
+    queryFn: async () => {
+      if (sharedPlaylists.length === 0) return {};
+      const ids = sharedPlaylists.map((p: any) => p.id);
+      const { data, error } = await supabase
+        .from("shared_playlist_songs")
+        .select("*")
+        .in("shared_playlist_id", ids)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      const map: Record<string, Song[]> = {};
+      for (const row of data || []) {
+        if (!map[row.shared_playlist_id]) map[row.shared_playlist_id] = [];
+        map[row.shared_playlist_id].push({
+          id: row.song_id,
+          title: row.title,
+          artist: row.artist,
+          album: row.album || "",
+          duration: row.duration || 0,
+          coverUrl: row.cover_url || "",
+          streamUrl: row.stream_url || "",
+          liked: false,
+        });
+      }
+      return map;
+    },
+    enabled: sharedPlaylists.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Online/offline tracking
   useEffect(() => {
     const goOffline = () => setIsOffline(true);
