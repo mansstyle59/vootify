@@ -2,19 +2,21 @@ import { useState, useRef, useEffect } from "react";
 import { hdCache } from "@/lib/hdCache";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2 } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, Sun, Moon, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { theme, setTheme } = useTheme();
   const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration } = usePlayerStore();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -225,12 +227,46 @@ const ProfilePage = () => {
             Sauvegarder
           </button>
 
+          {/* Theme Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-8 p-5 rounded-2xl bg-secondary/50 border border-border space-y-4"
+          >
+            <div className="flex items-center gap-3 mb-1">
+              <Sun className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">Apparence</h3>
+            </div>
+
+            <div className="flex gap-2">
+              {([
+                { key: "light" as const, icon: Sun, label: "Clair" },
+                { key: "dark" as const, icon: Moon, label: "Sombre" },
+                { key: "system" as const, icon: Monitor, label: "Auto" },
+              ]).map(({ key, icon: Icon, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setTheme(key)}
+                  className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium transition-all ${
+                    theme === key
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "bg-secondary/50 border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Audio Settings */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-8 p-5 rounded-2xl bg-secondary/50 border border-border space-y-5"
+            className="mt-4 p-5 rounded-2xl bg-secondary/50 border border-border space-y-5"
           >
             <div className="flex items-center gap-3 mb-1">
               <Music className="w-5 h-5 text-primary" />

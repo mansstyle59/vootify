@@ -5,7 +5,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @layer base {
-  :root {
+  :root,
+  .dark {
     --background: 240 10% 6%;
     --foreground: 0 0% 95%;
 
@@ -55,6 +56,55 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 240 6% 15%;
     --sidebar-ring: 162 78% 50%;
+  }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    --primary: 141 73% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 6% 30%;
+
+    --muted: 240 5% 94%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 280 60% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 88%;
+    --input: 240 6% 88%;
+    --ring: 141 73% 38%;
+
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 240 6% 80% / 0.4;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --glass-blur: 20px;
+
+    --gradient-primary: linear-gradient(135deg, hsl(141, 73%, 38%), hsl(160, 70%, 42%));
+    --gradient-accent: linear-gradient(135deg, hsl(280, 60%, 55%), hsl(320, 70%, 50%));
+    --gradient-warm: linear-gradient(135deg, hsl(30, 90%, 55%), hsl(350, 80%, 55%));
+    --gradient-surface: linear-gradient(145deg, hsl(0, 0%, 97%), hsl(0, 0%, 93%));
+
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 240 6% 30%;
+    --sidebar-primary: 162 78% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 92%;
+    --sidebar-accent-foreground: 240 10% 10%;
+    --sidebar-border: 240 6% 88%;
+    --sidebar-ring: 162 78% 42%;
   }
 }
 
