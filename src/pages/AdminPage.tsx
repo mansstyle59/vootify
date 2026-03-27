@@ -805,6 +805,8 @@ function UsersTab() {
     </div>
   );
 }
+
+function SongsTab() {
   const [songs, setSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
