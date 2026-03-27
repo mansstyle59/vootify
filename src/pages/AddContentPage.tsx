@@ -135,14 +135,32 @@ function SongForm() {
   const removeSong = (idx: number) => { setSongs((prev) => prev.filter((_, i) => i !== idx)); };
 
   const handleSubmit = async () => {
-    const toUpload = songs.filter((s) => !s.uploaded && s.title.trim() && s.artist.trim());
+    const toUpload = songs.filter((s) => !s.uploaded && !s.skipped && s.title.trim() && s.artist.trim());
     if (toUpload.length === 0) return;
     setSubmitting(true);
 
+    let imported = 0;
+    let skipped = 0;
+
     for (let i = 0; i < songs.length; i++) {
       const song = songs[i];
-      if (song.uploaded || !song.title.trim() || !song.artist.trim()) continue;
+      if (song.uploaded || (song as any).skipped || !song.title.trim() || !song.artist.trim()) continue;
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: true } : s));
+
+      // Check for duplicate BEFORE uploading the file
+      const { data: existing } = await supabase
+        .from("custom_songs")
+        .select("id")
+        .ilike("title", song.title.trim())
+        .ilike("artist", song.artist.trim())
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        // Duplicate found — skip entirely, no upload
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, skipped: true } as any : s));
+        skipped++;
+        continue;
+      }
 
       const ext = song.file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -152,26 +170,17 @@ function SongForm() {
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
       const streamUrl = urlData.publicUrl;
 
-      const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", song.title.trim()).eq("artist", song.artist.trim()).limit(1);
-      if (existing && existing.length > 0) {
-        const { error: updateErr } = await supabase.from("custom_songs").update({
-          album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
-        }).eq("id", existing[0].id);
-        if (updateErr) { toast.error(`Erreur mise à jour: ${song.title}`); await supabase.storage.from("audio").remove([path]); }
-        else toast.success(`"${song.title}" mis à jour`);
-        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: !updateErr } : s));
-        continue;
-      }
-
       const { error: dbErr } = await supabase.from("custom_songs").insert({
         user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
         album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
       });
       if (dbErr) { toast.error(`Erreur DB: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: true, streamUrl } : s));
+      imported++;
     }
     setSubmitting(false);
-    toast.success(`${toUpload.length} chanson${toUpload.length > 1 ? "s" : ""} ajoutée${toUpload.length > 1 ? "s" : ""} !`);
+    if (imported > 0) toast.success(`${imported} chanson${imported > 1 ? "s" : ""} ajoutée${imported > 1 ? "s" : ""}`);
+    if (skipped > 0) toast.info(`${skipped} doublon${skipped > 1 ? "s" : ""} ignoré${skipped > 1 ? "s" : ""}`);
   };
 
   const pendingCount = songs.filter((s) => !s.uploaded && s.title.trim() && s.artist.trim()).length;
