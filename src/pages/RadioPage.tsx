@@ -397,6 +397,8 @@ const RadioPage = () => {
             <div>
               <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-xs text-primary/80 font-medium" />
             </div>
+          ) : (station as any)._nowPlaying ? (
+            <MarqueeText text={`♪ ${(station as any)._nowPlaying}`} className="text-xs text-primary/60 font-medium" />
           ) : (
             <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize" />
           )}
