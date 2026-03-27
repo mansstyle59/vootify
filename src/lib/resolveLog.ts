@@ -72,18 +72,28 @@ export const resolveLog = {
     return { total: log.length, custom, hd, none, corrected };
   },
 
-  /** Fetch all logs from the database (admin only) */
-  async fetchFromDB(limit = 500): Promise<ResolveLogEntry[]> {
-    const { data, error } = await supabase
-      .from("resolve_logs" as any)
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.warn("[resolve-log] DB fetch error:", error.message);
-      return [];
+  /** Fetch all logs from the database (admin only) — paginates past 1000-row limit */
+  async fetchFromDB(limit = 5000): Promise<ResolveLogEntry[]> {
+    let all: any[] = [];
+    let from = 0;
+    const PAGE = 1000;
+    while (all.length < limit) {
+      const batchSize = Math.min(PAGE, limit - all.length);
+      const { data, error } = await supabase
+        .from("resolve_logs" as any)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + batchSize - 1);
+      if (error) {
+        console.warn("[resolve-log] DB fetch error:", error.message);
+        break;
+      }
+      if (!data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < batchSize) break;
+      from += batchSize;
     }
+    return all;
 
     return ((data as any[]) || []).map((r: any) => ({
       songId: r.song_id,
