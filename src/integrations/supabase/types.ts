@@ -340,6 +340,48 @@ export type Database = {
         }
         Relationships: []
       }
+      resolve_logs: {
+        Row: {
+          artist_corrected: boolean
+          created_at: string
+          id: string
+          original_artist: string
+          original_title: string
+          resolved_artist: string | null
+          resolved_title: string | null
+          song_id: string
+          source: string
+          stream_url: string
+          title_corrected: boolean
+        }
+        Insert: {
+          artist_corrected?: boolean
+          created_at?: string
+          id?: string
+          original_artist: string
+          original_title: string
+          resolved_artist?: string | null
+          resolved_title?: string | null
+          song_id: string
+          source?: string
+          stream_url?: string
+          title_corrected?: boolean
+        }
+        Update: {
+          artist_corrected?: boolean
+          created_at?: string
+          id?: string
+          original_artist?: string
+          original_title?: string
+          resolved_artist?: string | null
+          resolved_title?: string | null
+          song_id?: string
+          source?: string
+          stream_url?: string
+          title_corrected?: boolean
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           id: string

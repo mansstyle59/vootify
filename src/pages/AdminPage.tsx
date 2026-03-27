@@ -543,12 +543,20 @@ function LogsTab() {
 }
 
 function ResolveTab() {
-  const [entries, setEntries] = useState(resolveLog.getAll());
-  const stats = resolveLog.stats();
+  const [entries, setEntries] = useState<import("@/lib/resolveLog").ResolveLogEntry[]>([]);
+  const [dbLoading, setDbLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "custom" | "hd" | "none">("all");
 
-  const refresh = () => setEntries(resolveLog.getAll());
+  const fetchDB = async () => {
+    setDbLoading(true);
+    const data = await resolveLog.fetchFromDB(500);
+    setEntries(data);
+    setDbLoading(false);
+  };
 
+  useEffect(() => { fetchDB(); }, []);
+
+  const stats = resolveLog.statsFromEntries(entries);
   const filtered = filter === "all" ? entries : entries.filter((e) => e.source === filter);
 
   const statCards = [
@@ -588,13 +596,17 @@ function ResolveTab() {
         ))}
         <div className="flex-1" />
         <button
-          onClick={refresh}
+          onClick={fetchDB}
           className="px-3 py-1 rounded-full text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
         >
-          Rafraîchir
+          {dbLoading ? "Chargement…" : "Rafraîchir"}
         </button>
         <button
-          onClick={() => { resolveLog.clear(); setEntries([]); toast.success("Logs vidés"); }}
+          onClick={async () => {
+            const ok = await resolveLog.clearDB();
+            if (ok) { setEntries([]); toast.success("Logs supprimés"); }
+            else toast.error("Erreur lors de la suppression");
+          }}
           className="px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
         >
           Vider
@@ -603,10 +615,14 @@ function ResolveTab() {
 
       {/* Entries list */}
       <div className="space-y-1.5 max-h-[60vh] overflow-y-auto scrollbar-hide">
-        {filtered.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12 text-sm">Aucune résolution enregistrée dans cette session</p>
+        {dbLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12 text-sm">Aucune résolution enregistrée</p>
         ) : (
-          [...filtered].reverse().map((e, i) => {
+          filtered.map((e, i) => {
             const sourceColor = e.source === "custom" ? "text-primary" : e.source === "hd" ? "text-blue-400" : "text-destructive";
             const sourceLabel = e.source === "custom" ? "Custom" : e.source === "hd" ? "HD" : "Échec";
             return (
@@ -618,7 +634,7 @@ function ResolveTab() {
                 className="p-3 rounded-xl bg-secondary/30 border border-border"
               >
                 <div className="flex items-start gap-2">
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${sourceColor} bg-current/10`}
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${sourceColor}`}
                     style={{ backgroundColor: `hsl(var(--secondary))` }}
                   >
                     {sourceLabel}
@@ -634,7 +650,7 @@ function ResolveTab() {
                     )}
                   </div>
                   <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">
-                    {new Date(e.ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(e.ts).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
               </motion.div>
