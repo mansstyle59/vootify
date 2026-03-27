@@ -28,9 +28,28 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   return <NoSubscriptionScreen onSignOut={signOut} user={user} />;
 }
 
-function NoSubscriptionScreen({ onSignOut }: { onSignOut: () => void }) {
+function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user: any }) {
   const [requested, setRequested] = useState(false);
+  const [sending, setSending] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [alreadyRequested, setAlreadyRequested] = useState(false);
+
+  // Check if user already has a pending request
+  useState(() => {
+    if (!user) return;
+    supabase
+      .from("access_requests")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setRequested(true);
+          setAlreadyRequested(true);
+        }
+      });
+  });
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -42,8 +61,28 @@ function NoSubscriptionScreen({ onSignOut }: { onSignOut: () => void }) {
     }
   };
 
-  const handleRequest = () => {
-    setRequested(true);
+  const handleRequest = async () => {
+    if (!user) return;
+    setSending(true);
+    try {
+      // Get display name from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      await supabase.from("access_requests").insert({
+        user_id: user.id,
+        user_email: user.email || "",
+        display_name: profile?.display_name || user.email || "",
+      });
+      setRequested(true);
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
