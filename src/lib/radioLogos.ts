@@ -18,6 +18,11 @@ const STATION_LOGO_MAP: { pattern: RegExp; logo: string }[] = [
 const deezerLogoCache = new Map<string, string>();
 
 export function getStationLogo(stationName: string, fallbackUrl: string): string {
+  // 1. If we have a user-uploaded cover (not empty, not a generic placeholder), always use it
+  if (fallbackUrl && fallbackUrl.length > 10 && !fallbackUrl.includes("unsplash.com")) {
+    return fallbackUrl;
+  }
+  // 2. Try known station patterns
   for (const { pattern, logo } of STATION_LOGO_MAP) {
     if (pattern.test(stationName)) return logo;
   }
@@ -29,14 +34,14 @@ export function getStationLogo(stationName: string, fallbackUrl: string): string
  * Returns the best cover URL found, or the fallback.
  */
 export async function getStationLogoAsync(stationName: string, fallbackUrl: string): Promise<string> {
-  // 1. Local logos
-  for (const { pattern, logo } of STATION_LOGO_MAP) {
-    if (pattern.test(stationName)) return logo;
+  // 1. If user uploaded a cover, always respect it — no external lookup
+  if (fallbackUrl && fallbackUrl.length > 10 && !fallbackUrl.includes("unsplash.com")) {
+    return fallbackUrl;
   }
 
-  // 2. If fallback already looks good (not empty, not a generic placeholder), use it
-  if (fallbackUrl && !fallbackUrl.includes("unsplash.com") && fallbackUrl.length > 10) {
-    return fallbackUrl;
+  // 2. Local logos
+  for (const { pattern, logo } of STATION_LOGO_MAP) {
+    if (pattern.test(stationName)) return logo;
   }
 
   // 3. Check in-memory cache

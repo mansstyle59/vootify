@@ -70,18 +70,18 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: (index || 0) * 0.05 }}
-      className={`group flex items-center gap-3 px-3 py-2 rounded-lg hover-glass ${
+      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl hover-glass ${
         isBlocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-      } ${isCurrentSong ? "bg-primary/5" : ""}`}
+      } ${isCurrentSong ? "bg-primary/5 ring-1 ring-primary/10" : ""}`}
       onClick={handleClick}
     >
       {showIndex && (
-        <span className="w-6 text-center text-sm text-muted-foreground tabular-nums group-hover:hidden">
+        <span className="w-6 text-center text-sm text-muted-foreground tabular-nums group-hover:hidden flex-shrink-0">
           {(index || 0) + 1}
         </span>
       )}
       {showIndex && (
-        <span className="w-6 text-center hidden group-hover:block">
+        <span className="w-6 text-center hidden group-hover:block flex-shrink-0">
           {isCurrentSong && isPlaying ? (
             <Pause className="w-4 h-4 text-primary mx-auto" />
           ) : (
@@ -90,10 +90,10 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         </span>
       )}
 
-      <div className="relative w-10 h-10 flex-shrink-0">
-        <img src={song.coverUrl} alt={song.title} className="w-full h-full rounded object-cover" />
+      <div className="relative w-11 h-11 flex-shrink-0">
+        <img src={song.coverUrl} alt={song.title} className="w-full h-full rounded-lg object-cover ring-1 ring-white/[0.06]" />
         {!showIndex && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
             {isCurrentSong && isPlaying ? (
               <Pause className="w-4 h-4 text-primary" />
             ) : (
@@ -104,103 +104,110 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
+        <p className={`text-sm font-medium leading-tight ${isCurrentSong ? "text-primary" : "text-foreground"}`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {song.title}
         </p>
-        <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 leading-tight" style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {song.artist}
+        </p>
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleLike(song);
-        }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-      </button>
-
-      {/* Add to queue */}
-      {!isBlocked && song.duration > 0 && (
+      {/* Action buttons — always visible on mobile, hover on desktop */}
+      <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={(e) => {
             e.stopPropagation();
-            const newQueue = [...queue.filter((s) => s.id !== song.id), song];
-            setQueue(newQueue);
-            toast.success(`"${song.title}" ajouté à la file`);
+            toggleLike(song);
           }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Ajouter à la file d'attente"
+          className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
         >
-          <ListEnd className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+          <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
         </button>
-      )}
 
-      {/* Add to playlist */}
-      {song.duration > 0 && (
-        <div className="relative" ref={menuRef}>
+        {/* Add to queue */}
+        {!isBlocked && song.duration > 0 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setShowPlaylistMenu(!showPlaylistMenu);
+              const newQueue = [...queue.filter((s) => s.id !== song.id), song];
+              setQueue(newQueue);
+              toast.success(`"${song.title}" ajouté à la file`);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Ajouter à une playlist"
+            className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            title="Ajouter à la file d'attente"
           >
-            <ListPlus className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+            <ListEnd className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
           </button>
-          <AnimatePresence>
-            {showPlaylistMenu && (
-              <AddToPlaylistMenu song={song} onClose={() => setShowPlaylistMenu(false)} />
+        )}
+
+        {/* Add to playlist */}
+        {song.duration > 0 && (
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPlaylistMenu(!showPlaylistMenu);
+              }}
+              className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              title="Ajouter à une playlist"
+            >
+              <ListPlus className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+            </button>
+            <AnimatePresence>
+              {showPlaylistMenu && (
+                <AddToPlaylistMenu song={song} onClose={() => setShowPlaylistMenu(false)} />
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+        {/* Download / cached indicator */}
+        {song.streamUrl && song.duration > 0 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isCached && !isDownloading) download(song);
+            }}
+            className={`p-1 rounded-full ${isCached || isDownloading ? "opacity-100" : "md:opacity-0 md:group-hover:opacity-100"} transition-opacity`}
+            title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
+          >
+            {isCached ? (
+              <CheckCircle className="w-4 h-4 text-primary" />
+            ) : isDownloading ? (
+              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
             )}
-          </AnimatePresence>
-        </div>
-      )}
-      {/* Download / cached indicator */}
-      {song.streamUrl && song.duration > 0 && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!isCached && !isDownloading) download(song);
-          }}
-          className={isCached || isDownloading ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity"}
-          title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
-        >
-          {isCached ? (
-            <CheckCircle className="w-4 h-4 text-primary" />
-          ) : isDownloading ? (
-            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
-          ) : (
-            <Download className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
-          )}
-        </button>
-      )}
+          </button>
+        )}
+      </div>
+
+      {/* Source badge */}
       {(() => {
         if (isCached) return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent/15 text-accent-foreground border border-accent/20" title="Disponible hors-ligne">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent-foreground border border-accent/20 flex-shrink-0" title="Disponible hors-ligne">
             Local
           </span>
         );
         const sourceType = getSongSourceType(song);
         if (sourceType === "custom") return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary" title="Morceau custom admin">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-secondary-foreground border border-secondary flex-shrink-0" title="Morceau custom admin">
             Custom
           </span>
         );
         if (sourceType === "hd") return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20" title="Flux complet haute qualité">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/20 flex-shrink-0" title="Flux complet haute qualité">
             HD
           </span>
         );
         if (sourceType === "no-hd") return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/20" title="Aucun flux HD disponible">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-destructive/15 text-destructive border border-destructive/20 flex-shrink-0" title="Aucun flux HD disponible">
             No HD
           </span>
         );
         return null;
       })()}
 
-      <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(song.duration)}</span>
+      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">{formatDuration(song.duration)}</span>
     </motion.div>
   );
 
