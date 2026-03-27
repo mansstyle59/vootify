@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Music } from "lucide-react";
 
 interface CoverCardProps {
   title: string;
