@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { toast } from "sonner";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Song } from "@/data/mockData";
@@ -99,6 +100,12 @@ const HomePage = () => {
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto animate-fade-in">
+      <ScrollBlurHeader scrollThreshold={120}>
+        <div className="px-4 md:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 flex items-center justify-between">
+          <span className="text-sm font-display font-bold text-foreground tracking-tight">Vootify</span>
+        </div>
+      </ScrollBlurHeader>
+
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
       {activeSections.map((s) => renderSection(s))}
