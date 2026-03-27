@@ -395,55 +395,90 @@ export function MiniPlayer() {
     loadAndPlay();
   }, [currentSong?.id]);
 
-  // ── Preload next track for instant transitions ──
+  // ── Batch preload next 3 tracks for zero-latency transitions ──
+  const preloadedIdsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (!currentSong) return;
-    const { queue, shuffle } = usePlayerStore.getState();
+    const { queue } = usePlayerStore.getState();
     if (queue.length <= 1) return;
 
     const idx = queue.findIndex((s) => s.id === currentSong.id);
-    const nextIdx = shuffle
-      ? (idx + 1) % queue.length // For preload, just pick next sequential even in shuffle
-      : (idx + 1) % queue.length;
-    const nextSong = queue[nextIdx];
-    if (!nextSong || nextSong.id === preloadedSongIdRef.current) return;
+    if (idx < 0) return;
 
-    // Preload in background
-    const preloadNext = async () => {
-      let src: string | null = null;
-
-      // Check offline cache first
-      const cachedUrl = await offlineCache.getCachedUrl(nextSong.id);
-      if (cachedUrl) {
-        src = cachedUrl;
-      } else if (nextSong.id.startsWith("dz-") && (!nextSong.streamUrl || nextSong.streamUrl.includes("cdn-preview") || nextSong.streamUrl.includes("dzcdn.net"))) {
-        try {
-          const resolved = await deezerApi.resolveFullStream(nextSong);
-          if (resolved.streamUrl && !resolved.streamUrl.includes("cdn-preview") && !resolved.streamUrl.includes("dzcdn.net")) {
-            src = resolved.streamUrl;
-            // Update the song in the queue with the resolved URL
-            const currentQueue = usePlayerStore.getState().queue;
-            const updatedQueue = currentQueue.map((s) => s.id === nextSong.id ? resolved : s);
-            usePlayerStore.setState({ queue: updatedQueue });
-          }
-        } catch { /* silent */ }
-      } else if (nextSong.streamUrl) {
-        src = nextSong.streamUrl;
+    // Get the next 3 songs in queue
+    const upcoming: { song: typeof queue[0]; qIdx: number }[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const ni = (idx + i) % queue.length;
+      if (ni !== idx && queue[ni]) {
+        upcoming.push({ song: queue[ni], qIdx: ni });
       }
+    }
 
-      if (src && preloadRef.current) {
-        preloadRef.current.src = src;
-        preloadRef.current.load();
-        preloadedSongIdRef.current = nextSong.id;
-        console.log("[preload] Buffering next:", nextSong.title);
-        usePlayerStore.setState({ nextPreloaded: true });
+    if (upcoming.length === 0) return;
+
+    let cancelled = false;
+
+    const resolveUpcoming = async () => {
+      for (const { song: nextSong } of upcoming) {
+        if (cancelled) return;
+        // Skip if already resolved or already preloaded
+        if (preloadedIdsRef.current.has(nextSong.id)) continue;
+
+        let src: string | null = null;
+
+        // Check offline cache first
+        const cachedUrl = await offlineCache.getCachedUrl(nextSong.id);
+        if (cancelled) return;
+
+        if (cachedUrl) {
+          src = cachedUrl;
+        } else if (
+          nextSong.id.startsWith("dz-") &&
+          (!nextSong.streamUrl || nextSong.streamUrl.includes("cdn-preview") || nextSong.streamUrl.includes("dzcdn.net"))
+        ) {
+          try {
+            const resolved = await deezerApi.resolveFullStream(nextSong);
+            if (cancelled) return;
+            if (resolved.streamUrl && !resolved.streamUrl.includes("cdn-preview") && !resolved.streamUrl.includes("dzcdn.net")) {
+              src = resolved.streamUrl;
+              // Update the song in the queue with the resolved URL
+              const currentQueue = usePlayerStore.getState().queue;
+              const updatedQueue = currentQueue.map((s) => s.id === nextSong.id ? resolved : s);
+              usePlayerStore.setState({ queue: updatedQueue });
+            }
+          } catch { /* silent */ }
+        } else if (nextSong.streamUrl) {
+          src = nextSong.streamUrl;
+        }
+
+        if (cancelled) return;
+
+        if (src) {
+          preloadedIdsRef.current.add(nextSong.id);
+        }
+
+        // For the immediate next song, also buffer the audio element
+        if (src && preloadRef.current && !preloadedSongIdRef.current) {
+          preloadRef.current.src = src;
+          preloadRef.current.load();
+          preloadedSongIdRef.current = nextSong.id;
+          usePlayerStore.setState({ nextPreloaded: true });
+        }
       }
     };
 
-    // Delay preload slightly so it doesn't compete with current track loading
-    const timer = setTimeout(preloadNext, 150);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(resolveUpcoming, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [currentSong?.id]);
+
+  // Clear preloaded set on queue change
+  useEffect(() => {
+    preloadedIdsRef.current.clear();
+  }, [usePlayerStore.getState().queue.length]);
 
   const preemptiveTriggeredRef = useRef(false);
   const lastProgressUpdateRef = useRef(0);
