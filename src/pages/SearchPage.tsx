@@ -24,6 +24,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
+import { searchArtistImage } from "@/lib/coverArtSearch";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -166,6 +167,34 @@ const SearchPage = () => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 15);
   }, [allSongs]);
+
+  // Fetch real Deezer artist photos
+  const [artistPhotos, setArtistPhotos] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (trendingArtists.length === 0) return;
+    let cancelled = false;
+    const fetchPhotos = async () => {
+      const photos: Record<string, string> = {};
+      // Fetch in parallel batches of 5
+      for (let i = 0; i < trendingArtists.length; i += 5) {
+        const batch = trendingArtists.slice(i, i + 5);
+        const results = await Promise.allSettled(
+          batch.map(async (a) => {
+            const url = await searchArtistImage(a.name);
+            return { name: a.name, url };
+          })
+        );
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value.url) {
+            photos[r.value.name] = r.value.url;
+          }
+        }
+      }
+      if (!cancelled) setArtistPhotos(photos);
+    };
+    fetchPhotos();
+    return () => { cancelled = true; };
+  }, [trendingArtists]);
 
   // Build a lowercase→groupName lookup (from shared module)
   const tagToGroup = useMemo(() => buildTagToGroupMap(), []);
@@ -421,8 +450,8 @@ const SearchPage = () => {
                       className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
                     >
                       <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                        {artist.cover ? (
-                          <img src={artist.cover} alt={artist.name} className="w-full h-full object-cover" />
+                        {(artistPhotos[artist.name] || artist.cover) ? (
+                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-secondary flex items-center justify-center">
                             <User className="w-5 h-5 text-muted-foreground" />
