@@ -24,11 +24,6 @@ export interface HomeSection {
 export const DEFAULT_SECTIONS: HomeSection[] = [
   { id: "pourVous", label: "Pour vous", emoji: "💫", visible: true },
   { id: "coupsDeCœur", label: "Coups de cœur", emoji: "❤️", visible: true },
-  { id: "titresDuMoment", label: "Titres du moment", emoji: "🔥", visible: true },
-  { id: "popHits", label: "Pop Hits", emoji: "🎤", visible: true },
-  { id: "rapstars", label: "Rapstars", emoji: "⭐", visible: true },
-  { id: "chillVibes", label: "Chill & Détente", emoji: "🌙", visible: true },
-  { id: "afrobeats", label: "Afrobeats", emoji: "🌍", visible: true },
   { id: "top10", label: "Top 10", emoji: "🏆", visible: true },
 ];
 

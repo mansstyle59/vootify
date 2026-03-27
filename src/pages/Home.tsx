@@ -19,10 +19,6 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const PLAYLISTS = {
   titresDuMoment: "53362031",
-  rapstars: "3272614282",
-  popHits: "1996494362",
-  chillVibes: "1362516565",
-  afrobeats: "6460178564",
 } as const;
 
 type TopGenre = "all" | "rap" | "pop" | "chill" | "afro";
