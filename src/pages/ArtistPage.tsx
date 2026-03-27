@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2, ImagePlus } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { formatDuration } from "@/data/mockData";
 import type { Song } from "@/data/mockData";
@@ -21,6 +21,8 @@ const ArtistPage = () => {
   const userId = usePlayerStore((s) => s.userId);
   const { isAdmin } = useAdminAuth();
   const [enriching, setEnriching] = useState(false);
+  const [showImageInput, setShowImageInput] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const { scrollY } = useScroll();
   const bgY = useTransform(scrollY, [0, 400], [0, 120]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
@@ -89,15 +91,30 @@ const ArtistPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch real artist photo from Deezer
+  // Fetch custom artist image (manual override — highest priority)
+  const { data: customArtistImage } = useQuery({
+    queryKey: ["custom-artist-image", artistName],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("artist_images")
+        .select("image_url")
+        .eq("artist_name", artistName)
+        .maybeSingle();
+      return data?.image_url || null;
+    },
+    enabled: !!artistName,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  // Fetch real artist photo from Deezer (fallback)
   const { data: artistImageUrl } = useQuery({
     queryKey: ["artist-image", artistName],
     queryFn: () => searchArtistImage(artistName),
-    enabled: !!artistName,
+    enabled: !!artistName && !customArtistImage,
     staleTime: 24 * 60 * 60 * 1000, // 24h cache
   });
 
-  const coverUrl = artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
+  const coverUrl = customArtistImage || artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
 
   const albums = useMemo(() => {
     const map = new Map<string, { title: string; coverUrl: string; count: number }>();
@@ -232,42 +249,86 @@ const ArtistPage = () => {
           <Shuffle className="w-4 h-4" /> Aléatoire
         </button>
         {isAdmin && (
-          <button
-            onClick={async () => {
-              if (enriching || songs.length === 0) return;
-              setEnriching(true);
-              let updated = 0;
-              for (const song of songs) {
-                try {
-                  const rawId = song.id.replace(/^custom-/, "");
-                  const meta = await searchCoverArt({ artist: song.artist, title: song.title, album: song.album });
-                  if (!meta) continue;
-                  const updates: Record<string, any> = {};
-                  if (meta.coverUrl) updates.cover_url = meta.coverUrl;
-                  if (meta.album) updates.album = meta.album;
-                  if (meta.genre) updates.genre = meta.genre;
-                  if (meta.year) updates.year = meta.year;
-                  if (Object.keys(updates).length > 0) {
-                    await supabase.from("custom_songs").update(updates).eq("id", rawId);
-                    updated++;
-                  }
-                } catch { /* skip */ }
-                await new Promise((r) => setTimeout(r, 350));
-              }
-              // Refresh artist image
-              queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
-              queryClient.invalidateQueries({ queryKey: ["artist-songs", artistName] });
-              setEnriching(false);
-              toast.success(`${updated} titre${updated > 1 ? "s" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
-            }}
-            disabled={enriching}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors disabled:opacity-50"
-          >
-            {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {enriching ? "Enrichissement…" : "Enrichir Deezer"}
-          </button>
+          <>
+            <button
+              onClick={async () => {
+                if (enriching || songs.length === 0) return;
+                setEnriching(true);
+                let updated = 0;
+                for (const song of songs) {
+                  try {
+                    const rawId = song.id.replace(/^custom-/, "");
+                    const meta = await searchCoverArt({ artist: song.artist, title: song.title, album: song.album });
+                    if (!meta) continue;
+                    const updates: Record<string, any> = {};
+                    if (meta.coverUrl) updates.cover_url = meta.coverUrl;
+                    if (meta.album) updates.album = meta.album;
+                    if (meta.genre) updates.genre = meta.genre;
+                    if (meta.year) updates.year = meta.year;
+                    if (Object.keys(updates).length > 0) {
+                      await supabase.from("custom_songs").update(updates).eq("id", rawId);
+                      updated++;
+                    }
+                  } catch { /* skip */ }
+                  await new Promise((r) => setTimeout(r, 350));
+                }
+                queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
+                queryClient.invalidateQueries({ queryKey: ["artist-songs", artistName] });
+                setEnriching(false);
+                toast.success(`${updated} titre${updated > 1 ? "s" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
+              }}
+              disabled={enriching}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors disabled:opacity-50"
+            >
+              {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {enriching ? "Enrichissement…" : "Enrichir Deezer"}
+            </button>
+            <button
+              onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
+            >
+              <ImagePlus className="w-4 h-4" /> Photo
+            </button>
+          </>
         )}
       </div>
+
+      {/* Manual artist image URL input */}
+      {isAdmin && showImageInput && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="px-4 mb-4"
+        >
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={imageUrlInput}
+              onChange={(e) => setImageUrlInput(e.target.value)}
+              placeholder="URL de la photo (https://...)"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <button
+              onClick={async () => {
+                const url = imageUrlInput.trim();
+                if (!url || !userId) return;
+                const { error } = await supabase
+                  .from("artist_images")
+                  .upsert({ artist_name: artistName, image_url: url, updated_by: userId, updated_at: new Date().toISOString() }, { onConflict: "artist_name" });
+                if (error) { toast.error("Erreur de sauvegarde"); return; }
+                queryClient.invalidateQueries({ queryKey: ["custom-artist-image", artistName] });
+                queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
+                setShowImageInput(false);
+                toast.success("Photo de l'artiste mise à jour");
+              }}
+              className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
+            >
+              OK
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Listening Stats */}
       {listeningStats && (
