@@ -918,7 +918,7 @@ function SongsTab() {
     setSaving(true);
     const { error } = await supabase
       .from("custom_songs")
-      .update({ title: editTitle.trim(), artist: editArtist.trim() })
+      .update({ title: editTitle.trim(), artist: editArtist.trim(), cover_url: editCoverUrl || null })
       .eq("id", id);
     setSaving(false);
     if (error) {
@@ -926,9 +926,10 @@ function SongsTab() {
       return;
     }
     setSongs((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, title: editTitle.trim(), artist: editArtist.trim() } : s))
+      prev.map((s) => (s.id === id ? { ...s, title: editTitle.trim(), artist: editArtist.trim(), cover_url: editCoverUrl || null } : s))
     );
     setEditingId(null);
+    setEditCoverUrl("");
     toast.success("Morceau modifié");
   };
 
