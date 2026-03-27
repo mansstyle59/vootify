@@ -25,7 +25,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   if (isActive) return <>{children}</>;
 
   // No active subscription → show block screen
-  return <NoSubscriptionScreen onSignOut={signOut} />;
+  return <NoSubscriptionScreen onSignOut={signOut} user={user} />;
 }
 
 function NoSubscriptionScreen({ onSignOut }: { onSignOut: () => void }) {
