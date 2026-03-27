@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, LogOut } from "lucide-react";
+import { ShieldX, Crown, LogOut, Send, CheckCircle } from "lucide-react";
 
 /**
  * Blocks access to the app if the user has no active subscription.
@@ -27,6 +29,23 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
 }
 
 function NoSubscriptionScreen({ onSignOut }: { onSignOut: () => void }) {
+  const [requested, setRequested] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch {
+      setSigningOut(false);
+    }
+  };
+
+  const handleRequest = () => {
+    setRequested(true);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <motion.div
@@ -61,13 +80,37 @@ function NoSubscriptionScreen({ onSignOut }: { onSignOut: () => void }) {
           </ul>
         </div>
 
-        <button
-          onClick={onSignOut}
-          className="w-full py-3.5 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2.5"
-        >
-          <LogOut className="w-4 h-4" />
-          Se déconnecter
-        </button>
+        <div className="space-y-3">
+          {!requested ? (
+            <button
+              type="button"
+              onClick={handleRequest}
+              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5"
+            >
+              <Send className="w-4 h-4" />
+              Faire une demande d'accès
+            </button>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full py-3.5 rounded-xl bg-primary/10 text-primary font-medium text-sm flex items-center justify-center gap-2.5"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Demande envoyée !
+            </motion.div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="w-full py-3.5 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
+          >
+            <LogOut className="w-4 h-4" />
+            {signingOut ? "Déconnexion…" : "Se déconnecter"}
+          </button>
+        </div>
       </motion.div>
     </div>
   );
