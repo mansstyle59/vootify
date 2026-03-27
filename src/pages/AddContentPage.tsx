@@ -184,7 +184,7 @@ function SongForm() {
     if (skipped > 0) toast.info(`${skipped} doublon${skipped > 1 ? "s" : ""} ignoré${skipped > 1 ? "s" : ""}`);
   };
 
-  const pendingCount = songs.filter((s) => !s.uploaded && s.title.trim() && s.artist.trim()).length;
+  const pendingCount = songs.filter((s) => !s.uploaded && !s.skipped && s.title.trim() && s.artist.trim()).length;
 
   return (
     <div className="space-y-4">
