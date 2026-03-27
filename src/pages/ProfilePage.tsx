@@ -24,6 +24,7 @@ function formatBytes(bytes: number): string {
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { subscription, isActive } = useSubscription(user?.id ?? null);
   
   const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration } = usePlayerStore();
   const navigate = useNavigate();
