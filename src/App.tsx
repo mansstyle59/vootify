@@ -16,10 +16,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
-import { hdCache } from "@/lib/hdCache";
-
-// Clear HD cache on app startup
-hdCache.clear();
+import { startCacheWarmup } from "@/lib/cacheWarmup";
 
 // Lazy load all pages for faster initial load & smooth transitions
 const Home = lazy(() => import("./pages/Home"));
@@ -84,6 +81,8 @@ function AppContent() {
     setUserId(userId);
     if (userId) {
       loadUserData(userId);
+      // Warm up caches in background for instant navigation
+      startCacheWarmup(userId);
     }
   }, [user, loading, loadUserData, setUserId]);
 
