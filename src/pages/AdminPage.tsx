@@ -173,6 +173,8 @@ function UsersTab() {
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showCredsDialog, setShowCredsDialog] = useState(false);
+  const [createdCreds, setCreatedCreds] = useState<{ identifier: string; password: string; displayName: string } | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
@@ -248,11 +250,13 @@ function UsersTab() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Utilisateur créé avec succès");
+      // Store credentials for popup
+      setCreatedCreds({ identifier: createEmail.trim(), password: createPassword, displayName: createDisplayName.trim() || createEmail.trim() });
       setShowCreateDialog(false);
       setCreateEmail("");
       setCreatePassword("");
       setCreateDisplayName("");
+      setShowCredsDialog(true);
       await loadUsers();
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création");
@@ -431,6 +435,73 @@ function UsersTab() {
             >
               {editingCreds && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
               Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Created credentials popup */}
+      <Dialog open={showCredsDialog} onOpenChange={(open) => { if (!open) { setShowCredsDialog(false); setCreatedCreds(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <CheckCircle className="w-5 h-5" />
+              Utilisateur créé avec succès
+            </DialogTitle>
+          </DialogHeader>
+          {createdCreds && (
+            <div className="space-y-3 py-2">
+              <p className="text-xs text-muted-foreground">Voici les identifiants de connexion. Copiez-les avant de fermer.</p>
+              <div className="space-y-2 rounded-xl bg-secondary/50 border border-border p-4">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Nom d'affichage</p>
+                  <p className="text-sm font-medium text-foreground">{createdCreds.displayName}</p>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Identifiant</p>
+                    <p className="text-sm font-mono font-medium text-foreground">{createdCreds.identifier}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(createdCreds.identifier); toast.success("Identifiant copié"); }}
+                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title="Copier"
+                  >
+                    <Mail className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Mot de passe</p>
+                    <p className="text-sm font-mono font-medium text-foreground">{createdCreds.password}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(createdCreds.password); toast.success("Mot de passe copié"); }}
+                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title="Copier"
+                  >
+                    <Lock className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <Button
+                className="w-full gap-1.5"
+                onClick={() => {
+                  const text = `Nom : ${createdCreds.displayName}\nIdentifiant : ${createdCreds.identifier}\nMot de passe : ${createdCreds.password}`;
+                  navigator.clipboard.writeText(text);
+                  toast.success("Tous les identifiants copiés");
+                }}
+              >
+                <User className="w-4 h-4" />
+                Tout copier
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowCredsDialog(false); setCreatedCreds(null); }}>
+              Fermer
             </Button>
           </DialogFooter>
         </DialogContent>
