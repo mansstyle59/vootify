@@ -599,12 +599,43 @@ export function MiniPlayer() {
     }
   }, [next, volume]);
 
+  const errorRetryCountRef = useRef(0);
+
   const handleAudioError = useCallback(async () => {
     if (!audioRef.current || !currentSong) return;
     const audio = audioRef.current;
-    console.error("[player] Audio error for:", currentSong.title, "readyState:", audio.readyState, "networkState:", audio.networkState);
+    const isRadio = currentSong.duration === 0;
 
-    // Try local cache fallback
+    console.error("[player] Audio error for:", currentSong.title,
+      "readyState:", audio.readyState, "networkState:", audio.networkState,
+      isRadio ? "(radio)" : "(track)");
+
+    // Radio streams: progressive retry with backoff (don't skip)
+    if (isRadio) {
+      const retries = errorRetryCountRef.current;
+      if (retries >= 5) {
+        console.error("[player] Radio: max retries reached");
+        errorRetryCountRef.current = 0;
+        return;
+      }
+      const delay = Math.min(1000 * Math.pow(2, retries), 10000); // 1s, 2s, 4s, 8s, 10s
+      errorRetryCountRef.current = retries + 1;
+      console.warn(`[player] Radio: retry ${retries + 1}/5 in ${delay}ms`);
+      setTimeout(() => {
+        if (!audio || !usePlayerStore.getState().isPlaying) return;
+        const src = currentSong.streamUrl;
+        if (!src) return;
+        audio.src = "";
+        audio.src = src;
+        audio.load();
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }, delay);
+      return;
+    }
+
+    // Music tracks: try cache → retry URL → skip
     const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
     if (cachedUrl && !audio.src.includes("blob:")) {
       console.warn("[player] Falling back to local cache");
@@ -616,7 +647,6 @@ export function MiniPlayer() {
       return;
     }
 
-    // If we have a stream URL, retry once
     if (currentSong.streamUrl) {
       console.warn("[player] Retrying stream URL");
       audio.src = currentSong.streamUrl;
@@ -625,13 +655,19 @@ export function MiniPlayer() {
       audio.muted = false;
       setTimeout(() => {
         audio.play().catch((e) => {
-          console.error("[player] Retry also failed:", e);
-          // Skip to next track as last resort
+          console.error("[player] Retry failed — skipping:", e);
           next();
         });
       }, 500);
+    } else {
+      next();
     }
   }, [currentSong, volume, next]);
+
+  // Reset error retry counter on track change
+  useEffect(() => {
+    errorRetryCountRef.current = 0;
+  }, [currentSong?.id]);
 
   if (!currentSong) return null;
 
