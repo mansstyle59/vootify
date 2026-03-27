@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save } from "lucide-react";
+import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig } from "@/hooks/useHomeConfig";
 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home";
 
 interface UserProfile {
   user_id: string;
@@ -38,6 +39,7 @@ const AdminPage = () => {
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "stats", label: "Statistiques", icon: Shield },
+    { key: "home", label: "Accueil", icon: LayoutDashboard },
     { key: "users", label: "Utilisateurs", icon: Users },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
@@ -87,6 +89,7 @@ const AdminPage = () => {
 
       <div className="px-4 md:px-8 max-w-4xl mx-auto">
         {tab === "stats" && <StatsTab />}
+        {tab === "home" && <HomeTab />}
         {tab === "users" && <UsersTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
@@ -553,5 +556,159 @@ function LogsTab() {
   );
 }
 
+function HomeTab() {
+  const { data: config, isLoading } = useHomeConfig();
+  const saveMutation = useSaveHomeConfig();
+  const { user } = useAdminAuth();
+  const [sections, setSections] = useState<HomeSection[]>([]);
+  const [heroTitle, setHeroTitle] = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (config) {
+      setSections([...config.sections].sort((a, b) => a.order - b.order));
+      setHeroTitle(config.heroTitle || "");
+      setHeroSubtitle(config.heroSubtitle || "");
+    }
+  }, [config]);
+
+  const toggleVisibility = (id: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
+    );
+  };
+
+  const updateTitle = (id: string, title: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title } : s))
+    );
+  };
+
+  const moveSection = (from: number, to: number) => {
+    if (to < 0 || to >= sections.length) return;
+    const updated = [...sections];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(to, 0, moved);
+    setSections(updated.map((s, i) => ({ ...s, order: i })));
+  };
+
+  const handleSave = () => {
+    if (!user) return;
+    saveMutation.mutate(
+      {
+        config: {
+          sections: sections.map((s, i) => ({ ...s, order: i })),
+          heroTitle: heroTitle || undefined,
+          heroSubtitle: heroSubtitle || undefined,
+        },
+        userId: user.id,
+      },
+      {
+        onSuccess: () => toast.success("Page d'accueil mise à jour ✨"),
+        onError: () => toast.error("Erreur lors de la sauvegarde"),
+      }
+    );
+  };
+
+  if (isLoading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  return (
+    <div className="space-y-6">
+      {/* Hero customization */}
+      <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <LayoutDashboard className="w-4 h-4 text-primary" />
+          Bannière d'accueil
+        </h3>
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Sous-titre personnalisé (optionnel)</label>
+            <input
+              value={heroSubtitle}
+              onChange={(e) => setHeroSubtitle(e.target.value)}
+              placeholder="Ex: Bienvenue sur votre plateforme musicale"
+              className="w-full text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Sections ordering */}
+      <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <ListMusic className="w-4 h-4 text-primary" />
+          Sections (ordre & visibilité)
+        </h3>
+        <div className="space-y-1.5">
+          {sections.map((section, idx) => (
+            <motion.div
+              key={section.id}
+              layout
+              className={`flex items-center gap-2 p-2.5 rounded-lg border transition-colors ${
+                section.visible
+                  ? "bg-background/60 border-border"
+                  : "bg-muted/30 border-border/50 opacity-60"
+              }`}
+            >
+              {/* Drag handle / reorder buttons */}
+              <div className="flex flex-col gap-0.5">
+                <button
+                  onClick={() => moveSection(idx, idx - 1)}
+                  disabled={idx === 0}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-opacity text-xs leading-none"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => moveSection(idx, idx + 1)}
+                  disabled={idx === sections.length - 1}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-opacity text-xs leading-none"
+                >
+                  ▼
+                </button>
+              </div>
+
+              {/* Editable title */}
+              <input
+                value={section.title}
+                onChange={(e) => updateTitle(section.id, e.target.value)}
+                className="flex-1 text-sm font-medium bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 min-w-0"
+              />
+
+              {/* Toggle visibility */}
+              <button
+                onClick={() => toggleVisibility(section.id)}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  section.visible
+                    ? "text-primary hover:bg-primary/10"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+                title={section.visible ? "Masquer" : "Afficher"}
+              >
+                {section.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Save button */}
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={handleSave}
+        disabled={saveMutation.isPending}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm transition-all disabled:opacity-50"
+      >
+        {saveMutation.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Save className="w-4 h-4" />
+        )}
+        Sauvegarder
+      </motion.button>
+    </div>
+  );
+}
 
 export default AdminPage;
