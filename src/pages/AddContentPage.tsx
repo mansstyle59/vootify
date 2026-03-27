@@ -464,12 +464,12 @@ function SongForm() {
           {searchingCovers ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Recherche pochettes... {coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : ""}
+              Deezer... {coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : ""}
             </>
           ) : (
             <>
-              <Image className="w-4 h-4" />
-              Rechercher les pochettes automatiquement
+              <Sparkles className="w-4 h-4" />
+              Scraper métadonnées Deezer
             </>
           )}
         </motion.button>
