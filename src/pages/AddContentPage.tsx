@@ -9,7 +9,7 @@ import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { extractID3 } from "@/lib/id3Utils";
+import { extractID3, crossReferenceBatch } from "@/lib/id3Utils";
 
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
