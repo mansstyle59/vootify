@@ -22,6 +22,7 @@ const PlaylistDetailPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { isAdmin } = useAdminAuth();
 
 
   const { scrollY } = useScroll();
