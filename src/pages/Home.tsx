@@ -106,11 +106,6 @@ const HomePage = () => {
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto">
-      <ScrollBlurHeader scrollThreshold={120}>
-        <div className="px-5 md:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2.5 flex items-center justify-between">
-          <span className="text-[15px] font-extrabold text-foreground tracking-tight">Vootify</span>
-        </div>
-      </ScrollBlurHeader>
 
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
