@@ -182,6 +182,90 @@ function UsersTab() {
   const [editPassword, setEditPassword] = useState("");
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [editingCreds, setEditingCreds] = useState(false);
+  
+  // Share playlist state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareTargetUser, setShareTargetUser] = useState<UserProfile | null>(null);
+  const [sharePlaylistName, setSharePlaylistName] = useState("");
+  const [shareSearch, setShareSearch] = useState("");
+  const [shareSelectedSongs, setShareSelectedSongs] = useState<Set<string>>(new Set());
+  const [shareSending, setShareSending] = useState(false);
+
+  const { data: allSongsForShare = [] } = useQuery({
+    queryKey: ["admin-all-songs-share"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .not("stream_url", "is", null)
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const filteredShareSongs = useMemo(() => {
+    if (!shareSearch.trim()) return allSongsForShare;
+    const q = shareSearch.toLowerCase();
+    return allSongsForShare.filter(
+      (s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q)
+    );
+  }, [allSongsForShare, shareSearch]);
+
+  const handleSendPlaylist = async () => {
+    if (!shareTargetUser || shareSelectedSongs.size === 0 || !sharePlaylistName.trim()) {
+      toast.error("Nom de playlist et morceaux requis");
+      return;
+    }
+    setShareSending(true);
+    try {
+      const selectedSongsList = allSongsForShare.filter((s) => shareSelectedSongs.has(s.id));
+      const coverUrl = selectedSongsList.find((s) => s.cover_url)?.cover_url || null;
+
+      const { data: playlist, error: plError } = await supabase
+        .from("shared_playlists")
+        .insert({
+          playlist_name: sharePlaylistName.trim(),
+          cover_url: coverUrl,
+          shared_by: (await supabase.auth.getUser()).data.user?.id,
+          shared_to: shareTargetUser.user_id,
+        })
+        .select("id")
+        .single();
+
+      if (plError) throw plError;
+
+      const songRows = selectedSongsList.map((s, i) => ({
+        shared_playlist_id: playlist.id,
+        song_id: `custom-${s.id}`,
+        title: s.title,
+        artist: s.artist,
+        album: s.album,
+        cover_url: s.cover_url,
+        stream_url: s.stream_url,
+        duration: s.duration,
+        position: i,
+      }));
+
+      const { error: songsError } = await supabase
+        .from("shared_playlist_songs")
+        .insert(songRows);
+
+      if (songsError) throw songsError;
+
+      toast.success(`Playlist envoyée à ${shareTargetUser.display_name || "l'utilisateur"}`);
+      setShowShareDialog(false);
+      setSharePlaylistName("");
+      setShareSelectedSongs(new Set());
+      setShareSearch("");
+      setShareTargetUser(null);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setShareSending(false);
+    }
+  };
 
   const loadUsers = async () => {
     const { data: profiles } = await supabase
