@@ -1295,12 +1295,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   togglePlay();
                   if (navigator.vibrate) navigator.vibrate(8);
                 }}
-                className="w-[76px] h-[76px] rounded-full flex items-center justify-center transition-all"
+                className="w-[76px] h-[76px] rounded-full flex items-center justify-center transition-all bg-foreground"
                 style={{
-                  background: "linear-gradient(145deg, hsl(0 0% 100% / 0.95), hsl(0 0% 85% / 0.9))",
                   boxShadow: isPlaying
-                    ? "0 0 30px hsl(141 73% 42% / 0.25), 0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)"
-                    : "0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
+                    ? "0 0 30px hsl(var(--primary) / 0.25), 0 8px 30px hsl(0 0% 0% / 0.3)"
+                    : "0 8px 30px hsl(0 0% 0% / 0.3)",
                 }}
               >
                 <AnimatePresence mode="wait" initial={false}>
