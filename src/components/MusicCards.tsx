@@ -231,7 +231,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
     return <LongPressMenu song={song}>{cardContent}</LongPressMenu>;
   }
   return cardContent;
-}
+});
 
 interface ContentCardProps {
   title: string;
