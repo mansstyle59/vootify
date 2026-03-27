@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
@@ -138,7 +139,9 @@ const App = () => {
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
-                  <AppContent />
+                  <SubscriptionGate>
+                    <AppContent />
+                  </SubscriptionGate>
                 </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
