@@ -513,7 +513,7 @@ export function MiniPlayer() {
   const isLive = currentSong ? currentSong.duration === 0 : false;
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverForColor = isLive ? (radioMeta?.coverUrl || currentSong?.coverUrl) : currentSong?.coverUrl;
-  // Skip dominant color on mini player — expensive canvas op, only use on fullscreen
+  const miniDominantColor: string | null = null; // Skip expensive canvas op on mini player
 
   // ── Media Session API: lock screen metadata ──
   // IMPORTANT: Don't remove action handlers on cleanup — iOS loses the Now Playing session
