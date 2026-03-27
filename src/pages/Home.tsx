@@ -260,7 +260,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto">
+    <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto animate-fade-in">
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
       {activeSections.map((s) => renderSection(s))}

@@ -400,7 +400,7 @@ const LibraryPage = () => {
       : tabs;
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto relative">
+    <div className="pb-40 max-w-7xl mx-auto relative animate-fade-in">
       {/* Dynamic gradient header */}
       <div
         className="sticky top-0 z-20 transition-colors duration-700"
