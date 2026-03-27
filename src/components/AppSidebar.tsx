@@ -1,4 +1,5 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Home, Search, Library, Radio, PlusCircle, LogOut } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
