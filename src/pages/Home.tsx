@@ -1,17 +1,17 @@
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { AnimatePresence } from "framer-motion";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { SongSkeleton } from "@/components/MusicCards";
-import { motion } from "framer-motion";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
-import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
+import { HorizontalScroll } from "@/components/home/HorizontalScroll";
 import { HeroBanner } from "@/components/home/HeroBanner";
-import { TopChartCard } from "@/components/home/TopChartCard";
+import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomizer";
+import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
+import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomizer";
 import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
 import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
@@ -105,88 +105,6 @@ const HomePage = () => {
                 <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, likedSongs)} />
               ))}
             </HorizontalScroll>
-          </Section>
-        ) : null;
-
-      case "titresDuMoment":
-        return isVisible("titresDuMoment") ? (
-          <Section key="titresDuMoment" title={sectionTitle(section)} songs={titresDuMoment} viewAllLink={`/playlist/dz-${PLAYLISTS.titresDuMoment}`} onPlayAll={() => { if (titresDuMoment?.length) { setQueue(titresDuMoment); play(titresDuMoment[0]); } }}>
-            <HorizontalScroll>
-              {loadingTitres ? <CoverSkeleton /> : titresDuMoment?.map((song, i) => (
-                <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, titresDuMoment)} />
-              ))}
-            </HorizontalScroll>
-          </Section>
-        ) : null;
-
-      case "popHits":
-        return isVisible("popHits") ? (
-          <Section key="popHits" title={sectionTitle(section)} songs={popHits} viewAllLink={`/playlist/dz-${PLAYLISTS.popHits}`} onPlayAll={() => { if (popHits?.length) { setQueue(popHits); play(popHits[0]); } }}>
-            <HorizontalScroll>
-              {loadingPop ? <CoverSkeleton /> : popHits?.map((song, i) => (
-                <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, popHits)} />
-              ))}
-            </HorizontalScroll>
-          </Section>
-        ) : null;
-
-      case "rapstars":
-        return isVisible("rapstars") ? (
-          <Section key="rapstars" title={sectionTitle(section)} songs={rapstars} viewAllLink={`/playlist/dz-${PLAYLISTS.rapstars}`} onPlayAll={() => { if (rapstars?.length) { setQueue(rapstars); play(rapstars[0]); } }}>
-            <HorizontalScroll>
-              {loadingRap ? <CoverSkeleton /> : rapstars?.map((song, i) => (
-                <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, rapstars)} />
-              ))}
-            </HorizontalScroll>
-          </Section>
-        ) : null;
-
-      case "chillVibes":
-        return isVisible("chillVibes") ? (
-          <Section key="chillVibes" title={sectionTitle(section)} songs={chillVibes} viewAllLink={`/playlist/dz-${PLAYLISTS.chillVibes}`} onPlayAll={() => { if (chillVibes?.length) { setQueue(chillVibes); play(chillVibes[0]); } }}>
-            <HorizontalScroll>
-              {loadingChill ? <CoverSkeleton /> : chillVibes?.map((song, i) => (
-                <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, chillVibes)} />
-              ))}
-            </HorizontalScroll>
-          </Section>
-        ) : null;
-
-      case "afrobeats":
-        return isVisible("afrobeats") ? (
-          <Section key="afrobeats" title={sectionTitle(section)} songs={afrobeats} viewAllLink={`/playlist/dz-${PLAYLISTS.afrobeats}`} onPlayAll={() => { if (afrobeats?.length) { setQueue(afrobeats); play(afrobeats[0]); } }}>
-            <HorizontalScroll>
-              {loadingAfro ? <CoverSkeleton /> : afrobeats?.map((song, i) => (
-                <CoverCard key={song.id} title={song.title} subtitle={song.artist} imageUrl={song.coverUrl} index={i} isActive={currentSong?.id === song.id && isPlaying} onClick={() => handlePlayTrack(song, afrobeats)} />
-              ))}
-            </HorizontalScroll>
-          </Section>
-        ) : null;
-
-      case "top10":
-        return isVisible("top10") ? (
-          <Section key="top10" title={sectionTitle(section)} songs={topData.songs} onPlayAll={() => { if (topData.songs.length) { setQueue(topData.source); play(topData.songs[0]); } }}>
-            <div className="px-4 md:px-8">
-              <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-hide pb-1">
-                {TOP_TABS.map(({ key, label }) => (
-                  <button key={key} onClick={() => setTopGenre(key)} className={`relative px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${topGenre === key ? "text-primary-foreground" : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"}`}>
-                    {topGenre === key && (
-                      <motion.div layoutId="topTabIndicator" className="absolute inset-0 bg-primary rounded-full shadow-md shadow-primary/25" transition={{ type: "spring", stiffness: 400, damping: 30 }} />
-                    )}
-                    <span className="relative z-10">{label}</span>
-                  </button>
-                ))}
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.div key={topGenre} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25, ease: "easeInOut" }} className="rounded-xl bg-secondary/20 border border-border/50 overflow-hidden divide-y divide-border/30">
-                  {topData.loading
-                    ? Array.from({ length: 10 }).map((_, i) => <SongSkeleton key={i} />)
-                    : topData.songs.map((song, i) => (
-                        <TopChartCard key={song.id} song={song} rank={i + 1} onClick={() => handlePlayTrack(song, topData.source)} />
-                      ))}
-                </motion.div>
-              </AnimatePresence>
-            </div>
           </Section>
         ) : null;
 
