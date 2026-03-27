@@ -283,8 +283,53 @@ const ArtistPage = () => {
             {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             {enriching ? "Enrichissement…" : "Enrichir Deezer"}
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
+            >
+              <ImagePlus className="w-4 h-4" /> Photo
+            </button>
+          )}
         )}
       </div>
+
+      {/* Manual artist image URL input */}
+      {isAdmin && showImageInput && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="px-4 mb-4"
+        >
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={imageUrlInput}
+              onChange={(e) => setImageUrlInput(e.target.value)}
+              placeholder="URL de la photo (https://...)"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <button
+              onClick={async () => {
+                const url = imageUrlInput.trim();
+                if (!url || !userId) return;
+                const { error } = await supabase
+                  .from("artist_images")
+                  .upsert({ artist_name: artistName, image_url: url, updated_by: userId, updated_at: new Date().toISOString() }, { onConflict: "artist_name" });
+                if (error) { toast.error("Erreur de sauvegarde"); return; }
+                queryClient.invalidateQueries({ queryKey: ["custom-artist-image", artistName] });
+                queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
+                setShowImageInput(false);
+                toast.success("Photo de l'artiste mise à jour");
+              }}
+              className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
+            >
+              OK
+            </button>
+          </div>
+        </motion.div>
+      )
 
       {/* Listening Stats */}
       {listeningStats && (
