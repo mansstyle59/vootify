@@ -155,7 +155,13 @@ const PlaylistDetailPage = () => {
 
   const handleDownloadAll = () => {
     if (displaySongs.length === 0 || downloading) return;
-    downloadPlaylist(displaySongs);
+    downloadPlaylist(displaySongs).then(() => {
+      // Refresh cached IDs after download
+      Promise.all(displaySongs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
+        (ids) => setCachedIds(new Set(ids.filter(Boolean) as string[]))
+      );
+      toast.success("Téléchargement terminé !");
+    });
   };
 
   const handleRemove = async (songId: string) => { if (!id) return; await removeSongFromPlaylist(id, songId); toast.success("Morceau retiré"); };
