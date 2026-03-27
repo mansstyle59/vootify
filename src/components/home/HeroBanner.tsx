@@ -1,10 +1,45 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
-import { LogIn, LogOut, Headphones } from "lucide-react";
+import { motion, useScroll, useTransform, animate } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
+import { LogIn, LogOut, Headphones, Music, Radio, ListMusic } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
+function AnimatedCounter({ value, label, icon: Icon, delay }: { value: number; label: string; icon: React.ElementType; delay: number }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (value === 0) return;
+    const controls = animate(0, value, {
+      duration: 1.2,
+      delay,
+      ease: [0.25, 0.46, 0.45, 0.94],
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [value, delay]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: delay + 0.1, type: "spring", stiffness: 200, damping: 20 }}
+      className="flex items-center gap-2 px-3 py-2 rounded-xl"
+      style={{
+        background: "hsl(var(--card) / 0.4)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid hsl(var(--border) / 0.3)",
+      }}
+    >
+      <Icon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+      <span className="text-base font-black text-foreground tabular-nums">{display}</span>
+      <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+    </motion.div>
+  );
+}
 function getGreeting(name?: string | null) {
   const h = new Date().getHours();
   const base = h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
