@@ -15,20 +15,20 @@ import { deezerApi } from "@/lib/deezerApi";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { useDominantColor } from "@/hooks/useDominantColor";
 
-/* ── Shared glass styles ── */
+/* ── Shared glass styles — uses CSS custom properties for theme ── */
 const glassStyle = {
-  background: "linear-gradient(135deg, hsl(0 0% 100% / 0.08), hsl(0 0% 100% / 0.03))",
+  background: "hsl(var(--card) / 0.85)",
   backdropFilter: "blur(60px) saturate(1.6)",
   WebkitBackdropFilter: "blur(60px) saturate(1.6)",
-  border: "1px solid hsl(0 0% 100% / 0.1)",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 hsl(0 0% 100% / 0.1), inset 0 -1px 0 hsl(0 0% 0% / 0.1)",
+  border: "1px solid hsl(var(--border) / 0.5)",
+  boxShadow: "0 8px 32px hsl(0 0% 0% / 0.25), inset 0 1px 0 hsl(var(--foreground) / 0.05)",
 };
 
 const glassButtonStyle = {
-  background: "hsl(0 0% 100% / 0.08)",
+  background: "hsl(var(--muted) / 0.5)",
   backdropFilter: "blur(20px)",
   WebkitBackdropFilter: "blur(20px)",
-  border: "1px solid hsl(0 0% 100% / 0.1)",
+  border: "1px solid hsl(var(--border) / 0.3)",
 };
 
 /* ─────────────────────────────────────────────
