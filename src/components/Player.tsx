@@ -991,46 +991,14 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           <button
-            onClick={async () => {
-              if (addingToLib || addedToLib) return;
-              const artist = radioMeta?.artist;
-              const title = radioMeta?.title;
-              if (!artist || !title) return;
-              setAddingToLib(true);
-              try {
-                // Search Deezer for the track
-                const results = await deezerApi.searchTracks(`${artist} ${title}`, 1);
-                if (results.length > 0) {
-                  const track = results[0];
-                  const song = {
-                    id: track.id,
-                    title: track.title,
-                    artist: track.artist,
-                    album: track.album || "",
-                    duration: track.duration,
-                    coverUrl: track.coverUrl,
-                    streamUrl: track.streamUrl || "",
-                    liked: true,
-                  };
-                  toggleLike(song);
-                  setAddedToLib(true);
-                  setTimeout(() => setAddedToLib(false), 3000);
-                }
-              } catch {
-                // silent
-              } finally {
-                setAddingToLib(false);
-              }
+            onClick={() => {
+              if (!currentSong) return;
+              toggleLike(currentSong);
+              if (navigator.vibrate) navigator.vibrate(10);
             }}
             className="p-1 active:scale-90 transition-transform"
           >
-            {addingToLib ? (
-              <Loader2 className="w-7 h-7 text-foreground/40 animate-spin" />
-            ) : addedToLib ? (
-              <Check className="w-7 h-7 text-primary" />
-            ) : (
-              <PlusCircle className="w-7 h-7 text-foreground/40" />
-            )}
+            <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
           </button>
         </div>
 
