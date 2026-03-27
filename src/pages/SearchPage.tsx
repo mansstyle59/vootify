@@ -159,12 +159,18 @@ const SearchPage = () => {
     play(song);
   };
 
-  const handleRemoveRecent = (term: string) => {
-    if (userId) {
-      musicDb.removeSearchQuery(userId, term).then(() => {
-        musicDb.getSearchHistory(userId).then(setRecentSearches);
-      });
-    }
+  const handleAlbumClick = async (albumTitle: string) => {
+    const { data } = await supabase
+      .from("custom_albums")
+      .select("id")
+      .eq("title", albumTitle)
+      .limit(1)
+      .single();
+    if (data) navigate(`/album/${data.id}`);
+  };
+
+  const handleArtistClick = (artistName: string) => {
+    navigate(`/artist/${encodeURIComponent(artistName)}`);
   };
 
   const clearAllRecent = () => {
