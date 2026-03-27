@@ -54,6 +54,28 @@ const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
 
+  // Fetch unique artists with cover images
+  const { data: artists, isLoading: loadingArtists } = useQuery({
+    queryKey: ["home-artists"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("artist, cover_url")
+        .not("stream_url", "is", null);
+      if (error) throw error;
+      const artistMap = new Map<string, string>();
+      for (const row of data || []) {
+        if (!artistMap.has(row.artist) && row.cover_url) {
+          artistMap.set(row.artist, row.cover_url);
+        } else if (!artistMap.has(row.artist)) {
+          artistMap.set(row.artist, "");
+        }
+      }
+      return Array.from(artistMap.entries()).map(([name, cover]) => ({ name, cover }));
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Fetch albums
   const { data: albums, isLoading: loadingAlbums } = useQuery({
     queryKey: ["home-albums"],
@@ -206,6 +228,29 @@ const HomePage = () => {
           </div>
         );
       })}
+
+      {/* Artists section */}
+      {(loadingArtists || (artists && artists.length > 0)) && (
+        <Section title="Artistes">
+          <HorizontalScroll>
+            {loadingArtists ? (
+              <CoverSkeleton count={6} />
+            ) : (
+              artists?.map((artist, i) => (
+                <CoverCard
+                  key={artist.name}
+                  title={artist.name}
+                  subtitle=""
+                  imageUrl={artist.cover}
+                  index={i}
+                  rounded
+                  onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                />
+              ))
+            )}
+          </HorizontalScroll>
+        </Section>
+      )}
 
       {/* Albums section */}
       {(loadingAlbums || (albums && albums.length > 0)) && (
