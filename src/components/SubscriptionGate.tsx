@@ -40,8 +40,14 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
   const [signingOut, setSigningOut] = useState(false);
   const [alreadyRequested, setAlreadyRequested] = useState(false);
   const [contactEmail, setContactEmail] = useState(user?.email || "");
-  const [duration, setDuration] = useState(30);
-  const [durationUnit, setDurationUnit] = useState<"days" | "months">("days");
+  const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
+
+  const durationOptions = [
+    { label: "7 jours", value: 7, unit: "days" as const },
+    { label: "1 mois", value: 1, unit: "months" as const },
+    { label: "6 mois", value: 6, unit: "months" as const },
+    { label: "1 an", value: 12, unit: "months" as const },
+  ];
 
   useEffect(() => {
     if (!user) return;
