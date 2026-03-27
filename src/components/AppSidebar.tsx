@@ -1,4 +1,5 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Home, Search, Library, Radio, PlusCircle, LogOut } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
@@ -108,8 +109,15 @@ export function MobileNav() {
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-2xl border-t border-border/50 px-1 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex justify-around py-1.5">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/30 px-1"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)",
+        background: "hsl(var(--card) / 0.75)",
+        backdropFilter: "blur(40px) saturate(1.8)",
+        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+      }}
+    >
+      <div className="flex justify-around py-1">
         {items.map((item) => (
           <RouterNavLink
             key={item.to}
@@ -117,13 +125,33 @@ export function MobileNav() {
             end={item.to === "/"}
             onTouchStart={() => prefetchRoute(item.to)}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-[10px] font-medium transition-all active:scale-90 ${
-                isActive ? "text-primary" : "text-muted-foreground"
+              `flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl text-[10px] font-semibold transition-all duration-200 native-press-sm ${
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground/70"
               }`
             }
           >
-            <item.icon className="w-[22px] h-[22px]" strokeWidth={isAdminItem(item.to) ? 1.5 : 2} />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <div className="relative">
+                  <item.icon
+                    className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                      isActive ? "scale-110" : ""
+                    }`}
+                    strokeWidth={isActive ? 2.5 : 1.8}
+                  />
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                </div>
+                <span>{item.label}</span>
+              </>
+            )}
           </RouterNavLink>
         ))}
       </div>
@@ -131,6 +159,3 @@ export function MobileNav() {
   );
 }
 
-function isAdminItem(to: string) {
-  return to === "/add";
-}

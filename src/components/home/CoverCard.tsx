@@ -20,8 +20,8 @@ export const CoverCard = memo(function CoverCard({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, type: "spring", stiffness: 200, damping: 22 }}
-      whileTap={{ scale: 0.96 }}
+      transition={{ delay: index * 0.03, type: "spring", stiffness: 260, damping: 24 }}
+      whileTap={{ scale: 0.95 }}
       className="flex-shrink-0 w-40 cursor-pointer group"
       onClick={onClick}
     >

@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState, useCallback, lazy, Suspense, startTransition } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/hooks/useTheme";
@@ -50,20 +50,31 @@ function AnimatedRoutes() {
 
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes location={location}>
-        <Route path="/" element={<Home />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/library" element={<LibraryPage />} />
-        <Route path="/radio" element={<RadioPage />} />
-        <Route path="/add" element={<AddContentPage />} />
-        <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
-        <Route path="/album/:id" element={<AlbumDetailPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="min-h-screen"
+        >
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/radio" element={<RadioPage />} />
+            <Route path="/add" element={<AddContentPage />} />
+            <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
+            <Route path="/album/:id" element={<AlbumDetailPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
     </Suspense>
   );
 }
