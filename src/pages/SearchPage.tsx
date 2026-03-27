@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -458,16 +457,6 @@ const SearchPage = () => {
         <div className="px-4 md:px-8 mb-4">
           <div className="flex gap-2 flex-wrap">
             <button
-              onClick={() => setHdOnly(!hdOnly)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                hdOnly
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
-            >
-              HD uniquement
-            </button>
-            <button
               onClick={() => setCustomOnly(!customOnly)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
                 customOnly
@@ -477,22 +466,6 @@ const SearchPage = () => {
             >
               Custom uniquement
             </button>
-            <button
-              onClick={() => {
-                hdCache.clear();
-                toast.success("Cache HD vidé");
-              }}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground hover:bg-destructive/20 hover:text-destructive transition-all flex items-center gap-1"
-            >
-              <Trash2 className="w-3 h-3" />
-              Vider cache HD
-            </button>
-            {resolveProgress && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-1.5 animate-pulse">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                {resolveProgress.resolved}/{resolveProgress.total} HD
-              </span>
-            )}
           </div>
         </div>
       )}
