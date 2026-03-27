@@ -245,4 +245,19 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Native-like active states */
+  .native-press {
+    @apply active:scale-[0.97] transition-transform duration-100;
+  }
+
+  .native-press-sm {
+    @apply active:scale-[0.98] transition-transform duration-75;
+  }
+
+  /* iOS-style page container */
+  .ios-page {
+    @apply min-h-screen overscroll-y-none;
+    -webkit-overflow-scrolling: touch;
+  }
 }
