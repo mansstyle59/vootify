@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, ty
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions";
 
 interface UserProfile {
   user_id: string;
@@ -45,6 +45,7 @@ const AdminPage = () => {
     { key: "stats", label: "Statistiques", icon: Shield },
     { key: "home", label: "Accueil", icon: LayoutDashboard },
     { key: "users", label: "Utilisateurs", icon: Users },
+    { key: "subscriptions", label: "Abonnements", icon: CreditCard },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "logs", label: "Logs", icon: ScrollText },
@@ -95,6 +96,7 @@ const AdminPage = () => {
         {tab === "stats" && <StatsTab />}
         {tab === "home" && <HomeTab />}
         {tab === "users" && <UsersTab />}
+        {tab === "subscriptions" && <SubscriptionsTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
@@ -1310,6 +1312,391 @@ function SongPickerModal({
           </motion.button>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+/* ── Subscriptions & Usage Tab ── */
+interface Subscription {
+  id: string;
+  user_id: string;
+  plan: string;
+  starts_at: string;
+  expires_at: string | null;
+  status: string;
+}
+
+function SubscriptionsTab() {
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [usage, setUsage] = useState<Record<string, number>>({});
+  const [usageHistory, setUsageHistory] = useState<{ date: string; seconds: number; user_id: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Dialog state
+  const [showSubDialog, setShowSubDialog] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editPlan, setEditPlan] = useState("premium");
+  const [editDuration, setEditDuration] = useState(30);
+
+  // Stats view
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
+  const [period, setPeriod] = useState<"week" | "month" | "year">("month");
+
+  const loadData = async () => {
+    setLoading(true);
+    const [profilesRes, subsRes, usageRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("subscriptions").select("*").order("created_at", { ascending: false }),
+      supabase.from("usage_sessions").select("user_id, duration_seconds, session_date").order("session_date", { ascending: false }),
+    ]);
+
+    setUsers((profilesRes.data || []).map(p => ({ ...p, isAdmin: false })));
+    setSubs(subsRes.data as Subscription[] || []);
+
+    // Aggregate total usage per user
+    const totals: Record<string, number> = {};
+    const history: { date: string; seconds: number; user_id: string }[] = [];
+    for (const row of (usageRes.data || [])) {
+      const uid = (row as any).user_id;
+      const secs = (row as any).duration_seconds || 0;
+      const date = (row as any).session_date;
+      totals[uid] = (totals[uid] || 0) + secs;
+      history.push({ date, seconds: secs, user_id: uid });
+    }
+    setUsage(totals);
+    setUsageHistory(history);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return `${h}h ${m}min`;
+    return `${m}min`;
+  };
+
+  const getUserSub = (userId: string) => subs.find(s => s.user_id === userId && s.status === "active");
+
+  const handleSetSubscription = async () => {
+    if (!editUserId) return;
+    setActionLoading("sub");
+    try {
+      // Deactivate existing active subs
+      await supabase
+        .from("subscriptions")
+        .update({ status: "expired" })
+        .eq("user_id", editUserId)
+        .eq("status", "active");
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + editDuration);
+
+      await supabase.from("subscriptions").insert({
+        user_id: editUserId,
+        plan: editPlan,
+        starts_at: new Date().toISOString(),
+        expires_at: expiresAt.toISOString(),
+        status: "active",
+      });
+
+      toast.success("Abonnement mis à jour");
+      setShowSubDialog(false);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRevoke = async (userId: string) => {
+    if (!confirm("Révoquer l'abonnement de cet utilisateur ?")) return;
+    setActionLoading(`revoke-${userId}`);
+    await supabase
+      .from("subscriptions")
+      .update({ status: "revoked" })
+      .eq("user_id", userId)
+      .eq("status", "active");
+    toast.success("Abonnement révoqué");
+    await loadData();
+    setActionLoading(null);
+  };
+
+  // Usage chart data for selected user
+  const chartData = useMemo(() => {
+    if (!viewUserId) return [];
+    const now = new Date();
+    let days = period === "week" ? 7 : period === "month" ? 30 : 365;
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const filtered = usageHistory.filter(
+      h => h.user_id === viewUserId && new Date(h.date) >= cutoff
+    );
+
+    // Group by date
+    const byDate: Record<string, number> = {};
+    for (const h of filtered) {
+      byDate[h.date] = (byDate[h.date] || 0) + h.seconds;
+    }
+
+    // Fill all dates
+    const result: { date: string; minutes: number }[] = [];
+    for (let d = new Date(cutoff); d <= now; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      result.push({ date: key, minutes: Math.round((byDate[key] || 0) / 60) });
+    }
+    return result;
+  }, [viewUserId, period, usageHistory]);
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  // Detail view for a user
+  if (viewUserId) {
+    const user = users.find(u => u.user_id === viewUserId);
+    const sub = getUserSub(viewUserId);
+    const totalMins = Math.round((usage[viewUserId] || 0) / 60);
+    const maxVal = Math.max(...chartData.map(d => d.minutes), 1);
+
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={() => setViewUserId(null)}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </button>
+
+        <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+              {(user?.display_name || "?").slice(0, 2).toUpperCase()}
+            </div>
+            <div>
+              <p className="font-medium text-foreground">{user?.display_name || "Sans nom"}</p>
+              <p className="text-xs text-muted-foreground">Temps total : {formatTime(usage[viewUserId] || 0)}</p>
+            </div>
+            {sub && (
+              <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
+                {sub.plan}
+              </span>
+            )}
+          </div>
+
+          {sub && (
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>Début : {new Date(sub.starts_at).toLocaleDateString("fr-FR")}</p>
+              {sub.expires_at && (
+                <p>Expire : {new Date(sub.expires_at).toLocaleDateString("fr-FR")}
+                  {new Date(sub.expires_at) < new Date() && <span className="text-destructive ml-1">(expiré)</span>}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Period selector */}
+        <div className="flex gap-1.5">
+          {(["week", "month", "year"] as const).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                period === p
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
+              }`}
+            >
+              {p === "week" ? "7 jours" : p === "month" ? "30 jours" : "1 an"}
+            </button>
+          ))}
+        </div>
+
+        {/* Bar chart */}
+        <div className="rounded-xl bg-secondary/30 border border-border p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <p className="text-sm font-medium text-foreground">Temps d'écoute (minutes)</p>
+          </div>
+          <div className="flex items-end gap-0.5 h-32">
+            {chartData.map((d, i) => (
+              <div
+                key={d.date}
+                className="flex-1 group relative"
+                title={`${d.date}: ${d.minutes}min`}
+              >
+                <div
+                  className="w-full rounded-t bg-primary/70 hover:bg-primary transition-colors"
+                  style={{ height: `${(d.minutes / maxVal) * 100}%`, minHeight: d.minutes > 0 ? 2 : 0 }}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-muted-foreground">{chartData[0]?.date?.slice(5)}</span>
+            <span className="text-[10px] text-muted-foreground">{chartData[chartData.length - 1]?.date?.slice(5)}</span>
+          </div>
+        </div>
+
+        {/* Daily breakdown */}
+        <div className="space-y-1 max-h-60 overflow-y-auto">
+          {chartData.filter(d => d.minutes > 0).reverse().map(d => (
+            <div key={d.date} className="flex items-center justify-between px-3 py-2 rounded-lg bg-secondary/20 text-sm">
+              <span className="text-muted-foreground">{new Date(d.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</span>
+              <span className="font-medium text-foreground">{d.minutes} min</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Subscription dialog */}
+      <Dialog open={showSubDialog} onOpenChange={setShowSubDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              Attribuer un abonnement
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Type d'abonnement</Label>
+              <div className="flex gap-2">
+                {["premium", "gold", "vip"].map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setEditPlan(p)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      editPlan === p
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                  >
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Durée</Label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { label: "7 jours", value: 7 },
+                  { label: "30 jours", value: 30 },
+                  { label: "90 jours", value: 90 },
+                  { label: "1 an", value: 365 },
+                ].map(d => (
+                  <button
+                    key={d.value}
+                    onClick={() => setEditDuration(d.value)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      editDuration === d.value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubDialog(false)}>Annuler</Button>
+            <Button onClick={handleSetSubscription} disabled={actionLoading === "sub"}>
+              {actionLoading === "sub" && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
+              Attribuer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User list with subscription & usage info */}
+      {users.map(u => {
+        const sub = getUserSub(u.user_id);
+        const totalTime = usage[u.user_id] || 0;
+        const isExpired = sub?.expires_at && new Date(sub.expires_at) < new Date();
+
+        return (
+          <motion.div
+            key={u.user_id}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl bg-secondary/30 border border-border p-3 space-y-2"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                {(u.display_name || "?").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{u.display_name || "Sans nom"}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatTime(totalTime)}</span>
+                  {sub && (
+                    <>
+                      <span className="text-border">•</span>
+                      <span className={`font-medium ${isExpired ? "text-destructive" : "text-primary"}`}>
+                        {sub.plan.toUpperCase()} {isExpired ? "(expiré)" : ""}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => setViewUserId(u.user_id)}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                  title="Voir les statistiques"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setEditUserId(u.user_id);
+                    setShowSubDialog(true);
+                  }}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                  title="Gérer l'abonnement"
+                >
+                  <CreditCard className="w-4 h-4" />
+                </button>
+                {sub && (
+                  <button
+                    onClick={() => handleRevoke(u.user_id)}
+                    disabled={actionLoading === `revoke-${u.user_id}`}
+                    className="p-1.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+                    title="Révoquer l'abonnement"
+                  >
+                    {actionLoading === `revoke-${u.user_id}` ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <X className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {sub && sub.expires_at && (
+              <div className="ml-13 text-[10px] text-muted-foreground">
+                Expire le {new Date(sub.expires_at).toLocaleDateString("fr-FR")}
+              </div>
+            )}
+          </motion.div>
+        );
+      })}
     </div>
   );
 }

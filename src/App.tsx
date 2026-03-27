@@ -17,6 +17,7 @@ import { PageLoader } from "@/components/PageLoader";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
+import { useUsageTracking } from "@/hooks/useUsageTracking";
 
 // Lazy load all pages for faster initial load & smooth transitions
 const Home = lazy(() => import("./pages/Home"));
@@ -85,6 +86,9 @@ function AppContent() {
   const setUserId = usePlayerStore((s) => s.setUserId);
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
+
+  // Track usage time
+  useUsageTracking();
 
   useEffect(() => {
     if (loading) return;
