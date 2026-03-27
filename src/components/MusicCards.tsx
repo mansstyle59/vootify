@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd } from "lucide-react";
