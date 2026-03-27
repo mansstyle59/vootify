@@ -50,6 +50,48 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
 
 const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
 
+/** Clickable cover thumbnail — tap to change cover image */
+function SongCoverThumb({ coverUrl, disabled, onChange }: { coverUrl: string; disabled?: boolean; onChange: (url: string) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (max 5 Mo)"); return; }
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("covers").upload(path, file);
+    if (error) { toast.error("Erreur upload image"); return; }
+    const { data } = supabase.storage.from("covers").getPublicUrl(path);
+    onChange(data.publicUrl);
+  };
+
+  return (
+    <>
+      <input ref={ref} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      <button
+        type="button"
+        onClick={() => !disabled && ref.current?.click()}
+        disabled={disabled}
+        className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 group"
+      >
+        {coverUrl ? (
+          <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-secondary flex items-center justify-center">
+            <FileAudio className="w-5 h-5 text-muted-foreground/40" />
+          </div>
+        )}
+        {!disabled && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
+            <Camera className="w-4 h-4 text-white" />
+          </div>
+        )}
+      </button>
+    </>
+  );
+}
+
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-2">
