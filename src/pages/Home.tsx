@@ -238,15 +238,7 @@ const HomePage = () => {
               <CoverSkeleton count={6} />
             ) : (
               artists?.map((artist, i) => (
-                <CoverCard
-                  key={artist.name}
-                  title={artist.name}
-                  subtitle=""
-                  imageUrl={artist.cover}
-                  index={i}
-                  rounded
-                  onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                />
+                <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
               ))
             )}
           </HorizontalScroll>
