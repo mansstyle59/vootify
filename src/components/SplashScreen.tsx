@@ -44,7 +44,6 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
                 src="/pwa-icon-512.png"
                 alt="Vootify"
                 className="w-24 h-24 rounded-[28px]"
-                fetchPriority="high"
               />
             </div>
           </motion.div>
