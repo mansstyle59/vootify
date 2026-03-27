@@ -149,7 +149,7 @@ const RequestAccessPage = () => {
               <button
                 type="button"
                 onClick={handleRequest}
-                disabled={sending || !contactEmail.trim()}
+                disabled={sending || !contactEmail.trim() || !pseudo.trim()}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
