@@ -145,7 +145,7 @@ function SongForm() {
 
     for (let i = 0; i < songs.length; i++) {
       const song = songs[i];
-      if (song.uploaded || (song as any).skipped || !song.title.trim() || !song.artist.trim()) continue;
+      if (song.uploaded || song.skipped || !song.title.trim() || !song.artist.trim()) continue;
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: true } : s));
 
       // Check for duplicate BEFORE uploading the file
