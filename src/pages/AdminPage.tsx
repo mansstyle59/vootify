@@ -217,7 +217,7 @@ function UsersTab() {
 
   const handleCreateUser = async () => {
     if (!createEmail.trim() || !createPassword.trim()) {
-      toast.error("Email et mot de passe requis");
+      toast.error("Identifiant et mot de passe requis");
       return;
     }
     if (createPassword.length < 6) {
@@ -226,11 +226,13 @@ function UsersTab() {
     }
     setCreating(true);
     try {
+      // Auto-append domain for Supabase email requirement
+      const email = createEmail.trim().includes("@") ? createEmail.trim() : `${createEmail.trim()}@vootify.app`;
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
         body: {
-          email: createEmail.trim(),
+          email,
           password: createPassword,
-          display_name: createDisplayName.trim() || undefined,
+          display_name: createDisplayName.trim() || createEmail.trim(),
         },
       });
       if (error) throw error;
@@ -288,15 +290,15 @@ function UsersTab() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-email">Email *</Label>
+              <Label htmlFor="create-email">Identifiant *</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="create-email"
-                  type="email"
+                  type="text"
                   value={createEmail}
                   onChange={(e) => setCreateEmail(e.target.value)}
-                  placeholder="utilisateur@email.com"
+                  placeholder="nom_utilisateur"
                   className="pl-9"
                   required
                 />
