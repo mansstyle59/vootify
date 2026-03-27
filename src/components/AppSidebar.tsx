@@ -141,13 +141,6 @@ export function MobileNav() {
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.8}
                   />
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-indicator"
-                      className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  )}
                 </div>
                 <span>{item.label}</span>
               </>
