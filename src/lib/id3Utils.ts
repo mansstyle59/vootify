@@ -126,28 +126,34 @@ export async function extractID3(file: File | Blob, fileName?: string): Promise<
 export function crossReferenceBatch(tracks: ID3Metadata[]): ID3Metadata[] {
   if (tracks.length <= 1) return tracks;
 
-  // Find most common album
   const albumCounts = new Map<string, number>();
   const artistCounts = new Map<string, number>();
+  const genreCounts = new Map<string, number>();
+  const yearCounts = new Map<number, number>();
   let sharedCover: string | undefined;
   let coverCount = 0;
 
   for (const t of tracks) {
     if (t.album) albumCounts.set(t.album, (albumCounts.get(t.album) || 0) + 1);
     if (t.artist) artistCounts.set(t.artist, (artistCounts.get(t.artist) || 0) + 1);
+    if (t.genre) genreCounts.set(t.genre, (genreCounts.get(t.genre) || 0) + 1);
+    if (t.year) yearCounts.set(t.year, (yearCounts.get(t.year) || 0) + 1);
     if (t.coverUrl) { sharedCover = t.coverUrl; coverCount++; }
   }
 
-  // If >50% share the same album, apply to all missing
   const dominantAlbum = [...albumCounts.entries()].sort((a, b) => b[1] - a[1])[0];
   const dominantArtist = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const dominantGenre = [...genreCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const dominantYear = [...yearCounts.entries()].sort((a, b) => b[1] - a[1])[0];
 
-  const threshold = tracks.length * 0.5;
+  const threshold = tracks.length * 0.3; // Lower threshold for better propagation
 
   return tracks.map((t) => ({
     ...t,
     album: t.album || (dominantAlbum && dominantAlbum[1] >= threshold ? dominantAlbum[0] : t.album),
     artist: t.artist || (dominantArtist && dominantArtist[1] >= threshold ? dominantArtist[0] : t.artist),
-    coverUrl: t.coverUrl || (coverCount >= threshold ? sharedCover : t.coverUrl),
+    genre: t.genre || (dominantGenre && dominantGenre[1] >= threshold ? dominantGenre[0] : t.genre),
+    year: t.year || (dominantYear && dominantYear[1] >= threshold ? dominantYear[0] : t.year),
+    coverUrl: t.coverUrl || (coverCount >= 1 ? sharedCover : t.coverUrl),
   }));
 }
