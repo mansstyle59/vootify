@@ -256,6 +256,7 @@ const LibraryPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectMode, setSelectMode] = useState(false);
+  const [artistSearch, setArtistSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [albumSearch, setAlbumSearch] = useState("");
   const [likedSearch, setLikedSearch] = useState("");
