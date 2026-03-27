@@ -16,18 +16,28 @@ function customRowToSong(row: any): Song {
   };
 }
 
-/** Fetch all local songs (cached aggressively) */
+/** Fetch all local songs (paginated to bypass 1000 row limit) */
 export function useAllLocalSongs() {
   return useQuery({
     queryKey: ["all-local-songs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("*")
-        .not("stream_url", "is", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []).map(customRowToSong);
+      const PAGE_SIZE = 1000;
+      let allData: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("custom_songs")
+          .select("*")
+          .not("stream_url", "is", null)
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = allData.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return allData.map(customRowToSong);
     },
     staleTime: 5 * 60 * 1000,
   });
