@@ -70,22 +70,22 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: (index || 0) * 0.05 }}
-      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl hover-glass ${
+      className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover-glass ${
         isBlocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
       } ${isCurrentSong ? "bg-primary/5 ring-1 ring-primary/10" : ""}`}
       onClick={handleClick}
     >
       {showIndex && (
-        <span className="w-6 text-center text-sm text-muted-foreground tabular-nums group-hover:hidden flex-shrink-0">
+        <span className="w-5 text-center text-xs text-muted-foreground tabular-nums group-hover:hidden flex-shrink-0">
           {(index || 0) + 1}
         </span>
       )}
       {showIndex && (
-        <span className="w-6 text-center hidden group-hover:block flex-shrink-0">
+        <span className="w-5 text-center hidden group-hover:block flex-shrink-0">
           {isCurrentSong && isPlaying ? (
-            <Pause className="w-4 h-4 text-primary mx-auto" />
+            <Pause className="w-3.5 h-3.5 text-primary mx-auto" />
           ) : (
-            <Play className="w-4 h-4 text-primary mx-auto" />
+            <Play className="w-3.5 h-3.5 text-primary mx-auto" />
           )}
         </span>
       )}
@@ -103,17 +103,18 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium leading-tight ${isCurrentSong ? "text-primary" : "text-foreground"}`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+      {/* Title + Artist — takes remaining space */}
+      <div className="flex-1 min-w-0 mr-1">
+        <p className={`text-sm font-semibold leading-snug truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
           {song.title}
         </p>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-tight" style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {song.artist}
+        <p className="text-xs text-muted-foreground/70 mt-0.5 truncate">
+          {song.artist}{song.album ? ` · ${song.album}` : ""}
         </p>
       </div>
 
-      {/* Action buttons — always visible on mobile, hover on desktop */}
-      <div className="flex items-center gap-1 flex-shrink-0">
+      {/* Compact action buttons */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -121,7 +122,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
           }}
           className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
         >
-          <Heart className={`w-4 h-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+          <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
         </button>
 
         {/* Add to queue */}
@@ -136,7 +137,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
             className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
             title="Ajouter à la file d'attente"
           >
-            <ListEnd className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+            <ListEnd className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
           </button>
         )}
 
@@ -151,7 +152,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
               className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
               title="Ajouter à une playlist"
             >
-              <ListPlus className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+              <ListPlus className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
             </button>
             <AnimatePresence>
               {showPlaylistMenu && (
@@ -171,11 +172,11 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
             title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
           >
             {isCached ? (
-              <CheckCircle className="w-4 h-4 text-primary" />
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
             ) : isDownloading ? (
-              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
             ) : (
-              <Download className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+              <Download className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
             )}
           </button>
         )}
@@ -184,30 +185,30 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
       {/* Source badge */}
       {(() => {
         if (isCached) return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent-foreground border border-accent/20 flex-shrink-0" title="Disponible hors-ligne">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/15 text-accent-foreground border border-accent/20 flex-shrink-0">
             Local
           </span>
         );
         const sourceType = getSongSourceType(song);
         if (sourceType === "custom") return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-secondary-foreground border border-secondary flex-shrink-0" title="Morceau custom admin">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary flex-shrink-0">
             Custom
           </span>
         );
         if (sourceType === "hd") return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/20 flex-shrink-0" title="Flux complet haute qualité">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20 flex-shrink-0">
             HD
           </span>
         );
         if (sourceType === "no-hd") return (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-destructive/15 text-destructive border border-destructive/20 flex-shrink-0" title="Aucun flux HD disponible">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/20 flex-shrink-0">
             No HD
           </span>
         );
         return null;
       })()}
 
-      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">{formatDuration(song.duration)}</span>
+      <span className="text-[11px] text-muted-foreground/60 tabular-nums flex-shrink-0 ml-0.5">{formatDuration(song.duration)}</span>
     </motion.div>
   );
 
