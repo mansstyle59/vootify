@@ -173,6 +173,14 @@ const SearchPage = () => {
     navigate(`/artist/${encodeURIComponent(artistName)}`);
   };
 
+  const handleRemoveRecent = (term: string) => {
+    if (userId) {
+      musicDb.removeSearchQuery(userId, term).then(() => {
+        musicDb.getSearchHistory(userId).then(setRecentSearches);
+      });
+    }
+  };
+
   const clearAllRecent = () => {
     if (userId) {
       musicDb.clearSearchHistory(userId).then(() => setRecentSearches([]));
