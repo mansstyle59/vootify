@@ -132,11 +132,13 @@ export function MiniPlayer() {
 
     document.addEventListener("visibilitychange", handleVisibility);
     // 'pause' event on audio catches OS-level interruptions
-    audioRef.current?.addEventListener("pause", handleInterrupt);
+    const audioEl = audioRef.current;
+    audioEl?.addEventListener("pause", handleInterrupt);
 
     return () => {
       if (resumeTimer) clearTimeout(resumeTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
+      audioEl?.removeEventListener("pause", handleInterrupt);
     };
   }, [volume]);
 
@@ -457,9 +459,10 @@ export function MiniPlayer() {
   }, [currentSong?.id]);
 
   // Clear preloaded set on queue change
+  const queueLength = usePlayerStore((s) => s.queue.length);
   useEffect(() => {
     preloadedIdsRef.current.clear();
-  }, [usePlayerStore.getState().queue.length]);
+  }, [queueLength]);
 
   const preemptiveTriggeredRef = useRef(false);
   const lastProgressUpdateRef = useRef(0);
@@ -1206,7 +1209,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       {/* Multi-layer dynamic background — Apple Music style */}
       <div className="absolute inset-0">
         {/* Base color layer */}
-        <div className="absolute inset-0 transition-colors duration-[1.5s]" style={{ background: bgColor }} />
+        <div className="absolute inset-0 transition-colors" style={{ background: bgColor, transitionDuration: '1.5s' }} />
         
         {/* Blurred cover layer — extreme blur for ambient feel */}
         <AnimatePresence mode="popLayout">
