@@ -151,17 +151,11 @@ const PlaylistDetailPage = () => {
   const handlePlayAll = () => { if (displaySongs.length > 0) { setQueue(displaySongs); play(displaySongs[0]); } };
   const handleShufflePlay = () => { if (displaySongs.length > 0) { const s = [...displaySongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); } };
 
-  const [downloading, setDownloading] = useState(false);
-  const [dlProgress, setDlProgress] = useState({ done: 0, total: 0 });
-  const handleDownloadAll = async () => {
-    if (displaySongs.length === 0) return;
-    setDownloading(true); const total = displaySongs.length; setDlProgress({ done: 0, total }); let done = 0;
-    for (const song of displaySongs) {
-      try { const cached = await offlineCache.isCached(song.id); if (!cached && song.streamUrl) await offlineCache.cacheSong(song); done++; setDlProgress({ done, total }); }
-      catch { done++; setDlProgress({ done, total }); }
-    }
-    setDownloading(false); setCachedIds(new Set(displaySongs.map((s) => s.id)));
-    toast.success("Téléchargement terminé !");
+  const { isDownloading: downloading, songs: dlSongs, completed: dlCompleted, failed: dlFailed, skipped: dlSkipped, total: dlTotal, overallProgress, downloadPlaylist, cancel: cancelDownload } = usePlaylistDownload();
+
+  const handleDownloadAll = () => {
+    if (displaySongs.length === 0 || downloading) return;
+    downloadPlaylist(displaySongs);
   };
 
   const handleRemove = async (songId: string) => { if (!id) return; await removeSongFromPlaylist(id, songId); toast.success("Morceau retiré"); };
