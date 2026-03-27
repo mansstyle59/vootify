@@ -46,7 +46,7 @@ export function AppSidebar() {
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <aside className="hidden md:flex flex-col w-[240px] min-h-screen glass-panel border-r border-border/50 p-4">
+    <aside className="hidden md:flex flex-col w-[240px] min-h-screen bg-card/80 backdrop-blur-xl border-r border-border/50 p-4">
       <div className="mb-8 px-2">
         <h1 className="text-2xl font-display font-bold gradient-text-primary">
           Vootify
@@ -62,7 +62,7 @@ export function AppSidebar() {
             onMouseEnter={() => prefetchRoute(item.to)}
             onTouchStart={() => prefetchRoute(item.to)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -78,17 +78,17 @@ export function AppSidebar() {
       {user && (
         <div className="mt-auto pt-4 border-t border-border/50">
           <div className="flex items-center gap-3 px-2">
-          <button onClick={() => navigate("/profile")} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={avatarUrl} alt={displayName || "User"} />
-              <AvatarFallback className="text-xs font-semibold bg-primary/20 text-primary">
-                {(displayName || "U").slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-            </div>
-          </button>
+            <button onClick={() => navigate("/profile")} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+                <AvatarFallback className="text-xs font-semibold bg-primary/20 text-primary">
+                  {(displayName || "U").slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+              </div>
+            </button>
             <button
               onClick={() => signOut()}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -108,8 +108,8 @@ export function MobileNav() {
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-border/50 px-2 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex justify-around py-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-2xl border-t border-border/50 px-1 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex justify-around py-1.5">
         {items.map((item) => (
           <RouterNavLink
             key={item.to}
@@ -117,16 +117,20 @@ export function MobileNav() {
             end={item.to === "/"}
             onTouchStart={() => prefetchRoute(item.to)}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+              `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-[10px] font-medium transition-all active:scale-90 ${
                 isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
-            <item.icon className="w-5 h-5" />
+            <item.icon className="w-[22px] h-[22px]" strokeWidth={isAdminItem(item.to) ? 1.5 : 2} />
             <span>{item.label}</span>
           </RouterNavLink>
         ))}
       </div>
     </nav>
   );
+}
+
+function isAdminItem(to: string) {
+  return to === "/add";
 }
