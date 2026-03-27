@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,13 +32,11 @@ const AlbumDetailPage = () => {
   const coverOpacity = useTransform(scrollY, [0, 250], [1, 0.5]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
 
-  const isJioSaavn = id?.startsWith("js-album-");
   const isDeezer = id?.startsWith("dz-album-");
 
   const { data, isLoading } = useQuery({
     queryKey: ["album-detail", id],
     queryFn: async () => {
-      if (isJioSaavn) return jiosaavnApi.getAlbum(id!);
       if (isDeezer) return deezerApi.getAlbumTracks(id!);
       throw new Error("Unknown album source");
     },
@@ -52,65 +49,7 @@ const AlbumDetailPage = () => {
   const [resolvedTracks, setResolvedTracks] = useState<Song[]>([]);
   const [resolveKey, setResolveKey] = useState(0);
   const [resolving, setResolving] = useState(false);
-  useEffect(() => {
-    if (rawTracks.length === 0) {
-      setResolvedTracks([]);
-      return;
-    }
-
-    const controller = new AbortController();
-    setResolvedTracks(rawTracks);
-
-    const dzTracksNeedingResolve = rawTracks.filter(
-      (t) =>
-        t.id.startsWith("dz-") &&
-        (!t.streamUrl || t.streamUrl.includes("dzcdn.net") || t.streamUrl.includes("cdn-preview"))
-    );
-
-    if (dzTracksNeedingResolve.length === 0) {
-      setResolving(false);
-      return () => controller.abort();
-    }
-
-    setResolving(true);
-
-    (async () => {
-      const updated = [...rawTracks];
-
-      for (let i = 0; i < updated.length; i += 4) {
-        if (controller.signal.aborted) return;
-        const batch = updated.slice(i, i + 4);
-        const resolved = await Promise.all(
-          batch.map((s) =>
-            s.id.startsWith("dz-") ? deezerApi.resolveFullStream(s).catch(() => s) : Promise.resolve(s)
-          )
-        );
-        if (controller.signal.aborted) return;
-
-        for (let j = 0; j < resolved.length; j++) {
-          const idx = i + j;
-          const isHd =
-            !!resolved[j].streamUrl &&
-            !resolved[j].streamUrl.includes("dzcdn.net") &&
-            !resolved[j].streamUrl.includes("cdn-preview");
-
-          if (isHd && resolved[j].streamUrl !== updated[idx].streamUrl) {
-            updated[idx] = resolved[j];
-          }
-        }
-
-        setResolvedTracks([...updated]);
-      }
-
-      if (!controller.signal.aborted) {
-        setResolving(false);
-      }
-    })();
-
-    return () => controller.abort();
-  }, [rawTracks, id, resolveKey]);
-
-  const tracks = resolvedTracks.length > 0 ? resolvedTracks : rawTracks;
+  const tracks = rawTracks;
   const totalDuration = tracks.reduce((sum, t) => sum + t.duration, 0);
 
   const effectiveUserId = getEffectiveUserId(user?.id);
@@ -136,9 +75,8 @@ const AlbumDetailPage = () => {
 
   const handlePlay = async (song: Song) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
-    const resolved = song.id.startsWith("dz-") ? await deezerApi.resolveFullStream(song) : song;
     setQueue(tracks);
-    play(resolved);
+    play(song);
   };
 
   const playAll = () => { if (tracks.length > 0) { setQueue(tracks); handlePlay(tracks[0]); } };
@@ -150,8 +88,7 @@ const AlbumDetailPage = () => {
     let done = 0;
     for (const song of tracks) {
       try {
-        const resolved = song.id.startsWith("dz-") ? await deezerApi.resolveFullStream(song) : song;
-        if (resolved.streamUrl) await offlineCache.cacheSong(resolved);
+        if (song.streamUrl) await offlineCache.cacheSong(song);
         done++;
       } catch { /* skip */ }
     }

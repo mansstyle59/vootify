@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { hdCache } from "@/lib/hdCache";
+import { offlineCache } from "@/lib/offlineCache";
 import { offlineCache } from "@/lib/offlineCache";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -313,25 +313,6 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Clear HD cache */}
-            <div className="flex items-center justify-between pt-2 border-t border-border/50">
-              <div>
-                <p className="text-sm font-medium text-foreground">Cache HD</p>
-                <p className="text-xs text-muted-foreground">
-                  {hdCache.stats().count} résolution{hdCache.stats().count > 1 ? "s" : ""} en cache
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  hdCache.clear();
-                  toast.success("Cache HD vidé !");
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Vider
-              </button>
-            </div>
 
             {/* SW & Offline cache indicators */}
             <div className="space-y-3 pt-2 border-t border-border/50">

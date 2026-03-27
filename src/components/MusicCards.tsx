@@ -9,21 +9,9 @@ import { LongPressMenu } from "./LongPressMenu";
 import { toast } from "sonner";
 
 /** Determine the source badge type for a song */
-function getSongSourceType(song: Song): "custom" | "hd" | "no-hd" | null {
-  // Custom admin songs always show Custom
+function getSongSourceType(song: Song): "custom" | null {
   if (song.id.startsWith("custom-")) return "custom";
-  // Resolved via custom_songs table
   if (song.resolvedViaCustom) return "custom";
-  // Deezer songs
-  if (song.id.startsWith("dz-")) {
-    if (!song.streamUrl) return "no-hd";
-    // Still a 30s preview
-    if (song.streamUrl.includes("dzcdn.net")) return "no-hd";
-    // Resolved to full stream via JioSaavn
-    return "hd";
-  }
-  // JioSaavn songs are always full
-  if (song.id.startsWith("js-")) return "hd";
   return null;
 }
 
@@ -61,7 +49,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
   }, [showPlaylistMenu]);
 
   const sourceType = getSongSourceType(song);
-  const isBlocked = sourceType === "no-hd";
+  const isBlocked = false;
 
   const handleClick = () => {
     if (isBlocked) return;
@@ -207,16 +195,6 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
         if (sourceType === "custom") return (
           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary flex-shrink-0">
             Custom
-          </span>
-        );
-        if (sourceType === "hd") return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20 flex-shrink-0">
-            HD
-          </span>
-        );
-        if (sourceType === "no-hd") return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/20 flex-shrink-0">
-            No HD
           </span>
         );
         return null;
