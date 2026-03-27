@@ -21,7 +21,7 @@ interface PlayerState {
   crossfadeEnabled: boolean;
   crossfadeDuration: number; // in seconds
   _seekTime: number | null;
-  resolveStep: string | null;
+  
   nextPreloaded: boolean;
   audioDuration: number; // real audio element duration (overrides metadata)
   
@@ -69,7 +69,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "true"),
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "2"),
   _seekTime: null,
-  resolveStep: null,
+  
   nextPreloaded: false,
   audioDuration: 0,
 

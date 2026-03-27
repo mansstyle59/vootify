@@ -11,7 +11,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
-import { deezerApi } from "@/lib/deezerApi";
+import { Music } from "lucide-react";
 import { useDominantColor } from "@/hooks/useDominantColor";
 
 /* ── Shared glass styles — uses CSS custom properties for theme ── */
@@ -51,8 +51,6 @@ export function MiniPlayer() {
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
-  const resolveStep = usePlayerStore((s) => s.resolveStep);
-  const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
 
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
@@ -820,49 +818,30 @@ export function MiniPlayer() {
               onClick={toggleFullScreen}
             >
               <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
-                <img
-                  src={currentSong.coverUrl}
-                  alt={currentSong.title}
-                  className="w-full h-full object-cover"
-                />
+                {currentSong.coverUrl ? (
+                  <img
+                    src={currentSong.coverUrl}
+                    alt={currentSong.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                    <Music className="w-5 h-5 text-primary/40" />
+                  </div>
+                )}
               </div>
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold truncate text-foreground leading-tight">
                   {currentSong.title}
                 </p>
-                <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 relative overflow-hidden h-4">
-                  <AnimatePresence mode="wait">
-                    {resolveStep ? (
-                      <motion.span
-                        key={resolveStep}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute inset-0 inline-flex items-center gap-1 text-primary"
-                      >
-                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                        <span className="font-semibold text-[10px]">{resolveStep}</span>
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="artist"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute inset-0 inline-flex items-center truncate"
-                      >
-                        {currentSong.artist}
-                        {playingFromCache && (
-                          <span className="ml-1.5 inline-flex items-center gap-1 text-primary">
-                            <WifiOff className="w-2.5 h-2.5" />
-                            <span className="font-semibold text-[10px]">OFFLINE</span>
-                          </span>
-                        )}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center">
+                  {currentSong.artist}
+                  {playingFromCache && (
+                    <span className="ml-1.5 inline-flex items-center gap-1 text-primary">
+                      <WifiOff className="w-2.5 h-2.5" />
+                      <span className="font-semibold text-[10px]">OFFLINE</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -910,8 +889,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked
   } = usePlayerStore();
-  const [addingToLib, setAddingToLib] = useState(false);
-  const [addedToLib, setAddedToLib] = useState(false);
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
@@ -1012,46 +989,14 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           <button
-            onClick={async () => {
-              if (addingToLib || addedToLib) return;
-              const artist = radioMeta?.artist;
-              const title = radioMeta?.title;
-              if (!artist || !title) return;
-              setAddingToLib(true);
-              try {
-                // Search Deezer for the track
-                const results = await deezerApi.searchTracks(`${artist} ${title}`, 1);
-                if (results.length > 0) {
-                  const track = results[0];
-                  const song = {
-                    id: track.id,
-                    title: track.title,
-                    artist: track.artist,
-                    album: track.album || "",
-                    duration: track.duration,
-                    coverUrl: track.coverUrl,
-                    streamUrl: track.streamUrl || "",
-                    liked: true,
-                  };
-                  toggleLike(song);
-                  setAddedToLib(true);
-                  setTimeout(() => setAddedToLib(false), 3000);
-                }
-              } catch {
-                // silent
-              } finally {
-                setAddingToLib(false);
-              }
+            onClick={() => {
+              if (!currentSong) return;
+              toggleLike(currentSong);
+              if (navigator.vibrate) navigator.vibrate(10);
             }}
             className="p-1 active:scale-90 transition-transform"
           >
-            {addingToLib ? (
-              <Loader2 className="w-7 h-7 text-foreground/40 animate-spin" />
-            ) : addedToLib ? (
-              <Check className="w-7 h-7 text-primary" />
-            ) : (
-              <PlusCircle className="w-7 h-7 text-foreground/40" />
-            )}
+            <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
           </button>
         </div>
 
@@ -1103,7 +1048,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
-  const resolveStep = usePlayerStore((s) => s.resolveStep);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
@@ -1392,53 +1336,16 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                   {currentSong.title}
                 </h2>
-                <div className="flex items-center gap-2 mt-0.5 relative overflow-hidden h-6">
-                  <AnimatePresence mode="wait">
-                    {resolveStep ? (
-                      <motion.span
-                        key={resolveStep}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute inset-0 inline-flex items-center gap-1.5 text-primary"
-                      >
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span className="font-semibold text-[13px]">{resolveStep}</span>
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="artist-badge"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute inset-0 inline-flex items-center gap-2"
-                      >
-                        <p className="text-[15px] text-foreground/60 truncate">
-                          {currentSong.artist}
-                        </p>
-                        {isCached ? (
-                          <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
-                            <WifiOff className="w-2.5 h-2.5" />
-                            OFFLINE
-                          </span>
-                        ) : currentSong.resolvedViaCustom ? (
-                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground border border-secondary">
-                            Custom
-                          </span>
-                        ) : currentSong.streamUrl && !currentSong.streamUrl.includes("dzcdn.net") && currentSong.id.startsWith("dz-") ? (
-                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
-                            HD
-                          </span>
-                        ) : currentSong.id.startsWith("dz-") ? (
-                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30">
-                            No HD
-                          </span>
-                        ) : null}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[15px] text-foreground/60 truncate">
+                    {currentSong.artist}
+                  </p>
+                  {isCached && (
+                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                      <WifiOff className="w-2.5 h-2.5" />
+                      OFFLINE
+                    </span>
+                  )}
                 </div>
               </div>
               <motion.button

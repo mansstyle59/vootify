@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd } from "lucide-react";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd, Music } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
@@ -11,7 +11,6 @@ import { toast } from "sonner";
 /** Determine the source badge type for a song */
 function getSongSourceType(song: Song): "custom" | null {
   if (song.id.startsWith("custom-")) return "custom";
-  if (song.resolvedViaCustom) return "custom";
   return null;
 }
 
@@ -86,7 +85,13 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
       )}
 
       <div className="relative w-11 h-11 flex-shrink-0">
-        <img src={song.coverUrl} alt={song.title} className="w-full h-full rounded-lg object-cover ring-1 ring-white/[0.06]" />
+        {song.coverUrl ? (
+          <img src={song.coverUrl} alt={song.title} className="w-full h-full rounded-lg object-cover ring-1 ring-white/[0.06]" />
+        ) : (
+          <div className="w-full h-full rounded-lg ring-1 ring-white/[0.06] flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <Music className="w-5 h-5 text-primary/40" />
+          </div>
+        )}
         {!showIndex && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
             {isCurrentSong && isPlaying ? (
