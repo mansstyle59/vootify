@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd } from "lucide-react";
@@ -33,8 +33,15 @@ interface SongCardProps {
   showIndex?: boolean;
 }
 
-export function SongCard({ song, index, showIndex }: SongCardProps) {
-  const { currentSong, isPlaying, play, togglePlay, toggleLike, isLiked, queue, setQueue } = usePlayerStore();
+export const SongCard = memo(function SongCard({ song, index, showIndex }: SongCardProps) {
+  const currentSong = usePlayerStore((s) => s.currentSong);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const play = usePlayerStore((s) => s.play);
+  const togglePlay = usePlayerStore((s) => s.togglePlay);
+  const toggleLike = usePlayerStore((s) => s.toggleLike);
+  const isLiked = usePlayerStore((s) => s.isLiked);
+  const queue = usePlayerStore((s) => s.queue);
+  const setQueue = usePlayerStore((s) => s.setQueue);
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
@@ -224,7 +231,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
     return <LongPressMenu song={song}>{cardContent}</LongPressMenu>;
   }
   return cardContent;
-}
+});
 
 interface ContentCardProps {
   title: string;

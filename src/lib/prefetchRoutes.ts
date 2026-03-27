@@ -18,7 +18,6 @@ const routeImports: Record<string, () => Promise<unknown>> = {
 const prefetched = new Set<string>();
 
 function prefetchRoute(path: string) {
-  // Normalize path
   const base = "/" + (path.split("/").filter(Boolean)[0] || "");
   const key = base === "/" ? "/" : base;
   if (prefetched.has(key)) return;
@@ -26,7 +25,6 @@ function prefetchRoute(path: string) {
   if (loader) {
     prefetched.add(key);
     loader().catch(() => {
-      // Silently fail — will load normally on navigation
       prefetched.delete(key);
     });
   }
@@ -56,12 +54,17 @@ export function initRoutePrefetch() {
     { capture: true, passive: true }
   );
 
-  // Prefetch home and search immediately (most common routes)
-  requestIdleCallback?.(() => {
+  // Prefetch all main navigation routes immediately on idle
+  const prefetchAll = () => {
     prefetchRoute("/");
     prefetchRoute("/search");
-  }) ?? setTimeout(() => {
-    prefetchRoute("/");
-    prefetchRoute("/search");
-  }, 2000);
+    prefetchRoute("/library");
+    prefetchRoute("/radio");
+  };
+
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(prefetchAll, { timeout: 1500 });
+  } else {
+    setTimeout(prefetchAll, 1000);
+  }
 }
