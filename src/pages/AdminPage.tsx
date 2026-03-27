@@ -1502,7 +1502,6 @@ function RequestsTab() {
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
   const pending = requests.filter(r => r.status === "pending");
-  const resolved = requests.filter(r => r.status !== "pending");
 
   return (
     <div className="space-y-4">
@@ -1516,84 +1515,57 @@ function RequestsTab() {
         )}
       </h3>
 
-      {requests.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">Aucune demande d'accès</p>
+      {pending.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Aucune demande en attente</p>
       ) : (
         <div className="space-y-2">
-          {pending.length > 0 && (
-            <>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">En attente</p>
-              {pending.map((r) => (
-                <motion.div
-                  key={r.id}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+          {pending.map((r) => (
+            <motion.div
+              key={r.id}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                {(r.display_name || "?").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                  {r.display_name || "Sans pseudo"}
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                  <Mail className="w-3 h-3 flex-shrink-0" />
+                  {r.user_email}
+                </p>
+                <p className="text-xs text-primary font-medium flex items-center gap-1.5 mt-0.5">
+                  <Clock className="w-3 h-3 flex-shrink-0" />
+                  {r.requested_duration === 0
+                    ? "Illimité"
+                    : `${r.requested_duration || 30} ${r.requested_duration_unit === "months" ? "mois" : "jours"}`}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleAction(r.id, "approved", r)}
+                  disabled={!!actionLoading}
+                  className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                  title="Approuver"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
-                    {(r.display_name || "?").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{r.display_name || r.user_email}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {r.user_email}
-                    </p>
-                    <p className="text-xs text-primary font-medium flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {r.requested_duration || 30} {r.requested_duration_unit === "months" ? "mois" : "jours"}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleAction(r.id, "approved", r)}
-                      disabled={!!actionLoading}
-                      className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-                      title="Approuver"
-                    >
-                      {actionLoading === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={() => handleAction(r.id, "rejected")}
-                      disabled={!!actionLoading}
-                      className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
-                      title="Rejeter"
-                    >
-                      <XCircle className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </>
-          )}
-
-          {resolved.length > 0 && (
-            <>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-4">Historique</p>
-              {resolved.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-secondary/20 border border-border/50 opacity-60"
+                  {actionLoading === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => handleAction(r.id, "rejected")}
+                  disabled={!!actionLoading}
+                  className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                  title="Rejeter"
                 >
-                  <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center text-sm font-bold text-muted-foreground flex-shrink-0">
-                    {(r.display_name || "?").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{r.display_name || r.user_email}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    r.status === "approved" 
-                      ? "bg-primary/10 text-primary" 
-                      : "bg-destructive/10 text-destructive"
-                  }`}>
-                    {r.status === "approved" ? "Approuvé" : "Rejeté"}
-                  </span>
-                </div>
-              ))}
-            </>
-          )}
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
