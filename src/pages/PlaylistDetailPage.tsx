@@ -109,6 +109,19 @@ const PlaylistDetailPage = () => {
   };
 
 
+  const handleDeletePlaylist = async () => {
+    if (!id) return;
+    const confirmed = window.confirm("Supprimer cette playlist et tous ses morceaux ?");
+    if (!confirmed) return;
+    await supabase.from("playlist_songs").delete().eq("playlist_id", id);
+    const { error } = await supabase.from("playlists").delete().eq("id", id);
+    if (error) { toast.error("Erreur suppression"); return; }
+    toast.success("Playlist supprimée");
+    const uid = usePlayerStore.getState().userId;
+    if (uid) usePlayerStore.getState().loadUserData(uid);
+    navigate("/library");
+  };
+
   if (!playlist) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
