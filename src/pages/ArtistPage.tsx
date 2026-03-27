@@ -9,6 +9,7 @@ import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, Trendi
 import { motion, useScroll, useTransform } from "framer-motion";
 import { formatDuration } from "@/data/mockData";
 import type { Song } from "@/data/mockData";
+import { searchArtistImage } from "@/lib/coverArtSearch";
 
 const ArtistPage = () => {
   const { name } = useParams<{ name: string }>();
@@ -83,7 +84,15 @@ const ArtistPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const coverUrl = songs.find((s) => s.coverUrl)?.coverUrl || "";
+  // Fetch real artist photo from Deezer
+  const { data: artistImageUrl } = useQuery({
+    queryKey: ["artist-image", artistName],
+    queryFn: () => searchArtistImage(artistName),
+    enabled: !!artistName,
+    staleTime: 24 * 60 * 60 * 1000, // 24h cache
+  });
+
+  const coverUrl = artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
 
   const albums = useMemo(() => {
     const map = new Map<string, { title: string; coverUrl: string; count: number }>();

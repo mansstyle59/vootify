@@ -89,6 +89,22 @@ async function searchDeezer(artist: string, title: string, album?: string): Prom
 }
 
 /**
+ * Search Deezer for an artist image (photo).
+ */
+export async function searchArtistImage(artistName: string): Promise<string | null> {
+  try {
+    const data = await deezerFetch(`/search/artist?q=${encodeURIComponent(artistName)}&limit=3`);
+    if (!data.data || data.data.length === 0) return null;
+    // Find best match by name similarity
+    const lower = artistName.toLowerCase();
+    const match = data.data.find((a: any) => a.name?.toLowerCase() === lower) || data.data[0];
+    return match.picture_xl || match.picture_big || match.picture_medium || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Search MusicBrainz + Cover Art Archive as fallback.
  */
 async function searchMusicBrainz(artist: string, title: string, album?: string, year?: number): Promise<DeezerMeta | null> {
