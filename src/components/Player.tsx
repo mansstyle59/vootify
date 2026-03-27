@@ -1453,7 +1453,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(141_73%_42%/0.4)]" : "text-foreground/40"}`} />
                 </motion.div>
               </motion.button>
-            </div>
+              </motion.div>
+            </AnimatePresence>
 
             {/* Progress bar - ultra premium with time preview */}
             <div className="mb-5">
