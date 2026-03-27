@@ -10,10 +10,9 @@ import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense, startTransition } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { PageTransition } from "@/components/PageTransition";
 import { PageLoader } from "@/components/PageLoader";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
@@ -39,12 +38,12 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 30,
+      staleTime: 1000 * 60 * 10,
+      gcTime: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       retry: 1,
-      networkMode: "offlineFirst", // Serve cached data instantly
+      networkMode: "offlineFirst",
     },
   },
 });
@@ -110,7 +109,9 @@ function AppContent() {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+  const handleSplashFinish = useCallback(() => {
+    startTransition(() => setShowSplash(false));
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
