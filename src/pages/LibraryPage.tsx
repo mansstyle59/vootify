@@ -119,7 +119,13 @@ function PremiumSongRow({
       <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md transition-shadow ${
         isActive ? "shadow-primary/20 ring-1 ring-primary/30" : "shadow-black/20"
       }`}>
-        <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+        {song.coverUrl ? (
+          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-secondary flex items-center justify-center">
+            <Music className="w-5 h-5 text-muted-foreground/40" />
+          </div>
+        )}
         {!selectable && (
           <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
             isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
