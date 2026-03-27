@@ -82,27 +82,63 @@ export function MiniPlayer() {
   }, [isPlaying, currentSong?.id]);
 
   // ── Visibility change — resume playback + re-sync media session ──
+  // Handles: returning from background, phone call interruption, app switching
   useEffect(() => {
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleVisibility = () => {
       if (document.visibilityState !== "visible") return;
       const audio = audioRef.current;
       const state = usePlayerStore.getState();
       if (!audio || !state.isPlaying || !state.currentSong) return;
 
-      // Resume if audio got paused by OS
-      if (audio.paused && audio.src) {
-        console.log("[bg-resume] Resuming audio after visibility change");
-        audio.volume = volume;
-        audio.muted = false;
-        audio.play().catch(console.error);
-      }
-      // Re-sync media session state
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "playing";
+      // Small delay to let iOS audio session re-activate
+      resumeTimer = setTimeout(() => {
+        if (audio.paused && audio.src) {
+          const isRadio = state.currentSong && state.currentSong.duration === 0;
+          console.log("[bg-resume] Resuming", isRadio ? "radio stream" : "track");
+
+          if (isRadio) {
+            // Radio: reload stream to get fresh data (stale buffer = silence)
+            const src = audio.src;
+            audio.src = "";
+            audio.src = src;
+            audio.load();
+          }
+
+          audio.volume = volume;
+          audio.muted = false;
+          audio.play().catch((e) => {
+            console.warn("[bg-resume] Play failed, retrying:", e);
+            setTimeout(() => audio.play().catch(console.error), 500);
+          });
+        }
+        // Re-sync media session state
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.playbackState = "playing";
+        }
+      }, 300);
+    };
+
+    // Handle audio interruptions (phone calls, Siri, etc.)
+    const handleInterrupt = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      const state = usePlayerStore.getState();
+      // If we were playing but got paused externally → mark for resume
+      if (state.isPlaying && audio.paused) {
+        console.log("[interrupt] Audio paused externally — will resume on focus");
       }
     };
+
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    // 'pause' event on audio catches OS-level interruptions
+    audioRef.current?.addEventListener("pause", handleInterrupt);
+
+    return () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [volume]);
 
   // ── Watchdog — detect stuck audio, throttled in background ──
