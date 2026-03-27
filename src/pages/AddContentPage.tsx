@@ -132,6 +132,8 @@ function SongForm() {
   const [processing, setProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [searchingCovers, setSearchingCovers] = useState(false);
+  const [coverProgress, setCoverProgress] = useState({ done: 0, total: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
 
   const processFiles = async (files: FileList) => {
