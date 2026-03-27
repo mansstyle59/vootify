@@ -200,11 +200,9 @@ export async function batchSearchCovers(
   onProgress?: (done: number, total: number) => void
 ): Promise<Map<number, DeezerMeta>> {
   const results = new Map<number, DeezerMeta>();
-  const needsSearch = songs
-    .map((s, i) => ({ ...s, index: i }))
-    .filter((s) => !s.coverUrl);
+  const toSearch = songs.map((s, i) => ({ ...s, index: i }));
 
-  if (needsSearch.length === 0) return results;
+  if (toSearch.length === 0) return results;
 
   const albumCache = new Map<string, DeezerMeta | null>();
   let done = 0;
