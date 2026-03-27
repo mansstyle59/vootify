@@ -105,6 +105,8 @@ const SearchPage = () => {
     return () => { cancelled = true; };
   }, []);
 
+  const { data: allSongs, isLoading } = useAllLocalSongs();
+
   // Play a Friday release album — only full tracks, no 30s previews
   const playFridayRelease = useCallback(async (release: DeezerNewRelease) => {
     try {
@@ -126,7 +128,6 @@ const SearchPage = () => {
         const dTitle = normalize(t.title || "");
         const dArtist = normalize(t.artist?.name || release.artist);
 
-        // Find matching song in local library
         const match = library.find((s) => {
           const sTitle = normalize(s.title);
           const sArtist = normalize(s.artist);
@@ -153,8 +154,6 @@ const SearchPage = () => {
       toast.error("Impossible de charger cet album");
     }
   }, [play, setQueue, allSongs]);
-
-  const { data: allSongs, isLoading } = useAllLocalSongs();
 
   const recentIds = useMemo(
     () => new Set(recentlyPlayed.map((s) => s.id)),
