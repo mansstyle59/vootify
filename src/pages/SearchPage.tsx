@@ -224,6 +224,7 @@ const SearchPage = () => {
     setAddToPlaylistRelease(null);
   };
 
+  const recentIds = useMemo(
     () => new Set(recentlyPlayed.map((s) => s.id)),
     [recentlyPlayed]
   );
