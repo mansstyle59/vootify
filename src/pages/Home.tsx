@@ -9,8 +9,19 @@ import { HorizontalScroll } from "@/components/home/HorizontalScroll";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomizer";
 import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
+import { TrendingSection } from "@/components/home/TrendingSection";
+import { NewAlbumsSection } from "@/components/home/NewAlbumsSection";
 import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+
+/** Curated Deezer playlist IDs for recommendations */
+const CURATED_PLAYLISTS = [
+  { id: "1313621735", label: "Hits du moment 🎵" },
+  { id: "1111141961", label: "Rap FR 🇫🇷" },
+  { id: "1282495565", label: "Pop Hits ✨" },
+  { id: "1116189381", label: "Chill Vibes 🌊" },
+  { id: "5765628182", label: "Afro Hits 🌍" },
+];
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
@@ -19,9 +30,6 @@ const HomePage = () => {
   const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
   const [showCustomizer, setShowCustomizer] = useState(false);
 
-  // Removed aggressive refetch on visibility change — staleTime handles freshness
-
-  // Use local override while customizer is open, otherwise DB config
   const activeSections = localSections ?? sections;
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
@@ -29,7 +37,6 @@ const HomePage = () => {
       togglePlay();
       return;
     }
-    // Don't pre-resolve here — Player handles resolution to avoid double latency
     setQueue(allSongs);
     play(song);
   };
@@ -58,7 +65,6 @@ const HomePage = () => {
   const sectionTitle = (s: HomeSection) => `${s.label} ${s.emoji}`;
 
   const renderSection = (section: HomeSection) => {
-    // Custom Deezer playlist
     if (section.deezerPlaylistId && section.visible) {
       return (
         <CustomPlaylistSection
@@ -108,7 +114,24 @@ const HomePage = () => {
 
       <HeroBanner onCustomize={isAdmin ? () => setShowCustomizer(true) : undefined} />
 
+      {/* User's custom sections (pour vous, coups de cœur, admin playlists) */}
       {activeSections.map((s) => renderSection(s))}
+
+      {/* Trending tracks from Deezer charts */}
+      <TrendingSection onPlayTrack={handlePlayTrack} />
+
+      {/* New album releases */}
+      <NewAlbumsSection />
+
+      {/* Curated playlists */}
+      {CURATED_PLAYLISTS.map((pl) => (
+        <CustomPlaylistSection
+          key={pl.id}
+          playlistId={pl.id}
+          label={pl.label}
+          onPlayTrack={handlePlayTrack}
+        />
+      ))}
 
       {isAdmin && (
         <HomeCustomizer
