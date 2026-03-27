@@ -242,6 +242,75 @@ function SongForm() {
                   </button>
                 )}
               </div>
+
+              {/* Metadata badges — always visible */}
+              {(song.codec || song.bitrate || song.genre) && (
+                <div className="flex flex-wrap gap-1.5 px-0.5">
+                  {song.codec && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide">
+                      {song.codec}
+                    </span>
+                  )}
+                  {song.bitrate && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary text-muted-foreground text-[10px] font-semibold">
+                      {song.bitrate} kbps
+                    </span>
+                  )}
+                  {song.genre && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/50 text-accent-foreground text-[10px] font-semibold">
+                      {song.genre}
+                    </span>
+                  )}
+                  {song.sampleRate && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary text-muted-foreground text-[10px] font-semibold">
+                      {(song.sampleRate / 1000).toFixed(1)} kHz
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-[10px]"
+                  >
+                    <Info className="w-3 h-3" />
+                    {expandedIdx === idx ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                </div>
+              )}
+
+              {/* Expanded metadata details */}
+              <AnimatePresence>
+                {expandedIdx === idx && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="rounded-xl bg-secondary/30 border border-border/30 p-3 space-y-1.5 text-[11px]">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {song.album && <MetaRow label="Album" value={song.album} />}
+                        {song.albumArtist && <MetaRow label="Artiste album" value={song.albumArtist} />}
+                        {song.year && <MetaRow label="Année" value={String(song.year)} />}
+                        {song.genre && <MetaRow label="Genre" value={song.genre} />}
+                        {song.composer && <MetaRow label="Compositeur" value={song.composer} />}
+                        {song.trackNumber && (
+                          <MetaRow label="Piste" value={`${song.trackNumber}${song.totalTracks ? ` / ${song.totalTracks}` : ""}`} />
+                        )}
+                        {song.codec && <MetaRow label="Codec" value={song.codec} />}
+                        {song.bitrate && <MetaRow label="Débit" value={`${song.bitrate} kbps`} />}
+                        {song.sampleRate && <MetaRow label="Échantillonnage" value={`${song.sampleRate} Hz`} />}
+                        {song.duration > 0 && (
+                          <MetaRow label="Durée" value={`${Math.floor(song.duration / 60)}:${String(song.duration % 60).padStart(2, "0")}`} />
+                        )}
+                        <MetaRow label="Taille" value={`${(song.file.size / (1024 * 1024)).toFixed(1)} Mo`} />
+                        <MetaRow label="Format" value={song.file.name.split(".").pop()?.toUpperCase() || "?"} />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {!song.uploaded && !song.skipped && (
                 <div className="grid grid-cols-2 gap-2">
                   <input value={song.title} onChange={(e) => updateSong(idx, "title", e.target.value)} placeholder="Titre *"
