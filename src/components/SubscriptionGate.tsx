@@ -4,7 +4,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2 } from "lucide-react";
+import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2, Mail, Calendar } from "lucide-react";
 
 /**
  * Blocks access to the app if the user has no active subscription.
@@ -33,8 +33,10 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
   const [sending, setSending] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [alreadyRequested, setAlreadyRequested] = useState(false);
+  const [contactEmail, setContactEmail] = useState(user?.email || "");
+  const [duration, setDuration] = useState(30);
+  const [durationUnit, setDurationUnit] = useState<"days" | "months">("days");
 
-  // Check if user already has a pending request
   useEffect(() => {
     if (!user) return;
     supabase
@@ -63,9 +65,9 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
 
   const handleRequest = async () => {
     if (!user) return;
+    if (!contactEmail.trim()) return;
     setSending(true);
     try {
-      // Get display name from profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("display_name")
@@ -74,8 +76,10 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
 
       await supabase.from("access_requests").insert({
         user_id: user.id,
-        user_email: user.email || "",
+        user_email: contactEmail.trim(),
         display_name: profile?.display_name || user.email || "",
+        requested_duration: duration,
+        requested_duration_unit: durationUnit,
       });
       setRequested(true);
     } catch {
@@ -90,7 +94,7 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-sm"
+        className="text-center max-w-sm w-full"
       >
         <div className="relative inline-flex mb-6">
           <div className="w-20 h-20 rounded-2xl bg-destructive/10 flex items-center justify-center">
@@ -104,40 +108,79 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
         <h1 className="text-2xl font-display font-bold text-foreground mb-2">
           Abonnement requis
         </h1>
-        <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
-          Votre abonnement n'est pas actif ou a expiré. Veuillez contacter votre administrateur pour activer votre accès.
+        <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
+          Remplissez le formulaire ci-dessous pour demander l'activation de votre accès.
         </p>
-
-        <div className="bg-muted/50 rounded-xl p-4 mb-6 text-left">
-          <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
-            Comment obtenir l'accès ?
-          </p>
-          <ul className="text-sm text-foreground space-y-1.5">
-            <li>• Contactez votre administrateur</li>
-            <li>• Demandez l'activation de votre abonnement</li>
-            <li>• L'accès sera immédiat une fois activé</li>
-          </ul>
-        </div>
 
         <div className="space-y-3">
           {!requested ? (
-            <button
-              type="button"
-              onClick={handleRequest}
-              disabled={sending}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
-            >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {sending ? "Envoi…" : "Faire une demande d'accès"}
-            </button>
+            <>
+              {/* Email field */}
+              <div className="text-left">
+                <label className="text-xs text-muted-foreground font-medium mb-1 block">
+                  Adresse email de contact
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="votre@email.com"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="text-left">
+                <label className="text-xs text-muted-foreground font-medium mb-1 block">
+                  Durée d'abonnement souhaitée
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={duration}
+                      onChange={(e) => setDuration(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <select
+                    value={durationUnit}
+                    onChange={(e) => setDurationUnit(e.target.value as "days" | "months")}
+                    className="bg-muted/50 border border-border rounded-xl px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="days">Jours</option>
+                    <option value="months">Mois</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRequest}
+                disabled={sending || !contactEmail.trim()}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2"
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {sending ? "Envoi…" : "Envoyer la demande"}
+              </button>
+            </>
           ) : (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full py-3.5 rounded-xl bg-primary/10 text-primary font-medium text-sm flex items-center justify-center gap-2.5"
+              className="w-full py-4 rounded-xl bg-primary/10 text-primary font-medium text-sm flex flex-col items-center justify-center gap-2"
             >
-              <CheckCircle className="w-4 h-4" />
-              Demande envoyée !
+              <CheckCircle className="w-6 h-6" />
+              <span>Demande envoyée !</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Vous recevrez vos informations de connexion par email une fois approuvée.
+              </span>
             </motion.div>
           )}
 
