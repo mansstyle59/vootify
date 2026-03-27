@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
@@ -11,18 +11,19 @@ import {
   useMostPlayed,
   useRecommended,
 } from "@/hooks/useLocalSections";
+import { useHomeConfig } from "@/hooks/useHomeConfig";
 import { deezerApi } from "@/lib/deezerApi";
-import { Clock, Flame, Sparkles, Music, Globe } from "lucide-react";
+import { Music } from "lucide-react";
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { data: homeConfig } = useHomeConfig();
 
   const { data: recentlyAdded, isLoading: loadingAdded } = useRecentlyAdded(20);
   const { data: recentlyListened, isLoading: loadingListened } = useRecentlyListened(20);
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
 
-  // Deezer chart tracks
   const [deezerChart, setDeezerChart] = useState<Song[]>([]);
   const [loadingChart, setLoadingChart] = useState(true);
 
@@ -45,9 +46,25 @@ const HomePage = () => {
     [currentSong?.id, togglePlay, setQueue, play]
   );
 
+  // Map section IDs to their data
+  const sectionDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
+    recently_added: { songs: recentlyAdded, loading: loadingAdded },
+    recently_listened: { songs: recentlyListened, loading: loadingListened },
+    most_played: { songs: mostPlayed, loading: loadingMost },
+    recommended: { songs: recommended, loading: loadingRecommended },
+    deezer_chart: { songs: deezerChart, loading: loadingChart },
+  }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended, deezerChart, loadingChart]);
+
+  // Get ordered visible sections from config
+  const visibleSections = useMemo(() => {
+    if (!homeConfig) return [];
+    return [...homeConfig.sections]
+      .sort((a, b) => a.order - b.order)
+      .filter((s) => s.visible);
+  }, [homeConfig]);
+
   const renderSection = (
     title: string,
-    icon: React.ReactNode,
     songs: Song[] | undefined,
     loading: boolean
   ) => {
@@ -89,20 +106,17 @@ const HomePage = () => {
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto">
-      <HeroBanner />
+      <HeroBanner customSubtitle={homeConfig?.heroSubtitle} />
 
-      {renderSection("Ajoutés récemment 🆕", <Music className="w-4 h-4" />, recentlyAdded, loadingAdded)}
-      {renderSection("Écoutés récemment 🕐", <Clock className="w-4 h-4" />, recentlyListened, loadingListened)}
-      {renderSection("Les plus écoutés 🔥", <Flame className="w-4 h-4" />, mostPlayed, loadingMost)}
-      {renderSection("Recommandés pour vous ✨", <Sparkles className="w-4 h-4" />, recommended, loadingRecommended)}
-
-      {/* Deezer trending section */}
-      {renderSection(
-        "Tendances Deezer 🌍",
-        <Globe className="w-4 h-4" />,
-        deezerChart,
-        loadingChart
-      )}
+      {visibleSections.map((section) => {
+        const data = sectionDataMap[section.id];
+        if (!data) return null;
+        return (
+          <div key={section.id}>
+            {renderSection(section.title, data.songs, data.loading)}
+          </div>
+        );
+      })}
 
       {/* Empty state */}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && !loadingChart && deezerChart.length === 0 && (
