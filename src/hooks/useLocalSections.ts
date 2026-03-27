@@ -18,31 +18,6 @@ function rowToSong(row: any): Song {
   };
 }
 
-function customRowToSong(row: any): Song {
-  return {
-    id: `custom-${row.id}`,
-    title: row.title,
-    artist: row.artist,
-    album: row.album || "",
-    duration: row.duration || 0,
-    coverUrl: row.cover_url || "",
-    streamUrl: row.stream_url || "",
-    liked: false,
-    year: row.year || undefined,
-    genre: row.genre || undefined,
-  };
-}
-
-function customRowToSong(row: any): Song {
-  return {
-    id: `custom-${row.id}`,
-    title: row.title,
-    artist: row.artist,
-    album: row.album || "",
-    duration: row.duration || 0,
-    coverUrl: row.cover_url || "",
-    streamUrl: row.stream_url || "",
-    liked: false,
   };
 }
 
