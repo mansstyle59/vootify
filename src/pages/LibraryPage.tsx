@@ -167,8 +167,8 @@ function PremiumSongRow({
             <span className="shrink-0 text-[9px] text-muted-foreground/40">{song.year}</span>
           )}
         </div>
+      </div>
 
-      {/* Duration */}
       <span className="text-[11px] text-muted-foreground/50 tabular-nums flex-shrink-0 font-medium">
         {formatDuration(song.duration)}
       </span>
