@@ -1238,7 +1238,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     className="h-full rounded-full relative"
                     style={{
                       width: `${progressPct}%`,
-                      background: "linear-gradient(90deg, hsl(141 73% 42% / 0.8), hsl(0 0% 100% / 0.85))",
+                      background: "linear-gradient(90deg, hsl(var(--primary) / 0.8), hsl(var(--foreground) / 0.7))",
                       transition: isSeeking ? "none" : "width 0.3s linear",
                     }}
                   >
