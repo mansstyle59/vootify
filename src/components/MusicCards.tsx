@@ -113,19 +113,18 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
         </p>
       </div>
 
-      {/* Compact action buttons */}
-      <div className="flex items-center gap-0.5 flex-shrink-0">
+      {/* Action buttons — hidden on mobile, visible on desktop hover */}
+      <div className="hidden md:flex items-center gap-0.5 flex-shrink-0">
         <button
           onClick={(e) => {
             e.stopPropagation();
             toggleLike(song);
           }}
-          className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+          className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
         </button>
 
-        {/* Add to queue */}
         {!isBlocked && song.duration > 0 && (
           <button
             onClick={(e) => {
@@ -134,14 +133,13 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
               setQueue(newQueue);
               toast.success(`"${song.title}" ajouté à la file`);
             }}
-            className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
             title="Ajouter à la file d'attente"
           >
             <ListEnd className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
           </button>
         )}
 
-        {/* Add to playlist */}
         {song.duration > 0 && (
           <div className="relative" ref={menuRef}>
             <button
@@ -149,7 +147,7 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
                 e.stopPropagation();
                 setShowPlaylistMenu(!showPlaylistMenu);
               }}
-              className="p-1 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               title="Ajouter à une playlist"
             >
               <ListPlus className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
@@ -161,14 +159,13 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
             </AnimatePresence>
           </div>
         )}
-        {/* Download / cached indicator */}
         {song.streamUrl && song.duration > 0 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               if (!isCached && !isDownloading) download(song);
             }}
-            className={`p-1 rounded-full ${isCached || isDownloading ? "opacity-100" : "md:opacity-0 md:group-hover:opacity-100"} transition-opacity`}
+            className={`p-1 rounded-full ${isCached || isDownloading ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}
             title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
           >
             {isCached ? (
@@ -179,6 +176,16 @@ export function SongCard({ song, index, showIndex }: SongCardProps) {
               <Download className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
             )}
           </button>
+        )}
+      </div>
+
+      {/* Mobile: only show liked heart + cached indicator inline */}
+      <div className="flex md:hidden items-center gap-0.5 flex-shrink-0">
+        {liked && (
+          <Heart className="w-3 h-3 fill-primary text-primary flex-shrink-0" />
+        )}
+        {isCached && (
+          <CheckCircle className="w-3 h-3 text-primary flex-shrink-0" />
         )}
       </div>
 
