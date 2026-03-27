@@ -604,25 +604,26 @@ const SearchPage = () => {
 
             {allSongs && allSongs.length > 0 && (
               <div className="pt-2">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <Music className="w-4 h-4 text-muted-foreground" />
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Votre bibliothèque
                   </h2>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/20">
-                    <Music className="w-3 h-3" />
-                    {allSongs.length} morceaux
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent/15 text-accent-foreground border border-accent/20">
-                    <User className="w-3 h-3" />
-                    {new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size} artistes
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground border border-border">
-                    <Disc3 className="w-3 h-3" />
-                    {new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size} albums
-                  </span>
+                <div className="flex justify-around">
+                  {[
+                    { icon: <Music className="w-4 h-4" />, value: allSongs.length, label: "Morceaux", color: "text-primary border-primary/30 bg-primary/10" },
+                    { icon: <User className="w-4 h-4" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes", color: "text-primary border-primary/30 bg-primary/10" },
+                    { icon: <Disc3 className="w-4 h-4" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums", color: "text-primary border-primary/30 bg-primary/10" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="flex flex-col items-center gap-1">
+                      <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-2 ${stat.color}`}>
+                        {stat.icon}
+                        <span className="text-sm font-bold leading-tight mt-0.5">{stat.value}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium">{stat.label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
