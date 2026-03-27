@@ -246,6 +246,10 @@ export function MiniPlayer() {
     loadAbortRef.current = ac;
 
     audio.pause();
+    // Keep media session in "playing" state during track transition so iOS doesn't flip the button
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = "playing";
+    }
     if (navigator.vibrate) navigator.vibrate(8);
 
     const loadAndPlay = async () => {
@@ -293,9 +297,13 @@ export function MiniPlayer() {
         preloaded.ontimeupdate = handleTimeUpdate;
         preloaded.volume = volume;
         preloaded.muted = false;
-        preloaded.play().catch((e) => {
+        preloaded.play().then(() => {
+          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+        }).catch((e) => {
           console.error("[player] Gapless play failed:", e);
-          setTimeout(() => preloaded.play().catch(() => {}), 200);
+          setTimeout(() => preloaded.play().then(() => {
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+          }).catch(() => {}), 200);
         });
         // Clean old main
         oldMain.onended = null;
@@ -340,7 +348,9 @@ export function MiniPlayer() {
         audio.src = srcToUse;
         audio.volume = 0;
         audio.muted = false;
-        audio.play().catch((e) => {
+        audio.play().then(() => {
+          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+        }).catch((e) => {
           console.error("[player] Crossfade play failed:", e);
           setTimeout(() => audio.play().catch(() => {}), 200);
         });
@@ -349,23 +359,29 @@ export function MiniPlayer() {
         audio.src = srcToUse;
         audio.volume = volume;
         audio.muted = false;
-        audio.play().catch((e) => {
+        audio.play().then(() => {
+          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+        }).catch((e) => {
           console.warn("[player] Immediate play failed, waiting canplay:", e);
           const onCanPlay = () => {
             audio.removeEventListener("canplay", onCanPlay);
             audio.volume = volume;
             audio.muted = false;
-            audio.play().catch(console.error);
+            audio.play().then(() => {
+              if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+            }).catch(console.error);
           };
           audio.addEventListener("canplay", onCanPlay, { once: true });
         });
 
-        // Safety timeout — shorter for streaming-grade responsiveness
+        // Safety timeout
         setTimeout(() => {
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
             audio.muted = false;
-            audio.play().catch(console.error);
+            audio.play().then(() => {
+              if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+            }).catch(console.error);
           }
         }, 300);
       }
