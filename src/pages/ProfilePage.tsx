@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { hdCache } from "@/lib/hdCache";
+import { offlineCache } from "@/lib/offlineCache";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -9,9 +10,16 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, Sun, Moon, Monitor } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, Sun, Moon, Monitor, HardDrive, Database } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} Go`;
+}
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
@@ -25,6 +33,39 @@ const ProfilePage = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
+  const [offlineCacheSize, setOfflineCacheSize] = useState<number | null>(null);
+  const [offlineCount, setOfflineCount] = useState(0);
+
+  // Load cache sizes
+  useEffect(() => {
+    // SW cache size
+    if ("caches" in window) {
+      (async () => {
+        try {
+          const cacheNames = await caches.keys();
+          let total = 0;
+          for (const name of cacheNames) {
+            const cache = await caches.open(name);
+            const keys = await cache.keys();
+            for (const req of keys) {
+              try {
+                const res = await cache.match(req);
+                if (res) {
+                  const blob = await res.clone().blob();
+                  total += blob.size;
+                }
+              } catch {}
+            }
+          }
+          setSwCacheSize(total);
+        } catch {}
+      })();
+    }
+    // Offline (IndexedDB) cache
+    offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
+    offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -323,6 +364,48 @@ const ProfilePage = () => {
                 <Trash2 className="w-3.5 h-3.5" />
                 Vider
               </button>
+            </div>
+
+            {/* SW & Offline cache indicators */}
+            <div className="space-y-3 pt-2 border-t border-border/50">
+              <div className="flex items-center gap-3 mb-1">
+                <Database className="w-5 h-5 text-primary" />
+                <h3 className="text-base font-semibold text-foreground">Stockage</h3>
+              </div>
+
+              {/* Service Worker cache */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Cache navigateur (SW)</p>
+                  <p className="text-xs text-muted-foreground">
+                    {swCacheSize !== null ? formatBytes(swCacheSize) : "Calcul…"}
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!("caches" in window)) return;
+                    const names = await caches.keys();
+                    await Promise.all(names.map((n) => caches.delete(n)));
+                    setSwCacheSize(0);
+                    toast.success("Cache SW vidé !");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Vider
+                </button>
+              </div>
+
+              {/* Offline downloads cache */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Morceaux hors-ligne</p>
+                  <p className="text-xs text-muted-foreground">
+                    {offlineCount} titre{offlineCount > 1 ? "s" : ""} · {offlineCacheSize !== null ? formatBytes(offlineCacheSize) : "Calcul…"}
+                  </p>
+                </div>
+                <HardDrive className="w-4 h-4 text-muted-foreground" />
+              </div>
             </div>
           </motion.div>
 
