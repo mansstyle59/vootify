@@ -1000,15 +1000,37 @@ function SongsTab() {
               {selectedIds.has(s.id) && <Check className="w-3 h-3" />}
             </button>
 
-            <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
-              {s.cover_url ? (
-                <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                  <Music className="w-4 h-4 text-primary/30" />
-                </div>
-              )}
-            </div>
+            {editingId === s.id ? (
+              <div className="relative w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0 group/cover cursor-pointer" onClick={(e) => { e.stopPropagation(); coverFileRef.current?.click(); }}>
+                <input ref={coverFileRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                {uploadingCover ? (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  </div>
+                ) : editCoverUrl ? (
+                  <>
+                    <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
+                      <ImageIcon className="w-4 h-4 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                    <Upload className="w-4 h-4 text-primary/50" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
+                {s.cover_url ? (
+                  <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                    <Music className="w-4 h-4 text-primary/30" />
+                  </div>
+                )}
+              </div>
+            )}
             {editingId === s.id ? (
               <div className="flex-1 min-w-0 space-y-1.5">
                 <input
