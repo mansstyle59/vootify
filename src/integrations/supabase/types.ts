@@ -206,6 +206,36 @@ export type Database = {
         }
         Relationships: []
       }
+      friday_releases: {
+        Row: {
+          album_id: number
+          artist: string
+          cover_url: string | null
+          id: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          album_id: number
+          artist: string
+          cover_url?: string | null
+          id?: string
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          album_id?: number
+          artist?: string
+          cover_url?: string | null
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       home_config: {
         Row: {
           id: string
