@@ -355,7 +355,19 @@ const LibraryPage = () => {
     enabled: tab === "custom",
   });
 
-  const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
+  // Check which songs in current view are cached offline
+  useEffect(() => {
+    const allSongs = [
+      ...(tab === "recent" ? recentlyPlayed : []),
+      ...(tab === "liked" ? likedSongs : []),
+      ...(tab === "custom" ? customSongs : []),
+    ];
+    if (allSongs.length === 0) { setLibraryCachedIds(new Set()); return; }
+    Promise.all(
+      allSongs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))
+    ).then((ids) => setLibraryCachedIds(new Set(ids.filter(Boolean) as string[])));
+  }, [tab, recentlyPlayed, likedSongs, customSongs]);
+
   const [cacheSize, setCacheSize] = useState(0);
   const [isRedownloading, setIsRedownloading] = useState(false);
   const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
