@@ -448,6 +448,83 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_playlist_songs: {
+        Row: {
+          album: string | null
+          artist: string
+          cover_url: string | null
+          created_at: string
+          duration: number
+          id: string
+          position: number
+          shared_playlist_id: string
+          song_id: string
+          stream_url: string | null
+          title: string
+        }
+        Insert: {
+          album?: string | null
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          position?: number
+          shared_playlist_id: string
+          song_id: string
+          stream_url?: string | null
+          title: string
+        }
+        Update: {
+          album?: string | null
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          duration?: number
+          id?: string
+          position?: number
+          shared_playlist_id?: string
+          song_id?: string
+          stream_url?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_playlist_songs_shared_playlist_id_fkey"
+            columns: ["shared_playlist_id"]
+            isOneToOne: false
+            referencedRelation: "shared_playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_playlists: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          id: string
+          playlist_name: string
+          shared_by: string
+          shared_to: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          playlist_name: string
+          shared_by: string
+          shared_to: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          playlist_name?: string
+          shared_by?: string
+          shared_to?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
