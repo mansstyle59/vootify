@@ -12,6 +12,8 @@ export interface HomeConfig {
   sections: HomeSection[];
   heroTitle?: string;
   heroSubtitle?: string;
+  heroBgColor?: string;
+  heroBgImage?: string;
 }
 
 const DEFAULT_SECTIONS: HomeSection[] = [
