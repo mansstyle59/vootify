@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -14,6 +15,11 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminAuth();
   const { isActive, loading: subLoading } = useSubscription(user?.id ?? null);
+  const location = useLocation();
+
+  // Allow auth-related routes to bypass the gate
+  const publicPaths = ["/auth", "/reset-password"];
+  if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
   // Still loading → don't flash
   if (adminLoading || subLoading) return null;
