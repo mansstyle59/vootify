@@ -1144,7 +1144,7 @@ const LibraryPage = () => {
                     {/* Sort + Select toggle */}
                     <div className="relative flex items-center justify-between px-1 mb-3">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
-                        {selectMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : `${customSongs.length} titre${customSongs.length > 1 ? "s" : ""}`}
+                        {selectMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : `${sortedCustomSongs.length} titre${sortedCustomSongs.length > 1 ? "s" : ""}${customSearch.trim() ? ` sur ${customSongs.length}` : ""}`}
                       </p>
                       <div className="flex items-center gap-1.5">
                         <button
