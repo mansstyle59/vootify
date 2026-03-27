@@ -16,13 +16,15 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
   const [showPlaylistSub, setShowPlaylistSub] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const didLongPressRef = useRef(false);
   const { play, queue, setQueue, toggleLike, isLiked } = usePlayerStore();
   const liked = isLiked(song.id);
 
   const startPress = useCallback(() => {
+    didLongPressRef.current = false;
     timerRef.current = setTimeout(() => {
+      didLongPressRef.current = true;
       setOpen(true);
-      // Haptic feedback
       if (navigator.vibrate) navigator.vibrate(15);
     }, 500);
   }, []);
@@ -47,6 +49,13 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
       document.removeEventListener("touchstart", handler as any);
     };
   }, [open]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const actions = [
     {
@@ -88,7 +97,14 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
     <div className="relative">
       <div
         onTouchStart={startPress}
-        onTouchEnd={cancelPress}
+        onTouchEnd={(e) => {
+          cancelPress();
+          // Prevent click from firing after a successful long-press
+          if (didLongPressRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
         onTouchCancel={cancelPress}
         onMouseDown={startPress}
         onMouseUp={cancelPress}
@@ -96,6 +112,14 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
         onContextMenu={(e) => {
           e.preventDefault();
           setOpen(true);
+        }}
+        onClick={(e) => {
+          // Block the click event that follows a long-press
+          if (didLongPressRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            didLongPressRef.current = false;
+          }
         }}
       >
         {children}
