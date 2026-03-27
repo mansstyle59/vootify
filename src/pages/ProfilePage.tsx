@@ -358,6 +358,48 @@ const ProfilePage = () => {
                 Vider
               </button>
             </div>
+
+            {/* SW & Offline cache indicators */}
+            <div className="space-y-3 pt-2 border-t border-border/50">
+              <div className="flex items-center gap-3 mb-1">
+                <Database className="w-5 h-5 text-primary" />
+                <h3 className="text-base font-semibold text-foreground">Stockage</h3>
+              </div>
+
+              {/* Service Worker cache */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Cache navigateur (SW)</p>
+                  <p className="text-xs text-muted-foreground">
+                    {swCacheSize !== null ? formatBytes(swCacheSize) : "Calcul…"}
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!("caches" in window)) return;
+                    const names = await caches.keys();
+                    await Promise.all(names.map((n) => caches.delete(n)));
+                    setSwCacheSize(0);
+                    toast.success("Cache SW vidé !");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Vider
+                </button>
+              </div>
+
+              {/* Offline downloads cache */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Morceaux hors-ligne</p>
+                  <p className="text-xs text-muted-foreground">
+                    {offlineCount} titre{offlineCount > 1 ? "s" : ""} · {offlineCacheSize !== null ? formatBytes(offlineCacheSize) : "Calcul…"}
+                  </p>
+                </div>
+                <HardDrive className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
           </motion.div>
 
           {isAdmin && (
