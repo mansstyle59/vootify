@@ -120,7 +120,9 @@ const App = () => {
               <NetworkStatus />
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
-                <AppContent />
+                <AuthGate>
+                  <AppContent />
+                </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
           </AuthProvider>
