@@ -1319,6 +1319,25 @@ function HomeTab() {
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroBgColor, setHeroBgColor] = useState("");
   const [heroBgImage, setHeroBgImage] = useState("");
+  const [uploadingBgImage, setUploadingBgImage] = useState(false);
+  const bgImageFileRef = useRef<HTMLInputElement>(null);
+
+  const handleBgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (max 5 Mo)"); return; }
+    setUploadingBgImage(true);
+    const ext = file.name.split(".").pop();
+    const path = `hero-bg/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("covers").upload(path, file);
+    if (error) { toast.error("Erreur d'upload"); setUploadingBgImage(false); return; }
+    const { data: urlData } = supabase.storage.from("covers").getPublicUrl(path);
+    setHeroBgImage(urlData.publicUrl);
+    setUploadingBgImage(false);
+    toast.success("Image uploadée !");
+    if (bgImageFileRef.current) bgImageFileRef.current.value = "";
+  };
   const [editingCustom, setEditingCustom] = useState<string | null>(null);
   const [songPickerOpen, setSongPickerOpen] = useState(false);
 
@@ -1447,13 +1466,24 @@ function HomeTab() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Image de fond (URL, optionnel)</label>
-            <input
-              value={heroBgImage}
-              onChange={(e) => setHeroBgImage(e.target.value)}
-              placeholder="https://exemple.com/image.jpg"
-              className="w-full text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <label className="text-xs text-muted-foreground mb-1 block">Image de fond (optionnel)</label>
+            <div className="flex gap-2">
+              <input
+                value={heroBgImage}
+                onChange={(e) => setHeroBgImage(e.target.value)}
+                placeholder="https://exemple.com/image.jpg"
+                className="flex-1 text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <input ref={bgImageFileRef} type="file" accept="image/*" onChange={handleBgImageUpload} className="hidden" />
+              <button
+                onClick={() => bgImageFileRef.current?.click()}
+                disabled={uploadingBgImage}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex-shrink-0"
+              >
+                {uploadingBgImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                Importer
+              </button>
+            </div>
             {heroBgImage && (
               <div className="mt-2 relative rounded-lg overflow-hidden h-20">
                 <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" />
