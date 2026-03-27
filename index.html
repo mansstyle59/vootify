@@ -19,12 +19,16 @@
     <link rel="apple-touch-startup-image" href="/splash-screen.png" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
-    <!-- DNS prefetch for external APIs -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <!-- Preconnect for critical origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://whjjlqznrwroiwrpmoum.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://c.saavncdn.com" />
     <link rel="dns-prefetch" href="https://cdns-images.dzcdn.net" />
-    <link rel="preconnect" href="https://whjjlqznrwroiwrpmoum.supabase.co" crossorigin />
+
+    <!-- Preload font CSS for faster text rendering -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" /></noscript>
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -40,7 +44,13 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Inline skeleton to eliminate white flash before React hydrates -->
+      <div style="min-height:100vh;background:#0b0e14;display:flex;align-items:center;justify-content:center">
+        <div style="width:96px;height:96px;border-radius:28px;background:#111622;animation:pulse 1.5s ease-in-out infinite"></div>
+      </div>
+      <style>@keyframes pulse{0%,100%{opacity:.6}50%{opacity:.3}}</style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
