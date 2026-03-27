@@ -111,15 +111,48 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* iOS rubber-band feel for scrollable containers */
+  .scrollable-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Native-like selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+    color: inherit;
+  }
+
+  /* Smooth input focus */
+  input, textarea, select {
+    @apply transition-shadow duration-200;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
   }
 }
 
