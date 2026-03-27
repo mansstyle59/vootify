@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3 } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, ty
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests";
 
 interface UserProfile {
   user_id: string;
@@ -46,6 +46,7 @@ const AdminPage = () => {
     { key: "home", label: "Accueil", icon: LayoutDashboard },
     { key: "users", label: "Utilisateurs", icon: Users },
     { key: "subscriptions", label: "Abonnements", icon: CreditCard },
+    { key: "requests", label: "Demandes", icon: Inbox },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "logs", label: "Logs", icon: ScrollText },
@@ -97,6 +98,7 @@ const AdminPage = () => {
         {tab === "home" && <HomeTab />}
         {tab === "users" && <UsersTab />}
         {tab === "subscriptions" && <SubscriptionsTab />}
+        {tab === "requests" && <RequestsTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
@@ -1324,6 +1326,163 @@ interface Subscription {
   starts_at: string;
   expires_at: string | null;
   status: string;
+}
+
+function RequestsTab() {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const loadRequests = async () => {
+    const { data } = await supabase
+      .from("access_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setRequests(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadRequests(); }, []);
+
+  const handleAction = async (id: string, status: "approved" | "rejected", userId?: string) => {
+    setActionLoading(id);
+    try {
+      await supabase
+        .from("access_requests")
+        .update({ status, resolved_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (status === "approved" && userId) {
+        // Create or activate subscription for the user
+        const now = new Date();
+        const expiresAt = new Date(now);
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        
+        // Check if subscription exists
+        const { data: existingSub } = await supabase
+          .from("subscriptions")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (existingSub) {
+          await supabase
+            .from("subscriptions")
+            .update({ status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
+            .eq("user_id", userId);
+        } else {
+          await supabase.from("subscriptions").insert({
+            user_id: userId,
+            plan: "standard",
+            status: "active",
+            starts_at: now.toISOString(),
+            expires_at: expiresAt.toISOString(),
+          });
+        }
+        toast.success("Demande approuvée — abonnement activé");
+      } else {
+        toast.success("Demande rejetée");
+      }
+      await loadRequests();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  const pending = requests.filter(r => r.status === "pending");
+  const resolved = requests.filter(r => r.status !== "pending");
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+        <Inbox className="w-4 h-4 text-primary" />
+        Demandes d'accès
+        {pending.length > 0 && (
+          <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+            {pending.length}
+          </span>
+        )}
+      </h3>
+
+      {requests.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Aucune demande d'accès</p>
+      ) : (
+        <div className="space-y-2">
+          {pending.length > 0 && (
+            <>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">En attente</p>
+              {pending.map((r) => (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                    {(r.display_name || "?").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{r.display_name || r.user_email}</p>
+                    <p className="text-xs text-muted-foreground">{r.user_email}</p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleAction(r.id, "approved", r.user_id)}
+                      disabled={!!actionLoading}
+                      className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                      title="Approuver"
+                    >
+                      {actionLoading === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleAction(r.id, "rejected")}
+                      disabled={!!actionLoading}
+                      className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                      title="Rejeter"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </>
+          )}
+
+          {resolved.length > 0 && (
+            <>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-4">Historique</p>
+              {resolved.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-secondary/20 border border-border/50 opacity-60"
+                >
+                  <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center text-sm font-bold text-muted-foreground flex-shrink-0">
+                    {(r.display_name || "?").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{r.display_name || r.user_email}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    r.status === "approved" 
+                      ? "bg-primary/10 text-primary" 
+                      : "bg-destructive/10 text-destructive"
+                  }`}>
+                    {r.status === "approved" ? "Approuvé" : "Rejeté"}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function SubscriptionsTab() {
