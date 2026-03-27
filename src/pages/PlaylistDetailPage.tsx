@@ -5,7 +5,7 @@ import { SongCard } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
 
@@ -84,14 +84,26 @@ const PlaylistDetailPage = () => {
     await loadPlaylistSongs(id); setDragIdx(null); setOverIdx(null);
   }, [dragIdx, songs, id, loadPlaylistSongs]);
 
+  const [showCoverUrlInput, setShowCoverUrlInput] = useState(false);
+  const [coverUrlInput, setCoverUrlInput] = useState("");
+
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file || !id) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const { error } = await supabase.from("playlists").update({ cover_url: reader.result as string }).eq("id", id);
-      if (error) toast.error("Erreur couverture"); else { toast.success("Couverture mise à jour"); const uid = usePlayerStore.getState().userId; if (uid) usePlayerStore.getState().loadUserData(uid); }
-    };
-    reader.readAsDataURL(file);
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (max 5 Mo)"); return; }
+    const ext = file.name.split(".").pop();
+    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("covers").upload(path, file);
+    if (upErr) { toast.error("Erreur upload"); return; }
+    const { data: urlData } = supabase.storage.from("covers").getPublicUrl(path);
+    const { error } = await supabase.from("playlists").update({ cover_url: urlData.publicUrl }).eq("id", id);
+    if (error) toast.error("Erreur couverture"); else { toast.success("Couverture mise à jour"); const uid = usePlayerStore.getState().userId; if (uid) usePlayerStore.getState().loadUserData(uid); }
+  };
+
+  const handleCoverUrlSubmit = async () => {
+    if (!coverUrlInput.trim() || !id) return;
+    const { error } = await supabase.from("playlists").update({ cover_url: coverUrlInput.trim() }).eq("id", id);
+    if (error) toast.error("Erreur couverture");
+    else { toast.success("Couverture mise à jour"); setCoverUrlInput(""); setShowCoverUrlInput(false); const uid = usePlayerStore.getState().userId; if (uid) usePlayerStore.getState().loadUserData(uid); }
   };
 
 
@@ -199,16 +211,19 @@ const PlaylistDetailPage = () => {
                         <Share2 className="w-4 h-4 text-muted-foreground" />
                         Partager
                       </button>
-                      {true && (
-                        <>
-                          <div className="h-px bg-white/[0.06] mx-2 my-1" />
-                          <label className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors cursor-pointer">
-                            <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                            Changer la couverture
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleCoverChange(e); setMenuOpen(false); }} />
-                          </label>
-                        </>
-                      )}
+                      <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                      <label className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors cursor-pointer">
+                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                        Changer la couverture (fichier)
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleCoverChange(e); setMenuOpen(false); }} />
+                      </label>
+                      <button
+                        onClick={() => { setShowCoverUrlInput(true); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                      >
+                        <Link className="w-4 h-4 text-muted-foreground" />
+                        Changer la couverture (URL)
+                      </button>
                     </div>
                   </motion.div>
                 </>
@@ -263,7 +278,27 @@ const PlaylistDetailPage = () => {
         </div>
       </div>
 
-      {/* ─── ACTION BAR ─── */}
+      {/* Cover URL input */}
+      {showCoverUrlInput && (
+        <div className="px-4 md:px-8 mb-3">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={coverUrlInput}
+              onChange={(e) => setCoverUrlInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCoverUrlSubmit())}
+              placeholder="https://... URL de l'image"
+              className="flex-1 px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
+              autoFocus
+            />
+            <button onClick={handleCoverUrlSubmit} className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">OK</button>
+            <button onClick={() => setShowCoverUrlInput(false)} className="p-2.5 rounded-xl bg-secondary text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -285,21 +320,6 @@ const PlaylistDetailPage = () => {
         >
           <Shuffle className="w-4 h-4" />
           Aléatoire
-        </button>
-        <button
-          onClick={handleDownloadAll}
-          disabled={displaySongs.length === 0 || downloading}
-          className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
-        >
-          <Download className={`w-5 h-5 ${downloading ? "animate-bounce" : ""}`} />
-        </button>
-        <button
-          onClick={() => { setResolveKey((k) => k + 1); toast("Relance de la résolution HD…"); }}
-          disabled={resolving || displaySongs.length === 0}
-          className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
-          title="Relancer la résolution HD"
-        >
-          <RotateCcw className={`w-5 h-5 ${resolving ? "animate-spin" : ""}`} />
         </button>
       </motion.div>
 
