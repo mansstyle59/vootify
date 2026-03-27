@@ -1448,14 +1448,17 @@ function HomeTab() {
                   </button>
                 </div>
 
-                <input
-                  value={section.title}
-                  onChange={(e) => {
-                    updateTitle(section.id, e.target.value);
-                    if (isCustom) updateCustomTitle(section.id, e.target.value);
-                  }}
-                  className="flex-1 text-sm font-medium bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 min-w-0"
-                />
+                <div className="flex-1 relative min-w-0">
+                  <input
+                    value={section.title}
+                    onChange={(e) => {
+                      updateTitle(section.id, e.target.value);
+                      if (isCustom) updateCustomTitle(section.id, e.target.value);
+                    }}
+                    placeholder="Nom de la section (emoji inclus)"
+                    className="w-full text-sm font-medium bg-transparent text-foreground focus:outline-none focus:bg-muted/40 focus:ring-1 focus:ring-primary/30 rounded px-2 py-1 min-w-0 transition-colors"
+                  />
+                </div>
 
                 {isCustom && (
                   <>
