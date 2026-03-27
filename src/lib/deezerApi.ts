@@ -206,14 +206,11 @@ export const deezerApi = {
     // ── 2 & 3. Custom songs + JioSaavn — run in PARALLEL for minimal latency ──
     step("Résolution…");
 
-    // Custom songs query
+    // Custom songs query — with in-memory cache to avoid repeated DB calls
     const customPromise = (async () => {
       try {
-        const { data: customSongs } = await supabase
-          .from("custom_songs")
-          .select("*")
-          .not("stream_url", "is", null);
-
+        // Use cached custom songs list (refreshed every 60s)
+        const customSongs = await getCachedCustomSongs();
         if (!customSongs || customSongs.length === 0) return null;
 
         let bestCustom: typeof customSongs[0] | null = null;
@@ -249,7 +246,7 @@ export const deezerApi = {
       }
     })();
 
-    // JioSaavn HD search
+    // JioSaavn HD search — PARALLEL batches instead of sequential
     const saavnPromise = (async () => {
       try {
         const mainArtist = song.artist.split(",")[0].trim();
@@ -276,15 +273,40 @@ export const deezerApi = {
         let bestMatch: Song | null = null;
         let bestScore = 0;
 
-        for (const q of uniqueQueries) {
-          try {
-            const results = await jiosaavnApi.search(q, 15);
-            for (const r of results) {
-              const s = scoreCandidate(r);
-              if (s > bestScore) { bestScore = s; bestMatch = r; }
+        // Run first 3 queries in parallel for speed
+        const batch1 = uniqueQueries.slice(0, 3);
+        const batch1Results = await Promise.allSettled(
+          batch1.map((q) => jiosaavnApi.search(q, 10))
+        );
+
+        for (const r of batch1Results) {
+          if (r.status !== "fulfilled") continue;
+          for (const track of r.value) {
+            const s = scoreCandidate(track);
+            if (s > bestScore) { bestScore = s; bestMatch = track; }
+          }
+        }
+
+        // If good enough, skip remaining queries
+        if (bestScore >= 150) {
+          return bestMatch?.streamUrl && bestScore >= 40
+            ? { match: bestMatch, score: bestScore }
+            : null;
+        }
+
+        // Run remaining queries in parallel
+        const batch2 = uniqueQueries.slice(3);
+        if (batch2.length > 0) {
+          const batch2Results = await Promise.allSettled(
+            batch2.map((q) => jiosaavnApi.search(q, 10))
+          );
+          for (const r of batch2Results) {
+            if (r.status !== "fulfilled") continue;
+            for (const track of r.value) {
+              const s = scoreCandidate(track);
+              if (s > bestScore) { bestScore = s; bestMatch = track; }
             }
-            if (bestScore >= 180) break;
-          } catch { /* continue */ }
+          }
         }
 
         if (bestMatch?.streamUrl && bestScore >= 40) {
