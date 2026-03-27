@@ -62,6 +62,15 @@ interface SongEntry {
   uploaded: boolean;
   skipped: boolean;
   id3Filled: Set<string>;
+  genre?: string;
+  bitrate?: number;
+  sampleRate?: number;
+  codec?: string;
+  year?: number;
+  trackNumber?: number;
+  totalTracks?: number;
+  albumArtist?: string;
+  composer?: string;
 }
 
 function SongForm() {
