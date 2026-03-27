@@ -350,18 +350,6 @@ const LibraryPage = () => {
         }))).then(() => queryClient.invalidateQueries({ queryKey: ["custom-songs"] }));
       }
 
-      // Auto-enrich missing metadata (cover, album, duration) via Deezer
-      const toEnrich = songs.filter((s) => !s.coverUrl || !s.album || !s.duration);
-      if (toEnrich.length > 0) {
-        autoEnrichCustomSongs(
-          toEnrich.map((s) => ({
-            dbId: s._dbId, title: s.title, artist: s.artist,
-            album: s.album || null, coverUrl: s.coverUrl || null, duration: s.duration,
-          }))
-        ).then((count) => {
-          if (count > 0) queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
-        });
-      }
 
       return songs as Song[];
     },

@@ -104,22 +104,7 @@ async function uploadAndProcessFiles(
       let artist = id3.artist;
       let coverUrl = id3.coverUrl;
 
-      // If ID3 is incomplete, try Deezer search
-      if (!title || !artist || !coverUrl) {
-        const cleanName = cleanTitle(file.name);
-        const searchQuery = title && artist
-          ? `${artist} ${title}`
-          : title || cleanName;
-        try {
-          const results = await deezerApi.searchTracks(searchQuery, 3);
-          if (results.length > 0) {
-            const best = results[0];
-            if (!title) title = best.title;
-            if (!artist) artist = best.artist;
-            if (!coverUrl) coverUrl = best.coverUrl;
-          }
-        } catch {}
-      }
+      // Use ID3 metadata only - no external lookups
 
       const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;

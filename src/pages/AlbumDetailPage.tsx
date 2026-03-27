@@ -32,13 +32,17 @@ const AlbumDetailPage = () => {
   const coverOpacity = useTransform(scrollY, [0, 250], [1, 0.5]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
 
-  const isDeezer = id?.startsWith("dz-album-");
-
   const { data, isLoading } = useQuery({
     queryKey: ["album-detail", id],
     queryFn: async () => {
-      if (isDeezer) return deezerApi.getAlbumTracks(id!);
-      throw new Error("Unknown album source");
+      // Local albums only - fetch from custom_albums + custom_songs
+      const { data: album } = await supabase.from("custom_albums").select("*").eq("id", id).single();
+      if (!album) throw new Error("Album not found");
+      const { data: songs } = await supabase.from("custom_songs").select("*").eq("album", album.title).eq("artist", album.artist);
+      return {
+        album: { id: album.id, title: album.title, artist: album.artist, coverUrl: album.cover_url || "", year: album.year || 2024, songs: [] },
+        tracks: (songs || []).map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || album.cover_url || "", streamUrl: s.stream_url || "", liked: false })),
+      };
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,

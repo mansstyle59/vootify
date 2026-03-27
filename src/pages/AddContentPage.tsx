@@ -101,20 +101,7 @@ function SongForm() {
       }
       if (duration) id3Filled.add("duration");
 
-      if (!meta.title || !meta.artist || !meta.coverUrl) {
-        const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
-        const query = meta.title && meta.artist ? `${meta.artist} ${meta.title}` : meta.title || cleanName;
-        try {
-          const results = await deezerApi.searchTracks(query, 3);
-          if (results.length > 0) {
-            const best = results[0];
-            if (!meta.title) meta.title = best.title;
-            if (!meta.artist) meta.artist = best.artist;
-            if (!meta.album) meta.album = best.album;
-            if (!meta.coverUrl) meta.coverUrl = best.coverUrl;
-          }
-        } catch {}
-      }
+      // Use ID3 metadata only
 
       entries.push({
         file,
@@ -388,17 +375,7 @@ function PlaylistForm() {
         } catch { duration = 0; }
       }
 
-      if (!meta.title || !meta.artist || !meta.coverUrl) {
-        const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
-        try {
-          const results = await deezerApi.searchTracks(meta.title || cleanName, 3);
-          if (results.length > 0) {
-            if (!meta.title) meta.title = results[0].title;
-            if (!meta.artist) meta.artist = results[0].artist;
-            if (!meta.coverUrl) meta.coverUrl = results[0].coverUrl;
-          }
-        } catch {}
-      }
+      // Use ID3 metadata only
 
       entries.push({
         file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
