@@ -18,7 +18,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   // Allow auth-related routes to bypass the gate
-  const publicPaths = ["/auth", "/reset-password"];
+  const publicPaths = ["/auth", "/reset-password", "/request-access"];
   if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
   // Still loading → don't flash
