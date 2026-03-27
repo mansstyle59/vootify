@@ -137,26 +137,26 @@ function StatsTab() {
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
   const cards = [
-    { label: "Utilisateurs", value: stats.users, icon: Users, color: "text-blue-400" },
-    { label: "Morceaux custom", value: stats.songs, icon: Music, color: "text-primary" },
-    { label: "Radios custom", value: stats.radios, icon: Radio, color: "text-orange-400" },
-    { label: "Playlists", value: stats.playlists, icon: ListMusic, color: "text-purple-400" },
-    { label: "Titres aimés", value: stats.liked, icon: Music, color: "text-pink-400" },
+    { label: "Utilisateurs", value: stats.users, icon: Users, border: "border-blue-400/40", color: "text-blue-400" },
+    { label: "Morceaux", value: stats.songs, icon: Music, border: "border-primary/40", color: "text-primary" },
+    { label: "Radios", value: stats.radios, icon: Radio, border: "border-orange-400/40", color: "text-orange-400" },
+    { label: "Playlists", value: stats.playlists, icon: ListMusic, border: "border-purple-400/40", color: "text-purple-400" },
+    { label: "Titres aimés", value: stats.liked, icon: Music, border: "border-pink-400/40", color: "text-pink-400" },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <div className="flex flex-wrap justify-center gap-4 py-4">
       {cards.map((c, i) => (
         <motion.div
           key={c.label}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.05 }}
-          className="rounded-xl bg-secondary/50 border border-border p-4"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
+          className={`w-24 h-24 rounded-full border-2 ${c.border} bg-secondary/40 flex flex-col items-center justify-center gap-0.5`}
         >
-          <c.icon className={`w-5 h-5 ${c.color} mb-2`} />
-          <p className="text-2xl font-bold text-foreground">{c.value}</p>
-          <p className="text-xs text-muted-foreground">{c.label}</p>
+          <c.icon className={`w-4 h-4 ${c.color}`} />
+          <p className="text-xl font-bold text-foreground leading-none">{c.value}</p>
+          <p className="text-[10px] text-muted-foreground leading-tight text-center px-1">{c.label}</p>
         </motion.div>
       ))}
     </div>
