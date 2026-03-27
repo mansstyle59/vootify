@@ -207,7 +207,7 @@ export async function batchSearchCovers(
   const albumCache = new Map<string, DeezerMeta | null>();
   let done = 0;
 
-  for (const song of needsSearch) {
+  for (const song of toSearch) {
     const albumKey = song.album
       ? `${song.artist.toLowerCase()}|||${song.album.toLowerCase()}`
       : "";
@@ -216,7 +216,7 @@ export async function batchSearchCovers(
       const cached = albumCache.get(albumKey);
       if (cached) results.set(song.index, cached);
       done++;
-      onProgress?.(done, needsSearch.length);
+      onProgress?.(done, toSearch.length);
       continue;
     }
 
@@ -237,7 +237,7 @@ export async function batchSearchCovers(
     }
 
     done++;
-    onProgress?.(done, needsSearch.length);
+    onProgress?.(done, toSearch.length);
   }
 
   return results;
