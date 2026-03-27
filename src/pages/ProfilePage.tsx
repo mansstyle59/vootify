@@ -26,6 +26,39 @@ const ProfilePage = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
+  const [offlineCacheSize, setOfflineCacheSize] = useState<number | null>(null);
+  const [offlineCount, setOfflineCount] = useState(0);
+
+  // Load cache sizes
+  useEffect(() => {
+    // SW cache size
+    if ("caches" in window) {
+      (async () => {
+        try {
+          const cacheNames = await caches.keys();
+          let total = 0;
+          for (const name of cacheNames) {
+            const cache = await caches.open(name);
+            const keys = await cache.keys();
+            for (const req of keys) {
+              try {
+                const res = await cache.match(req);
+                if (res) {
+                  const blob = await res.clone().blob();
+                  total += blob.size;
+                }
+              } catch {}
+            }
+          }
+          setSwCacheSize(total);
+        } catch {}
+      })();
+    }
+    // Offline (IndexedDB) cache
+    offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
+    offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user) {
