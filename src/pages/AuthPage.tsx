@@ -21,10 +21,12 @@ const AuthPage = () => {
   const [resetSent, setResetSent] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from || "/";
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(from, { replace: true });
+  }, [user, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
