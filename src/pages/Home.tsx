@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music } from "lucide-react";
+import { Music, Disc3 } from "lucide-react";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
@@ -49,8 +50,24 @@ function useCustomSectionSongs(songIds: string[]) {
 }
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
+
+  // Fetch albums
+  const { data: albums, isLoading: loadingAlbums } = useQuery({
+    queryKey: ["home-albums"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_albums")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
   const { data: recentlyAdded, isLoading: loadingAdded } = useRecentlyAdded(20);
   const { data: recentlyListened, isLoading: loadingListened } = useRecentlyListened(20);
@@ -190,7 +207,27 @@ const HomePage = () => {
         );
       })}
 
-      {/* Empty state */}
+      {/* Albums section */}
+      {(loadingAlbums || (albums && albums.length > 0)) && (
+        <Section title="Albums">
+          <HorizontalScroll>
+            {loadingAlbums ? (
+              <CoverSkeleton count={6} />
+            ) : (
+              albums?.map((album, i) => (
+                <CoverCard
+                  key={album.id}
+                  title={album.title}
+                  subtitle={album.artist}
+                  imageUrl={album.cover_url || ""}
+                  index={i}
+                  onClick={() => navigate(`/album/${album.id}`)}
+                />
+              ))
+            )}
+          </HorizontalScroll>
+        </Section>
+      )}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <div className="px-4 md:px-8 py-20 text-center">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
