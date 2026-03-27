@@ -269,9 +269,9 @@ export function MiniPlayer() {
           (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
 
         if (needsResolution) {
-          setResolveStep("Recherche Custom…");
+          setResolveStep("Résolution…");
           try {
-            const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
+            const resolved = await deezerApi.resolveFullStream(songToPlay, (s) => setResolveStep(s));
             if (ac.signal.aborted) return;
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
@@ -388,7 +388,7 @@ export function MiniPlayer() {
             audio.muted = false;
             audio.play().catch(console.error);
           }
-        }, 600);
+        }, 300);
       }
     };
 
@@ -441,7 +441,7 @@ export function MiniPlayer() {
     };
 
     // Delay preload slightly so it doesn't compete with current track loading
-    const timer = setTimeout(preloadNext, 400);
+    const timer = setTimeout(preloadNext, 150);
     return () => clearTimeout(timer);
   }, [currentSong?.id]);
 
