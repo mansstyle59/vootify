@@ -919,44 +919,36 @@ const LibraryPage = () => {
                   <EmptyState icon={Music} title="Aucun titre ajouté" subtitle="Les titres ajoutés par l'admin apparaissent ici" />
                 ) : (
                   <>
-                    {/* Enrich metadata button */}
+                    {/* Enrich metadata button — server-side batch */}
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.97 }}
                       disabled={enriching}
                       onClick={async () => {
-                        const toEnrich = customSongs;
-                        if (toEnrich.length === 0) { toast.info("Aucun morceau à enrichir"); return; }
+                        if (customSongs.length === 0) { toast.info("Aucun morceau à enrichir"); return; }
                         setEnriching(true);
-                        setEnrichProgress({ done: 0, total: toEnrich.length });
+                        setEnrichProgress({ done: 0, total: customSongs.length });
                         try {
-                          const results = await batchSearchCovers(
-                            toEnrich.map((s) => ({ artist: s.artist, album: s.album, title: s.title, coverUrl: "", year: (s as any).year })),
-                            (done, total) => setEnrichProgress({ done, total })
-                          );
-                          let updated = 0;
-                          for (const [idx, meta] of results.entries()) {
-                            const song = toEnrich[idx] as any;
-                            const dbId = song._dbId || song.id.replace("custom-", "");
-                            const updates: Record<string, any> = {};
-                            if (meta.coverUrl) updates.cover_url = meta.coverUrl;
-                            if (meta.album) updates.album = meta.album;
-                            if (meta.artist) updates.artist = meta.artist;
-                            if (meta.title) updates.title = meta.title;
-                            if (meta.genre) updates.genre = meta.genre;
-                            if (meta.year) updates.year = meta.year;
-                            if (Object.keys(updates).length > 0) {
-                              await supabase.from("custom_songs").update(updates).eq("id", dbId);
-                              updated++;
-                            }
+                          let offset = 0;
+                          let totalUpdated = 0;
+                          let done = false;
+                          while (!done) {
+                            const { data, error } = await supabase.functions.invoke("enrich-metadata", {
+                              body: { offset, only_missing: false },
+                            });
+                            if (error) throw error;
+                            totalUpdated += data.updated || 0;
+                            offset = data.nextOffset || offset + 50;
+                            done = data.done;
+                            setEnrichProgress({ done: Math.min(offset, customSongs.length), total: customSongs.length });
                           }
-                          if (updated > 0) {
-                            toast.success(`${updated} morceau${updated > 1 ? "x" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
+                          if (totalUpdated > 0) {
+                            toast.success(`${totalUpdated} morceau${totalUpdated > 1 ? "x" : ""} enrichi${totalUpdated > 1 ? "s" : ""} via Deezer`);
                             queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
                           } else {
                             toast.info("Aucune nouvelle métadonnée trouvée");
                           }
-                        } catch { toast.error("Erreur lors de l'enrichissement"); }
+                        } catch (e) { toast.error("Erreur lors de l'enrichissement"); console.error(e); }
                         setEnriching(false);
                       }}
                       className="w-full mb-4 py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border/30"
