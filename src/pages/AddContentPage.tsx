@@ -242,7 +242,7 @@ function SongForm() {
                   </button>
                 )}
               </div>
-              {!song.uploaded && (
+              {!song.uploaded && !song.skipped && (
                 <div className="grid grid-cols-2 gap-2">
                   <input value={song.title} onChange={(e) => updateSong(idx, "title", e.target.value)} placeholder="Titre *"
                     className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("title") ? "border-primary/30" : "border-border/30"}`} />
