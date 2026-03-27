@@ -3,11 +3,12 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2, WifiOff, GripVertical, Trash2
+  Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
@@ -977,6 +978,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked, next, previous, queue
   } = usePlayerStore();
+  const navigate = useNavigate();
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
@@ -1037,8 +1039,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           </div>
           <p className="text-[12px] font-bold text-foreground/80 truncate">{stationName}</p>
         </div>
-        <button onClick={() => {}} className="p-1 active:scale-90 transition-transform">
-          <MoreHorizontal className="w-6 h-6 text-foreground/70" />
+        <button
+          onClick={() => {
+            const meta = radioMeta;
+            const q = encodeURIComponent(
+              `${meta?.title || ""} ${meta?.artist || currentSong?.artist || ""}`.trim()
+            );
+            onClose();
+            setTimeout(() => navigate(`/search?q=${q}`), 150);
+          }}
+          className="p-1 active:scale-90 transition-transform"
+        >
+          <Search className="w-6 h-6 text-foreground/70" />
         </button>
       </div>
 
@@ -1145,6 +1157,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
   } = usePlayerStore();
 
+  const navigate = useNavigate();
   const [showQueue, setShowQueue] = useState(false);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
@@ -1248,13 +1261,28 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {currentSong.album || "Ma bibliothèque"}
           </p>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={() => setShowQueue(!showQueue)}
-          className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
-        >
-          {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => {
+              const q = encodeURIComponent(
+                `${currentSong.title} ${currentSong.artist}`.trim()
+              );
+              onClose();
+              setTimeout(() => navigate(`/search?q=${q}`), 150);
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
+          >
+            <Search className="w-4 h-4 text-white/80" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => setShowQueue(!showQueue)}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
+          >
+            {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
+          </motion.button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">

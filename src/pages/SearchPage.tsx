@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { genreGroups, genreDefs, defaultGenreColor, buildTagToGroupMap } from "@/lib/genreGroups";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -30,8 +30,9 @@ import { searchArtistImage } from "@/lib/coverArtSearch";
 
 const SearchPage = () => {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [debouncedQuery, setDebouncedQuery] = useState(searchParams.get("q") || "");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const userId = usePlayerStore((s) => s.userId);
