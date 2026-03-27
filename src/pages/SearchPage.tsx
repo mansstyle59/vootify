@@ -20,6 +20,7 @@ import {
   User,
   Music,
   Disc3,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,39 @@ const SearchPage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
+
+  // Deezer new releases
+  interface DeezerNewRelease {
+    id: number;
+    title: string;
+    artist: string;
+    coverUrl: string;
+    albumId: number;
+  }
+  const [newReleases, setNewReleases] = useState<DeezerNewRelease[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchNew = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: "/chart/0/albums?limit=20" },
+        });
+        if (error || !data?.data) return;
+        if (cancelled) return;
+        setNewReleases(
+          data.data.map((a: any) => ({
+            id: a.id,
+            title: a.title || "",
+            artist: a.artist?.name || "",
+            coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "",
+            albumId: a.id,
+          }))
+        );
+      } catch { /* silent */ }
+    };
+    fetchNew();
+    return () => { cancelled = true; };
+  }, []);
 
   const { data: allSongs, isLoading } = useAllLocalSongs();
 
@@ -426,6 +460,50 @@ const SearchPage = () => {
                         <X className="w-3 h-3" />
                       </button>
                     </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Nouveautés Deezer */}
+            {newReleases.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Nouveautés
+                  </h2>
+                </div>
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                  {newReleases.map((release, i) => (
+                    <motion.button
+                      key={release.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="flex-shrink-0 w-[110px] group text-left snap-start"
+                    >
+                      <div className="w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
+                        {release.coverUrl ? (
+                          <img
+                            src={release.coverUrl}
+                            alt={release.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-secondary flex items-center justify-center">
+                            <Music className="w-6 h-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
+                        {release.title}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 truncate">
+                        {release.artist}
+                      </p>
+                    </motion.button>
                   ))}
                 </div>
               </div>
