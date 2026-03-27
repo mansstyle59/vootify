@@ -888,7 +888,7 @@ export function MiniPlayer() {
    ───────────────────────────────────────────── */
 function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
-    currentSong, isPlaying, togglePlay, toggleLike, isLiked
+    currentSong, isPlaying, togglePlay, toggleLike, isLiked, next, previous, queue
   } = usePlayerStore();
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
