@@ -1303,13 +1303,22 @@ function ArtistLibraryCard({ artist, index, navigate }: {
   index: number;
   navigate: ReturnType<typeof import("react-router-dom").useNavigate>;
 }) {
+  const { data: customImage } = useQuery({
+    queryKey: ["custom-artist-image", artist.name],
+    queryFn: async () => {
+      const { data } = await supabase.from("artist_images").select("image_url").eq("artist_name", artist.name).maybeSingle();
+      return data?.image_url || null;
+    },
+    staleTime: 24 * 60 * 60 * 1000,
+  });
   const { data: deezerImage } = useQuery({
     queryKey: ["artist-image", artist.name],
     queryFn: () => searchArtistImage(artist.name),
     staleTime: 24 * 60 * 60 * 1000,
+    enabled: !customImage,
   });
 
-  const imageUrl = deezerImage || artist.cover;
+  const imageUrl = customImage || deezerImage || artist.cover;
 
   return (
     <motion.button

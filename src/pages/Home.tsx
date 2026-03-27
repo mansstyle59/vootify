@@ -282,19 +282,28 @@ const HomePage = () => {
   );
 };
 
-/** Artist card that fetches real Deezer photo */
+/** Artist card that fetches real Deezer photo, with custom image priority */
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const { data: customImage } = useQuery({
+    queryKey: ["custom-artist-image", artist.name],
+    queryFn: async () => {
+      const { data } = await supabase.from("artist_images").select("image_url").eq("artist_name", artist.name).maybeSingle();
+      return data?.image_url || null;
+    },
+    staleTime: 24 * 60 * 60 * 1000,
+  });
   const { data: deezerImage } = useQuery({
     queryKey: ["artist-image", artist.name],
     queryFn: () => searchArtistImage(artist.name),
     staleTime: 24 * 60 * 60 * 1000,
+    enabled: !customImage,
   });
 
   return (
     <CoverCard
       title={artist.name}
       subtitle=""
-      imageUrl={deezerImage || artist.cover}
+      imageUrl={customImage || deezerImage || artist.cover}
       index={index}
       rounded
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
