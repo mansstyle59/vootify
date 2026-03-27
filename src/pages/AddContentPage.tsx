@@ -235,17 +235,18 @@ function SongForm() {
                 song.uploaded || song.skipped ? "liquid-glass opacity-60" : "liquid-glass"
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                {song.coverUrl ? (
-                  <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow-md" />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
-                    <FileAudio className="w-4 h-4 text-muted-foreground/50" />
-                  </div>
-                )}
+              <div className="flex gap-3">
+                {/* Clickable cover with change option */}
+                <SongCoverThumb
+                  coverUrl={song.coverUrl}
+                  disabled={song.uploaded || song.skipped}
+                  onChange={(url) => updateSong(idx, "coverUrl", url)}
+                />
+
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-foreground truncate">{song.title || song.file.name}</p>
                   <p className="text-[10px] text-muted-foreground/60 truncate">{song.artist || "Artiste inconnu"}</p>
+                  {song.album && <p className="text-[10px] text-muted-foreground/40 truncate">{song.album}{song.year ? ` • ${song.year}` : ""}</p>}
                 </div>
                 {song.uploaded && <CheckCircle className="w-5 h-5 text-primary shrink-0" />}
                 {song.skipped && (
@@ -327,12 +328,23 @@ function SongForm() {
                 )}
               </AnimatePresence>
 
+              {/* Editable fields */}
               {!song.uploaded && !song.skipped && (
-                <div className="grid grid-cols-2 gap-2">
-                  <input value={song.title} onChange={(e) => updateSong(idx, "title", e.target.value)} placeholder="Titre *"
-                    className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("title") ? "border-primary/30" : "border-border/30"}`} />
-                  <input value={song.artist} onChange={(e) => updateSong(idx, "artist", e.target.value)} placeholder="Artiste *"
-                    className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("artist") ? "border-primary/30" : "border-border/30"}`} />
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input value={song.title} onChange={(e) => updateSong(idx, "title", e.target.value)} placeholder="Titre *"
+                      className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("title") ? "border-primary/30" : "border-border/30"}`} />
+                    <input value={song.artist} onChange={(e) => updateSong(idx, "artist", e.target.value)} placeholder="Artiste *"
+                      className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("artist") ? "border-primary/30" : "border-border/30"}`} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input value={song.album} onChange={(e) => updateSong(idx, "album", e.target.value)} placeholder="Album"
+                      className="px-3 py-2 rounded-xl bg-secondary/50 border border-border/30 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40" />
+                    <input value={song.genre || ""} onChange={(e) => updateSong(idx, "genre", e.target.value)} placeholder="Genre"
+                      className="px-3 py-2 rounded-xl bg-secondary/50 border border-border/30 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40" />
+                    <input value={song.year ? String(song.year) : ""} onChange={(e) => { const v = parseInt(e.target.value); setSongs(p => p.map((s, i) => i === idx ? { ...s, year: isNaN(v) ? undefined : v } : s)); }} placeholder="Année"
+                      className="px-3 py-2 rounded-xl bg-secondary/50 border border-border/30 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40" />
+                  </div>
                 </div>
               )}
             </motion.div>
