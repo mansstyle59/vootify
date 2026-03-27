@@ -448,6 +448,7 @@ function PlaylistForm() {
         user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
         album: song.album.trim() || null, duration: song.duration || 0,
         cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+        year: song.year || null, genre: song.genre || null,
       }, { onConflict: "title,artist" });
 
       await addSongToPlaylist(created.id, {
