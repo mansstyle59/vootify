@@ -1485,7 +1485,7 @@ function RequestsTab() {
   );
 }
 
-
+function SubscriptionsTab() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [usage, setUsage] = useState<Record<string, number>>({});
