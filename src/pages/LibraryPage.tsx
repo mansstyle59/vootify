@@ -303,18 +303,7 @@ const LibraryPage = () => {
     countCached();
   }, [tab, playlists, playlistSongs]);
 
-  // Check which songs in current view are cached offline
-  useEffect(() => {
-    const allSongs = [
-      ...(tab === "recent" ? recentlyPlayed : []),
-      ...(tab === "liked" ? likedSongs : []),
-      ...(tab === "custom" ? customSongs : []),
-    ];
-    if (allSongs.length === 0) return;
-    Promise.all(
-      allSongs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))
-    ).then((ids) => setLibraryCachedIds(new Set(ids.filter(Boolean) as string[])));
-  }, [tab, recentlyPlayed, likedSongs, customSongs]);
+  // (cache check moved after customSongs declaration)
 
   const { data: customSongs = [] } = useQuery({
     queryKey: ["custom-songs"],
