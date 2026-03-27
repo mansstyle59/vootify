@@ -7,7 +7,6 @@ import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
-import { NotificationBell } from "@/components/NotificationBell";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence, motion } from "framer-motion"; // force refresh
@@ -118,10 +117,7 @@ function AppContent() {
       <PullToRefresh onRefresh={handleRefresh} className="flex-1 scrollbar-hide">
         <AnimatedRoutes />
       </PullToRefresh>
-      {/* Mobile notification bell */}
-      <div className="md:hidden fixed top-3 right-3 z-50">
-        <NotificationBell />
-      </div>
+      {/* NotificationBell moved into HeroBanner */}
       <MiniPlayer />
       <MobileNav />
       <AnimatePresence>
