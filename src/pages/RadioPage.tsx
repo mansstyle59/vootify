@@ -450,7 +450,7 @@ const RadioPage = () => {
   }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto">
+    <div className="pb-40 max-w-7xl mx-auto animate-fade-in">
       {/* Hero header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/5" />
