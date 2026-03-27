@@ -1,6 +1,7 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Home, Search, Library, Radio, PlusCircle, LogOut, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -89,7 +90,14 @@ export function AppSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                  {isAdmin && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-primary/40 text-primary bg-primary/10 font-semibold shrink-0">
+                      Admin
+                    </Badge>
+                  )}
+                </div>
               </div>
             </button>
             <button
