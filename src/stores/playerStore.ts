@@ -23,6 +23,7 @@ interface PlayerState {
   _seekTime: number | null;
   resolveStep: string | null;
   nextPreloaded: boolean;
+  audioDuration: number; // real audio element duration (overrides metadata)
   
 
   setUserId: (id: string | null) => void;
@@ -70,6 +71,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   _seekTime: null,
   resolveStep: null,
   nextPreloaded: false,
+  audioDuration: 0,
 
   setUserId: (id) => set({ userId: id }),
   setCrossfadeEnabled: (enabled) => { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); set({ crossfadeEnabled: enabled }); },

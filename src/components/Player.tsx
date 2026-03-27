@@ -50,6 +50,7 @@ export function MiniPlayer() {
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
@@ -240,7 +241,7 @@ export function MiniPlayer() {
 
     if (!isNewTrack) return;
     lastSongIdRef.current = currentSong.id;
-    usePlayerStore.setState({ nextPreloaded: false });
+    usePlayerStore.setState({ nextPreloaded: false, audioDuration: 0 });
 
     // Abort any in-flight load
     loadAbortRef.current?.abort();
@@ -456,10 +457,18 @@ export function MiniPlayer() {
     const audio = audioRef.current;
     const t = audio.currentTime;
 
+    // Sync real audio duration to store (once it's known)
+    if (isFinite(audio.duration) && audio.duration > 0) {
+      const stored = usePlayerStore.getState().audioDuration;
+      if (Math.abs(stored - audio.duration) > 0.5) {
+        usePlayerStore.setState({ audioDuration: audio.duration });
+      }
+    }
+
     // ── Throttle UI progress updates in background to save CPU ──
     const now = Date.now();
     const isVisible = document.visibilityState === "visible";
-    const throttleMs = isVisible ? 0 : 2000; // Update every 2s in background
+    const throttleMs = isVisible ? 0 : 2000;
     if (now - lastProgressUpdateRef.current >= throttleMs) {
       setProgress(t);
       lastProgressUpdateRef.current = now;
@@ -515,10 +524,12 @@ export function MiniPlayer() {
 
     // Set action handlers once (idempotent)
     navigator.mediaSession.setActionHandler("play", () => {
-      usePlayerStore.getState().togglePlay();
+      const store = usePlayerStore.getState();
+      if (!store.isPlaying) store.togglePlay();
     });
     navigator.mediaSession.setActionHandler("pause", () => {
-      usePlayerStore.getState().togglePlay();
+      const store = usePlayerStore.getState();
+      if (store.isPlaying) store.togglePlay();
     });
     navigator.mediaSession.setActionHandler("previoustrack", () => {
       usePlayerStore.getState().previous();
@@ -530,6 +541,16 @@ export function MiniPlayer() {
       if (details.seekTime != null && audioRef.current) {
         audioRef.current.currentTime = details.seekTime;
         usePlayerStore.getState().setProgress(details.seekTime);
+        // Immediately sync position to lock screen
+        if ("setPositionState" in navigator.mediaSession && audioRef.current.duration > 0) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: audioRef.current.duration,
+              playbackRate: 1,
+              position: details.seekTime,
+            });
+          } catch { /* ignore */ }
+        }
       }
     });
   }, []); // Only once
@@ -564,19 +585,29 @@ export function MiniPlayer() {
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   }, [currentSong, isLive, radioMeta, isPlaying]);
 
-  // Update position state for lock screen scrubber — throttled to every 5s
+  // Update position state for lock screen scrubber — use actual audio duration
   const lastPositionSyncRef = useRef(0);
   useEffect(() => {
     if (!("mediaSession" in navigator) || !currentSong || isLive) return;
     const now = Date.now();
-    if (now - lastPositionSyncRef.current < 5000) return;
+    // Throttle: every 1s when visible, every 5s in background
+    const interval = document.visibilityState === "visible" ? 1000 : 5000;
+    if (now - lastPositionSyncRef.current < interval) return;
     lastPositionSyncRef.current = now;
-    if ("setPositionState" in navigator.mediaSession && currentSong.duration > 0) {
+
+    // Use the ACTUAL audio duration (not Deezer metadata which can be wrong)
+    const audio = audioRef.current;
+    const realDuration = audio && isFinite(audio.duration) && audio.duration > 0
+      ? audio.duration
+      : currentSong.duration;
+
+    if ("setPositionState" in navigator.mediaSession && realDuration > 0) {
       try {
+        const pos = Math.max(0, Math.min(progress, realDuration));
         navigator.mediaSession.setPositionState({
-          duration: currentSong.duration,
+          duration: realDuration,
           playbackRate: 1,
-          position: Math.min(progress, currentSong.duration),
+          position: pos,
         });
       } catch { /* ignore */ }
     }
@@ -671,7 +702,8 @@ export function MiniPlayer() {
 
   if (!currentSong) return null;
 
-  const progressPct = !isLive && currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
+  const effectiveDuration = audioDuration > 0 ? audioDuration : currentSong.duration;
+  const progressPct = !isLive && effectiveDuration > 0 ? (progress / effectiveDuration) * 100 : 0;
 
   // ── Radio bubble mini-player ──
   if (isLive) {
@@ -1066,6 +1098,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const [showQueue, setShowQueue] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
+  const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -1074,7 +1107,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   if (!currentSong) return null;
 
   const liked = isLiked(currentSong.id);
-  const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
+  const effectiveDuration = audioDuration > 0 ? audioDuration : currentSong.duration;
+  const progressPct = effectiveDuration > 0 ? (progress / effectiveDuration) * 100 : 0;
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
 
@@ -1083,7 +1117,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     if (!bar) return;
     const rect = bar.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const time = Math.floor(pct * currentSong.duration);
+    const time = Math.floor(pct * effectiveDuration);
     storeSeekTo(time);
   };
 
@@ -1183,7 +1217,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   <p className="text-sm font-bold text-primary truncate">{currentSong.title}</p>
                   <p className="text-xs text-foreground/50 truncate">{currentSong.artist}</p>
                 </div>
-                <span className="text-xs text-foreground/40 tabular-nums">{formatDuration(currentSong.duration)}</span>
+                <span className="text-xs text-foreground/40 tabular-nums">{formatDuration(effectiveDuration)}</span>
               </div>
             </div>
 
@@ -1467,7 +1501,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </div>
               <div className="flex justify-between mt-1.5 text-[11px] text-foreground/50 tabular-nums font-medium">
                 <span>{formatDuration(Math.floor(progress))}</span>
-                <span>-{formatDuration(Math.max(0, currentSong.duration - Math.floor(progress)))}</span>
+                <span>-{formatDuration(Math.max(0, Math.floor(effectiveDuration) - Math.floor(progress)))}</span>
               </div>
             </div>
 
