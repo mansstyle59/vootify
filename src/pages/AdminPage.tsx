@@ -261,6 +261,30 @@ function UsersTab() {
     }
   };
 
+  const handleUpdateCredentials = async () => {
+    if (!editUserId) return;
+    if (!editEmail.trim() && !editPassword.trim()) return;
+    setEditingCreds(true);
+    try {
+      const payload: Record<string, any> = { target_user_id: editUserId };
+      if (editEmail.trim()) payload.email = editEmail.includes("@") ? editEmail : `${editEmail}@vootify.app`;
+      if (editPassword.trim()) payload.password = editPassword;
+
+      const { data, error } = await supabase.functions.invoke("admin-update-user", { body: payload });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Identifiants mis à jour");
+      setShowEditDialog(false);
+      setEditEmail("");
+      setEditPassword("");
+      setEditUserId(null);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la mise à jour");
+    } finally {
+      setEditingCreds(false);
+    }
+  };
+
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
   return (
