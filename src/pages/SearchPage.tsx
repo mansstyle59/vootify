@@ -151,6 +151,51 @@ const SearchPage = () => {
     return extractArtists(allSongs).slice(0, 15);
   }, [allSongs]);
 
+  // Genre color palette for browse cards
+  const genreColors: Record<string, { from: string; to: string }> = {
+    "Rap": { from: "hsl(0 70% 45%)", to: "hsl(15 80% 35%)" },
+    "Hip-Hop": { from: "hsl(280 60% 45%)", to: "hsl(300 50% 35%)" },
+    "R&B": { from: "hsl(200 70% 40%)", to: "hsl(220 60% 30%)" },
+    "Pop": { from: "hsl(330 70% 50%)", to: "hsl(350 60% 40%)" },
+    "Rock": { from: "hsl(0 0% 35%)", to: "hsl(0 0% 20%)" },
+    "Jazz": { from: "hsl(35 70% 45%)", to: "hsl(25 60% 30%)" },
+    "Classique": { from: "hsl(45 50% 45%)", to: "hsl(40 40% 30%)" },
+    "Électro": { from: "hsl(170 70% 40%)", to: "hsl(190 60% 30%)" },
+    "Reggae": { from: "hsl(120 50% 40%)", to: "hsl(140 40% 28%)" },
+    "Afro": { from: "hsl(30 80% 45%)", to: "hsl(15 70% 32%)" },
+    "Latino": { from: "hsl(50 80% 50%)", to: "hsl(35 70% 35%)" },
+    "Soul": { from: "hsl(260 50% 45%)", to: "hsl(280 40% 30%)" },
+    "Funk": { from: "hsl(310 60% 50%)", to: "hsl(290 50% 35%)" },
+    "Country": { from: "hsl(25 60% 45%)", to: "hsl(20 50% 30%)" },
+    "Metal": { from: "hsl(0 0% 25%)", to: "hsl(0 0% 12%)" },
+    "Blues": { from: "hsl(210 60% 40%)", to: "hsl(230 50% 28%)" },
+  };
+
+  const defaultGenreColor = { from: "hsl(var(--primary))", to: "hsl(var(--primary) / 0.6)" };
+
+  const genreCards = useMemo(() => {
+    if (!allSongs) return [];
+    const map = new Map<string, { genre: string; count: number; coverUrl: string }>();
+    for (const s of allSongs) {
+      const genre = (s as any).genre;
+      if (!genre) continue;
+      // Split multi-genre entries
+      genre.split(/[,/|]/).forEach((g: string) => {
+        const name = g.trim();
+        if (!name || name.length < 2) return;
+        const key = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { genre: key, count: 1, coverUrl: s.coverUrl });
+        } else {
+          map.get(key)!.count++;
+        }
+      });
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+  }, [allSongs]);
+
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) {
       togglePlay();
