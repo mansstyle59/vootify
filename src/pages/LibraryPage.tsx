@@ -432,7 +432,8 @@ const LibraryPage = () => {
   const [cachedSongs, setCachedSongs] = useState<(Song & { cachedAt: number })[]>([]);
   const [cacheSize, setCacheSize] = useState(0);
   const [isRedownloading, setIsRedownloading] = useState(false);
-  const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
 
   useEffect(() => {
     if (tab !== "downloads" && !isOffline) return;
