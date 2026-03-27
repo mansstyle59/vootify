@@ -279,31 +279,19 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           {customSubtitle || getSubGreeting()}
         </motion.p>
 
-        {/* Decorative equalizer bars */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="flex items-end gap-[3px] mt-5 h-5"
-        >
-          {[0.6, 1, 0.4, 0.8, 0.5, 0.9, 0.3, 0.7].map((h, i) => (
-            <motion.div
-              key={i}
-              animate={{ scaleY: [h, 1, h * 0.5, h] }}
-              transition={{
-                duration: 1.2 + i * 0.15,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.1,
-              }}
-              className="w-[3px] rounded-full origin-bottom"
-              style={{
-                height: "20px",
-                background: `hsl(var(--primary) / ${0.15 + i * 0.04})`,
-              }}
-            />
-          ))}
-        </motion.div>
+        {/* Animated stats */}
+        {stats && (stats.songs > 0 || stats.radios > 0 || stats.playlists > 0) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-wrap gap-2 mt-5"
+          >
+            {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.5} />}
+            {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.65} />}
+            {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.8} />}
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );
