@@ -14,6 +14,13 @@ import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, Sun, 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} Go`;
+}
+
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdminAuth();
