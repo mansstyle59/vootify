@@ -17,6 +17,7 @@ import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import { normalizeTitle, normalizeArtist, normalizeText, autoEnrichCustomSongs } from "@/lib/metadataEnrich";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
@@ -118,7 +119,13 @@ function PremiumSongRow({
       <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md transition-shadow ${
         isActive ? "shadow-primary/20 ring-1 ring-primary/30" : "shadow-black/20"
       }`}>
-        <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+        {song.coverUrl ? (
+          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-secondary flex items-center justify-center">
+            <Music className="w-5 h-5 text-muted-foreground/40" />
+          </div>
+        )}
         {!selectable && (
           <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
             isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
@@ -293,15 +300,18 @@ const LibraryPage = () => {
       const { data, error } = await supabase.from("custom_songs").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       const songs = (data || []).map((s: any): Song & { _dbId: string } => ({
-        _dbId: s.id, id: `custom-${s.id}`, title: s.title, artist: s.artist,
-        album: s.album || "", duration: s.duration, coverUrl: s.cover_url || "",
+        _dbId: s.id, id: `custom-${s.id}`,
+        title: normalizeTitle(s.title),
+        artist: normalizeArtist(s.artist),
+        album: s.album ? normalizeText(s.album) : "",
+        duration: s.duration, coverUrl: s.cover_url || "",
         streamUrl: s.stream_url || "", liked: false,
       }));
 
-      // Auto-fix missing durations
-      const toFix = songs.filter((s) => !s.duration && s.streamUrl);
-      if (toFix.length > 0) {
-        Promise.all(toFix.map((s) => new Promise<void>((resolve) => {
+      // Auto-fix missing durations via Audio element
+      const toFixDuration = songs.filter((s) => !s.duration && s.streamUrl);
+      if (toFixDuration.length > 0) {
+        Promise.all(toFixDuration.map((s) => new Promise<void>((resolve) => {
           const audio = new Audio();
           audio.preload = "metadata";
           audio.src = s.streamUrl;
@@ -314,6 +324,20 @@ const LibraryPage = () => {
           setTimeout(() => resolve(), 5000);
         }))).then(() => queryClient.invalidateQueries({ queryKey: ["custom-songs"] }));
       }
+
+      // Auto-enrich missing metadata (cover, album, duration) via Deezer
+      const toEnrich = songs.filter((s) => !s.coverUrl || !s.album || !s.duration);
+      if (toEnrich.length > 0) {
+        autoEnrichCustomSongs(
+          toEnrich.map((s) => ({
+            dbId: s._dbId, title: s.title, artist: s.artist,
+            album: s.album || null, coverUrl: s.coverUrl || null, duration: s.duration,
+          }))
+        ).then((count) => {
+          if (count > 0) queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+        });
+      }
+
       return songs as Song[];
     },
     staleTime: 60 * 1000,

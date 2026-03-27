@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { extractID3 } from "@/lib/id3Utils";
 import { deezerApi } from "@/lib/deezerApi";
+import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
 type Tab = "song" | "playlist" | "radio";
 
@@ -115,7 +116,10 @@ function SongForm() {
       }
 
       entries.push({
-        file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
+        file,
+        title: normalizeTitle(meta.title || file.name.replace(/\.[^.]+$/, "")),
+        artist: normalizeArtist(meta.artist || ""),
+        album: meta.album ? normalizeText(meta.album) : "",
         duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
       });
     }
