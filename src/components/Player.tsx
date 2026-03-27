@@ -854,7 +854,7 @@ export function MiniPlayer() {
                       >
                         {currentSong.artist}
                         {playingFromCache && (
-                          <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                          <span className="ml-1.5 inline-flex items-center gap-1 text-primary">
                             <WifiOff className="w-2.5 h-2.5" />
                             <span className="font-semibold text-[10px]">OFFLINE</span>
                           </span>
@@ -1414,7 +1414,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                           {currentSong.artist}
                         </p>
                         {isCached ? (
-                          <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                             <WifiOff className="w-2.5 h-2.5" />
                             OFFLINE
                           </span>
