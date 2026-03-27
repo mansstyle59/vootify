@@ -50,6 +50,15 @@ function FieldInput({ label, value, onChange, placeholder, type = "text", requir
 
 const ACCEPTED_AUDIO = ".mp3,.m4a,.aac,.ogg,.flac,.wav,.wma,.opus";
 
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-2">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className="text-foreground font-semibold text-right truncate">{value}</span>
+    </div>
+  );
+}
+
 interface SongEntry {
   file: File;
   title: string;
