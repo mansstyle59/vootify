@@ -9,8 +9,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { AnimatePresence, motion } from "framer-motion"; // force refresh
-import { useEffect, useState, useCallback, lazy, Suspense, startTransition } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState, useCallback, lazy, Suspense, startTransition, memo } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
@@ -46,11 +46,12 @@ const queryClient = new QueryClient({
       refetchOnReconnect: false,
       retry: 1,
       networkMode: "offlineFirst",
+      placeholderData: (prev: unknown) => prev, // keep previous data while refetching
     },
   },
 });
 
-function AnimatedRoutes() {
+const AnimatedRoutes = memo(function AnimatedRoutes() {
   const location = useLocation();
 
   return (
@@ -85,7 +86,7 @@ function AnimatedRoutes() {
       </AnimatePresence>
     </Suspense>
   );
-}
+});
 
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
