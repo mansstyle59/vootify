@@ -281,4 +281,24 @@ const HomePage = () => {
   );
 };
 
+/** Artist card that fetches real Deezer photo */
+function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const { data: deezerImage } = useQuery({
+    queryKey: ["artist-image", artist.name],
+    queryFn: () => searchArtistImage(artist.name),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  return (
+    <CoverCard
+      title={artist.name}
+      subtitle=""
+      imageUrl={deezerImage || artist.cover}
+      index={index}
+      rounded
+      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+    />
+  );
+}
+
 export default HomePage;
