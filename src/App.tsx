@@ -52,11 +52,9 @@ const queryClient = new QueryClient({
 });
 
 const AnimatedRoutes = memo(function AnimatedRoutes() {
-  const location = useLocation();
-
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes location={location}>
+      <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/library" element={<LibraryPage />} />
