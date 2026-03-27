@@ -35,6 +35,7 @@ const AdminPage = lazy(() => import("./pages/AdminPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const RequestAccessPage = lazy(() => import("./pages/RequestAccessPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const GenrePage = lazy(() => import("./pages/GenrePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,6 +78,7 @@ function AnimatedRoutes() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/request-access" element={<RequestAccessPage />} />
+            <Route path="/genre/:name" element={<GenrePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </motion.div>
