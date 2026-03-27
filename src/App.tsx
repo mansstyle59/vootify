@@ -139,7 +139,9 @@ const App = () => {
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
-                  <AppContent />
+                  <SubscriptionGate>
+                    <AppContent />
+                  </SubscriptionGate>
                 </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
