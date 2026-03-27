@@ -191,6 +191,20 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                 {displayName}
               </span>
             </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => signOut()}
+              className="flex items-center justify-center w-8 h-8 rounded-full transition-all"
+              style={{
+                background: "hsl(var(--card) / 0.6)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid hsl(var(--border) / 0.4)",
+              }}
+              title="Déconnexion"
+            >
+              <LogOut className="w-3.5 h-3.5 text-muted-foreground" />
+            </motion.button>
             <NotificationBell />
           </div>
         ) : (
