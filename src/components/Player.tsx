@@ -457,10 +457,18 @@ export function MiniPlayer() {
     const audio = audioRef.current;
     const t = audio.currentTime;
 
+    // Sync real audio duration to store (once it's known)
+    if (isFinite(audio.duration) && audio.duration > 0) {
+      const stored = usePlayerStore.getState().audioDuration;
+      if (Math.abs(stored - audio.duration) > 0.5) {
+        usePlayerStore.setState({ audioDuration: audio.duration });
+      }
+    }
+
     // ── Throttle UI progress updates in background to save CPU ──
     const now = Date.now();
     const isVisible = document.visibilityState === "visible";
-    const throttleMs = isVisible ? 0 : 2000; // Update every 2s in background
+    const throttleMs = isVisible ? 0 : 2000;
     if (now - lastProgressUpdateRef.current >= throttleMs) {
       setProgress(t);
       lastProgressUpdateRef.current = now;
