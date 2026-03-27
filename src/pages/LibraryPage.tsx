@@ -32,7 +32,7 @@ const filterMusicOnly = (songs: Song[]) =>
 /* ── Premium Song Row ── */
 function PremiumSongRow({
   song, index, showIndex, isActive, isPlaying, onClick, onSwipeLeft, onSwipeRight,
-  selectable, selected, onSelect,
+  selectable, selected, onSelect, cached,
 }: {
   song: Song; index: number; showIndex?: boolean;
   isActive: boolean; isPlaying: boolean;
@@ -42,6 +42,7 @@ function PremiumSongRow({
   selectable?: boolean;
   selected?: boolean;
   onSelect?: () => void;
+  cached?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
@@ -141,11 +142,18 @@ function PremiumSongRow({
 
       {/* Title & Artist */}
       <div className="flex-1 min-w-0">
-        <p className={`text-[13px] font-semibold leading-tight truncate ${
-          isActive ? "text-primary" : "text-foreground"
-        }`}>
-          {song.title}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className={`text-[13px] font-semibold leading-tight truncate ${
+            isActive ? "text-primary" : "text-foreground"
+          }`}>
+            {song.title}
+          </p>
+          {cached && (
+            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              <Download className="w-2.5 h-2.5" />
+            </span>
+          )}
+        </div>
         <p className="text-[11px] text-muted-foreground/70 leading-tight mt-1 truncate">
           {formatArtist(song.artist)}
         </p>
