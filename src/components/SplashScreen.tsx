@@ -41,8 +41,10 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
           >
             <div className="rounded-[28px] overflow-hidden glow-primary">
               <img
-                src="/pwa-icon-512.png"
+                src="/pwa-icon-192.png"
                 alt="Vootify"
+                width={96}
+                height={96}
                 className="w-24 h-24 rounded-[28px]"
               />
             </div>
