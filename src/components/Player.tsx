@@ -35,7 +35,7 @@ const glassButtonStyle = {
    ───────────────────────────────────────────── */
 export function MiniPlayer() {
   const {
-    currentSong, isPlaying, progress, volume, shuffle, repeat,
+    currentSong, isPlaying, progress, volume, shuffle, repeat, fullScreen,
     togglePlay, next, previous, setProgress, setVolume,
     toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer,
     _seekTime, crossfadeEnabled, crossfadeDuration
