@@ -1162,14 +1162,14 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       <div className="absolute inset-0 overflow-hidden">
         <AnimatePresence mode="popLayout">
           <motion.img
-            key={currentSong.coverUrl}
+            key={currentSong.id}
             src={currentSong.coverUrl}
             alt=""
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.25 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
+            initial={{ opacity: 0, scale: 2.2 }}
+            animate={{ opacity: 0.25, scale: 2 }}
+            exit={{ opacity: 0, scale: 1.8 }}
+            transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="absolute inset-0 w-full h-full object-cover blur-[120px]"
           />
         </AnimatePresence>
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 60%, hsl(var(--background) / 0.7) 100%)" }} />
