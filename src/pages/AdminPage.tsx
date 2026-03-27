@@ -304,16 +304,28 @@ function SongsTab() {
   const [editArtist, setEditArtist] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    supabase
-      .from("custom_songs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setSongs(data || []);
-        setLoading(false);
-      });
-  }, []);
+  const loadSongs = async () => {
+    setLoading(true);
+    // Fetch all songs by paginating past the 1000-row default limit
+    let allSongs: any[] = [];
+    let from = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (!data || data.length === 0) break;
+      allSongs = allSongs.concat(data);
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    setSongs(allSongs);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadSongs(); }, []);
 
   const handleDelete = async (id: string) => {
     await supabase.from("custom_songs").delete().eq("id", id);
@@ -551,7 +563,7 @@ function ResolveTab() {
 
   const fetchDB = async () => {
     setDbLoading(true);
-    const data = await resolveLog.fetchFromDB(1000);
+    const data = await resolveLog.fetchFromDB(5000);
     setEntries(data);
     setDbLoading(false);
   };
