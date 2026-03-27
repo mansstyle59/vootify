@@ -78,11 +78,25 @@ async function getCachedCustomSongs() {
   return _customSongsCache.data;
 }
 
-async function callDeezer(body: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke("deezer-proxy", { body });
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
-  return data;
+async function callDeezer(body: Record<string, unknown>, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+      body,
+      signal: controller.signal as any,
+    });
+    clearTimeout(timeoutId);
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError" || controller.signal.aborted) {
+      throw new Error("La recherche a expiré. Réessayez.");
+    }
+    throw err;
+  }
 }
 
 function mapTrackToSong(track: DeezerTrack): Song {
