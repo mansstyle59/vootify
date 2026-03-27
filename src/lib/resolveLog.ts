@@ -1,7 +1,8 @@
 /**
- * In-memory log of resolution modifications.
- * Tracks what was resolved, changed, or corrected per session.
+ * Resolution log — persists to Supabase resolve_logs table
+ * with in-memory cache for current session.
  */
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ResolveLogEntry {
   songId: string;
@@ -19,14 +20,35 @@ export interface ResolveLogEntry {
 const MAX_LOG = 200;
 let log: ResolveLogEntry[] = [];
 
+/** Write entry to DB (fire-and-forget) */
+function persistToDB(entry: ResolveLogEntry) {
+  supabase
+    .from("resolve_logs" as any)
+    .insert({
+      song_id: entry.songId,
+      original_title: entry.originalTitle,
+      original_artist: entry.originalArtist,
+      resolved_title: entry.resolvedTitle || null,
+      resolved_artist: entry.resolvedArtist || null,
+      source: entry.source,
+      stream_url: entry.streamUrl,
+      title_corrected: entry.titleCorrected,
+      artist_corrected: entry.artistCorrected,
+    } as any)
+    .then(({ error }) => {
+      if (error) console.warn("[resolve-log] DB insert error:", error.message);
+    });
+}
+
 export const resolveLog = {
   add(entry: ResolveLogEntry) {
     log.push(entry);
     if (log.length > MAX_LOG) log = log.slice(-MAX_LOG);
-    // Persist to sessionStorage for debugging
+    // Persist to session + DB
     try {
       sessionStorage.setItem("resolve-log", JSON.stringify(log));
     } catch {}
+    persistToDB(entry);
   },
 
   getAll(): ResolveLogEntry[] {
@@ -48,5 +70,54 @@ export const resolveLog = {
     const none = log.filter(e => e.source === "none").length;
     const corrected = log.filter(e => e.titleCorrected || e.artistCorrected).length;
     return { total: log.length, custom, hd, none, corrected };
+  },
+
+  /** Fetch all logs from the database (admin only) */
+  async fetchFromDB(limit = 500): Promise<ResolveLogEntry[]> {
+    const { data, error } = await supabase
+      .from("resolve_logs" as any)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.warn("[resolve-log] DB fetch error:", error.message);
+      return [];
+    }
+
+    return ((data as any[]) || []).map((r: any) => ({
+      songId: r.song_id,
+      originalTitle: r.original_title,
+      originalArtist: r.original_artist,
+      resolvedTitle: r.resolved_title,
+      resolvedArtist: r.resolved_artist,
+      source: r.source as "custom" | "hd" | "none",
+      streamUrl: r.stream_url,
+      titleCorrected: r.title_corrected,
+      artistCorrected: r.artist_corrected,
+      ts: new Date(r.created_at).getTime(),
+    }));
+  },
+
+  /** Clear all DB logs (admin only) */
+  async clearDB(): Promise<boolean> {
+    const { error } = await supabase
+      .from("resolve_logs" as any)
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) {
+      console.warn("[resolve-log] DB clear error:", error.message);
+      return false;
+    }
+    return true;
+  },
+
+  /** DB-level stats */
+  statsFromEntries(entries: ResolveLogEntry[]) {
+    const custom = entries.filter(e => e.source === "custom").length;
+    const hd = entries.filter(e => e.source === "hd").length;
+    const none = entries.filter(e => e.source === "none").length;
+    const corrected = entries.filter(e => e.titleCorrected || e.artistCorrected).length;
+    return { total: entries.length, custom, hd, none, corrected };
   },
 };
