@@ -186,11 +186,7 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
 
           <button
             type="button"
-            onClick={() => {
-              supabase.auth.signOut().then(() => {
-                window.location.href = "/auth";
-              });
-            }}
+            onClick={() => { window.location.href = "/auth"; }}
             className="w-full py-3.5 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2.5"
           >
             <LogIn className="w-4 h-4" />
