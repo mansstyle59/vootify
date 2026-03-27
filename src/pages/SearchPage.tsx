@@ -7,6 +7,7 @@ import { deezerApi } from "@/lib/deezerApi";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
+import { VirtualSongList } from "@/components/VirtualSongList";
 import { Search as SearchIcon, X, Clock, TrendingUp, User, Music, Mic2, Disc3, Zap, Loader2, Trash2, ListMusic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song, Album } from "@/data/mockData";
@@ -757,13 +758,11 @@ const SearchPage = () => {
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
                     </p>
-                    <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
-                      {filteredResults.map((song, i) => (
-                        <div key={`${song.id}-${i}`} onClick={() => handlePlayTrack(song, filteredResults)} className="border-b border-white/[0.04] last:border-b-0">
-                          <SongCard song={song} index={i} />
-                        </div>
-                      ))}
-                    </div>
+                    <VirtualSongList
+                      songs={filteredResults}
+                      onClickSong={(song) => handlePlayTrack(song, filteredResults)}
+                      className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+                    />
 
                     {/* Infinite scroll sentinel */}
                     {hasMoreDz && !artistFilter && (
