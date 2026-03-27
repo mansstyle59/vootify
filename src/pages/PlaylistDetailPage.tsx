@@ -50,7 +50,7 @@ const PlaylistDetailPage = () => {
     );
   }, [songs]);
 
-  useEffect(() => { if (id && !isDeezerPlaylist) loadPlaylistSongs(id); }, [id, isDeezerPlaylist]);
+  useEffect(() => { if (id && true) loadPlaylistSongs(id); }, [id, false]);
 
   // No resolution needed — songs play directly
 
@@ -94,7 +94,7 @@ const PlaylistDetailPage = () => {
     reader.readAsDataURL(file);
   };
 
-  if (isDeezerPlaylist && dzLoading) {
+  if (false && dzLoading) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
@@ -103,7 +103,7 @@ const PlaylistDetailPage = () => {
     );
   }
 
-  if (isDeezerPlaylist && dzError) {
+  if (false && dzError) {
     return (
       <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
         <p className="text-muted-foreground mb-2">Playlist indisponible</p>
@@ -156,7 +156,7 @@ const PlaylistDetailPage = () => {
             {playlist.name}
           </motion.div>
           <div className="flex items-center gap-2">
-            {!isDeezerPlaylist && (
+            {true && (
               <label className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all cursor-pointer">
                 <ImageIcon className="w-5 h-5" />
                 <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
@@ -219,7 +219,7 @@ const PlaylistDetailPage = () => {
                         <Share2 className="w-4 h-4 text-muted-foreground" />
                         Partager
                       </button>
-                      {!isDeezerPlaylist && (
+                      {true && (
                         <>
                           <div className="h-px bg-white/[0.06] mx-2 my-1" />
                           <label className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors cursor-pointer">
@@ -402,21 +402,21 @@ const PlaylistDetailPage = () => {
             className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
             renderRow={(song, i, songCard) => (
               <div
-                draggable={!isDeezerPlaylist}
-                onDragStart={!isDeezerPlaylist ? () => handleDragStart(i) : undefined}
-                onDragOver={!isDeezerPlaylist ? (e) => handleDragOver(e, i) : undefined}
-                onDrop={!isDeezerPlaylist ? () => handleDrop(i) : undefined}
-                onDragEnd={!isDeezerPlaylist ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
+                draggable={true}
+                onDragStart={true ? () => handleDragStart(i) : undefined}
+                onDragOver={true ? (e) => handleDragOver(e, i) : undefined}
+                onDrop={true ? () => handleDrop(i) : undefined}
+                onDragEnd={true ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
                 className={`flex items-center gap-1 group ${overIdx === i ? "border-t-2 !border-t-primary" : ""} ${dragIdx === i ? "opacity-40" : ""}`}
               >
-                {!isDeezerPlaylist && (
+                {true && (
                   <div className="cursor-grab active:cursor-grabbing p-1 pl-2 text-muted-foreground/30 hover:text-muted-foreground transition-colors">
                     <GripVertical className="w-4 h-4" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">{songCard}</div>
                 {cachedIds.has(song.id) && <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0 mr-1" />}
-                {!isDeezerPlaylist && (
+                {true && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
                     className="p-1.5 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/40 hover:text-destructive"
