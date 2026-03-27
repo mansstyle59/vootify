@@ -229,6 +229,29 @@ const HomePage = () => {
         );
       })}
 
+      {/* Artists section */}
+      {(loadingArtists || (artists && artists.length > 0)) && (
+        <Section title="Artistes">
+          <HorizontalScroll>
+            {loadingArtists ? (
+              <CoverSkeleton count={6} />
+            ) : (
+              artists?.map((artist, i) => (
+                <CoverCard
+                  key={artist.name}
+                  title={artist.name}
+                  subtitle=""
+                  imageUrl={artist.cover}
+                  index={i}
+                  rounded
+                  onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                />
+              ))
+            )}
+          </HorizontalScroll>
+        </Section>
+      )}
+
       {/* Albums section */}
       {(loadingAlbums || (albums && albums.length > 0)) && (
         <Section title="Albums">
