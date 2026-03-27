@@ -533,9 +533,15 @@ const RadioPage = () => {
           </div>
           {nowPlayingText ? (
             <div className="mt-0.5 space-y-0">
-              <MarqueeText text={`♪ ${radioMetadata?.title}`} className="text-[9px] text-primary/90 font-semibold" />
-              {radioMetadata?.artist && (
-                <MarqueeText text={radioMetadata.artist} className="text-[11px] text-muted-foreground" />
+              {isActive && radioMetadata?.title ? (
+                <>
+                  <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-[9px] text-primary/90 font-semibold" />
+                  {radioMetadata?.artist && (
+                    <MarqueeText text={radioMetadata.artist} className="text-[11px] text-muted-foreground" />
+                  )}
+                </>
+              ) : (
+                <MarqueeText text={`♪ ${nowPlayingText}`} className="text-[9px] text-primary/70 font-medium" />
               )}
             </div>
           ) : (
