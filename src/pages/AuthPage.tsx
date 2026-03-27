@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Music, Lock, User, Loader2, Eye, EyeOff } from "lucide-react";
+import { Music, Lock, User, Loader2, Eye, EyeOff, Send } from "lucide-react";
 import { motion } from "framer-motion";
 
 const AuthPage = () => {
