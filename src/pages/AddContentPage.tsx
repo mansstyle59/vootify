@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { extractID3 } from "@/lib/id3Utils";
 import { deezerApi } from "@/lib/deezerApi";
+import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
 type Tab = "song" | "playlist" | "radio";
 
