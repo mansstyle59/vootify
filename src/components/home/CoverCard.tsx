@@ -28,14 +28,20 @@ export const CoverCard = memo(function CoverCard({
       <div className={`relative w-40 h-40 overflow-hidden mb-2.5 bg-secondary shadow-lg ${
         rounded ? "rounded-full" : "rounded-2xl"
       } ${isActive ? "ring-2 ring-primary/50 ring-offset-2 ring-offset-background" : ""}`}>
-        <img
-          src={imageUrl}
-          alt={title}
-          loading="lazy"
-          className={`w-full h-full transition-all duration-500 group-hover:scale-110 ${
-            preserveRatio ? "object-contain p-2" : "object-cover"
-          }`}
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title}
+            loading="lazy"
+            className={`w-full h-full transition-all duration-500 group-hover:scale-110 ${
+              preserveRatio ? "object-contain p-2" : "object-cover"
+            }`}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <Music className="w-10 h-10 text-primary/30" />
+          </div>
+        )}
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
