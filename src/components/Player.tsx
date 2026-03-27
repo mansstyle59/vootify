@@ -13,7 +13,6 @@ import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { deezerApi } from "@/lib/deezerApi";
 import { useDominantColor } from "@/hooks/useDominantColor";
-import { useDominantColor } from "@/hooks/useDominantColor";
 
 /* ── Shared glass styles — uses CSS custom properties for theme ── */
 const glassStyle = {

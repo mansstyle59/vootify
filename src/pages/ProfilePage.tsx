@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { offlineCache } from "@/lib/offlineCache";
-import { offlineCache } from "@/lib/offlineCache";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
