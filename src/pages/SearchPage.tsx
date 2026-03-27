@@ -147,9 +147,24 @@ const SearchPage = () => {
     return artists.slice(0, 6);
   }, [allSongs, searchResults, debouncedQuery]);
 
+  // Trending artists with cover photo from their songs
   const trendingArtists = useMemo(() => {
     if (!allSongs) return [];
-    return extractArtists(allSongs).slice(0, 15);
+    const map = new Map<string, { name: string; cover: string; count: number }>();
+    for (const s of allSongs) {
+      s.artist.split(",").forEach((a) => {
+        const name = a.trim();
+        if (!name) return;
+        if (!map.has(name)) {
+          map.set(name, { name, cover: s.coverUrl, count: 1 });
+        } else {
+          map.get(name)!.count++;
+        }
+      });
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
   }, [allSongs]);
 
   // Build a lowercase→groupName lookup (from shared module)
@@ -395,17 +410,28 @@ const SearchPage = () => {
                     Artistes populaires
                   </h2>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
                   {trendingArtists.map((artist, i) => (
                     <motion.button
-                      key={artist}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.02 }}
-                      onClick={() => commitSearch(artist)}
-                      className="px-3.5 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm text-foreground hover:bg-primary/20 hover:border-primary/40 transition-all"
+                      key={artist.name}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
                     >
-                      {artist}
+                      <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                        {artist.cover ? (
+                          <img src={artist.cover} alt={artist.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-secondary flex items-center justify-center">
+                            <User className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-foreground font-medium truncate w-full text-center leading-tight">
+                        {artist.name}
+                      </span>
                     </motion.button>
                   ))}
                 </div>
