@@ -188,18 +188,40 @@ export function MiniPlayer() {
     runWatchdog();
     const onVis = () => runWatchdog();
     document.addEventListener("visibilitychange", onVis);
+
+    // ── Network recovery: auto-reconnect when connection returns ──
+    const handleOnline = () => {
+      const audio = audioRef.current;
+      const state = usePlayerStore.getState();
+      if (!audio || !state.isPlaying || !state.currentSong) return;
+      if (audio.paused || audio.readyState < 2) {
+        console.log("[network] Back online — reconnecting audio");
+        const isRadio = state.currentSong.duration === 0;
+        const src = audio.src;
+        if (isRadio) {
+          // Radio: full reload for fresh stream
+          audio.src = "";
+          audio.src = src;
+          audio.load();
+        }
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }
+    };
+    window.addEventListener("online", handleOnline);
+
     return () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", handleOnline);
     };
   }, [isPlaying, currentSong?.id, volume]);
 
   // ── Separate play/pause control from track loading ──
-  // Play/pause toggle for SAME track — no reload needed
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentSong || !audio.src) return;
-    // Only handle play/pause for current track (not new loads)
     if (lastSongIdRef.current === currentSong.id) {
       if (isPlaying) {
         audio.play().catch(console.error);
