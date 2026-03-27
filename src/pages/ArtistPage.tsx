@@ -283,14 +283,12 @@ const ArtistPage = () => {
             {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             {enriching ? "Enrichissement…" : "Enrichir Deezer"}
           </button>
-          {isAdmin && (
-            <button
-              onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
-            >
-              <ImagePlus className="w-4 h-4" /> Photo
-            </button>
-          )}
+          <button
+            onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
+          >
+            <ImagePlus className="w-4 h-4" /> Photo
+          </button>
         )}
       </div>
 
@@ -329,7 +327,7 @@ const ArtistPage = () => {
             </button>
           </div>
         </motion.div>
-      )
+      )}
 
       {/* Listening Stats */}
       {listeningStats && (
