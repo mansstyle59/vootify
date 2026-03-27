@@ -1,10 +1,45 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
-import { LogIn, LogOut, Headphones } from "lucide-react";
+import { motion, useScroll, useTransform, animate } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
+import { LogIn, LogOut, Headphones, Music, Radio, ListMusic } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
+function AnimatedCounter({ value, label, icon: Icon, delay }: { value: number; label: string; icon: React.ElementType; delay: number }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (value === 0) return;
+    const controls = animate(0, value, {
+      duration: 1.2,
+      delay,
+      ease: [0.25, 0.46, 0.45, 0.94],
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [value, delay]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: delay + 0.1, type: "spring", stiffness: 200, damping: 20 }}
+      className="flex items-center gap-2 px-3 py-2 rounded-xl"
+      style={{
+        background: "hsl(var(--card) / 0.4)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid hsl(var(--border) / 0.3)",
+      }}
+    >
+      <Icon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+      <span className="text-base font-black text-foreground tabular-nums">{display}</span>
+      <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+    </motion.div>
+  );
+}
 function getGreeting(name?: string | null) {
   const h = new Date().getHours();
   const base = h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
@@ -29,6 +64,23 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const { data: stats } = useQuery({
+    queryKey: ["hero-stats"],
+    queryFn: async () => {
+      const [songs, radios, playlists] = await Promise.all([
+        supabase.from("custom_songs").select("id", { count: "exact", head: true }),
+        supabase.from("custom_radio_stations").select("id", { count: "exact", head: true }),
+        supabase.from("playlists").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        songs: songs.count || 0,
+        radios: radios.count || 0,
+        playlists: playlists.count || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -227,31 +279,19 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           {customSubtitle || getSubGreeting()}
         </motion.p>
 
-        {/* Decorative equalizer bars */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="flex items-end gap-[3px] mt-5 h-5"
-        >
-          {[0.6, 1, 0.4, 0.8, 0.5, 0.9, 0.3, 0.7].map((h, i) => (
-            <motion.div
-              key={i}
-              animate={{ scaleY: [h, 1, h * 0.5, h] }}
-              transition={{
-                duration: 1.2 + i * 0.15,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.1,
-              }}
-              className="w-[3px] rounded-full origin-bottom"
-              style={{
-                height: "20px",
-                background: `hsl(var(--primary) / ${0.15 + i * 0.04})`,
-              }}
-            />
-          ))}
-        </motion.div>
+        {/* Animated stats */}
+        {stats && (stats.songs > 0 || stats.radios > 0 || stats.playlists > 0) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-wrap gap-2 mt-5"
+          >
+            {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.5} />}
+            {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.65} />}
+            {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.8} />}
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );
