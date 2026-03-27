@@ -53,20 +53,42 @@ const SearchPage = () => {
     let cancelled = false;
     const fetchNew = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
-          body: { path: "/chart/0/albums?limit=20" },
-        });
-        if (error || !data?.data) return;
+        // Fetch new releases from France (genre 85) and Belgium (genre 129) editorial
+        const [frRes, beRes] = await Promise.allSettled([
+          supabase.functions.invoke("deezer-proxy", { body: { path: "/editorial/85/releases?limit=15" } }),
+          supabase.functions.invoke("deezer-proxy", { body: { path: "/editorial/129/releases?limit=10" } }),
+        ]);
         if (cancelled) return;
-        setNewReleases(
-          data.data.map((a: any) => ({
-            id: a.id,
-            title: a.title || "",
-            artist: a.artist?.name || "",
-            coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "",
-            albumId: a.id,
-          }))
-        );
+        const seen = new Set<number>();
+        const releases: DeezerNewRelease[] = [];
+        for (const r of [frRes, beRes]) {
+          if (r.status !== "fulfilled" || r.value.error || !r.value.data?.data) continue;
+          for (const a of r.value.data.data) {
+            if (seen.has(a.id)) continue;
+            seen.add(a.id);
+            releases.push({
+              id: a.id,
+              title: a.title || "",
+              artist: a.artist?.name || "",
+              coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "",
+              albumId: a.id,
+            });
+          }
+        }
+        if (releases.length === 0) {
+          // Fallback to global chart
+          const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+            body: { path: "/chart/0/albums?limit=20" },
+          });
+          if (!error && data?.data) {
+            setNewReleases(data.data.map((a: any) => ({
+              id: a.id, title: a.title || "", artist: a.artist?.name || "",
+              coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "", albumId: a.id,
+            })));
+          }
+        } else {
+          setNewReleases(releases.slice(0, 20));
+        }
       } catch { /* silent */ }
     };
     fetchNew();
@@ -465,13 +487,49 @@ const SearchPage = () => {
               </div>
             )}
 
-            {/* Nouveautés Deezer */}
+            {trendingArtists.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Artistes populaires
+                  </h2>
+                </div>
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                  {trendingArtists.map((artist, i) => (
+                    <motion.button
+                      key={artist.name}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
+                    >
+                      <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                        {(artistPhotos[artist.name] || artist.cover) ? (
+                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-secondary flex items-center justify-center">
+                            <User className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-foreground font-medium truncate w-full text-center leading-tight">
+                        {artist.name}
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Nouveautés Deezer - France & Belgique */}
             {newReleases.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Nouveautés
+                    Nouveautés 🇫🇷 🇧🇪
                   </h2>
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
@@ -503,42 +561,6 @@ const SearchPage = () => {
                       <p className="text-[10px] text-muted-foreground/70 truncate">
                         {release.artist}
                       </p>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {trendingArtists.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Artistes populaires
-                  </h2>
-                </div>
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-                  {trendingArtists.map((artist, i) => (
-                    <motion.button
-                      key={artist.name}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.03 }}
-                      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
-                    >
-                      <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                        {(artistPhotos[artist.name] || artist.cover) ? (
-                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-secondary flex items-center justify-center">
-                            <User className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-foreground font-medium truncate w-full text-center leading-tight">
-                        {artist.name}
-                      </span>
                     </motion.button>
                   ))}
                 </div>
