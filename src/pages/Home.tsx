@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music } from "lucide-react";
+import { Music, Disc3 } from "lucide-react";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
