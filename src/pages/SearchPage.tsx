@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
@@ -19,6 +20,7 @@ import {
   Music,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 
 const SearchPage = () => {
