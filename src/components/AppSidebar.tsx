@@ -159,6 +159,3 @@ export function MobileNav() {
   );
 }
 
-function isAdminItem(to: string) {
-  return to === "/add";
-}
