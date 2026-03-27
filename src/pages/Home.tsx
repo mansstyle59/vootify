@@ -17,23 +17,8 @@ import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
 import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
-const PLAYLISTS = {
-  titresDuMoment: "53362031",
-} as const;
-
-type TopGenre = "all" | "rap" | "pop" | "chill" | "afro";
-
-const TOP_TABS: { key: TopGenre; label: string }[] = [
-  { key: "all", label: "Tous" },
-  { key: "rap", label: "Rap" },
-  { key: "pop", label: "Pop" },
-  { key: "chill", label: "Chill" },
-  { key: "afro", label: "Afro" },
-];
-
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
-  const [topGenre, setTopGenre] = useState<TopGenre>("all");
   const { isAdmin } = useAdminAuth();
   const { sections, saveConfig } = useGlobalHomeConfig();
   const [localSections, setLocalSections] = useState<HomeSection[] | null>(null);
@@ -54,36 +39,6 @@ const HomePage = () => {
   // Use local override while customizer is open, otherwise DB config
   const activeSections = localSections ?? sections;
 
-  const { data: titresDuMoment, isLoading: loadingTitres } = useQuery({
-    queryKey: ["deezer-titres-du-moment"],
-    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.titresDuMoment, 20),
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: rapstars, isLoading: loadingRap } = useQuery({
-    queryKey: ["deezer-rapstars"],
-    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.rapstars, 20),
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: popHits, isLoading: loadingPop } = useQuery({
-    queryKey: ["deezer-pop-hits"],
-    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.popHits, 20),
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: chillVibes, isLoading: loadingChill } = useQuery({
-    queryKey: ["deezer-chill-vibes"],
-    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.chillVibes, 20),
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: afrobeats, isLoading: loadingAfro } = useQuery({
-    queryKey: ["deezer-afrobeats"],
-    queryFn: () => deezerApi.getPlaylistTracks(PLAYLISTS.afrobeats, 20),
-    staleTime: 10 * 60 * 1000,
-  });
-
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) {
       togglePlay();
@@ -93,21 +48,6 @@ const HomePage = () => {
     setQueue(allSongs);
     play(resolved);
   };
-
-  const filterFull = (songs?: Song[]) =>
-    (songs || []).filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net"));
-
-  const getTopSongs = (): { songs: Song[]; loading: boolean; source: Song[] } => {
-    switch (topGenre) {
-      case "rap": return { songs: filterFull(rapstars).slice(0, 10), loading: loadingRap, source: rapstars || [] };
-      case "pop": return { songs: filterFull(popHits).slice(0, 10), loading: loadingPop, source: popHits || [] };
-      case "chill": return { songs: filterFull(chillVibes).slice(0, 10), loading: loadingChill, source: chillVibes || [] };
-      case "afro": return { songs: filterFull(afrobeats).slice(0, 10), loading: loadingAfro, source: afrobeats || [] };
-      default: return { songs: filterFull(titresDuMoment).slice(0, 10), loading: loadingTitres, source: titresDuMoment || [] };
-    }
-  };
-
-  const topData = getTopSongs();
 
   const personalizedMix = (() => {
     const pool = [...likedSongs];
