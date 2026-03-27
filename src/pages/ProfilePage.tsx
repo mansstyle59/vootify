@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { offlineCache } from "@/lib/offlineCache";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
@@ -9,7 +10,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, HardDrive, Database } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, HardDrive, Database, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ function formatBytes(bytes: number): string {
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { subscription, isActive } = useSubscription(user?.id ?? null);
   
   const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration } = usePlayerStore();
   const navigate = useNavigate();
@@ -220,8 +222,29 @@ const ProfilePage = () => {
             Cliquez pour changer la photo
           </p>
         </motion.div>
+        {/* Subscription badge */}
+        {isActive && subscription && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Crown className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground capitalize">{subscription.plan}</p>
+              <p className="text-xs text-muted-foreground">
+                {subscription.expires_at
+                  ? `Expire le ${new Date(subscription.expires_at).toLocaleDateString("fr-FR")}`
+                  : "Abonnement illimité"}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Form */}
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
