@@ -21,6 +21,7 @@ import {
   Music,
   Disc3,
   Sparkles,
+  Play,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,6 +102,42 @@ const SearchPage = () => {
     fetchNew();
     return () => { cancelled = true; };
   }, []);
+
+  // Play a Friday release album
+  const playFridayRelease = useCallback(async (release: DeezerNewRelease) => {
+    try {
+      const { data } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/album/${release.albumId}/tracks?limit=50` },
+      });
+      const tracks: Song[] = (data?.data || []).map((t: any) => ({
+        id: `deezer-${t.id}`,
+        title: t.title || "",
+        artist: t.artist?.name || release.artist,
+        album: release.title,
+        duration: t.duration || 0,
+        coverUrl: release.coverUrl,
+        streamUrl: t.preview || "",
+        liked: false,
+      }));
+      if (tracks.length > 0) {
+        setQueue(tracks);
+        play(tracks[0]);
+      }
+    } catch {
+      // If album fetch fails, create a single track entry
+      const single: Song = {
+        id: `deezer-album-${release.albumId}`,
+        title: release.title,
+        artist: release.artist,
+        album: release.title,
+        duration: 30,
+        coverUrl: release.coverUrl,
+        streamUrl: "",
+        liked: false,
+      };
+      play(single);
+    }
+  }, [play, setQueue]);
 
   const { data: allSongs, isLoading } = useAllLocalSongs();
 
@@ -546,9 +583,10 @@ const SearchPage = () => {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.03 }}
+                      onClick={() => playFridayRelease(release)}
                       className="flex-shrink-0 w-[110px] group text-left snap-start"
                     >
-                      <div className="w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
+                      <div className="relative w-[110px] h-[110px] rounded-xl overflow-hidden mb-1.5 shadow-md">
                         {release.coverUrl ? (
                           <img
                             src={release.coverUrl}
@@ -561,6 +599,9 @@ const SearchPage = () => {
                             <Music className="w-6 h-6 text-muted-foreground" />
                           </div>
                         )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                        </div>
                       </div>
                       <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
                         {release.title}
