@@ -256,6 +256,7 @@ const LibraryPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectMode, setSelectMode] = useState(false);
+  const [artistSearch, setArtistSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [albumSearch, setAlbumSearch] = useState("");
   const [likedSearch, setLikedSearch] = useState("");
@@ -1057,14 +1058,38 @@ const LibraryPage = () => {
                   <EmptyState icon={User} title="Aucun artiste" subtitle="Les artistes apparaîtront ici" />
                 ) : (
                   <>
-                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
-                      {libraryArtists.length} artiste{libraryArtists.length > 1 ? "s" : ""}
-                    </p>
-                    <div className="grid grid-cols-3 gap-4">
-                      {libraryArtists.map((artist, i) => (
-                        <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
-                      ))}
+                    <div className="relative mb-3">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                      <input
+                        type="text"
+                        value={artistSearch}
+                        onChange={(e) => setArtistSearch(e.target.value)}
+                        placeholder="Rechercher un artiste..."
+                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                      />
+                      {artistSearch && (
+                        <button onClick={() => setArtistSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
+                    {(() => {
+                      const filtered = artistSearch.trim()
+                        ? libraryArtists.filter((a) => a.name.toLowerCase().includes(artistSearch.toLowerCase().trim()))
+                        : libraryArtists;
+                      return (
+                        <>
+                          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
+                            {filtered.length} artiste{filtered.length > 1 ? "s" : ""}{artistSearch.trim() ? ` sur ${libraryArtists.length}` : ""}
+                          </p>
+                          <div className="grid grid-cols-3 gap-4">
+                            {filtered.map((artist, i) => (
+                              <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>
