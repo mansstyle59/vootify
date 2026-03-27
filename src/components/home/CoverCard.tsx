@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause } from "lucide-react";
 
@@ -12,7 +13,7 @@ interface CoverCardProps {
   preserveRatio?: boolean;
 }
 
-export function CoverCard({
+export const CoverCard = memo(function CoverCard({
   title, subtitle, imageUrl, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false,
 }: CoverCardProps) {
   return (
