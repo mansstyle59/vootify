@@ -44,7 +44,7 @@ export function CoverCard({
                 ? "opacity-100 scale-100"
                 : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
             }`}
-            style={{ boxShadow: isActive ? "0 0 20px hsl(141 73% 42% / 0.4)" : undefined }}
+            style={{ boxShadow: isActive ? "0 0 20px hsl(var(--primary) / 0.4)" : undefined }}
           >
             {isActive ? (
               <Pause className="w-5 h-5 text-primary-foreground" />

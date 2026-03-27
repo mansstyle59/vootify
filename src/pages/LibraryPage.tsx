@@ -149,7 +149,7 @@ function PremiumSongRow({
             {song.title}
           </p>
           {cached && (
-            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">
               <Download className="w-2.5 h-2.5" />
             </span>
           )}

@@ -247,7 +247,7 @@ export function ContentCard({ title, subtitle, imageUrl, onClick }: ContentCardP
           <motion.div
             whileTap={{ scale: 0.9 }}
             className="w-11 h-11 rounded-full liquid-glass flex items-center justify-center shadow-xl"
-            style={{ boxShadow: "0 0 20px hsl(141 73% 42% / 0.3)" }}
+            style={{ boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" }}
           >
             <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
           </motion.div>
