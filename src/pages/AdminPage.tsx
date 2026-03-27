@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
