@@ -463,10 +463,10 @@ export function MiniPlayer() {
       }
     }
 
-    // ── Throttle UI progress updates in background to save CPU ──
+    // ── Throttle UI progress updates to save CPU ──
     const now = Date.now();
     const isVisible = document.visibilityState === "visible";
-    const throttleMs = isVisible ? 0 : 2000;
+    const throttleMs = isVisible ? 250 : 3000;
     if (now - lastProgressUpdateRef.current >= throttleMs) {
       setProgress(t);
       lastProgressUpdateRef.current = now;
