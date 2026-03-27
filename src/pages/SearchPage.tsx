@@ -705,6 +705,12 @@ const SearchPage = () => {
                               <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
                             </div>
                           </button>
+                          {availableReleases.has(release.albumId) && (
+                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/90 backdrop-blur-sm">
+                              <Check className="w-2.5 h-2.5 text-white" />
+                              <span className="text-[8px] font-bold text-white leading-none">DISPO</span>
+                            </div>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
                             className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
