@@ -263,6 +263,55 @@ export function MiniPlayer() {
     loadAndPlay();
   }, [currentSong?.id]); // Only re-run when the track ID changes
 
+  // ── Preload next track for instant transitions ──
+  useEffect(() => {
+    if (!currentSong) return;
+    const { queue, shuffle } = usePlayerStore.getState();
+    if (queue.length <= 1) return;
+
+    const idx = queue.findIndex((s) => s.id === currentSong.id);
+    const nextIdx = shuffle
+      ? (idx + 1) % queue.length // For preload, just pick next sequential even in shuffle
+      : (idx + 1) % queue.length;
+    const nextSong = queue[nextIdx];
+    if (!nextSong || nextSong.id === preloadedSongIdRef.current) return;
+
+    // Preload in background
+    const preloadNext = async () => {
+      let src: string | null = null;
+
+      // Check offline cache first
+      const cachedUrl = await offlineCache.getCachedUrl(nextSong.id);
+      if (cachedUrl) {
+        src = cachedUrl;
+      } else if (nextSong.id.startsWith("dz-") && (!nextSong.streamUrl || nextSong.streamUrl.includes("cdn-preview") || nextSong.streamUrl.includes("dzcdn.net"))) {
+        try {
+          const resolved = await deezerApi.resolveFullStream(nextSong);
+          if (resolved.streamUrl && !resolved.streamUrl.includes("cdn-preview") && !resolved.streamUrl.includes("dzcdn.net")) {
+            src = resolved.streamUrl;
+            // Update the song in the queue with the resolved URL
+            const currentQueue = usePlayerStore.getState().queue;
+            const updatedQueue = currentQueue.map((s) => s.id === nextSong.id ? resolved : s);
+            usePlayerStore.setState({ queue: updatedQueue });
+          }
+        } catch { /* silent */ }
+      } else if (nextSong.streamUrl) {
+        src = nextSong.streamUrl;
+      }
+
+      if (src && preloadRef.current) {
+        preloadRef.current.src = src;
+        preloadRef.current.load();
+        preloadedSongIdRef.current = nextSong.id;
+        console.log("[preload] Buffering next:", nextSong.title);
+      }
+    };
+
+    // Delay preload slightly so it doesn't compete with current track loading
+    const timer = setTimeout(preloadNext, 1500);
+    return () => clearTimeout(timer);
+  }, [currentSong?.id]);
+
   const preemptiveTriggeredRef = useRef(false);
 
   const handleTimeUpdate = useCallback(() => {
