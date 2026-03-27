@@ -883,6 +883,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const [showQueue, setShowQueue] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
+  const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isSeeking, setIsSeeking] = useState(false);
