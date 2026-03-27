@@ -1,7 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { deezerApi } from "@/lib/deezerApi";
+import { usePlayerStore } from "@/stores/playerStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
