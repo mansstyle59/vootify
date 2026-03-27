@@ -310,14 +310,21 @@ function UsersTab() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="create-password"
-                  type="password"
+                  type={showCreatePassword ? "text" : "password"}
                   value={createPassword}
                   onChange={(e) => setCreatePassword(e.target.value)}
                   placeholder="Minimum 6 caractères"
-                  className="pl-9"
+                  className="pl-9 pr-10"
                   required
                   minLength={6}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowCreatePassword(!showCreatePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showCreatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
           </div>
