@@ -23,7 +23,7 @@ type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
-  songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview"));
+  songs.filter((s) => s.streamUrl);
 
 /** Filter out radio stations (duration === 0) from recently played */
 const filterMusicOnly = (songs: Song[]) =>
