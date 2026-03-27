@@ -203,15 +203,19 @@ export const deezerApi = {
       return score;
     };
 
-    // ── 2. Custom songs (priority — always check first) ──
-    step("Custom…");
-    try {
-      const { data: customSongs } = await supabase
-        .from("custom_songs")
-        .select("*")
-        .not("stream_url", "is", null);
+    // ── 2 & 3. Custom songs + JioSaavn — run in PARALLEL for minimal latency ──
+    step("Résolution…");
 
-      if (customSongs && customSongs.length > 0) {
+    // Custom songs query
+    const customPromise = (async () => {
+      try {
+        const { data: customSongs } = await supabase
+          .from("custom_songs")
+          .select("*")
+          .not("stream_url", "is", null);
+
+        if (!customSongs || customSongs.length === 0) return null;
+
         let bestCustom: typeof customSongs[0] | null = null;
         let bestScore = 0;
 
@@ -220,129 +224,133 @@ export const deezerApi = {
           const cArtist = norm(c.artist.split(",")[0]);
           const titleScore = matchScore(cTitle, targetTitle);
           const artistScore = matchScore(cArtist, targetArtist);
-          
-          // Exact title match is a strong signal
           let score = titleScore * 2 + artistScore * 1.5;
-          
-          // Duration proximity bonus
           if (c.duration > 0 && targetDuration > 0) {
             const diff = Math.abs(c.duration - targetDuration);
             if (diff <= 5) score += 40;
             else if (diff <= 15) score += 30;
             else if (diff <= 30) score += 15;
           }
-          
-          // Bonus: if title contains the target or vice-versa
           if (cTitle.includes(targetTitle) || targetTitle.includes(cTitle)) {
             score += 30;
           }
-
           if (score > bestScore) {
             bestScore = score;
             bestCustom = c;
           }
         }
 
-        // Lower threshold: score >= 60 is enough (was 80)
         if (bestCustom?.stream_url && bestScore >= 60) {
-          console.log("[resolve] custom match:", bestCustom.title, `(score: ${bestScore})`);
-          const resolved = {
-            ...song,
-            streamUrl: bestCustom.stream_url,
-            coverUrl: bestCustom.cover_url || song.coverUrl,
-            resolvedViaCustom: true,
-          };
-          hdCache.set(song.id, {
-            streamUrl: resolved.streamUrl,
-            coverUrl: bestCustom.cover_url || undefined,
-            resolvedViaCustom: true,
-            ts: Date.now(),
-          });
-          resolveLog.add({
-            songId: song.id,
-            originalTitle: song.title,
-            originalArtist: song.artist,
-            resolvedTitle: bestCustom.title,
-            resolvedArtist: bestCustom.artist,
-            source: "custom",
-            streamUrl: bestCustom.stream_url,
-            titleCorrected: norm(bestCustom.title) !== targetTitle,
-            artistCorrected: norm(bestCustom.artist.split(",")[0]) !== targetArtist,
-            ts: Date.now(),
-          });
-          return resolved;
+          return { custom: bestCustom, score: bestScore };
         }
+        return null;
+      } catch {
+        return null;
       }
-    } catch (e) {
-      console.error("[resolve] custom check failed:", e);
+    })();
+
+    // JioSaavn HD search
+    const saavnPromise = (async () => {
+      try {
+        const mainArtist = song.artist.split(",")[0].trim();
+        const cleanTitle = song.title.replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").trim();
+        const noFeatTitle = song.title.replace(/\s*(feat\.?|ft\.?|featuring)\s*.*/i, "").trim();
+        const queries = [
+          `${mainArtist} ${song.title}`,
+          `${mainArtist} ${cleanTitle}`,
+          song.title,
+          `${song.title} ${mainArtist}`,
+          cleanTitle,
+          noFeatTitle !== cleanTitle ? `${mainArtist} ${noFeatTitle}` : null,
+          noFeatTitle !== cleanTitle ? noFeatTitle : null,
+        ].filter(Boolean) as string[];
+
+        const seen = new Set<string>();
+        const uniqueQueries = queries.filter((q) => {
+          const n = norm(q);
+          if (seen.has(n) || n.length < 3) return false;
+          seen.add(n);
+          return true;
+        });
+
+        let bestMatch: Song | null = null;
+        let bestScore = 0;
+
+        for (const q of uniqueQueries) {
+          try {
+            const results = await jiosaavnApi.search(q, 15);
+            for (const r of results) {
+              const s = scoreCandidate(r);
+              if (s > bestScore) { bestScore = s; bestMatch = r; }
+            }
+            if (bestScore >= 180) break;
+          } catch { /* continue */ }
+        }
+
+        if (bestMatch?.streamUrl && bestScore >= 40) {
+          return { match: bestMatch, score: bestScore };
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    })();
+
+    // Wait for BOTH in parallel — use whichever wins
+    const [customResult, saavnResult] = await Promise.all([customPromise, saavnPromise]);
+
+    // Custom always takes priority when found
+    if (customResult) {
+      const { custom: bestCustom, score: bestScore } = customResult;
+      const resolved = {
+        ...song,
+        streamUrl: bestCustom.stream_url!,
+        coverUrl: bestCustom.cover_url || song.coverUrl,
+        resolvedViaCustom: true,
+      };
+      hdCache.set(song.id, {
+        streamUrl: resolved.streamUrl,
+        coverUrl: bestCustom.cover_url || undefined,
+        resolvedViaCustom: true,
+        ts: Date.now(),
+      });
+      resolveLog.add({
+        songId: song.id,
+        originalTitle: song.title,
+        originalArtist: song.artist,
+        resolvedTitle: bestCustom.title,
+        resolvedArtist: bestCustom.artist,
+        source: "custom",
+        streamUrl: bestCustom.stream_url!,
+        titleCorrected: norm(bestCustom.title) !== targetTitle,
+        artistCorrected: norm(bestCustom.artist.split(",")[0]) !== targetArtist,
+        ts: Date.now(),
+      });
+      return resolved;
     }
 
-    // ── 3. JioSaavn HD search ──
-    step("Recherche HD…");
-    try {
-      const mainArtist = song.artist.split(",")[0].trim();
-      const cleanTitle = song.title.replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").trim();
-      // Strip "feat." from title for better matching
-      const noFeatTitle = song.title.replace(/\s*(feat\.?|ft\.?|featuring)\s*.*/i, "").trim();
-      const queries = [
-        `${mainArtist} ${song.title}`,
-        `${mainArtist} ${cleanTitle}`,
-        song.title,
-        `${song.title} ${mainArtist}`,
-        cleanTitle,
-        noFeatTitle !== cleanTitle ? `${mainArtist} ${noFeatTitle}` : null,
-        noFeatTitle !== cleanTitle ? noFeatTitle : null,
-      ].filter(Boolean) as string[];
-
-      const seen = new Set<string>();
-      const uniqueQueries = queries.filter((q) => {
-        const n = norm(q);
-        if (seen.has(n) || n.length < 3) return false;
-        seen.add(n);
-        return true;
+    if (saavnResult) {
+      const { match: bestMatch, score: bestScore } = saavnResult;
+      const titleOk = matchScore(norm(bestMatch.title), targetTitle) >= 50;
+      const artistOk = matchScore(norm(bestMatch.artist.split(",")[0]), targetArtist) >= 40;
+      hdCache.set(song.id, {
+        streamUrl: bestMatch.streamUrl,
+        coverUrl: bestMatch.coverUrl || undefined,
+        ts: Date.now(),
       });
-
-      let bestMatch: Song | null = null;
-      let bestScore = 0;
-
-      for (const q of uniqueQueries) {
-        try {
-          const results = await jiosaavnApi.search(q, 15);
-          for (const r of results) {
-            const s = scoreCandidate(r);
-            if (s > bestScore) { bestScore = s; bestMatch = r; }
-          }
-          if (bestScore >= 180) break; // excellent match, stop early
-        } catch { /* continue */ }
-      }
-
-      if (bestMatch?.streamUrl && bestScore >= 40) {
-        console.log("[resolve] JioSaavn HD:", bestMatch.title, `(score: ${bestScore})`);
-        // Verify title/artist coherence — use original metadata if match is good
-        const titleOk = matchScore(norm(bestMatch.title), targetTitle) >= 50;
-        const artistOk = matchScore(norm(bestMatch.artist.split(",")[0]), targetArtist) >= 40;
-        hdCache.set(song.id, {
-          streamUrl: bestMatch.streamUrl,
-          coverUrl: bestMatch.coverUrl || undefined,
-          ts: Date.now(),
-        });
-        resolveLog.add({
-          songId: song.id,
-          originalTitle: song.title,
-          originalArtist: song.artist,
-          resolvedTitle: bestMatch.title,
-          resolvedArtist: bestMatch.artist,
-          source: "hd",
-          streamUrl: bestMatch.streamUrl,
-          titleCorrected: !titleOk,
-          artistCorrected: !artistOk,
-          ts: Date.now(),
-        });
-        // Keep original title/artist to avoid incoherent display
-        return { ...song, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || song.coverUrl };
-      }
-    } catch (e) {
-      console.error("[resolve] JioSaavn failed:", e);
+      resolveLog.add({
+        songId: song.id,
+        originalTitle: song.title,
+        originalArtist: song.artist,
+        resolvedTitle: bestMatch.title,
+        resolvedArtist: bestMatch.artist,
+        source: "hd",
+        streamUrl: bestMatch.streamUrl,
+        titleCorrected: !titleOk,
+        artistCorrected: !artistOk,
+        ts: Date.now(),
+      });
+      return { ...song, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || song.coverUrl };
     }
 
     // No full stream found — log it
