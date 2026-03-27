@@ -224,6 +224,25 @@ const SearchPage = () => {
     setAddToPlaylistRelease(null);
   };
 
+  // Check which Friday releases have tracks available in local library
+  const availableReleases = useMemo(() => {
+    if (!allSongs || !newReleases.length) return new Set<number>();
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const available = new Set<number>();
+    for (const release of newReleases) {
+      const rArtist = normalize(release.artist);
+      const rTitle = normalize(release.title);
+      const hasMatch = allSongs.some((s) => {
+        const sArtist = normalize(s.artist);
+        const sAlbum = normalize(s.album || "");
+        return (sArtist.includes(rArtist) || rArtist.includes(sArtist)) &&
+               (sAlbum.includes(rTitle) || rTitle.includes(sAlbum));
+      });
+      if (hasMatch) available.add(release.albumId);
+    }
+    return available;
+  }, [allSongs, newReleases]);
+
   const recentIds = useMemo(
     () => new Set(recentlyPlayed.map((s) => s.id)),
     [recentlyPlayed]
@@ -686,6 +705,12 @@ const SearchPage = () => {
                               <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
                             </div>
                           </button>
+                          {availableReleases.has(release.albumId) && (
+                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/90 backdrop-blur-sm">
+                              <Check className="w-2.5 h-2.5 text-white" />
+                              <span className="text-[8px] font-bold text-white leading-none">DISPO</span>
+                            </div>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
                             className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
