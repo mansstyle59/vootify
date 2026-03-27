@@ -9,7 +9,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download,
   HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown,
-  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus
+  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,7 @@ import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
+import { batchSearchCovers } from "@/lib/coverArtSearch";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
@@ -432,6 +433,8 @@ const LibraryPage = () => {
   const [cacheSize, setCacheSize] = useState(0);
   const [isRedownloading, setIsRedownloading] = useState(false);
   const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
 
   useEffect(() => {
     if (tab !== "downloads" && !isOffline) return;
@@ -798,6 +801,59 @@ const LibraryPage = () => {
                   <EmptyState icon={Music} title="Aucun titre ajouté" subtitle="Les titres ajoutés par l'admin apparaissent ici" />
                 ) : (
                   <>
+                    {/* Enrich metadata button */}
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.97 }}
+                      disabled={enriching}
+                      onClick={async () => {
+                        const missing = customSongs.filter((s: any) => !s.coverUrl || !s.album);
+                        if (missing.length === 0) { toast.info("Tous les morceaux ont déjà leurs métadonnées"); return; }
+                        setEnriching(true);
+                        setEnrichProgress({ done: 0, total: missing.length });
+                        try {
+                          const results = await batchSearchCovers(
+                            missing.map((s) => ({ artist: s.artist, album: s.album, title: s.title, coverUrl: s.coverUrl, year: (s as any).year })),
+                            (done, total) => setEnrichProgress({ done, total })
+                          );
+                          let updated = 0;
+                          for (const [idx, meta] of results.entries()) {
+                            const song = missing[idx] as any;
+                            const dbId = song._dbId || song.id.replace("custom-", "");
+                            const updates: Record<string, any> = {};
+                            if (meta.coverUrl && !song.coverUrl) updates.cover_url = meta.coverUrl;
+                            if (meta.album && !song.album) updates.album = meta.album;
+                            if (meta.genre) updates.genre = meta.genre;
+                            if (meta.year) updates.year = meta.year;
+                            if (Object.keys(updates).length > 0) {
+                              await supabase.from("custom_songs").update(updates).eq("id", dbId);
+                              updated++;
+                            }
+                          }
+                          if (updated > 0) {
+                            toast.success(`${updated} morceau${updated > 1 ? "x" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
+                            queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+                          } else {
+                            toast.info("Aucune nouvelle métadonnée trouvée");
+                          }
+                        } catch { toast.error("Erreur lors de l'enrichissement"); }
+                        setEnriching(false);
+                      }}
+                      className="w-full mb-4 py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border/30"
+                    >
+                      {enriching ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Deezer... {enrichProgress.total > 0 ? `${enrichProgress.done}/${enrichProgress.total}` : ""}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Enrichir métadonnées Deezer
+                        </>
+                      )}
+                    </motion.button>
+
                     {/* Sort + Select toggle */}
                     <div className="relative flex items-center justify-between px-1 mb-3">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
