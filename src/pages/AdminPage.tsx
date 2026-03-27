@@ -671,14 +671,24 @@ function RadiosTab() {
   const isSelecting = selectedIds.size > 0;
 
   useEffect(() => {
-    supabase
-      .from("custom_radio_stations")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setRadios(data || []);
-        setLoading(false);
-      });
+    (async () => {
+      const PAGE = 1000;
+      let all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await supabase
+          .from("custom_radio_stations")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      setRadios(all);
+      setLoading(false);
+    })();
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -1154,15 +1164,25 @@ function SongPickerModal({
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
 
   useEffect(() => {
-    supabase
-      .from("custom_songs")
-      .select("id, title, artist, cover_url")
-      .not("stream_url", "is", null)
-      .order("title")
-      .then(({ data }) => {
-        setAllSongs(data || []);
-        setLoading(false);
-      });
+    (async () => {
+      const PAGE = 1000;
+      let all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await supabase
+          .from("custom_songs")
+          .select("id, title, artist, cover_url")
+          .not("stream_url", "is", null)
+          .order("title")
+          .range(from, from + PAGE - 1);
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      setAllSongs(all);
+      setLoading(false);
+    })();
   }, []);
 
   const filtered = search.trim()
