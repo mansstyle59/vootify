@@ -257,6 +257,7 @@ const LibraryPage = () => {
   const [newName, setNewName] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [albumSearch, setAlbumSearch] = useState("");
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
@@ -882,12 +883,12 @@ const LibraryPage = () => {
             {tab === "albums" && (
               <div>
                 {loadingLibAlbums ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {Array.from({ length: 9 }).map((_, i) => (
                       <div key={i} className="animate-pulse">
-                        <div className="aspect-square rounded-2xl bg-secondary mb-2" />
-                        <div className="h-3 w-24 bg-secondary rounded mb-1" />
-                        <div className="h-2.5 w-16 bg-secondary rounded" />
+                        <div className="aspect-square rounded-xl bg-secondary mb-1.5" />
+                        <div className="h-2.5 w-16 bg-secondary rounded mb-1" />
+                        <div className="h-2 w-12 bg-secondary rounded" />
                       </div>
                     ))}
                   </div>
@@ -895,9 +896,26 @@ const LibraryPage = () => {
                   <EmptyState icon={Disc3} title="Aucun album" subtitle="Les albums apparaîtront ici" />
                 ) : (
                   <>
-                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {libraryAlbums.length} album{libraryAlbums.length > 1 ? "s" : ""}
                     </p>
+
+                    {/* Search albums by artist */}
+                    <div className="relative mb-3">
+                      <input
+                        type="text"
+                        value={albumSearch}
+                        onChange={(e) => setAlbumSearch(e.target.value)}
+                        placeholder="Rechercher par artiste..."
+                        className="w-full px-3 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                      />
+                      {albumSearch && (
+                        <button onClick={() => setAlbumSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
                     {isAdmin && (
                       <motion.button
                         type="button"
@@ -931,28 +949,34 @@ const LibraryPage = () => {
                           } catch (e) { toast.error("Erreur lors de l'enrichissement"); console.error(e); }
                           setEnriching(false);
                         }}
-                        className="w-full mb-4 py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border/30"
+                        className="w-full mb-3 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border/30"
                       >
                         {enriching ? (
                           <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             Deezer... {enrichProgress.total > 0 ? `${enrichProgress.done}/${enrichProgress.total}` : ""}
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-4 h-4" />
+                            <Sparkles className="w-3.5 h-3.5" />
                             Enrichir covers albums Deezer
                           </>
                         )}
                       </motion.button>
                     )}
-                    <div className="grid grid-cols-2 gap-3">
-                      {libraryAlbums.map((album, i) => (
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {libraryAlbums
+                        .filter((album) => {
+                          if (!albumSearch.trim()) return true;
+                          const q = albumSearch.toLowerCase().trim();
+                          return album.artist.toLowerCase().includes(q) || album.title.toLowerCase().includes(q);
+                        })
+                        .map((album, i) => (
                         <motion.button
                           key={album.id}
                           initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.03 }}
+                          transition={{ delay: i * 0.02 }}
                           whileTap={{ scale: 0.97 }}
                           onClick={() => {
                             if (album.id.startsWith("derived-")) {
@@ -963,17 +987,17 @@ const LibraryPage = () => {
                           }}
                           className="text-left group"
                         >
-                          <div className="aspect-square rounded-2xl overflow-hidden bg-secondary shadow-lg mb-2 relative">
+                          <div className="aspect-square rounded-xl overflow-hidden bg-secondary shadow-md mb-1.5 relative">
                             {album.cover_url ? (
                               <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                                <Disc3 className="w-10 h-10 text-primary/30" />
+                                <Disc3 className="w-8 h-8 text-primary/30" />
                               </div>
                             )}
                           </div>
-                          <p className="text-sm font-bold text-foreground truncate">{album.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
+                          <p className="text-xs font-bold text-foreground truncate">{album.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
                         </motion.button>
                       ))}
                     </div>
