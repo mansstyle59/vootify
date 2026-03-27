@@ -258,6 +258,8 @@ const LibraryPage = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [albumSearch, setAlbumSearch] = useState("");
+  const [likedSearch, setLikedSearch] = useState("");
+  const [customSearch, setCustomSearch] = useState("");
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const navigate = useNavigate();
