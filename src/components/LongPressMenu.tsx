@@ -166,11 +166,19 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
             >
               {/* Header with cover */}
               <div className="flex items-center gap-3 p-4 border-b border-white/[0.06]">
-                <img
-                  src={song.coverUrl}
-                  alt={song.title}
-                  className="w-12 h-12 rounded-xl object-cover shadow-lg"
-                />
+                {song.coverUrl ? (
+                  <img
+                    src={song.coverUrl}
+                    alt={song.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-12 h-12 rounded-xl object-cover shadow-lg"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 shadow-lg">
+                    <Music className="w-5 h-5 text-primary/40" />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-foreground truncate">{song.title}</p>
                   <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
