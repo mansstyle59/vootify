@@ -566,6 +566,7 @@ export function MiniPlayer() {
         preload="auto"
       />
       <audio ref={crossfadeRef} preload="auto" />
+      <audio ref={preloadRef} preload="auto" style={{ display: "none" }} />
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
