@@ -9,7 +9,8 @@ import { formatDuration } from "@/data/mockData";
 import {
   Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download,
   HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown,
-  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles
+  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles,
+  Disc3, User
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,9 +19,9 @@ import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
-import { batchSearchCovers } from "@/lib/coverArtSearch";
+import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
 
-type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
+type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
@@ -416,6 +417,42 @@ const LibraryPage = () => {
     enabled: tab === "custom",
   });
 
+  // Albums query
+  const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
+    queryKey: ["library-albums"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_albums")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 2 * 60 * 1000,
+    enabled: tab === "albums",
+  });
+
+  // Artists query (derived from custom_songs)
+  const { data: libraryArtists = [], isLoading: loadingLibArtists } = useQuery({
+    queryKey: ["library-artists"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("artist, cover_url")
+        .not("stream_url", "is", null);
+      if (error) throw error;
+      const artistMap = new Map<string, { name: string; cover: string; count: number }>();
+      for (const row of data || []) {
+        const existing = artistMap.get(row.artist);
+        if (existing) { existing.count++; if (!existing.cover && row.cover_url) existing.cover = row.cover_url; }
+        else artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1 });
+      }
+      return Array.from(artistMap.values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    },
+    staleTime: 2 * 60 * 1000,
+    enabled: tab === "artists",
+  });
+
   // Check which songs in current view are cached offline
   useEffect(() => {
     const allSongs = [
@@ -488,6 +525,8 @@ const LibraryPage = () => {
     { key: "recent", label: "Récents", icon: Clock },
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "albums", label: "Albums", icon: Disc3 },
+    { key: "artists", label: "Artistes", icon: User },
     { key: "custom", label: "Mes titres", icon: Music },
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
@@ -790,6 +829,85 @@ const LibraryPage = () => {
                       })}
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* ── ALBUMS ── */}
+            {tab === "albums" && (
+              <div>
+                {loadingLibAlbums ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="aspect-square rounded-2xl bg-secondary mb-2" />
+                        <div className="h-3 w-24 bg-secondary rounded mb-1" />
+                        <div className="h-2.5 w-16 bg-secondary rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : libraryAlbums.length === 0 ? (
+                  <EmptyState icon={Disc3} title="Aucun album" subtitle="Les albums apparaîtront ici" />
+                ) : (
+                  <>
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
+                      {libraryAlbums.length} album{libraryAlbums.length > 1 ? "s" : ""}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {libraryAlbums.map((album, i) => (
+                        <motion.button
+                          key={album.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => navigate(`/album/${album.id}`)}
+                          className="text-left group"
+                        >
+                          <div className="aspect-square rounded-2xl overflow-hidden bg-secondary shadow-lg mb-2 relative">
+                            {album.cover_url ? (
+                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                                <Disc3 className="w-10 h-10 text-primary/30" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-foreground truncate">{album.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── ARTISTS ── */}
+            {tab === "artists" && (
+              <div>
+                {loadingLibArtists ? (
+                  <div className="grid grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="animate-pulse flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full bg-secondary mb-2" />
+                        <div className="h-3 w-16 bg-secondary rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : libraryArtists.length === 0 ? (
+                  <EmptyState icon={User} title="Aucun artiste" subtitle="Les artistes apparaîtront ici" />
+                ) : (
+                  <>
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
+                      {libraryArtists.length} artiste{libraryArtists.length > 1 ? "s" : ""}
+                    </p>
+                    <div className="grid grid-cols-3 gap-4">
+                      {libraryArtists.map((artist, i) => (
+                        <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -1164,5 +1282,43 @@ const LibraryPage = () => {
     </div>
   );
 };
+
+/** Artist card with Deezer photo for library */
+function ArtistLibraryCard({ artist, index, navigate }: {
+  artist: { name: string; cover: string; count: number };
+  index: number;
+  navigate: ReturnType<typeof import("react-router-dom").useNavigate>;
+}) {
+  const { data: deezerImage } = useQuery({
+    queryKey: ["artist-image", artist.name],
+    queryFn: () => searchArtistImage(artist.name),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  const imageUrl = deezerImage || artist.cover;
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.03 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+      className="flex flex-col items-center text-center group"
+    >
+      <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary shadow-lg mb-2 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+        {imageUrl ? (
+          <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <User className="w-8 h-8 text-primary/30" />
+          </div>
+        )}
+      </div>
+      <p className="text-xs font-bold text-foreground truncate max-w-[96px]">{artist.name}</p>
+      <p className="text-[10px] text-muted-foreground">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+    </motion.button>
+  );
+}
 
 export default LibraryPage;
