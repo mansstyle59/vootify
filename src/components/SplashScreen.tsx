@@ -94,7 +94,7 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
             transition={{ delay: 1.2, duration: 0.5 }}
             className="mt-3 text-xs font-medium tracking-[0.25em] uppercase text-muted-foreground"
           >
-            Your music, elevated
+            Ta musique, sans limites
           </motion.p>
 
           {/* Animated loading bar */}
