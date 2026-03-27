@@ -532,14 +532,19 @@ const LibraryPage = () => {
   }, [tab, isOffline]);
 
   const sortedCustomSongs = useMemo(() => {
-    const arr = [...customSongs];
+    let arr = [...customSongs];
+    // Search filter
+    if (customSearch.trim()) {
+      const q = customSearch.toLowerCase().trim();
+      arr = arr.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q)));
+    }
     switch (customSort) {
       case "alpha": return arr.sort((a, b) => a.title.localeCompare(b.title, "fr"));
       case "artist": return arr.sort((a, b) => a.artist.localeCompare(b.artist, "fr"));
       case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
       default: return arr;
     }
-  }, [customSongs, customSort]);
+  }, [customSongs, customSort, customSearch]);
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
@@ -1118,6 +1123,23 @@ const LibraryPage = () => {
                         </>
                       )}
                     </motion.button>
+
+                    {/* Search */}
+                    <div className="relative mb-3">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                      <input
+                        type="text"
+                        value={customSearch}
+                        onChange={(e) => setCustomSearch(e.target.value)}
+                        placeholder="Rechercher un morceau..."
+                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                      />
+                      {customSearch && (
+                        <button onClick={() => setCustomSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
 
                     {/* Sort + Select toggle */}
                     <div className="relative flex items-center justify-between px-1 mb-3">
