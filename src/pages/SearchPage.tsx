@@ -21,6 +21,7 @@ import {
   Music,
   Disc3,
   Sparkles,
+  Play,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
