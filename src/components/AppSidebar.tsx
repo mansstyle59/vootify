@@ -1,6 +1,6 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Search, Library, Radio, PlusCircle, LogOut } from "lucide-react";
+import { Home, Search, Library, Radio, PlusCircle, LogOut, Shield } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ const navItems = [
 
 const adminItems = [
   { to: "/add", icon: PlusCircle, label: "Ajouter" },
+  { to: "/admin", icon: Shield, label: "Admin" },
 ];
 
 // Route → lazy chunk mapping for prefetch
@@ -24,6 +25,7 @@ const routeImports: Record<string, () => Promise<unknown>> = {
   "/library": () => import("@/pages/LibraryPage"),
   "/radio": () => import("@/pages/RadioPage"),
   "/add": () => import("@/pages/AddContentPage"),
+  "/admin": () => import("@/pages/AdminPage"),
 };
 
 const prefetched = new Set<string>();
