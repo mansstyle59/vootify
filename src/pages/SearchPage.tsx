@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
@@ -19,9 +20,11 @@ import {
   Music,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 
 const SearchPage = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -90,6 +93,39 @@ const SearchPage = () => {
     return extractArtists(searchResults).slice(0, 8);
   }, [searchResults]);
 
+  // Extract artists with cover photos for display cards
+  const artistCards = useMemo(() => {
+    if (searchResults.length === 0) return [];
+    const map = new Map<string, { name: string; coverUrl: string; songCount: number }>();
+    for (const s of searchResults) {
+      s.artist.split(",").forEach((a) => {
+        const name = a.trim();
+        if (!name) return;
+        if (!map.has(name)) {
+          map.set(name, { name, coverUrl: s.coverUrl, songCount: 1 });
+        } else {
+          map.get(name)!.songCount++;
+        }
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount).slice(0, 10);
+  }, [searchResults]);
+
+  // Extract albums with cover photos for display cards
+  const albumCards = useMemo(() => {
+    if (searchResults.length === 0) return [];
+    const map = new Map<string, { title: string; artist: string; coverUrl: string; songCount: number }>();
+    for (const s of searchResults) {
+      if (!s.album) continue;
+      if (!map.has(s.album)) {
+        map.set(s.album, { title: s.album, artist: s.artist.split(",")[0].trim(), coverUrl: s.coverUrl, songCount: 1 });
+      } else {
+        map.get(s.album)!.songCount++;
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount).slice(0, 10);
+  }, [searchResults]);
+
   const filteredResults = useMemo(() => {
     if (!artistFilter) return searchResults;
     return searchResults.filter((s) => s.artist.includes(artistFilter));
@@ -121,6 +157,20 @@ const SearchPage = () => {
     }
     setQueue(allSongs);
     play(song);
+  };
+
+  const handleAlbumClick = async (albumTitle: string) => {
+    const { data } = await supabase
+      .from("custom_albums")
+      .select("id")
+      .eq("title", albumTitle)
+      .limit(1)
+      .single();
+    if (data) navigate(`/album/${data.id}`);
+  };
+
+  const handleArtistClick = (artistName: string) => {
+    navigate(`/artist/${encodeURIComponent(artistName)}`);
   };
 
   const handleRemoveRecent = (term: string) => {
@@ -366,6 +416,79 @@ const SearchPage = () => {
               </div>
             ) : (
               <>
+                {/* Artist cards with photos */}
+                {artistCards.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User className="w-4 h-4 text-primary" />
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Artistes
+                      </h2>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                      {artistCards.map((artist, i) => (
+                        <motion.button
+                          key={artist.name}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                          onClick={() => handleArtistClick(artist.name)}
+                          className="flex-shrink-0 w-28 group text-center"
+                        >
+                          <div className="w-28 h-28 rounded-full overflow-hidden bg-secondary mb-2 shadow-lg mx-auto ring-2 ring-transparent group-hover:ring-primary/40 transition-all">
+                            {artist.coverUrl ? (
+                              <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                                <User className="w-8 h-8 text-primary/30" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs font-bold text-foreground truncate">{artist.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{artist.songCount} titre{artist.songCount > 1 ? "s" : ""}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Album cards with photos */}
+                {albumCards.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Music className="w-4 h-4 text-primary" />
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Albums
+                      </h2>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                      {albumCards.map((album, i) => (
+                        <motion.button
+                          key={album.title}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                          onClick={() => handleAlbumClick(album.title)}
+                          className="flex-shrink-0 w-32 group text-left"
+                        >
+                          <div className="w-32 h-32 rounded-xl overflow-hidden bg-secondary mb-2 shadow-lg group-hover:shadow-xl transition-all">
+                            {album.coverUrl ? (
+                              <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                                <Music className="w-8 h-8 text-primary/30" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs font-bold text-foreground truncate">{album.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{album.artist}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Artist filter chips */}
                 {uniqueArtists.length > 1 && (
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
