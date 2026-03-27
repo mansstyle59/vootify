@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
@@ -14,6 +16,38 @@ import {
 import { useHomeConfig } from "@/hooks/useHomeConfig";
 import { Music } from "lucide-react";
 
+/** Fetch songs by their custom_songs UUIDs */
+function useCustomSectionSongs(songIds: string[]) {
+  return useQuery({
+    queryKey: ["custom-section-songs", songIds],
+    queryFn: async (): Promise<Song[]> => {
+      if (songIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .in("id", songIds);
+      if (error) throw error;
+      // Preserve the order from songIds
+      const map = new Map((data || []).map((r) => [r.id, r]));
+      return songIds
+        .map((id) => map.get(id))
+        .filter(Boolean)
+        .map((r: any) => ({
+          id: `custom-${r.id}`,
+          title: r.title,
+          artist: r.artist,
+          album: r.album || "",
+          duration: r.duration || 0,
+          coverUrl: r.cover_url || "",
+          streamUrl: r.stream_url || "",
+          liked: false,
+        }));
+    },
+    enabled: songIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
@@ -22,6 +56,40 @@ const HomePage = () => {
   const { data: recentlyListened, isLoading: loadingListened } = useRecentlyListened(20);
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
+
+  // Gather all custom section song IDs for batch fetching
+  const allCustomSongIds = useMemo(() => {
+    if (!homeConfig?.customSections) return [];
+    return [...new Set(homeConfig.customSections.flatMap((c) => c.songIds))];
+  }, [homeConfig?.customSections]);
+
+  const { data: customSongsData, isLoading: loadingCustomSongs } = useQuery({
+    queryKey: ["all-custom-section-songs", allCustomSongIds],
+    queryFn: async (): Promise<Map<string, Song>> => {
+      if (allCustomSongIds.length === 0) return new Map();
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .in("id", allCustomSongIds);
+      if (error) throw error;
+      const map = new Map<string, Song>();
+      for (const r of data || []) {
+        map.set(r.id, {
+          id: `custom-${r.id}`,
+          title: r.title,
+          artist: r.artist,
+          album: r.album || "",
+          duration: r.duration || 0,
+          coverUrl: r.cover_url || "",
+          streamUrl: r.stream_url || "",
+          liked: false,
+        });
+      }
+      return map;
+    },
+    enabled: allCustomSongIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const handlePlayTrack = useCallback(
     (song: Song, allSongs: Song[]) => {
@@ -35,7 +103,7 @@ const HomePage = () => {
     [currentSong?.id, togglePlay, setQueue, play]
   );
 
-  const sectionDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
+  const builtinDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
     recently_added: { songs: recentlyAdded, loading: loadingAdded },
     recently_listened: { songs: recentlyListened, loading: loadingListened },
     most_played: { songs: mostPlayed, loading: loadingMost },
@@ -45,9 +113,18 @@ const HomePage = () => {
   const visibleSections = useMemo(() => {
     if (!homeConfig) return [];
     return [...homeConfig.sections]
-      .filter((s) => s.visible && s.id !== "deezer_chart")
+      .filter((s) => s.visible)
       .sort((a, b) => a.order - b.order);
   }, [homeConfig]);
+
+  const getCustomSectionSongs = useCallback((sectionId: string): Song[] => {
+    if (!homeConfig?.customSections || !customSongsData) return [];
+    const cs = homeConfig.customSections.find((c) => c.id === sectionId);
+    if (!cs) return [];
+    return cs.songIds
+      .map((id) => customSongsData.get(id))
+      .filter(Boolean) as Song[];
+  }, [homeConfig?.customSections, customSongsData]);
 
   const renderSection = (
     title: string,
@@ -95,7 +172,16 @@ const HomePage = () => {
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {visibleSections.map((section) => {
-        const data = sectionDataMap[section.id];
+        const isCustom = section.id.startsWith("custom_");
+        if (isCustom) {
+          const songs = getCustomSectionSongs(section.id);
+          return (
+            <div key={section.id}>
+              {renderSection(section.title, songs, loadingCustomSongs)}
+            </div>
+          );
+        }
+        const data = builtinDataMap[section.id];
         if (!data) return null;
         return (
           <div key={section.id}>
