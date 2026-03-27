@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn } from "lucide-react";
+import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn, User } from "lucide-react";
 
 const durationOptions = [
   { label: "7 jours", value: 7, unit: "days" as const },
@@ -19,6 +19,7 @@ const RequestAccessPage = () => {
   const [requested, setRequested] = useState(false);
   const [sending, setSending] = useState(false);
   const [contactEmail, setContactEmail] = useState(user?.email || "");
+  const [pseudo, setPseudo] = useState("");
   const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
 
   const handleRequest = async () => {
@@ -26,7 +27,7 @@ const RequestAccessPage = () => {
     setSending(true);
     try {
       const userId = user?.id || "00000000-0000-0000-0000-000000000000";
-      const displayName = user?.email?.split("@")[0] || contactEmail.split("@")[0];
+      const displayName = pseudo.trim() || user?.email?.split("@")[0] || contactEmail.split("@")[0];
 
       if (user) {
         const { data: profile } = await supabase
@@ -86,6 +87,24 @@ const RequestAccessPage = () => {
         <div className="space-y-3">
           {!requested ? (
             <>
+              {/* Pseudo */}
+              <div className="text-left">
+                <label className="text-xs text-muted-foreground font-medium mb-1 block">
+                  Pseudo
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={pseudo}
+                    onChange={(e) => setPseudo(e.target.value)}
+                    placeholder="Votre pseudo"
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
               <div className="text-left">
                 <label className="text-xs text-muted-foreground font-medium mb-1 block">
                   Adresse email de contact
