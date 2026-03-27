@@ -50,7 +50,7 @@ export function MiniPlayer() {
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
-  const [nextPreloaded, setNextPreloaded] = useState(false);
+  const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
 
@@ -136,7 +136,7 @@ export function MiniPlayer() {
 
     if (!isNewTrack) return; // Same track — handled by play/pause effect above
     lastSongIdRef.current = currentSong.id;
-    setNextPreloaded(false);
+    usePlayerStore.setState({ nextPreloaded: false });
     preloadedSongIdRef.current = null;
 
     // Abort any in-flight load for a previous track
@@ -307,7 +307,7 @@ export function MiniPlayer() {
         preloadRef.current.load();
         preloadedSongIdRef.current = nextSong.id;
         console.log("[preload] Buffering next:", nextSong.title);
-        setNextPreloaded(true);
+        usePlayerStore.setState({ nextPreloaded: true });
       }
     };
 
