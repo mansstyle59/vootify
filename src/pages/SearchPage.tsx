@@ -46,7 +46,11 @@ const SearchPage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
-
+  const [addToPlaylistRelease, setAddToPlaylistRelease] = useState<DeezerNewRelease | null>(null);
+  const [addToPlaylistTracks, setAddToPlaylistTracks] = useState<Song[]>([]);
+  const [loadingPlaylistAdd, setLoadingPlaylistAdd] = useState(false);
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
   // Deezer new releases
   interface DeezerNewRelease {
     id: number;
