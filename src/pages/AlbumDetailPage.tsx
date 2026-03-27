@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { usePlayerStore } from "@/stores/playerStore";
@@ -18,6 +18,7 @@ import { formatDuration } from "@/data/mockData";
 
 const AlbumDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -34,15 +35,33 @@ const AlbumDetailPage = () => {
   const coverOpacity = useTransform(scrollY, [0, 250], [1, 0.5]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
 
+  const isByName = id === "by-name";
+  const paramArtist = searchParams.get("artist") || "";
+  const paramAlbum = searchParams.get("album") || "";
+
   const { data, isLoading } = useQuery({
-    queryKey: ["album-detail", id],
+    queryKey: ["album-detail", isByName ? `${paramArtist}|||${paramAlbum}` : id],
     queryFn: async () => {
-      // Local albums only - fetch from custom_albums + custom_songs
+      if (isByName) {
+        // Derived album: fetch songs by artist + album name
+        const { data: songs } = await supabase
+          .from("custom_songs")
+          .select("*")
+          .eq("album", paramAlbum)
+          .eq("artist", paramArtist);
+        if (!songs || songs.length === 0) throw new Error("Album not found");
+        const firstSong = songs[0];
+        return {
+          album: { id: `derived-${paramArtist}|||${paramAlbum}`, title: paramAlbum, artist: paramArtist, coverUrl: firstSong.cover_url || "", year: firstSong.year || null, songs: [] },
+          tracks: songs.map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || firstSong.cover_url || "", streamUrl: s.stream_url || "", liked: false })),
+        };
+      }
+      // Explicit album from custom_albums
       const { data: album } = await supabase.from("custom_albums").select("*").eq("id", id).single();
       if (!album) throw new Error("Album not found");
       const { data: songs } = await supabase.from("custom_songs").select("*").eq("album", album.title).eq("artist", album.artist);
       return {
-        album: { id: album.id, title: album.title, artist: album.artist, coverUrl: album.cover_url || "", year: album.year || 2024, songs: [] },
+        album: { id: album.id, title: album.title, artist: album.artist, coverUrl: album.cover_url || "", year: album.year || null, songs: [] },
         tracks: (songs || []).map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || album.cover_url || "", streamUrl: s.stream_url || "", liked: false })),
       };
     },
