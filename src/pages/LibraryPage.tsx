@@ -1146,7 +1146,7 @@ const LibraryPage = () => {
                                     setQueue(sel); play(sel[0]);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md shadow-primary/25"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md shadow-primary/25 whitespace-nowrap flex-shrink-0"
                                 >
                                   <Play className="w-3 h-3" /> Lire
                                 </button>
@@ -1157,7 +1157,7 @@ const LibraryPage = () => {
                                     toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} aux favoris`);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 >
                                   <Heart className="w-3 h-3" /> Favoris
                                 </button>
@@ -1169,7 +1169,7 @@ const LibraryPage = () => {
                                     toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} à la file`);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 >
                                   <ListPlus className="w-3 h-3" /> File
                                 </button>
@@ -1188,7 +1188,7 @@ const LibraryPage = () => {
                                       setSelectMode(false); setSelectedIds(new Set());
                                       queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
                                     }}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium whitespace-nowrap flex-shrink-0"
                                   >
                                     <Trash2 className="w-3 h-3" /> Supprimer
                                   </button>
@@ -1222,7 +1222,7 @@ const LibraryPage = () => {
                                       setEnriching(false);
                                       setSelectMode(false); setSelectedIds(new Set());
                                     }}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-medium disabled:opacity-50"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-medium disabled:opacity-50 whitespace-nowrap flex-shrink-0"
                                   >
                                     {enriching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                                     Enrichir
@@ -1231,7 +1231,7 @@ const LibraryPage = () => {
                                 <div className="relative">
                                   <button
                                     onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                   >
                                     <ListMusic className="w-3 h-3" /> Playlist
                                   </button>
