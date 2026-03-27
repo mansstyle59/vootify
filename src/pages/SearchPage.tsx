@@ -430,7 +430,7 @@ const SearchPage = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.03, duration: 0.3 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => commitSearch(g.genre)}
+                        onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
                         className="relative h-[100px] rounded-2xl overflow-hidden text-left group"
                         style={{
                           background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
