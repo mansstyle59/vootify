@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, Music } from "lucide-react";
 
@@ -18,6 +18,16 @@ interface CoverCardProps {
 export const CoverCard = memo(function CoverCard({
   title, subtitle, imageUrl, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false, showPlay = false,
 }: CoverCardProps) {
+  const [tapped, setTapped] = useState(false);
+  const tapTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleTap = useCallback(() => {
+    if (tapped) return;
+    setTapped(true);
+    clearTimeout(tapTimer.current);
+    tapTimer.current = setTimeout(() => setTapped(false), 2500);
+  }, [tapped]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -26,6 +36,7 @@ export const CoverCard = memo(function CoverCard({
       whileTap={{ scale: 0.95 }}
       className="flex-shrink-0 w-40 cursor-pointer group"
       onClick={onClick}
+      onTouchStart={showPlay && !isActive ? handleTap : undefined}
     >
       <div className={`relative w-40 h-40 overflow-hidden mb-2.5 bg-secondary shadow-lg ${
         rounded ? "rounded-full" : "rounded-2xl"
@@ -44,8 +55,10 @@ export const CoverCard = memo(function CoverCard({
             <Music className="w-10 h-10 text-primary/30" />
           </div>
         )}
-        {/* Subtle gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Subtle gradient overlay on hover / tap */}
+        <div className={`absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent transition-opacity duration-300 ${
+          tapped ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`} />
 
         {/* Play/Pause button — only on playable cards */}
         {(showPlay || isActive) && (
@@ -57,7 +70,7 @@ export const CoverCard = memo(function CoverCard({
               className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
                 isActive
                   ? "opacity-100 scale-100 bg-primary shadow-[0_2px_16px_hsl(var(--primary)/0.5)]"
-                  : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 bg-primary/90 shadow-[0_2px_16px_hsl(var(--primary)/0.4)]"
+                  : `${tapped ? "opacity-100 scale-100" : "opacity-0 scale-75"} group-hover:opacity-100 group-hover:scale-100 bg-primary/90 shadow-[0_2px_16px_hsl(var(--primary)/0.4)]`
               }`}
             >
               {isActive ? (
