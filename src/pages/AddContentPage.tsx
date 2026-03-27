@@ -9,7 +9,7 @@ import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { extractID3 } from "@/lib/id3Utils";
+import { extractID3, crossReferenceBatch } from "@/lib/id3Utils";
 
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
@@ -175,6 +175,26 @@ function SongForm() {
         albumArtist: id3.albumArtist, composer: id3.composer,
       });
     }
+
+    // Cross-reference batch: fill missing album/artist/cover from siblings
+    if (entries.length > 1) {
+      const id3Batch = entries.map((e) => ({
+        title: e.title, artist: e.artist, album: e.album,
+        coverUrl: e.coverUrl, year: e.year, genre: e.genre,
+        albumArtist: e.albumArtist,
+      }));
+      const enriched = crossReferenceBatch(id3Batch);
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        const en = enriched[i];
+        if (!e.album && en.album) { e.album = en.album; e.id3Filled.add("album"); }
+        if (!e.artist && en.artist) { e.artist = en.artist; e.id3Filled.add("artist"); }
+        if (!e.coverUrl && en.coverUrl) { e.coverUrl = en.coverUrl; e.id3Filled.add("coverUrl"); }
+        if (!e.year && en.year) { e.year = en.year; }
+        if (!e.genre && en.genre) { e.genre = en.genre; }
+      }
+    }
+
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
     if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} analysé${entries.length > 1 ? "s" : ""}`);
