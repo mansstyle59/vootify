@@ -167,8 +167,8 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         transition={{ delay: 0.25, type: "spring", stiffness: 300, damping: 25 }}
         className="absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] right-4 z-20"
       >
-        {user ? (
-          <div className="flex items-center gap-1.5">
+         {user ? (
+          <div className="flex items-center gap-2">
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/profile")}
@@ -191,20 +191,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                 {displayName}
               </span>
             </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => signOut()}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
-              style={{
-                background: "hsl(var(--card) / 0.6)",
-                backdropFilter: "blur(20px) saturate(1.8)",
-                WebkitBackdropFilter: "blur(20px) saturate(1.8)",
-                border: "1px solid hsl(var(--border) / 0.4)",
-              }}
-              title="Se déconnecter"
-            >
-              <LogOut className="w-3.5 h-3.5 text-muted-foreground" />
-            </motion.button>
+            <NotificationBell />
           </div>
         ) : (
           <motion.button

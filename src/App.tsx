@@ -118,10 +118,7 @@ function AppContent() {
       <PullToRefresh onRefresh={handleRefresh} className="flex-1 scrollbar-hide">
         <AnimatedRoutes />
       </PullToRefresh>
-      {/* Mobile notification bell */}
-      <div className="md:hidden fixed top-3 right-3 z-50">
-        <NotificationBell />
-      </div>
+      {/* NotificationBell moved into HeroBanner */}
       <MiniPlayer />
       <MobileNav />
       <AnimatePresence>
