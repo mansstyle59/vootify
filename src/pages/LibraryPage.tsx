@@ -1142,6 +1142,41 @@ const LibraryPage = () => {
                                     <Trash2 className="w-3 h-3" /> Supprimer
                                   </button>
                                 )}
+                                {isAdmin && selectedIds.size > 0 && (
+                                  <button
+                                    disabled={enriching}
+                                    onClick={async () => {
+                                      const ids = Array.from(selectedIds).map(id => id.replace("custom-", ""));
+                                      setEnriching(true);
+                                      setEnrichProgress({ done: 0, total: ids.length });
+                                      try {
+                                        // Process in batches of 50
+                                        let totalUpdated = 0;
+                                        for (let i = 0; i < ids.length; i += 50) {
+                                          const batch = ids.slice(i, i + 50);
+                                          const { data, error } = await supabase.functions.invoke("enrich-metadata", {
+                                            body: { song_ids: batch, only_missing: false },
+                                          });
+                                          if (error) throw error;
+                                          totalUpdated += data.updated || 0;
+                                          setEnrichProgress({ done: Math.min(i + 50, ids.length), total: ids.length });
+                                        }
+                                        if (totalUpdated > 0) {
+                                          toast.success(`${totalUpdated} morceau${totalUpdated > 1 ? "x" : ""} enrichi${totalUpdated > 1 ? "s" : ""}`);
+                                          queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+                                        } else {
+                                          toast.info("Aucune nouvelle métadonnée trouvée");
+                                        }
+                                      } catch (e) { toast.error("Erreur enrichissement"); console.error(e); }
+                                      setEnriching(false);
+                                      setSelectMode(false); setSelectedIds(new Set());
+                                    }}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-medium disabled:opacity-50"
+                                  >
+                                    {enriching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                    Enrichir
+                                  </button>
+                                )}
                                 <div className="relative">
                                   <button
                                     onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}

@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        done: songs.length < BATCH_SIZE,
+        done: songIds ? true : songs.length < BATCH_SIZE,
         updated,
         processed: songs.length,
         offset,
