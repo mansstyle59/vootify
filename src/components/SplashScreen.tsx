@@ -5,11 +5,10 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    // Faster splash: wait for DOM to be interactive then dismiss quickly
     const timer = setTimeout(() => {
       setVisible(false);
       setTimeout(onFinish, 400);
-    }, 1200);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [onFinish]);
 
@@ -19,38 +18,34 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center"
-          style={{ background: "hsl(240, 10%, 4%)" }}
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-background"
         >
-          {/* Logo */}
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.1 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.05 }}
             className="flex flex-col items-center gap-4"
           >
             <img
               src="/pwa-icon-512.png"
               alt="Vootify"
-              className="w-28 h-28 rounded-3xl"
-              style={{ boxShadow: "0 20px 60px -10px rgba(29, 185, 84, 0.4)" }}
+              className="w-24 h-24 rounded-[22px] shadow-[0_20px_60px_-10px_hsl(var(--primary)/0.4)]"
             />
             <motion.h1
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-2xl font-display font-bold text-[#1DB954]"
+              transition={{ delay: 0.3, duration: 0.3 }}
+              className="text-2xl font-display font-bold text-primary"
             >
               VOOTIFY
             </motion.h1>
           </motion.div>
 
-          {/* Loading dots */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: 0.6 }}
             className="absolute bottom-20 flex gap-1.5"
           >
             {[0, 1, 2].map((i) => (
@@ -58,7 +53,7 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
                 key={i}
                 className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40"
                 animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
               />
             ))}
           </motion.div>
