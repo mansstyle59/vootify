@@ -587,11 +587,6 @@ function PlaylistForm() {
                   )}
                 </div>
               </motion.div>
-                  <button onClick={() => setSongs(p => p.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </motion.div>
             ))}
           </div>
         )}
