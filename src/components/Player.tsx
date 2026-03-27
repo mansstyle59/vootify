@@ -537,6 +537,10 @@ export function MiniPlayer() {
     navigator.mediaSession.setActionHandler("nexttrack", () => {
       usePlayerStore.getState().next();
     });
+    // Explicitly disable 10s skip buttons on iOS lock screen — show prev/next track instead
+    navigator.mediaSession.setActionHandler("seekbackward", null);
+    navigator.mediaSession.setActionHandler("seekforward", null);
+
     navigator.mediaSession.setActionHandler("seekto", (details) => {
       if (details.seekTime != null && audioRef.current) {
         audioRef.current.currentTime = details.seekTime;
