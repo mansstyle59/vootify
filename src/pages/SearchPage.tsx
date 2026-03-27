@@ -151,43 +151,66 @@ const SearchPage = () => {
     return extractArtists(allSongs).slice(0, 15);
   }, [allSongs]);
 
-  // Genre definitions with emoji, vibrant colors
+  // Genre groups: merge similar sub-genres into one card
+  // Key = display name, values = all tags that map to it
+  const genreGroups: Record<string, string[]> = {
+    "Rap & Hip-Hop":    ["rap", "hip-hop", "hip hop", "hiphop", "rap français", "rap fr", "french rap", "conscious rap", "gangsta rap", "boom bap"],
+    "R&B & Soul":       ["r&b", "rnb", "r and b", "soul", "neo soul", "neo-soul", "contemporary r&b"],
+    "Trap & Drill":     ["trap", "drill", "uk drill", "french drill", "chicago drill", "plugg", "pluggnb"],
+    "Pop":              ["pop", "pop rock", "synth pop", "synthpop", "electropop", "indie pop", "k-pop", "kpop", "j-pop"],
+    "Afro":             ["afro", "afrobeats", "afrobeat", "afro pop", "afropop", "afro-pop", "amapiano", "afro house", "afroswing"],
+    "Électro & Dance":  ["électro", "electro", "edm", "electronic", "house", "techno", "dance", "trance", "dubstep", "drum and bass", "dnb", "deep house"],
+    "Reggae & Dancehall": ["reggae", "dancehall", "ragga", "dub", "reggaeton"],
+    "Latino":           ["latino", "latin", "reggaeton", "salsa", "bachata", "dembow", "cumbia"],
+    "Rock & Metal":     ["rock", "metal", "hard rock", "punk", "alternative", "indie rock", "grunge", "heavy metal", "punk rock"],
+    "Jazz & Blues":     ["jazz", "blues", "smooth jazz", "jazz fusion", "bebop", "acid jazz"],
+    "Funk & Disco":     ["funk", "disco", "boogie", "nu-disco"],
+    "Classique":        ["classique", "classical", "orchestral", "opera", "symphonic"],
+    "Gospel & Worship": ["gospel", "worship", "christian", "praise"],
+    "Country & Folk":   ["country", "folk", "americana", "bluegrass"],
+  };
+
   const genreDefs: Record<string, { emoji: string; from: string; to: string }> = {
-    "Rap":       { emoji: "🎤", from: "hsl(0 75% 48%)",   to: "hsl(20 85% 30%)" },
-    "Hip-hop":   { emoji: "🔥", from: "hsl(275 65% 50%)", to: "hsl(295 55% 32%)" },
-    "R&b":       { emoji: "💜", from: "hsl(240 60% 50%)", to: "hsl(260 50% 32%)" },
-    "Pop":       { emoji: "🎵", from: "hsl(330 75% 55%)", to: "hsl(345 65% 38%)" },
-    "Rock":      { emoji: "🎸", from: "hsl(210 20% 38%)", to: "hsl(210 15% 20%)" },
-    "Jazz":      { emoji: "🎷", from: "hsl(35 75% 48%)",  to: "hsl(25 65% 28%)" },
-    "Classique": { emoji: "🎻", from: "hsl(45 55% 48%)",  to: "hsl(40 45% 28%)" },
-    "Électro":   { emoji: "⚡", from: "hsl(175 75% 42%)", to: "hsl(195 65% 28%)" },
-    "Reggae":    { emoji: "🌴", from: "hsl(130 55% 42%)", to: "hsl(150 45% 25%)" },
-    "Afro":      { emoji: "🌍", from: "hsl(30 85% 48%)",  to: "hsl(15 75% 30%)" },
-    "Latino":    { emoji: "💃", from: "hsl(50 85% 52%)",  to: "hsl(35 75% 32%)" },
-    "Soul":      { emoji: "🎙️", from: "hsl(260 55% 48%)", to: "hsl(280 45% 28%)" },
-    "Funk":      { emoji: "🪩", from: "hsl(310 65% 52%)", to: "hsl(290 55% 32%)" },
-    "Country":   { emoji: "🤠", from: "hsl(25 65% 48%)",  to: "hsl(18 55% 28%)" },
-    "Metal":     { emoji: "🤘", from: "hsl(0 0% 30%)",    to: "hsl(0 0% 10%)" },
-    "Blues":     { emoji: "🎹", from: "hsl(215 65% 45%)", to: "hsl(235 55% 25%)" },
-    "Drill":     { emoji: "🔫", from: "hsl(0 0% 22%)",    to: "hsl(0 0% 8%)" },
-    "Trap":      { emoji: "💎", from: "hsl(270 70% 45%)", to: "hsl(285 60% 25%)" },
-    "Dancehall": { emoji: "🇯🇲", from: "hsl(55 80% 45%)",  to: "hsl(120 50% 30%)" },
-    "Gospel":    { emoji: "🙏", from: "hsl(45 70% 50%)",  to: "hsl(30 60% 30%)" },
+    "Rap & Hip-Hop":      { emoji: "🎤", from: "hsl(0 75% 48%)",   to: "hsl(20 85% 30%)" },
+    "R&B & Soul":         { emoji: "💜", from: "hsl(240 60% 50%)", to: "hsl(260 50% 32%)" },
+    "Trap & Drill":       { emoji: "💎", from: "hsl(270 70% 45%)", to: "hsl(285 60% 25%)" },
+    "Pop":                { emoji: "🎵", from: "hsl(330 75% 55%)", to: "hsl(345 65% 38%)" },
+    "Afro":               { emoji: "🌍", from: "hsl(30 85% 48%)",  to: "hsl(15 75% 30%)" },
+    "Électro & Dance":    { emoji: "⚡", from: "hsl(175 75% 42%)", to: "hsl(195 65% 28%)" },
+    "Reggae & Dancehall": { emoji: "🌴", from: "hsl(130 55% 42%)", to: "hsl(150 45% 25%)" },
+    "Latino":             { emoji: "💃", from: "hsl(50 85% 52%)",  to: "hsl(35 75% 32%)" },
+    "Rock & Metal":       { emoji: "🎸", from: "hsl(210 20% 38%)", to: "hsl(210 15% 20%)" },
+    "Jazz & Blues":       { emoji: "🎷", from: "hsl(35 75% 48%)",  to: "hsl(25 65% 28%)" },
+    "Funk & Disco":       { emoji: "🪩", from: "hsl(310 65% 52%)", to: "hsl(290 55% 32%)" },
+    "Classique":          { emoji: "🎻", from: "hsl(45 55% 48%)",  to: "hsl(40 45% 28%)" },
+    "Gospel & Worship":   { emoji: "🙏", from: "hsl(45 70% 50%)",  to: "hsl(30 60% 30%)" },
+    "Country & Folk":     { emoji: "🤠", from: "hsl(25 65% 48%)",  to: "hsl(18 55% 28%)" },
   };
 
   const defaultGenreColor = { emoji: "🎶", from: "hsl(var(--primary))", to: "hsl(var(--primary) / 0.5)" };
 
+  // Build a lowercase→groupName lookup
+  const tagToGroup = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const [group, tags] of Object.entries(genreGroups)) {
+      for (const tag of tags) m.set(tag.toLowerCase(), group);
+    }
+    return m;
+  }, []);
+
   const genreCards = useMemo(() => {
-    // Build from library songs
     const map = new Map<string, { genre: string; count: number; coverUrl: string }>();
+
     if (allSongs) {
       for (const s of allSongs) {
         const genre = (s as any).genre;
         if (!genre) continue;
         genre.split(/[,/|]/).forEach((g: string) => {
-          const name = g.trim();
-          if (!name || name.length < 2) return;
-          const key = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+          const raw = g.trim().toLowerCase();
+          if (!raw || raw.length < 2) return;
+          // Map to group or use capitalized raw
+          const groupName = tagToGroup.get(raw);
+          const key = groupName || (raw.charAt(0).toUpperCase() + raw.slice(1));
           if (!map.has(key)) {
             map.set(key, { genre: key, count: 1, coverUrl: s.coverUrl });
           } else {
@@ -199,17 +222,17 @@ const SearchPage = () => {
 
     const fromLib = Array.from(map.values()).sort((a, b) => b.count - a.count);
 
-    // Always show default genres even if library is empty
-    const defaultGenres = ["Rap", "Hip-hop", "R&b", "Pop", "Électro", "Afro", "Rock", "Jazz", "Trap", "Drill", "Reggae", "Latino"];
+    // Always show default genre groups
+    const defaults = Object.keys(genreGroups);
     const seen = new Set(fromLib.map((g) => g.genre));
-    for (const dg of defaultGenres) {
+    for (const dg of defaults) {
       if (!seen.has(dg)) {
         fromLib.push({ genre: dg, count: 0, coverUrl: "" });
       }
     }
 
     return fromLib.slice(0, 12);
-  }, [allSongs]);
+  }, [allSongs, tagToGroup]);
 
   const handlePlayTrack = (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) {
