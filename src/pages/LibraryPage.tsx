@@ -303,7 +303,19 @@ const LibraryPage = () => {
     countCached();
   }, [tab, playlists, playlistSongs]);
 
-  const { data: customSongs = [] } = useQuery({
+  // Check which songs in current view are cached offline
+  useEffect(() => {
+    const allSongs = [
+      ...(tab === "recent" ? recentlyPlayed : []),
+      ...(tab === "liked" ? likedSongs : []),
+      ...(tab === "custom" ? customSongs : []),
+    ];
+    if (allSongs.length === 0) return;
+    Promise.all(
+      allSongs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))
+    ).then((ids) => setLibraryCachedIds(new Set(ids.filter(Boolean) as string[])));
+  }, [tab, recentlyPlayed, likedSongs, customSongs]);
+
     queryKey: ["custom-songs"],
     queryFn: async () => {
       const { data, error } = await supabase.from("custom_songs").select("*").order("created_at", { ascending: false });
