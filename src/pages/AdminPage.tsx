@@ -663,6 +663,10 @@ function SongsTab() {
 function RadiosTab() {
   const [radios, setRadios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  const isSelecting = selectedIds.size > 0;
 
   useEffect(() => {
     supabase
@@ -681,25 +685,107 @@ function RadiosTab() {
     toast.success("Radio supprimée");
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!confirm(`Supprimer ${count} radio${count > 1 ? "s" : ""} ? Cette action est irréversible.`)) return;
+    setDeleting(true);
+    const ids = Array.from(selectedIds);
+    for (let i = 0; i < ids.length; i += 50) {
+      await supabase.from("custom_radio_stations").delete().in("id", ids.slice(i, i + 50));
+    }
+    setRadios((prev) => prev.filter((r) => !selectedIds.has(r.id)));
+    setSelectedIds(new Set());
+    setDeleting(false);
+    toast.success(`${count} radio${count > 1 ? "s" : ""} supprimée${count > 1 ? "s" : ""}`);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === radios.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(radios.map((r) => r.id)));
+  };
+
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
   return (
     <div className="space-y-2">
+      {radios.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
+          >
+            {selectedIds.size === radios.length ? (
+              <><X className="w-3.5 h-3.5" /> Tout désélectionner</>
+            ) : (
+              <><Check className="w-3.5 h-3.5" /> Tout sélectionner</>
+            )}
+          </button>
+          {isSelecting && (
+            <>
+              <span className="text-xs text-muted-foreground">
+                {selectedIds.size} sélectionnée{selectedIds.size > 1 ? "s" : ""}
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors ml-auto"
+              >
+                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Supprimer ({selectedIds.size})
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {radios.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Aucune radio custom</p>
       ) : (
         radios.map((r) => (
-          <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group">
+          <div
+            key={r.id}
+            className={`flex items-center gap-3 p-3 rounded-xl border group transition-colors cursor-pointer ${
+              selectedIds.has(r.id) ? "bg-primary/10 border-primary/30" : "bg-secondary/30 border-border"
+            }`}
+            onClick={() => isSelecting && toggleSelect(r.id)}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleSelect(r.id); }}
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                selectedIds.has(r.id)
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-muted-foreground/40 hover:border-primary/60"
+              }`}
+            >
+              {selectedIds.has(r.id) && <Check className="w-3 h-3" />}
+            </button>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
               <p className="text-xs text-muted-foreground truncate">{r.genre || "Radio"}</p>
             </div>
-            <button
-              onClick={() => handleDelete(r.id)}
-              className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {!isSelecting && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
+                className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         ))
       )}
