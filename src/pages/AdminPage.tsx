@@ -1563,14 +1563,17 @@ function SubscriptionsTab() {
         .eq("user_id", editUserId)
         .eq("status", "active");
 
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + editDuration);
+      const expiresAt = editDuration === 0 ? null : (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + editDuration);
+        return d.toISOString();
+      })();
 
       await supabase.from("subscriptions").insert({
         user_id: editUserId,
         plan: editPlan,
         starts_at: new Date().toISOString(),
-        expires_at: expiresAt.toISOString(),
+        expires_at: expiresAt,
         status: "active",
       });
 
