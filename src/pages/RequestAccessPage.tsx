@@ -23,7 +23,7 @@ const RequestAccessPage = () => {
   const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
 
   const handleRequest = async () => {
-    if (!contactEmail.trim()) return;
+    if (!contactEmail.trim() || !pseudo.trim()) return;
     setSending(true);
     try {
       const userId = user?.id || "00000000-0000-0000-0000-000000000000";
