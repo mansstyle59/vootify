@@ -90,8 +90,8 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
         user_id: user.id,
         user_email: contactEmail.trim(),
         display_name: profile?.display_name || user.email || "",
-        requested_duration: duration,
-        requested_duration_unit: durationUnit,
+        requested_duration: selectedDuration.value,
+        requested_duration_unit: selectedDuration.unit,
       });
       setRequested(true);
     } catch {
