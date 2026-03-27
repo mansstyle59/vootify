@@ -1157,6 +1157,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
   } = usePlayerStore();
 
+  const navigate = useNavigate();
   const [showQueue, setShowQueue] = useState(false);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
