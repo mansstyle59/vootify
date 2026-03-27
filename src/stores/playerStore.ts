@@ -89,12 +89,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   play: (song) => {
-    const { userId } = get();
+    const { userId, currentSong } = get();
+    // Skip if already playing the same song (prevents re-trigger)
+    if (currentSong?.id === song.id && get().isPlaying) return;
     set((state) => ({
       currentSong: song,
       isPlaying: true,
       progress: 0,
-      originalStreamUrl: null,
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     }));
     if (userId) {
@@ -108,9 +109,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { queue, currentSong, shuffle } = get();
     if (!currentSong || queue.length === 0) return;
     const idx = queue.findIndex((s) => s.id === currentSong.id);
-    const nextIdx = shuffle
-      ? Math.floor(Math.random() * queue.length)
-      : (idx + 1) % queue.length;
+    let nextIdx: number;
+    if (shuffle) {
+      // Pick random but never the same track (unless queue has only 1)
+      if (queue.length <= 1) { nextIdx = 0; }
+      else {
+        do { nextIdx = Math.floor(Math.random() * queue.length); } while (nextIdx === idx);
+      }
+    } else {
+      nextIdx = (idx + 1) % queue.length;
+    }
     get().play(queue[nextIdx]);
   },
 
@@ -118,9 +126,15 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { queue, currentSong, shuffle } = get();
     if (!currentSong || queue.length === 0) return;
     const idx = queue.findIndex((s) => s.id === currentSong.id);
-    const prevIdx = shuffle
-      ? Math.floor(Math.random() * queue.length)
-      : (idx - 1 + queue.length) % queue.length;
+    let prevIdx: number;
+    if (shuffle) {
+      if (queue.length <= 1) { prevIdx = 0; }
+      else {
+        do { prevIdx = Math.floor(Math.random() * queue.length); } while (prevIdx === idx);
+      }
+    } else {
+      prevIdx = (idx - 1 + queue.length) % queue.length;
+    }
     get().play(queue[prevIdx]);
   },
 
