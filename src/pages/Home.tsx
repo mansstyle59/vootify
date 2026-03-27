@@ -50,8 +50,24 @@ function useCustomSectionSongs(songIds: string[]) {
 }
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
+
+  // Fetch albums
+  const { data: albums, isLoading: loadingAlbums } = useQuery({
+    queryKey: ["home-albums"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_albums")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
   const { data: recentlyAdded, isLoading: loadingAdded } = useRecentlyAdded(20);
   const { data: recentlyListened, isLoading: loadingListened } = useRecentlyListened(20);
