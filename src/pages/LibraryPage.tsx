@@ -277,6 +277,7 @@ const LibraryPage = () => {
         .from("shared_playlists")
         .select("*")
         .eq("shared_to", userId)
+        .eq("status", "accepted")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
