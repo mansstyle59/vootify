@@ -93,9 +93,7 @@ export const resolveLog = {
       if (data.length < batchSize) break;
       from += batchSize;
     }
-    return all;
-
-    return ((data as any[]) || []).map((r: any) => ({
+    return all.map((r: any) => ({
       songId: r.song_id,
       originalTitle: r.original_title,
       originalArtist: r.original_artist,
