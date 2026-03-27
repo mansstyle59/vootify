@@ -25,7 +25,7 @@ export function PageFade({ children }: { children: ReactNode }) {
     <div
       ref={ref}
       className="min-h-screen"
-      style={{ transition: "opacity 40ms ease-out" }}
+      style={{ transition: "opacity 60ms ease-out" }}
     >
       {children}
     </div>
