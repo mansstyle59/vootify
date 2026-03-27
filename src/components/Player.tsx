@@ -515,10 +515,12 @@ export function MiniPlayer() {
 
     // Set action handlers once (idempotent)
     navigator.mediaSession.setActionHandler("play", () => {
-      usePlayerStore.getState().togglePlay();
+      const store = usePlayerStore.getState();
+      if (!store.isPlaying) store.togglePlay();
     });
     navigator.mediaSession.setActionHandler("pause", () => {
-      usePlayerStore.getState().togglePlay();
+      const store = usePlayerStore.getState();
+      if (store.isPlaying) store.togglePlay();
     });
     navigator.mediaSession.setActionHandler("previoustrack", () => {
       usePlayerStore.getState().previous();
@@ -530,6 +532,16 @@ export function MiniPlayer() {
       if (details.seekTime != null && audioRef.current) {
         audioRef.current.currentTime = details.seekTime;
         usePlayerStore.getState().setProgress(details.seekTime);
+        // Immediately sync position to lock screen
+        if ("setPositionState" in navigator.mediaSession && audioRef.current.duration > 0) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: audioRef.current.duration,
+              playbackRate: 1,
+              position: details.seekTime,
+            });
+          } catch { /* ignore */ }
+        }
       }
     });
   }, []); // Only once
