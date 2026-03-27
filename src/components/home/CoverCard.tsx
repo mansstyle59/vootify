@@ -38,11 +38,11 @@ export const CoverCard = memo(function CoverCard({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileTap={{ scale: 0.96 }}
-      className="flex-shrink-0 w-[120px] cursor-pointer group snap-start"
+      className="flex-shrink-0 w-[105px] md:w-[130px] cursor-pointer group snap-start"
       onClick={onClick}
       onTouchStart={showPlay && !isActive ? handleTap : undefined}
     >
-      <div className={`relative w-[120px] h-[120px] overflow-hidden mb-1.5 ${
+      <div className={`relative w-[105px] h-[105px] md:w-[130px] md:h-[130px] overflow-hidden mb-1.5 ${
         rounded ? "rounded-full" : "rounded-xl"
       } ${isActive ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
         style={{
@@ -105,10 +105,10 @@ export const CoverCard = memo(function CoverCard({
         )}
       </div>
 
-      <h3 className={`text-[13px] font-semibold truncate leading-tight ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
+      <h3 className={`text-[12px] md:text-[13px] font-semibold truncate leading-tight ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
         {title}
       </h3>
-      <p className={`text-[11px] text-muted-foreground/70 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
+      <p className={`text-[10px] md:text-[11px] text-muted-foreground/70 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
         {subtitle}
       </p>
     </motion.div>

@@ -213,7 +213,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto">
+    <div className="pb-32 md:pb-40 max-w-7xl mx-auto relative overflow-y-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {visibleSections.map((section) => {
