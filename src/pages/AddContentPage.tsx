@@ -216,7 +216,7 @@ function SongForm() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
               className={`rounded-2xl p-3.5 space-y-2.5 transition-all ${
-                song.uploaded ? "liquid-glass opacity-60" : "liquid-glass"
+                song.uploaded || song.skipped ? "liquid-glass opacity-60" : "liquid-glass"
               }`}
             >
               <div className="flex items-center gap-2.5">
