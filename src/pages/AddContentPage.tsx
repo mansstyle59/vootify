@@ -439,12 +439,17 @@ function SongForm() {
               if (results.size > 0) {
                 setSongs((prev) =>
                   prev.map((s, i) => {
-                    const cover = results.get(i);
-                    if (cover && !s.coverUrl) return { ...s, coverUrl: cover, id3Filled: new Set([...s.id3Filled, "coverUrl"]) };
-                    return s;
+                    const meta = results.get(i);
+                    if (!meta) return s;
+                    const updated = { ...s, id3Filled: new Set([...s.id3Filled]) };
+                    if (meta.coverUrl && !s.coverUrl) { updated.coverUrl = meta.coverUrl; updated.id3Filled.add("coverUrl"); }
+                    if (meta.album && !s.album) { updated.album = meta.album; updated.id3Filled.add("album"); }
+                    if (meta.genre && !s.genre) { updated.genre = meta.genre; }
+                    if (meta.year && !s.year) { updated.year = meta.year; }
+                    return updated;
                   })
                 );
-                toast.success(`${results.size} pochette${results.size > 1 ? "s" : ""} trouvée${results.size > 1 ? "s" : ""}`);
+                toast.success(`${results.size} résultat${results.size > 1 ? "s" : ""} Deezer trouvé${results.size > 1 ? "s" : ""}`);
               } else {
                 toast.info("Aucune pochette trouvée en ligne");
               }
