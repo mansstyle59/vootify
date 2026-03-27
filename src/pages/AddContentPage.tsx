@@ -417,6 +417,59 @@ function SongForm() {
         </div>
       )}
 
+      {/* Auto cover search button */}
+      {songs.length > 0 && songs.some((s) => !s.coverUrl && !s.uploaded && !s.skipped) && (
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.97 }}
+          onClick={async () => {
+            setSearchingCovers(true);
+            setCoverProgress({ done: 0, total: 0 });
+            try {
+              const results = await batchSearchCovers(
+                songs.map((s) => ({
+                  artist: s.artist,
+                  album: s.album,
+                  title: s.title,
+                  coverUrl: s.coverUrl,
+                  year: s.year,
+                })),
+                (done, total) => setCoverProgress({ done, total })
+              );
+              if (results.size > 0) {
+                setSongs((prev) =>
+                  prev.map((s, i) => {
+                    const cover = results.get(i);
+                    if (cover && !s.coverUrl) return { ...s, coverUrl: cover, id3Filled: new Set([...s.id3Filled, "coverUrl"]) };
+                    return s;
+                  })
+                );
+                toast.success(`${results.size} pochette${results.size > 1 ? "s" : ""} trouvée${results.size > 1 ? "s" : ""}`);
+              } else {
+                toast.info("Aucune pochette trouvée en ligne");
+              }
+            } catch {
+              toast.error("Erreur lors de la recherche de pochettes");
+            }
+            setSearchingCovers(false);
+          }}
+          disabled={searchingCovers || submitting}
+          className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border/30"
+        >
+          {searchingCovers ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Recherche pochettes... {coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : ""}
+            </>
+          ) : (
+            <>
+              <Image className="w-4 h-4" />
+              Rechercher les pochettes automatiquement
+            </>
+          )}
+        </motion.button>
+      )}
+
       {pendingCount > 0 && (
         <motion.button
           type="button"
