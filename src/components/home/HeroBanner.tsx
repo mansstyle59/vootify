@@ -49,27 +49,27 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
       {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-[1]" />
 
-      {/* Floating icons with improved animation */}
+      {/* Subtle floating icons — positioned to avoid text overlap */}
       <motion.div
-        animate={{ y: [0, -14, 0], rotate: [0, 10, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-8 right-6 text-primary/15"
+        animate={{ y: [0, -10, 0], rotate: [0, 8, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-6 right-[42%] text-primary/8 pointer-events-none"
       >
-        <Music2 className="w-14 h-14" />
+        <Music2 className="w-8 h-8" />
       </motion.div>
       <motion.div
-        animate={{ y: [0, 12, 0], rotate: [0, -8, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-12 right-20 text-accent-foreground/10"
+        animate={{ y: [0, 8, 0], rotate: [0, -6, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-28 right-6 text-primary/6 pointer-events-none"
       >
-        <Headphones className="w-11 h-11" />
+        <Headphones className="w-7 h-7" />
       </motion.div>
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-        className="absolute top-20 left-[65%] text-primary/8"
+        transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-32 left-6 text-primary/5 pointer-events-none"
       >
-        <Disc3 className="w-9 h-9" />
+        <Disc3 className="w-6 h-6" />
       </motion.div>
 
       {/* User / Login — top right */}
