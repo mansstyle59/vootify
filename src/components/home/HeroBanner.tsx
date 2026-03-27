@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform, animate } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { LogIn, LogOut, Headphones, Music, Radio, ListMusic } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
