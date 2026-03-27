@@ -118,6 +118,9 @@ function SongForm() {
         artist: normalizeArtist(meta.artist || ""),
         album: meta.album ? normalizeText(meta.album) : "",
         duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
+        genre: id3.genre, bitrate: id3.bitrate, sampleRate: id3.sampleRate, codec: id3.codec,
+        year: id3.year, trackNumber: id3.trackNumber, totalTracks: id3.totalTracks,
+        albumArtist: id3.albumArtist, composer: id3.composer,
       });
     }
     setSongs((prev) => [...prev, ...entries]);
