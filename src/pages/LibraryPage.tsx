@@ -833,6 +833,85 @@ const LibraryPage = () => {
               </div>
             )}
 
+            {/* ── ALBUMS ── */}
+            {tab === "albums" && (
+              <div>
+                {loadingLibAlbums ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="aspect-square rounded-2xl bg-secondary mb-2" />
+                        <div className="h-3 w-24 bg-secondary rounded mb-1" />
+                        <div className="h-2.5 w-16 bg-secondary rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : libraryAlbums.length === 0 ? (
+                  <EmptyState icon={Disc3} title="Aucun album" subtitle="Les albums apparaîtront ici" />
+                ) : (
+                  <>
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
+                      {libraryAlbums.length} album{libraryAlbums.length > 1 ? "s" : ""}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {libraryAlbums.map((album, i) => (
+                        <motion.button
+                          key={album.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => navigate(`/album/${album.id}`)}
+                          className="text-left group"
+                        >
+                          <div className="aspect-square rounded-2xl overflow-hidden bg-secondary shadow-lg mb-2 relative">
+                            {album.cover_url ? (
+                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                                <Disc3 className="w-10 h-10 text-primary/30" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-foreground truncate">{album.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── ARTISTS ── */}
+            {tab === "artists" && (
+              <div>
+                {loadingLibArtists ? (
+                  <div className="grid grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="animate-pulse flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full bg-secondary mb-2" />
+                        <div className="h-3 w-16 bg-secondary rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : libraryArtists.length === 0 ? (
+                  <EmptyState icon={User} title="Aucun artiste" subtitle="Les artistes apparaîtront ici" />
+                ) : (
+                  <>
+                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
+                      {libraryArtists.length} artiste{libraryArtists.length > 1 ? "s" : ""}
+                    </p>
+                    <div className="grid grid-cols-3 gap-4">
+                      {libraryArtists.map((artist, i) => (
+                        <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* ── CUSTOM ── */}
             {tab === "custom" && (
               <div>
