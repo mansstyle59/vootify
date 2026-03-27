@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 const DEEZER_API = "https://api.deezer.com";
-const BATCH_SIZE = 50; // process 50 songs per invocation
+const BATCH_SIZE = 50;
 const DELAY_MS = 350;
 
 function delay(ms: number) {
@@ -68,6 +68,50 @@ async function deezerSearch(artist: string, title: string, album?: string) {
   }
 }
 
+async function deezerAlbumSearch(artist: string, albumTitle: string) {
+  try {
+    const query = `artist:"${artist}" album:"${albumTitle}"`;
+    let res = await fetch(`${DEEZER_API}/search/album?q=${encodeURIComponent(query)}&limit=3`, {
+      headers: { "User-Agent": "Vootify/1.0" },
+    });
+    let data = await res.json();
+
+    if (!data.data?.length) {
+      res = await fetch(`${DEEZER_API}/search/album?q=${encodeURIComponent(`${artist} ${albumTitle}`)}&limit=3`, {
+        headers: { "User-Agent": "Vootify/1.0" },
+      });
+      data = await res.json();
+      if (!data.data?.length) return null;
+    }
+
+    const album = data.data[0];
+    const coverUrl = album.cover_xl || album.cover_big || album.cover_medium || "";
+    
+    let year: number | undefined;
+    if (album.id) {
+      try {
+        const albumRes = await fetch(`${DEEZER_API}/album/${album.id}`, {
+          headers: { "User-Agent": "Vootify/1.0" },
+        });
+        const albumData = await albumRes.json();
+        if (albumData.release_date) {
+          const y = parseInt(albumData.release_date.split("-")[0], 10);
+          if (y > 1900 && y <= new Date().getFullYear() + 1) year = y;
+        }
+      } catch { /* skip */ }
+    }
+
+    return {
+      coverUrl: coverUrl || undefined,
+      title: album.title || undefined,
+      artist: album.artist?.name || undefined,
+      year,
+    };
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -79,10 +123,56 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json().catch(() => ({}));
+    const mode = body.mode || "songs"; // "songs" or "albums"
     const offset = body.offset || 0;
-    const onlyMissing = body.only_missing !== false; // default: only enrich missing genre/year
+    const onlyMissing = body.only_missing !== false;
 
-    // Fetch batch of songs
+    if (mode === "albums") {
+      // Enrich custom_albums
+      const { data: albums, error } = await supabase
+        .from("custom_albums")
+        .select("id, title, artist, cover_url, year")
+        .order("created_at", { ascending: true })
+        .range(offset, offset + BATCH_SIZE - 1);
+
+      if (error) throw error;
+      if (!albums || albums.length === 0) {
+        return new Response(JSON.stringify({ done: true, updated: 0, offset }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let updated = 0;
+      for (const album of albums) {
+        if (onlyMissing && album.cover_url && album.year) continue;
+
+        await delay(DELAY_MS);
+        const meta = await deezerAlbumSearch(album.artist, album.title);
+        if (!meta) continue;
+
+        const updates: Record<string, any> = {};
+        if (meta.coverUrl && !album.cover_url) updates.cover_url = meta.coverUrl;
+        if (meta.year && !album.year) updates.year = meta.year;
+
+        if (Object.keys(updates).length > 0) {
+          await supabase.from("custom_albums").update(updates).eq("id", album.id);
+          updated++;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          done: albums.length < BATCH_SIZE,
+          updated,
+          processed: albums.length,
+          offset,
+          nextOffset: offset + albums.length,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Default: enrich songs
     let query = supabase
       .from("custom_songs")
       .select("id, title, artist, album, cover_url, genre, year")
@@ -101,7 +191,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Cache by album to avoid duplicate API calls
     const albumCache = new Map<string, any>();
     let updated = 0;
 
@@ -123,7 +212,6 @@ Deno.serve(async (req) => {
       if (meta.coverUrl && !song.cover_url) updates.cover_url = meta.coverUrl;
       if (meta.genre && !song.genre) updates.genre = meta.genre;
       if (meta.year && !song.year) updates.year = meta.year;
-      // Always update album name if Deezer has a better one
       if (meta.album && song.album !== meta.album) updates.album = meta.album;
 
       if (Object.keys(updates).length > 0) {
