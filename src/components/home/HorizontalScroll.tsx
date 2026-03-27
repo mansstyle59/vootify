@@ -66,8 +66,8 @@ export function CoverSkeleton({ count = 8 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-[140px] snap-start">
-          <div className="w-[140px] h-[140px] rounded-2xl bg-secondary/60 mb-2 animate-pulse" />
+        <div key={i} className="flex-shrink-0 w-[120px] snap-start">
+          <div className="w-[120px] h-[120px] rounded-xl bg-secondary/60 mb-1.5 animate-pulse" />
           <div className="h-3 w-24 bg-secondary/60 rounded-md mb-1 animate-pulse" />
           <div className="h-2.5 w-16 bg-secondary/40 rounded-md animate-pulse" />
         </div>

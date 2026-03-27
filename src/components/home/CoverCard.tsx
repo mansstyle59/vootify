@@ -38,17 +38,17 @@ export const CoverCard = memo(function CoverCard({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileTap={{ scale: 0.96 }}
-      className="flex-shrink-0 w-[140px] cursor-pointer group snap-start"
+      className="flex-shrink-0 w-[120px] cursor-pointer group snap-start"
       onClick={onClick}
       onTouchStart={showPlay && !isActive ? handleTap : undefined}
     >
-      <div className={`relative w-[140px] h-[140px] overflow-hidden mb-2 ${
+      <div className={`relative w-[120px] h-[120px] overflow-hidden mb-1.5 ${
         rounded ? "rounded-full" : "rounded-xl"
       } ${isActive ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
         style={{
           boxShadow: isActive
-            ? "0 8px 30px hsl(var(--primary) / 0.3)"
-            : "0 4px 20px hsl(0 0% 0% / 0.2), 0 1px 4px hsl(0 0% 0% / 0.1)",
+            ? "0 6px 24px hsl(var(--primary) / 0.3)"
+            : "0 3px 12px hsl(0 0% 0% / 0.18), 0 1px 3px hsl(0 0% 0% / 0.1)",
         }}
       >
         {imageUrl ? (
