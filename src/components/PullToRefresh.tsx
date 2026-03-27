@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, forwardRef, type ReactNode } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Loader2, ArrowDown } from "lucide-react";
+import { RotateCw } from "lucide-react";
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void> | void;
@@ -8,8 +8,8 @@ interface PullToRefreshProps {
   className?: string;
 }
 
-const THRESHOLD = 80;
-const MAX_PULL = 120;
+const THRESHOLD = 72;
+const MAX_PULL = 130;
 
 export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(function PullToRefresh({ onRefresh, children, className = "" }, ref) {
   const [refreshing, setRefreshing] = useState(false);
@@ -18,9 +18,13 @@ export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(func
   const pullY = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const indicatorOpacity = useTransform(pullY, [0, 40, THRESHOLD], [0, 0.5, 1]);
-  const indicatorScale = useTransform(pullY, [0, THRESHOLD], [0.5, 1]);
-  const rotate = useTransform(pullY, [0, THRESHOLD], [0, 180]);
+  const indicatorOpacity = useTransform(pullY, [0, 30, THRESHOLD], [0, 0.6, 1]);
+  const indicatorScale = useTransform(pullY, [0, THRESHOLD * 0.5, THRESHOLD], [0.3, 0.8, 1]);
+  const indicatorY = useTransform(pullY, (v) => Math.max(v - 44, -44));
+  const rotate = useTransform(pullY, [0, THRESHOLD, MAX_PULL], [0, 360, 720]);
+  const progress = useTransform(pullY, [0, THRESHOLD], [0, 1]);
+  const contentY = useTransform(pullY, (v) => v * 0.35);
+  const strokeDashoffset = useTransform(progress, [0, 1], [88, 0]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (refreshing) return;
@@ -37,9 +41,8 @@ export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(func
       pullY.set(0);
       return;
     }
-    // Dampen pull
-    const dampened = Math.min(delta * 0.5, MAX_PULL);
-    pullY.set(dampened);
+    const dampened = Math.min(delta * 0.45 * (1 - delta / 800), MAX_PULL);
+    pullY.set(Math.max(0, dampened));
   }, [refreshing, pullY]);
 
   const handleTouchEnd = useCallback(async () => {
@@ -49,13 +52,13 @@ export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(func
 
     if (currentPull >= THRESHOLD && !refreshing) {
       setRefreshing(true);
-      animate(pullY, 60, { type: "spring", stiffness: 300, damping: 30 });
+      animate(pullY, 56, { type: "spring", stiffness: 350, damping: 28 });
       try {
         await onRefresh();
       } catch {}
       setRefreshing(false);
     }
-    animate(pullY, 0, { type: "spring", stiffness: 400, damping: 35 });
+    animate(pullY, 0, { type: "spring", stiffness: 500, damping: 35, mass: 0.8 });
   }, [onRefresh, pullY, refreshing]);
 
   return (
@@ -66,24 +69,33 @@ export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(func
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Indicator */}
+      {/* Pull indicator */}
       <motion.div
-        style={{ opacity: indicatorOpacity, scale: indicatorScale, y: useTransform(pullY, (v) => v - 50) }}
-        className="absolute left-1/2 -translate-x-1/2 z-50 flex items-center justify-center"
+        style={{ opacity: indicatorOpacity, scale: indicatorScale, y: indicatorY }}
+        className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
       >
-        <div className="w-10 h-10 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 flex items-center justify-center shadow-lg">
-          {refreshing ? (
-            <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          ) : (
-            <motion.div style={{ rotate }}>
-              <ArrowDown className="w-5 h-5 text-primary" />
-            </motion.div>
-          )}
+        <div className="w-11 h-11 rounded-full bg-background/80 backdrop-blur-xl border border-primary/20 flex items-center justify-center shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.3)]">
+          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 44 44">
+            <motion.circle
+              cx="22"
+              cy="22"
+              r="14"
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="88"
+              style={{ strokeDashoffset: refreshing ? 0 : strokeDashoffset }}
+              className={refreshing ? "animate-spin origin-center" : ""}
+            />
+          </svg>
+          <motion.div style={{ rotate: refreshing ? undefined : rotate }} className={refreshing ? "animate-spin" : ""}>
+            <RotateCw className="w-4.5 h-4.5 text-primary" strokeWidth={2.5} />
+          </motion.div>
         </div>
       </motion.div>
 
-      {/* Content with pull offset */}
-      <motion.div style={{ y: useTransform(pullY, (v) => v * 0.3) }}>
+      <motion.div style={{ y: contentY }}>
         {children}
       </motion.div>
     </div>
