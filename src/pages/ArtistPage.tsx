@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2, ImagePlus } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { formatDuration } from "@/data/mockData";
 import type { Song } from "@/data/mockData";
