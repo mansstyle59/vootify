@@ -154,8 +154,8 @@ export function MiniPlayer() {
 
     const runWatchdog = () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
-      // Longer interval in background = less CPU
-      const interval = document.visibilityState === "visible" ? 3000 : 8000;
+      // Longer interval = less CPU
+      const interval = document.visibilityState === "visible" ? 5000 : 10000;
       watchdogRef.current = setInterval(() => {
         const audio = audioRef.current;
         if (!audio || audio.paused || !audio.src || !isFinite(audio.duration)) return;
@@ -368,31 +368,29 @@ export function MiniPlayer() {
           }
         }, FADE_STEP);
       } else {
-        // Direct load — minimal latency
+        // Direct load — instant play
         audio.src = srcToUse;
         audio.volume = volume;
         audio.muted = false;
+        audio.play().catch((e) => {
+          console.warn("[player] Immediate play failed, waiting canplay:", e);
+          const onCanPlay = () => {
+            audio.removeEventListener("canplay", onCanPlay);
+            audio.volume = volume;
+            audio.muted = false;
+            audio.play().catch(console.error);
+          };
+          audio.addEventListener("canplay", onCanPlay, { once: true });
+        });
 
-        const onCanPlay = () => {
-          audio.removeEventListener("canplay", onCanPlay);
-          audio.volume = volume;
-          audio.muted = false;
-          audio.play().catch((e) => {
-            console.error("[player] Play failed:", e);
-            setTimeout(() => audio.play().catch(() => {}), 150);
-          });
-        };
-        audio.addEventListener("canplay", onCanPlay, { once: true });
-
-        // Safety timeout
+        // Safety timeout — shorter for streaming-grade responsiveness
         setTimeout(() => {
-          audio.removeEventListener("canplay", onCanPlay);
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
             audio.muted = false;
             audio.play().catch(console.error);
           }
-        }, 1800);
+        }, 600);
       }
     };
 
@@ -445,7 +443,7 @@ export function MiniPlayer() {
     };
 
     // Delay preload slightly so it doesn't compete with current track loading
-    const timer = setTimeout(preloadNext, 1500);
+    const timer = setTimeout(preloadNext, 400);
     return () => clearTimeout(timer);
   }, [currentSong?.id]);
 
