@@ -268,6 +268,54 @@ const LibraryPage = () => {
   } = usePlayerStore();
   const queryClient = useQueryClient();
 
+  // Shared playlists from admin
+  const { data: sharedPlaylists = [] } = useQuery({
+    queryKey: ["shared-playlists", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("shared_playlists")
+        .select("*")
+        .eq("shared_to", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: sharedPlaylistSongsMap = {} } = useQuery({
+    queryKey: ["shared-playlist-songs", sharedPlaylists.map((p: any) => p.id).join(",")],
+    queryFn: async () => {
+      if (sharedPlaylists.length === 0) return {};
+      const ids = sharedPlaylists.map((p: any) => p.id);
+      const { data, error } = await supabase
+        .from("shared_playlist_songs")
+        .select("*")
+        .in("shared_playlist_id", ids)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      const map: Record<string, Song[]> = {};
+      for (const row of data || []) {
+        if (!map[row.shared_playlist_id]) map[row.shared_playlist_id] = [];
+        map[row.shared_playlist_id].push({
+          id: row.song_id,
+          title: row.title,
+          artist: row.artist,
+          album: row.album || "",
+          duration: row.duration || 0,
+          coverUrl: row.cover_url || "",
+          streamUrl: row.stream_url || "",
+          liked: false,
+        });
+      }
+      return map;
+    },
+    enabled: sharedPlaylists.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Online/offline tracking
   useEffect(() => {
     const goOffline = () => setIsOffline(true);
@@ -683,6 +731,60 @@ const LibraryPage = () => {
                         </motion.div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Shared playlists from admin */}
+                {sharedPlaylists.length > 0 && (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ListMusic className="w-4 h-4 text-primary" />
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Playlists partagées
+                      </h3>
+                    </div>
+                    <div className="space-y-2.5">
+                      {sharedPlaylists.map((sp: any, idx: number) => {
+                        const spSongs = sharedPlaylistSongsMap[sp.id] || [];
+                        const coverImg = sp.cover_url || (spSongs[0]?.coverUrl) || "";
+                        return (
+                          <motion.div
+                            key={sp.id}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.04 }}
+                          >
+                            <motion.button
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => {
+                                if (spSongs.length > 0) {
+                                  setQueue(spSongs);
+                                  play(spSongs[0]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl liquid-glass transition-all"
+                            >
+                              <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
+                                {coverImg ? (
+                                  <img src={coverImg} alt={sp.playlist_name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                    <ListMusic className="w-6 h-6 text-primary/30" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1 text-left">
+                                <p className="text-sm font-semibold text-foreground truncate">{sp.playlist_name}</p>
+                                <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                                  {spSongs.length} titre{spSongs.length !== 1 ? "s" : ""} · Partagée par l'admin
+                                </p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+                            </motion.button>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,6 +182,90 @@ function UsersTab() {
   const [editPassword, setEditPassword] = useState("");
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [editingCreds, setEditingCreds] = useState(false);
+  
+  // Share playlist state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareTargetUser, setShareTargetUser] = useState<UserProfile | null>(null);
+  const [sharePlaylistName, setSharePlaylistName] = useState("");
+  const [shareSearch, setShareSearch] = useState("");
+  const [shareSelectedSongs, setShareSelectedSongs] = useState<Set<string>>(new Set());
+  const [shareSending, setShareSending] = useState(false);
+
+  const { data: allSongsForShare = [] } = useQuery({
+    queryKey: ["admin-all-songs-share"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("*")
+        .not("stream_url", "is", null)
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const filteredShareSongs = useMemo(() => {
+    if (!shareSearch.trim()) return allSongsForShare;
+    const q = shareSearch.toLowerCase();
+    return allSongsForShare.filter(
+      (s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q)
+    );
+  }, [allSongsForShare, shareSearch]);
+
+  const handleSendPlaylist = async () => {
+    if (!shareTargetUser || shareSelectedSongs.size === 0 || !sharePlaylistName.trim()) {
+      toast.error("Nom de playlist et morceaux requis");
+      return;
+    }
+    setShareSending(true);
+    try {
+      const selectedSongsList = allSongsForShare.filter((s) => shareSelectedSongs.has(s.id));
+      const coverUrl = selectedSongsList.find((s) => s.cover_url)?.cover_url || null;
+
+      const { data: playlist, error: plError } = await supabase
+        .from("shared_playlists")
+        .insert({
+          playlist_name: sharePlaylistName.trim(),
+          cover_url: coverUrl,
+          shared_by: (await supabase.auth.getUser()).data.user?.id,
+          shared_to: shareTargetUser.user_id,
+        })
+        .select("id")
+        .single();
+
+      if (plError) throw plError;
+
+      const songRows = selectedSongsList.map((s, i) => ({
+        shared_playlist_id: playlist.id,
+        song_id: `custom-${s.id}`,
+        title: s.title,
+        artist: s.artist,
+        album: s.album,
+        cover_url: s.cover_url,
+        stream_url: s.stream_url,
+        duration: s.duration,
+        position: i,
+      }));
+
+      const { error: songsError } = await supabase
+        .from("shared_playlist_songs")
+        .insert(songRows);
+
+      if (songsError) throw songsError;
+
+      toast.success(`Playlist envoyée à ${shareTargetUser.display_name || "l'utilisateur"}`);
+      setShowShareDialog(false);
+      setSharePlaylistName("");
+      setShareSelectedSongs(new Set());
+      setShareSearch("");
+      setShareTargetUser(null);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setShareSending(false);
+    }
+  };
 
   const loadUsers = async () => {
     const { data: profiles } = await supabase
@@ -569,18 +654,31 @@ function UsersTab() {
                       )}
                     </button>
                    )}
-                  <button
-                    onClick={() => {
-                      setEditUserId(u.user_id);
-                      setEditEmail("");
-                      setEditPassword("");
-                      setShowEditDialog(true);
-                    }}
-                    className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
-                    title="Modifier identifiants"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                   <button
+                     onClick={() => {
+                       setShareTargetUser(u);
+                       setSharePlaylistName("");
+                       setShareSelectedSongs(new Set());
+                       setShareSearch("");
+                       setShowShareDialog(true);
+                     }}
+                     className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                     title="Envoyer une playlist"
+                   >
+                     <Send className="w-4 h-4" />
+                   </button>
+                   <button
+                     onClick={() => {
+                       setEditUserId(u.user_id);
+                       setEditEmail("");
+                       setEditPassword("");
+                       setShowEditDialog(true);
+                     }}
+                     className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                     title="Modifier identifiants"
+                   >
+                     <Pencil className="w-4 h-4" />
+                   </button>
                   <button
                     onClick={() => {
                       if (confirm(`Supprimer ${u.display_name || "cet utilisateur"} ? Cette action est irréversible.`)) {
@@ -603,6 +701,107 @@ function UsersTab() {
           );
         })
       )}
+
+      {/* Share playlist dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              Envoyer une playlist à {shareTargetUser?.display_name || "l'utilisateur"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2 flex-1 overflow-hidden flex flex-col">
+            <div className="space-y-2">
+              <Label>Nom de la playlist *</Label>
+              <Input
+                value={sharePlaylistName}
+                onChange={(e) => setSharePlaylistName(e.target.value)}
+                placeholder="Ex : Ma sélection du moment"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Rechercher des morceaux</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={shareSearch}
+                  onChange={(e) => setShareSearch(e.target.value)}
+                  placeholder="Titre, artiste, album..."
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {shareSelectedSongs.size} morceau{shareSelectedSongs.size > 1 ? "x" : ""} sélectionné{shareSelectedSongs.size > 1 ? "s" : ""}
+              </p>
+              {shareSelectedSongs.size > 0 && (
+                <button
+                  onClick={() => setShareSelectedSongs(new Set())}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Tout désélectionner
+                </button>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-1 min-h-0 max-h-[40vh]">
+              {filteredShareSongs.map((song) => {
+                const isSelected = shareSelectedSongs.has(song.id);
+                return (
+                  <button
+                    key={song.id}
+                    onClick={() => {
+                      const next = new Set(shareSelectedSongs);
+                      if (isSelected) next.delete(song.id);
+                      else next.add(song.id);
+                      setShareSelectedSongs(next);
+                    }}
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all ${
+                      isSelected ? "bg-primary/15 border border-primary/30" : "bg-secondary/30 border border-transparent hover:bg-secondary/60"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                      {song.cover_url ? (
+                        <img src={song.cover_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Music className="w-4 h-4 text-muted-foreground/30" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{song.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      isSelected ? "border-primary bg-primary" : "border-muted-foreground/30"
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                  </button>
+                );
+              })}
+              {filteredShareSongs.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-8">Aucun morceau trouvé</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSendPlaylist}
+              disabled={shareSending || shareSelectedSongs.size === 0 || !sharePlaylistName.trim()}
+              className="gap-1.5"
+            >
+              {shareSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Envoyer ({shareSelectedSongs.size})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
