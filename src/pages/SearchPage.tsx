@@ -526,7 +526,7 @@ const SearchPage = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Nouveautés 🇫🇷 🇧🇪
+                    Nouveautés du vendredi 🇫🇷
                   </h2>
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
