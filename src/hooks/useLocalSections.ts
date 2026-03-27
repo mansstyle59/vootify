@@ -18,8 +18,6 @@ function rowToSong(row: any): Song {
   };
 }
 
-  };
-}
 
 /** Recently added custom songs (by admin) */
 export function useRecentlyAdded(limit = 20) {
