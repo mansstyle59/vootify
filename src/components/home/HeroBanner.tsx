@@ -36,14 +36,12 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-2 pt-[env(safe-area-inset-top)]" style={{ minHeight: "260px" }}>
-      {/* Parallax background with richer gradients */}
-      <motion.div style={{ y, scale }} className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-accent/15 to-background" />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/12 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/12 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4" />
-        {/* Extra ambient glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-[150px]" />
+    <div ref={ref} className="relative overflow-hidden mb-2 pt-[env(safe-area-inset-top)]" style={{ minHeight: "240px" }}>
+      {/* Parallax background — simplified for perf */}
+      <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-background" />
+        <div className="absolute top-0 right-0 w-72 h-72 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-56 h-56 bg-accent/8 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/4" />
       </motion.div>
 
       {/* Bottom fade */}
@@ -96,22 +94,22 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
       {/* Main content */}
       <motion.div
         style={{ opacity }}
-        className="relative z-10 px-5 md:px-8 pt-12 pb-8 flex flex-col justify-end"
+        className="relative z-10 px-5 md:px-8 pt-10 pb-6 flex flex-col justify-end gpu-layer"
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 w-fit mb-3"
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           <span className="text-xs font-semibold text-primary tracking-wide uppercase">Vootify Music</span>
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }}
+          transition={{ delay: 0.15, duration: 0.35, ease: "easeOut" }}
           className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-1.5 leading-tight"
         >
           {getGreeting(user ? displayName : null)} 👋

@@ -7,8 +7,8 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onFinish, 350);
-    }, 1200);
+      setTimeout(onFinish, 300);
+    }, 900);
     return () => clearTimeout(timer);
   }, [onFinish]);
 
@@ -39,24 +39,14 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
             transition={{ type: "spring", stiffness: 280, damping: 20, delay: 0.05 }}
             className="relative mb-5"
           >
-            <motion.div
-              animate={{
-                boxShadow: [
-                  "0 0 20px hsl(var(--primary) / 0.2)",
-                  "0 0 50px hsl(var(--primary) / 0.4)",
-                  "0 0 20px hsl(var(--primary) / 0.2)",
-                ],
-              }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="rounded-[28px] overflow-hidden"
-            >
+            <div className="rounded-[28px] overflow-hidden glow-primary">
               <img
                 src="/pwa-icon-512.png"
                 alt="Vootify"
                 className="w-24 h-24 rounded-[28px]"
                 fetchPriority="high"
               />
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* Brand name — smooth fade in */}
