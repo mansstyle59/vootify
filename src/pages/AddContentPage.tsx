@@ -232,8 +232,11 @@ function SongForm() {
                   <p className="text-[10px] text-muted-foreground/60 truncate">{song.artist || "Artiste inconnu"}</p>
                 </div>
                 {song.uploaded && <CheckCircle className="w-5 h-5 text-primary shrink-0" />}
+                {song.skipped && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">Doublon</span>
+                )}
                 {song.uploading && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
-                {!song.uploaded && !song.uploading && (
+                {!song.uploaded && !song.uploading && !song.skipped && (
                   <button type="button" onClick={() => removeSong(idx)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                     <X className="w-4 h-4" />
                   </button>
