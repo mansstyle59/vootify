@@ -1039,8 +1039,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           </div>
           <p className="text-[12px] font-bold text-foreground/80 truncate">{stationName}</p>
         </div>
-        <button onClick={() => {}} className="p-1 active:scale-90 transition-transform">
-          <MoreHorizontal className="w-6 h-6 text-foreground/70" />
+        <button
+          onClick={() => {
+            const meta = radioMeta;
+            const q = encodeURIComponent(
+              `${meta?.title || ""} ${meta?.artist || currentSong?.artist || ""}`.trim()
+            );
+            onClose();
+            setTimeout(() => navigate(`/search?q=${q}`), 150);
+          }}
+          className="p-1 active:scale-90 transition-transform"
+        >
+          <Search className="w-6 h-6 text-foreground/70" />
         </button>
       </div>
 
