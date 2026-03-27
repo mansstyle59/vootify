@@ -4,7 +4,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2, Mail, Calendar } from "lucide-react";
+import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2, Mail, Calendar, LogIn } from "lucide-react";
 
 /**
  * Blocks access to the app if the user has no active subscription.
@@ -186,12 +186,15 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
 
           <button
             type="button"
-            onClick={handleSignOut}
-            disabled={signingOut}
-            className="w-full py-3.5 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
+            onClick={() => {
+              supabase.auth.signOut().then(() => {
+                window.location.href = "/auth";
+              });
+            }}
+            className="w-full py-3.5 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2.5"
           >
-            <LogOut className="w-4 h-4" />
-            {signingOut ? "Déconnexion…" : "Se déconnecter"}
+            <LogIn className="w-4 h-4" />
+            Se connecter
           </button>
         </div>
       </motion.div>
