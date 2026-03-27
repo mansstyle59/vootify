@@ -253,6 +253,44 @@ const RadioPage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // MyRadioEnDirect logo map (loaded once, enriches all station logos)
+  const { data: myRadioLogoMap } = useQuery({
+    queryKey: ["myradio-logos"],
+    queryFn: async () => {
+      const stations = await myRadioApi.getAll();
+      return buildMyRadioLogoMap(stations);
+    },
+    staleTime: 30 * 60 * 1000, // 30 min cache
+  });
+
+  // MyRadioEnDirect search results (parallel to Radio Browser)
+  const { data: myRadioResults = [] } = useQuery({
+    queryKey: ["myradio-search", searchQuery],
+    queryFn: async () => {
+      const stations = await myRadioApi.search(searchQuery);
+      // Return enriched results with now playing info visible
+      return stations.map(s => ({
+        id: `mred-${s.slug}`,
+        name: s.name,
+        genre: s.nowPlaying || "Radio française",
+        coverUrl: s.logoHdUrl || s.logoUrl,
+        streamUrl: "", // No stream URL from scraping
+        country: "France",
+        countryCode: "FR",
+        votes: 0,
+        clicks: 0,
+        codec: "",
+        bitrate: 0,
+        _nowPlaying: s.nowPlaying,
+        _artist: s.artist,
+        _title: s.title,
+        _slug: s.slug,
+      } as RadioBrowserStation & { _nowPlaying?: string; _artist?: string; _title?: string; _slug?: string }));
+    },
+    staleTime: 2 * 60 * 1000,
+    enabled: searchQuery.length >= 2,
+  });
+
   const { data: searchResults = [], isLoading: loadingSearch } = useQuery({
     queryKey: ["radio-browser-search", searchQuery],
     queryFn: () => radioBrowserApi.search(searchQuery, 30),
@@ -262,10 +300,64 @@ const RadioPage = () => {
 
   const isLoading = searchQuery.length >= 2 ? loadingSearch : loadingCustom;
 
+  // Merge search results: myradioendirect first (French HD), then Radio Browser (deduplicated)
   const stations = useMemo(() => {
-    if (searchQuery.length >= 2) return searchResults;
+    if (searchQuery.length >= 2) {
+      // Enrich Radio Browser results with myradioendirect HD logos
+      const enrichedBrowser = searchResults.map(s => {
+        if (myRadioLogoMap) {
+          const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+          if (hdLogo) return { ...s, coverUrl: hdLogo };
+        }
+        return s;
+      });
+
+      // Merge: myRadio results first, then Radio Browser (skip duplicates by name)
+      const seenNames = new Set<string>();
+      const merged: RadioBrowserStation[] = [];
+
+      // MyRadio results first (only those with stream URLs from Radio Browser or custom)
+      for (const mr of myRadioResults) {
+        const nameLower = mr.name.toLowerCase().trim();
+        // Try to find matching Radio Browser station for stream URL
+        const browserMatch = enrichedBrowser.find(b =>
+          b.name.toLowerCase().trim() === nameLower ||
+          b.name.toLowerCase().includes(nameLower) ||
+          nameLower.includes(b.name.toLowerCase().trim())
+        );
+        if (browserMatch) {
+          // Merge: use myradio logo + browser stream URL
+          merged.push({ ...browserMatch, coverUrl: mr.coverUrl || browserMatch.coverUrl });
+          seenNames.add(nameLower);
+          seenNames.add(browserMatch.name.toLowerCase().trim());
+        } else {
+          // Show myradio station even without stream URL (user can find it)
+          merged.push(mr);
+          seenNames.add(nameLower);
+        }
+      }
+
+      // Add remaining Radio Browser results
+      for (const s of enrichedBrowser) {
+        const nameLower = s.name.toLowerCase().trim();
+        if (!seenNames.has(nameLower)) {
+          merged.push(s);
+          seenNames.add(nameLower);
+        }
+      }
+
+      return merged;
+    }
+    // Default: enrich custom stations with myradio logos
+    if (myRadioLogoMap) {
+      return customStations.map(s => {
+        const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+        if (hdLogo && (!s.coverUrl || s.coverUrl.length < 10)) return { ...s, coverUrl: hdLogo };
+        return s;
+      });
+    }
     return customStations;
-  }, [searchQuery, searchResults, customStations]);
+  }, [searchQuery, searchResults, myRadioResults, customStations, myRadioLogoMap]);
 
   const isCustomTab = searchQuery.length < 2;
 
