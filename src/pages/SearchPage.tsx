@@ -973,6 +973,98 @@ const SearchPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add album to playlist modal */}
+      <AnimatePresence>
+        {addToPlaylistRelease && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => { setAddToPlaylistRelease(null); setAddToPlaylistTracks([]); setShowCreatePlaylist(false); }}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-t-2xl border border-border bg-card shadow-2xl overflow-hidden"
+              style={{ maxHeight: "70vh" }}
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 p-4 border-b border-border">
+                {addToPlaylistRelease.coverUrl && (
+                  <img src={addToPlaylistRelease.coverUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{addToPlaylistRelease.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{addToPlaylistRelease.artist}</p>
+                  {!loadingPlaylistAdd && (
+                    <p className="text-[10px] text-primary mt-0.5">
+                      {addToPlaylistTracks.length} morceau{addToPlaylistTracks.length !== 1 ? "x" : ""} disponible{addToPlaylistTracks.length !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+                <button onClick={() => { setAddToPlaylistRelease(null); setAddToPlaylistTracks([]); }} className="p-1">
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {loadingPlaylistAdd ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : addToPlaylistTracks.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">Aucun morceau disponible</div>
+              ) : (
+                <>
+                  <div className="max-h-[40vh] overflow-y-auto p-2">
+                    {playlists.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-6">Aucune playlist</p>
+                    ) : (
+                      playlists.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => handleAddAlbumToPlaylist(p.id, p.name)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left rounded-xl hover:bg-accent transition-colors"
+                        >
+                          <ListMusic className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                          <span className="flex-1 truncate text-foreground font-medium">{p.name}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className="p-2 border-t border-border">
+                    {showCreatePlaylist ? (
+                      <div className="flex gap-2 p-1">
+                        <input
+                          value={newPlaylistName}
+                          onChange={(e) => setNewPlaylistName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleCreateAndAdd()}
+                          placeholder="Nom de la playlist..."
+                          className="flex-1 px-3 py-2 rounded-lg bg-secondary text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                          autoFocus
+                        />
+                        <button onClick={handleCreateAndAdd} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Créer</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowCreatePlaylist(true)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-accent transition-colors text-foreground"
+                      >
+                        <Plus className="w-5 h-5" />
+                        <span>Nouvelle playlist</span>
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
