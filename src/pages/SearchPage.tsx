@@ -417,6 +417,50 @@ const SearchPage = () => {
               </div>
             )}
 
+            {genreCards.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Disc3 className="w-4 h-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Parcourir par genre
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {genreCards.map((g, i) => {
+                    const colors = genreColors[g.genre] || defaultGenreColor;
+                    return (
+                      <motion.button
+                        key={g.genre}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.03, duration: 0.3 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => commitSearch(g.genre)}
+                        className="relative h-24 rounded-xl overflow-hidden text-left group"
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`,
+                        }}
+                      >
+                        {g.coverUrl && (
+                          <img
+                            src={g.coverUrl}
+                            alt=""
+                            className="absolute -right-3 -bottom-3 w-16 h-16 rounded-lg object-cover rotate-[20deg] opacity-60 group-hover:opacity-80 transition-opacity shadow-lg"
+                          />
+                        )}
+                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
+                          <h3 className="text-[15px] font-bold text-white drop-shadow-sm">
+                            {g.genre}
+                          </h3>
+                          <p className="text-[11px] text-white/60">{g.count} titres</p>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {allSongs && allSongs.length > 0 && (
               <div className="pt-2">
                 <div className="flex items-center gap-2 mb-3">
