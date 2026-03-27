@@ -640,6 +640,15 @@ const LibraryPage = () => {
                               ) : (
                                 <img src={coverImg} alt={p.name} className="w-full h-full object-cover" />
                               )}
+                              {cachedCount > 0 && (
+                                <div className={`absolute bottom-0.5 right-0.5 flex items-center justify-center rounded-full shadow-md ${
+                                  cachedCount === pSongs.length && pSongs.length > 0
+                                    ? "w-5 h-5 bg-primary"
+                                    : "w-5 h-5 bg-primary/80"
+                                }`}>
+                                  <Download className="w-2.5 h-2.5 text-primary-foreground" />
+                                </div>
+                              )}
                             </div>
 
                             <div className="min-w-0 flex-1 text-left">
