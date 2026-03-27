@@ -50,7 +50,7 @@ const PlaylistDetailPage = () => {
     );
   }, [songs]);
 
-  useEffect(() => { if (id && true) loadPlaylistSongs(id); }, [id, false]);
+  useEffect(() => { if (id) loadPlaylistSongs(id); }, [id]);
 
   // No resolution needed — songs play directly
 
