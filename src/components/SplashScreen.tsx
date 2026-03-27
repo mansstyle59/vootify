@@ -7,11 +7,11 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    // Shorter splash — 1.6s instead of 2.2s
+    // Ultra-fast splash — 1.1s
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onFinish, 400); // Faster exit
-    }, 1600);
+      setTimeout(onFinish, 300);
+    }, 1100);
     return () => clearTimeout(timer);
   }, [onFinish]);
 
