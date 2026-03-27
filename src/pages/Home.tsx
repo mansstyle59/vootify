@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePlayerStore } from "@/stores/playerStore";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
@@ -11,7 +11,8 @@ import {
   useMostPlayed,
   useRecommended,
 } from "@/hooks/useLocalSections";
-import { Clock, Flame, Sparkles, Music } from "lucide-react";
+import { deezerApi } from "@/lib/deezerApi";
+import { Clock, Flame, Sparkles, Music, Globe } from "lucide-react";
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
@@ -20,6 +21,17 @@ const HomePage = () => {
   const { data: recentlyListened, isLoading: loadingListened } = useRecentlyListened(20);
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
+
+  // Deezer chart tracks
+  const [deezerChart, setDeezerChart] = useState<Song[]>([]);
+  const [loadingChart, setLoadingChart] = useState(true);
+
+  useEffect(() => {
+    deezerApi.getChartTracks(20)
+      .then(setDeezerChart)
+      .catch(() => setDeezerChart([]))
+      .finally(() => setLoadingChart(false));
+  }, []);
 
   const handlePlayTrack = useCallback(
     (song: Song, allSongs: Song[]) => {
@@ -84,8 +96,16 @@ const HomePage = () => {
       {renderSection("Les plus écoutés 🔥", <Flame className="w-4 h-4" />, mostPlayed, loadingMost)}
       {renderSection("Recommandés pour vous ✨", <Sparkles className="w-4 h-4" />, recommended, loadingRecommended)}
 
+      {/* Deezer trending section */}
+      {renderSection(
+        "Tendances Deezer 🌍",
+        <Globe className="w-4 h-4" />,
+        deezerChart,
+        loadingChart
+      )}
+
       {/* Empty state */}
-      {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
+      {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && !loadingChart && deezerChart.length === 0 && (
         <div className="px-4 md:px-8 py-20 text-center">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Music className="w-10 h-10 text-primary/40" />

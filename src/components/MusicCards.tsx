@@ -196,6 +196,11 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
             Local
           </span>
         );
+        if (song.id.startsWith("dz-")) return (
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20 flex-shrink-0">
+            30s
+          </span>
+        );
         const sourceType = getSongSourceType(song);
         if (sourceType === "custom") return (
           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary flex-shrink-0">

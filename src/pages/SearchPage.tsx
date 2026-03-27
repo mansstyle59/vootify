@@ -10,6 +10,7 @@ import {
   getSuggestions,
   extractArtists,
 } from "@/hooks/useLocalSearch";
+import { deezerApi } from "@/lib/deezerApi";
 import {
   Search as SearchIcon,
   X,
@@ -20,6 +21,8 @@ import {
   Mic2,
   Disc3,
   Zap,
+  Globe,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Song } from "@/data/mockData";
@@ -35,6 +38,11 @@ const SearchPage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"local" | "deezer">("local");
+
+  // Deezer search state
+  const [deezerResults, setDeezerResults] = useState<Song[]>([]);
+  const [deezerLoading, setDeezerLoading] = useState(false);
 
   // Load all local songs once (cached)
   const { data: allSongs, isLoading } = useAllLocalSongs();
@@ -83,6 +91,28 @@ const SearchPage = () => {
     inputRef.current?.blur();
   }, []);
 
+  // Deezer search when query changes
+  useEffect(() => {
+    if (debouncedQuery.length < 2) {
+      setDeezerResults([]);
+      return;
+    }
+    let cancelled = false;
+    setDeezerLoading(true);
+    deezerApi
+      .searchTracks(debouncedQuery, 30)
+      .then((results) => {
+        if (!cancelled) setDeezerResults(results);
+      })
+      .catch(() => {
+        if (!cancelled) setDeezerResults([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDeezerLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [debouncedQuery]);
+
   // Autocomplete suggestions (instant, from memory)
   const autocompleteSuggestions = useMemo(() => {
     if (!allSongs || query.length < 1) return [];
@@ -94,6 +124,17 @@ const SearchPage = () => {
     if (!allSongs || debouncedQuery.length < 1) return [];
     return searchLocalSongs(allSongs, debouncedQuery, recentIds).map((r) => r.song);
   }, [allSongs, debouncedQuery, recentIds]);
+
+  // Filter Deezer results: remove songs that exist locally (by matching title+artist)
+  const filteredDeezerResults = useMemo(() => {
+    if (!allSongs || allSongs.length === 0) return deezerResults;
+    const localSet = new Set(
+      allSongs.map((s) => `${s.title.toLowerCase()}::${s.artist.toLowerCase()}`)
+    );
+    return deezerResults.filter(
+      (s) => !localSet.has(`${s.title.toLowerCase()}::${s.artist.toLowerCase()}`)
+    );
+  }, [deezerResults, allSongs]);
 
   // Artist filter
   const uniqueArtists = useMemo(() => {
@@ -108,12 +149,12 @@ const SearchPage = () => {
 
   // Save search to history
   useEffect(() => {
-    if (debouncedQuery.length >= 2 && searchResults.length > 0 && userId) {
+    if (debouncedQuery.length >= 2 && (searchResults.length > 0 || deezerResults.length > 0) && userId) {
       musicDb.saveSearchQuery(userId, debouncedQuery).then(() => {
         musicDb.getSearchHistory(userId).then(setRecentSearches);
       });
     }
-  }, [debouncedQuery, searchResults.length, userId]);
+  }, [debouncedQuery, searchResults.length, deezerResults.length, userId]);
 
   // Alternative suggestions when no results
   const alternativeSuggestions = useMemo(() => {
@@ -151,6 +192,15 @@ const SearchPage = () => {
     }
   };
 
+  // Auto-switch to deezer tab if no local results but deezer has results
+  useEffect(() => {
+    if (debouncedQuery.length >= 2 && searchResults.length === 0 && filteredDeezerResults.length > 0) {
+      setActiveTab("deezer");
+    } else if (debouncedQuery.length >= 2 && searchResults.length > 0) {
+      setActiveTab("local");
+    }
+  }, [debouncedQuery, searchResults.length, filteredDeezerResults.length]);
+
   return (
     <div className="pb-40 max-w-7xl mx-auto animate-fade-in">
       {/* Header */}
@@ -167,7 +217,7 @@ const SearchPage = () => {
                   Rechercher
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Parcourez votre bibliothèque musicale
+                  Bibliothèque locale & Deezer
                 </p>
               </div>
             </div>
@@ -199,6 +249,7 @@ const SearchPage = () => {
                 setDebouncedQuery("");
                 setArtistFilter(null);
                 setShowSuggestions(false);
+                setDeezerResults([]);
               }}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
             >
@@ -380,110 +431,196 @@ const SearchPage = () => {
             exit={{ opacity: 0 }}
             className="px-4 md:px-8"
           >
-            {isLoading ? (
-              <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <SongSkeleton key={i} />
-                ))}
-              </div>
-            ) : (
-              <>
-                {/* Artist filter */}
-                {uniqueArtists.length > 1 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Filtrer par artiste
-                      </span>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                      <button
-                        onClick={() => setArtistFilter(null)}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          !artistFilter
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        }`}
-                      >
-                        Tous
-                      </button>
-                      {uniqueArtists.map((artist) => (
-                        <button
-                          key={artist}
-                          onClick={() =>
-                            setArtistFilter(artistFilter === artist ? null : artist)
-                          }
-                          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            artistFilter === artist
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          }`}
-                        >
-                          {artist}
-                        </button>
+            {/* Tab switcher */}
+            <div className="flex gap-1 mb-4 p-1 rounded-xl bg-secondary/60 border border-border">
+              <button
+                onClick={() => setActiveTab("local")}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === "local"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Music className="w-4 h-4" />
+                Bibliothèque
+                {searchResults.length > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    activeTab === "local" ? "bg-primary-foreground/20" : "bg-muted"
+                  }`}>
+                    {searchResults.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("deezer")}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === "deezer"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Globe className="w-4 h-4" />
+                Deezer
+                {deezerLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : filteredDeezerResults.length > 0 ? (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    activeTab === "deezer" ? "bg-primary-foreground/20" : "bg-muted"
+                  }`}>
+                    {filteredDeezerResults.length}
+                  </span>
+                ) : null}
+              </button>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {activeTab === "local" ? (
+                <motion.div
+                  key="local-results"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {isLoading ? (
+                    <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <SongSkeleton key={i} />
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {filteredResults.length > 0 ? (
-                  <>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {filteredResults.length} résultat
-                      {filteredResults.length > 1 ? "s" : ""}
-                      {artistFilter && (
-                        <>
-                          {" "}
-                          de{" "}
-                          <span className="text-primary font-medium">{artistFilter}</span>
-                        </>
-                      )}
-                    </p>
-                    <VirtualSongList
-                      songs={filteredResults}
-                      onClickSong={(song) => handlePlayTrack(song, filteredResults)}
-                      className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
-                    />
-                  </>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-16"
-                  >
-                    <SearchIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                    <p className="text-foreground font-medium mb-1">
-                      Aucun résultat pour «{" "}
-                      <span className="text-primary">{debouncedQuery}</span> »
-                    </p>
-                    <p className="text-sm text-muted-foreground/60 mt-1 mb-6">
-                      Essayez un autre terme ou vérifiez l'orthographe
-                    </p>
-
-                    {/* Alternative suggestions */}
-                    {alternativeSuggestions.length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-                          Essayez plutôt
-                        </p>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                          {alternativeSuggestions.map((artist) => (
+                  ) : (
+                    <>
+                      {/* Artist filter */}
+                      {uniqueArtists.length > 1 && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <User className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Filtrer par artiste
+                            </span>
+                          </div>
+                          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                             <button
-                              key={artist}
-                              onClick={() => commitSearch(artist)}
-                              className="px-3.5 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm text-foreground hover:bg-primary/20 transition-all"
+                              onClick={() => setArtistFilter(null)}
+                              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                !artistFilter
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                              }`}
                             >
-                              {artist}
+                              Tous
                             </button>
-                          ))}
+                            {uniqueArtists.map((artist) => (
+                              <button
+                                key={artist}
+                                onClick={() =>
+                                  setArtistFilter(artistFilter === artist ? null : artist)
+                                }
+                                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                  artistFilter === artist
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                }`}
+                              >
+                                {artist}
+                              </button>
+                            ))}
+                          </div>
                         </div>
+                      )}
+
+                      {filteredResults.length > 0 ? (
+                        <>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            {filteredResults.length} résultat
+                            {filteredResults.length > 1 ? "s" : ""}
+                            {artistFilter && (
+                              <>
+                                {" "}de{" "}
+                                <span className="text-primary font-medium">{artistFilter}</span>
+                              </>
+                            )}
+                          </p>
+                          <VirtualSongList
+                            songs={filteredResults}
+                            onClickSong={(song) => handlePlayTrack(song, filteredResults)}
+                            className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+                          />
+                        </>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="text-center py-12"
+                        >
+                          <Music className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                          <p className="text-foreground font-medium mb-1">
+                            Aucun résultat local
+                          </p>
+                          <p className="text-sm text-muted-foreground/60 mb-4">
+                            Essayez l'onglet Deezer pour écouter un extrait 30s
+                          </p>
+                          <button
+                            onClick={() => setActiveTab("deezer")}
+                            className="px-4 py-2 rounded-full bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
+                          >
+                            <Globe className="w-4 h-4 inline mr-1.5" />
+                            Chercher sur Deezer
+                          </button>
+                        </motion.div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="deezer-results"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {deezerLoading ? (
+                    <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <SongSkeleton key={i} />
+                      ))}
+                    </div>
+                  ) : filteredDeezerResults.length > 0 ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-3">
+                        <p className="text-sm text-muted-foreground">
+                          {filteredDeezerResults.length} résultat{filteredDeezerResults.length > 1 ? "s" : ""} Deezer
+                        </p>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
+                          EXTRAIT 30s
+                        </span>
                       </div>
-                    )}
-                  </motion.div>
-                )}
-              </>
-            )}
+                      <VirtualSongList
+                        songs={filteredDeezerResults}
+                        onClickSong={(song) => handlePlayTrack(song, filteredDeezerResults)}
+                        className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+                      />
+                    </>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-center py-16"
+                    >
+                      <Globe className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-foreground font-medium mb-1">
+                        Aucun résultat Deezer pour «{" "}
+                        <span className="text-primary">{debouncedQuery}</span> »
+                      </p>
+                      <p className="text-sm text-muted-foreground/60 mt-1">
+                        Essayez un autre terme
+                      </p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
