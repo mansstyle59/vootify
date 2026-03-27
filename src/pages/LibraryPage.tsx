@@ -308,8 +308,22 @@ const LibraryPage = () => {
   const { data: customSongs = [] } = useQuery({
     queryKey: ["custom-songs"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("custom_songs").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
+      // Paginate past 1000-row Supabase default limit
+      let allData: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("custom_songs")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = allData.concat(data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
       const songs = (data || []).map((s: any): Song & { _dbId: string } => ({
         _dbId: s.id, id: `custom-${s.id}`,
         title: normalizeTitle(s.title),
