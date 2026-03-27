@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity } from "lucide-react";
-import { resolveLog } from "@/lib/resolveLog";
+
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "resolve";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs";
 
 interface UserProfile {
   user_id: string;
@@ -42,7 +42,6 @@ const AdminPage = () => {
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "logs", label: "Logs", icon: ScrollText },
-    { key: "resolve", label: "Résolution", icon: Activity },
   ];
 
   return (
@@ -92,7 +91,7 @@ const AdminPage = () => {
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
-        {tab === "resolve" && <ResolveTab />}
+        
       </div>
     </div>
   );
@@ -554,159 +553,5 @@ function LogsTab() {
   );
 }
 
-function ResolveTab() {
-  const [entries, setEntries] = useState<import("@/lib/resolveLog").ResolveLogEntry[]>([]);
-  const [dbLoading, setDbLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "custom" | "hd" | "none">("all");
-  const [page, setPage] = useState(1);
-  const PER_PAGE = 30;
-
-  const fetchDB = async () => {
-    setDbLoading(true);
-    const data = await resolveLog.fetchFromDB(5000);
-    setEntries(data);
-    setDbLoading(false);
-  };
-
-  useEffect(() => { fetchDB(); }, []);
-  useEffect(() => { setPage(1); }, [filter]);
-
-  const stats = resolveLog.statsFromEntries(entries);
-  const filtered = filter === "all" ? entries : entries.filter((e) => e.source === filter);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
-  const statCards = [
-    { label: "Total", value: stats.total, color: "text-foreground" },
-    { label: "Custom", value: stats.custom, color: "text-primary" },
-    { label: "HD", value: stats.hd, color: "text-blue-400" },
-    { label: "Échecs", value: stats.none, color: "text-destructive" },
-    { label: "Corrigés", value: stats.corrected, color: "text-orange-400" },
-  ];
-
-  return (
-    <div className="space-y-4">
-      {/* Stats grid */}
-      <div className="grid grid-cols-5 gap-2">
-        {statCards.map((c) => (
-          <div key={c.label} className="rounded-xl bg-secondary/50 border border-border p-3 text-center">
-            <p className={`text-xl font-bold ${c.color}`}>{c.value}</p>
-            <p className="text-[10px] text-muted-foreground">{c.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Filter + actions */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {(["all", "custom", "hd", "none"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-              filter === f
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
-            }`}
-          >
-            {f === "all" ? "Tous" : f === "custom" ? "Custom" : f === "hd" ? "HD" : "Échecs"}
-          </button>
-        ))}
-        <div className="flex-1" />
-        <button
-          onClick={fetchDB}
-          className="px-3 py-1 rounded-full text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
-        >
-          {dbLoading ? "Chargement…" : "Rafraîchir"}
-        </button>
-        <button
-          onClick={async () => {
-            const ok = await resolveLog.clearDB();
-            if (ok) { setEntries([]); toast.success("Logs supprimés"); }
-            else toast.error("Erreur lors de la suppression");
-          }}
-          className="px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-        >
-          Vider
-        </button>
-      </div>
-
-      {/* Entries list */}
-      <div className="space-y-1.5">
-        {dbLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12 text-sm">Aucune résolution enregistrée</p>
-        ) : (
-          paginated.map((e, i) => {
-            const sourceColor = e.source === "custom" ? "text-primary" : e.source === "hd" ? "text-blue-400" : "text-destructive";
-            const sourceLabel = e.source === "custom" ? "Custom" : e.source === "hd" ? "HD" : "Échec";
-            return (
-              <motion.div
-                key={`${e.songId}-${e.ts}-${i}`}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.02, 0.3) }}
-                className="p-3 rounded-xl bg-secondary/30 border border-border"
-              >
-                <div className="flex items-start gap-2">
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${sourceColor}`}
-                    style={{ backgroundColor: `hsl(var(--secondary))` }}
-                  >
-                    {sourceLabel}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{e.originalTitle}</p>
-                    <p className="text-xs text-muted-foreground truncate">{e.originalArtist}</p>
-                    {e.resolvedTitle && e.resolvedTitle !== e.originalTitle && (
-                      <p className="text-[11px] text-orange-400 mt-0.5 truncate">→ {e.resolvedTitle}</p>
-                    )}
-                    {e.resolvedArtist && e.resolvedArtist !== e.originalArtist && (
-                      <p className="text-[11px] text-orange-400 truncate">→ {e.resolvedArtist}</p>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">
-                    {new Date(e.ts).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Pagination */}
-      {!dbLoading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors disabled:opacity-30"
-          >
-            ← Précédent
-          </button>
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {page} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors disabled:opacity-30"
-          >
-            Suivant →
-          </button>
-        </div>
-      )}
-
-      {/* Count info */}
-      {!dbLoading && filtered.length > 0 && (
-        <p className="text-center text-[10px] text-muted-foreground/50">
-          {filtered.length} entrée{filtered.length > 1 ? "s" : ""} · Page {page}/{totalPages}
-        </p>
-      )}
-    </div>
-  );
-}
 
 export default AdminPage;

@@ -12,7 +12,6 @@ import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { deezerApi } from "@/lib/deezerApi";
-import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { useDominantColor } from "@/hooks/useDominantColor";
 
 /* ── Shared glass styles — uses CSS custom properties for theme ── */
@@ -264,29 +263,11 @@ export function MiniPlayer() {
           usePlayerStore.setState({ currentSong: songToPlay });
         }
       } else {
-        const needsResolution =
-          !songToPlay.streamUrl ||
-          (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
-
-        if (needsResolution) {
-          setResolveStep("Résolution…");
-          try {
-            const resolved = await deezerApi.resolveFullStream(songToPlay, (s) => setResolveStep(s));
-            if (ac.signal.aborted) return;
-            if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
-              songToPlay = resolved;
-              usePlayerStore.setState({ currentSong: resolved });
-            }
-          } catch (e) {
-            console.error("[player] Stream resolution failed:", e);
-          }
-          setResolveStep(null);
-
-          if (!songToPlay.streamUrl || songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")) {
-            console.warn("[player] No playable source for:", songToPlay.title);
-            usePlayerStore.getState().next();
-            return;
-          }
+        // If no stream URL, skip to next
+        if (!songToPlay.streamUrl) {
+          console.warn("[player] No playable source for:", songToPlay.title);
+          usePlayerStore.getState().next();
+          return;
         }
       }
 
@@ -433,21 +414,6 @@ export function MiniPlayer() {
 
         if (cachedUrl) {
           src = cachedUrl;
-        } else if (
-          nextSong.id.startsWith("dz-") &&
-          (!nextSong.streamUrl || nextSong.streamUrl.includes("cdn-preview") || nextSong.streamUrl.includes("dzcdn.net"))
-        ) {
-          try {
-            const resolved = await deezerApi.resolveFullStream(nextSong);
-            if (cancelled) return;
-            if (resolved.streamUrl && !resolved.streamUrl.includes("cdn-preview") && !resolved.streamUrl.includes("dzcdn.net")) {
-              src = resolved.streamUrl;
-              // Update the song in the queue with the resolved URL
-              const currentQueue = usePlayerStore.getState().queue;
-              const updatedQueue = currentQueue.map((s) => s.id === nextSong.id ? resolved : s);
-              usePlayerStore.setState({ queue: updatedQueue });
-            }
-          } catch { /* silent */ }
         } else if (nextSong.streamUrl) {
           src = nextSong.streamUrl;
         }
@@ -1057,8 +1023,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                 const results = await deezerApi.searchTracks(`${artist} ${title}`, 1);
                 if (results.length > 0) {
                   const track = results[0];
-                  // Resolve HD stream via JioSaavn
-                  const hdResults = await jiosaavnApi.search(`${track.title} ${track.artist}`, 1);
                   const song = {
                     id: track.id,
                     title: track.title,
@@ -1066,7 +1030,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     album: track.album || "",
                     duration: track.duration,
                     coverUrl: track.coverUrl,
-                    streamUrl: hdResults.length > 0 ? hdResults[0].streamUrl : "",
+                    streamUrl: track.streamUrl || "",
                     liked: true,
                   };
                   toggleLike(song);

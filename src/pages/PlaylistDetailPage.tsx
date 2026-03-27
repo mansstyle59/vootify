@@ -80,73 +80,9 @@ const PlaylistDetailPage = () => {
 
   useEffect(() => { if (id && !isDeezerPlaylist) loadPlaylistSongs(id); }, [id, isDeezerPlaylist]);
 
-  useEffect(() => {
-    resolveAbortRef.current?.abort();
-    setResolvedSongs(new Map());
-    setResolving(false);
+  // No resolution needed — songs play directly
 
-    if (songs.length === 0) {
-      setResolveProgress(null);
-      return;
-    }
-
-    const needsResolve = songs.filter(
-      (s) =>
-        s.id.startsWith("dz-") &&
-        (!s.streamUrl || s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
-    );
-
-    if (needsResolve.length === 0) {
-      setResolveProgress(null);
-      return;
-    }
-
-    const controller = new AbortController();
-    resolveAbortRef.current = controller;
-    setResolveProgress({ done: 0, total: needsResolve.length });
-    setResolving(true);
-
-    const resolve = async () => {
-      let done = 0;
-
-      for (let i = 0; i < needsResolve.length; i += 4) {
-        if (controller.signal.aborted) return;
-
-        const batch = needsResolve.slice(i, i + 4);
-        const results = await Promise.all(batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s)));
-
-        if (controller.signal.aborted) return;
-
-        done += batch.length;
-        setResolveProgress({ done, total: needsResolve.length });
-
-        setResolvedSongs((prev) => {
-          const next = new Map(prev);
-          results.forEach((r, idx) => {
-            const isHd =
-              !!r.streamUrl &&
-              !r.streamUrl.includes("dzcdn.net") &&
-              !r.streamUrl.includes("cdn-preview");
-
-            if (isHd && r.streamUrl !== batch[idx].streamUrl) {
-              next.set(r.id, r);
-            }
-          });
-          return next;
-        });
-      }
-
-      if (!controller.signal.aborted) {
-        setResolving(false);
-        setTimeout(() => setResolveProgress(null), 800);
-      }
-    };
-
-    resolve();
-    return () => controller.abort();
-  }, [songs, id, resolveKey]);
-
-  const displaySongs = songs.map((s) => resolvedSongs.get(s.id) || s);
+  const displaySongs = songs;
   const totalDuration = displaySongs.reduce((sum, t) => sum + t.duration, 0);
 
   const handlePlayAll = () => { if (displaySongs.length > 0) { setQueue(displaySongs); play(displaySongs[0]); } };

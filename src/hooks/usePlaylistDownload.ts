@@ -82,20 +82,8 @@ export function usePlaylistDownload() {
         const song = queue.shift()!;
 
         try {
-          // 1. Resolve HD stream if needed
+          // Use the song's streamUrl directly
           let resolved = song;
-          const needsResolve =
-            song.id.startsWith("dz-") &&
-            (!song.streamUrl || song.streamUrl.includes("dzcdn.net") || song.streamUrl.includes("cdn-preview"));
-
-          if (needsResolve) {
-            updateSong(song.id, { status: "resolving" });
-            try {
-              resolved = await deezerApi.resolveFullStream(song);
-            } catch {
-              // Use original if resolution fails
-            }
-          }
 
           if (!resolved.streamUrl) {
             updateSong(song.id, { status: "error" });
