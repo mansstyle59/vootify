@@ -5,7 +5,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2, Mail, Calendar, LogIn } from "lucide-react";
+import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn } from "lucide-react";
 
 /**
  * Blocks access to the app if the user has no active subscription.
@@ -40,8 +40,14 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
   const [signingOut, setSigningOut] = useState(false);
   const [alreadyRequested, setAlreadyRequested] = useState(false);
   const [contactEmail, setContactEmail] = useState(user?.email || "");
-  const [duration, setDuration] = useState(30);
-  const [durationUnit, setDurationUnit] = useState<"days" | "months">("days");
+  const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
+
+  const durationOptions = [
+    { label: "7 jours", value: 7, unit: "days" as const },
+    { label: "1 mois", value: 1, unit: "months" as const },
+    { label: "6 mois", value: 6, unit: "months" as const },
+    { label: "1 an", value: 12, unit: "months" as const },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -84,8 +90,8 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
         user_id: user.id,
         user_email: contactEmail.trim(),
         display_name: profile?.display_name || user.email || "",
-        requested_duration: duration,
-        requested_duration_unit: durationUnit,
+        requested_duration: selectedDuration.value,
+        requested_duration_unit: selectedDuration.unit,
       });
       setRequested(true);
     } catch {
@@ -140,29 +146,27 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
 
               {/* Duration */}
               <div className="text-left">
-                <label className="text-xs text-muted-foreground font-medium mb-1 block">
+                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
                   Durée d'abonnement souhaitée
                 </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={duration}
-                      onChange={(e) => setDuration(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <select
-                    value={durationUnit}
-                    onChange={(e) => setDurationUnit(e.target.value as "days" | "months")}
-                    className="bg-muted/50 border border-border rounded-xl px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="days">Jours</option>
-                    <option value="months">Mois</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  {durationOptions.map((opt) => {
+                    const isSelected = selectedDuration.value === opt.value && selectedDuration.unit === opt.unit;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => setSelectedDuration({ value: opt.value, unit: opt.unit })}
+                        className={`py-2.5 rounded-xl text-sm font-medium transition-colors border ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/50 text-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
