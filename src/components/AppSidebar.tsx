@@ -1,6 +1,7 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Home, Search, Library, Radio, PlusCircle, LogOut, Shield } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Badge } from "@/components/ui/badge";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,10 +52,11 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden md:flex flex-col w-[240px] min-h-screen bg-card/80 backdrop-blur-xl border-r border-border/50 p-4">
-      <div className="mb-8 px-2">
+      <div className="mb-8 px-2 flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold gradient-text-primary">
           Vootify
         </h1>
+        <NotificationBell />
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
