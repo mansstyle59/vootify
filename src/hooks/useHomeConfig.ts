@@ -8,8 +8,15 @@ export interface HomeSection {
   order: number;
 }
 
+export interface CustomSection {
+  id: string;
+  title: string;
+  songIds: string[]; // custom_songs UUIDs
+}
+
 export interface HomeConfig {
   sections: HomeSection[];
+  customSections: CustomSection[];
   heroTitle?: string;
   heroSubtitle?: string;
   heroBgColor?: string;
@@ -35,16 +42,16 @@ export function useHomeConfig() {
 
       if (error) throw error;
       if (!data || !data.sections) {
-        return { sections: DEFAULT_SECTIONS };
+        return { sections: DEFAULT_SECTIONS, customSections: [] };
       }
 
       const raw = data.sections as any;
-      // Support both { sections: [...], heroTitle, heroSubtitle } and plain array
       if (Array.isArray(raw)) {
-        return { sections: mergeSections(raw) };
+        return { sections: mergeSections(raw), customSections: [] };
       }
       return {
         sections: mergeSections(raw.sections || []),
+        customSections: raw.customSections || [],
         heroTitle: raw.heroTitle,
         heroSubtitle: raw.heroSubtitle,
         heroBgColor: raw.heroBgColor,
@@ -60,11 +67,9 @@ function mergeSections(saved: HomeSection[]): HomeSection[] {
   const map = new Map(saved.map((s) => [s.id, s]));
   const merged: HomeSection[] = [];
 
-  // Add saved sections in their order
   for (const s of saved) {
-    if (DEFAULT_SECTIONS.some((d) => d.id === s.id)) {
-      merged.push(s);
-    }
+    // Keep both default and custom_ sections
+    merged.push(s);
   }
 
   // Add any missing default sections
@@ -84,13 +89,13 @@ export function useSaveHomeConfig() {
     mutationFn: async ({ config, userId }: { config: HomeConfig; userId: string }) => {
       const payload = {
         sections: config.sections,
+        customSections: config.customSections,
         heroTitle: config.heroTitle,
         heroSubtitle: config.heroSubtitle,
         heroBgColor: config.heroBgColor,
         heroBgImage: config.heroBgImage,
       };
 
-      // Check if a row exists
       const { data: existing } = await supabase
         .from("home_config")
         .select("id")

@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save } from "lucide-react";
-import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig } from "@/hooks/useHomeConfig";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search } from "lucide-react";
+import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, type CustomSection } from "@/hooks/useHomeConfig";
 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -561,15 +561,18 @@ function HomeTab() {
   const saveMutation = useSaveHomeConfig();
   const { user } = useAdminAuth();
   const [sections, setSections] = useState<HomeSection[]>([]);
+  const [customSections, setCustomSections] = useState<CustomSection[]>([]);
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroBgColor, setHeroBgColor] = useState("");
   const [heroBgImage, setHeroBgImage] = useState("");
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [editingCustom, setEditingCustom] = useState<string | null>(null);
+  const [songPickerOpen, setSongPickerOpen] = useState(false);
 
   useEffect(() => {
     if (config) {
       setSections([...config.sections].sort((a, b) => a.order - b.order));
+      setCustomSections(config.customSections || []);
       setHeroTitle(config.heroTitle || "");
       setHeroSubtitle(config.heroSubtitle || "");
       setHeroBgColor(config.heroBgColor || "");
@@ -597,12 +600,45 @@ function HomeTab() {
     setSections(updated.map((s, i) => ({ ...s, order: i })));
   };
 
+  const addCustomSection = () => {
+    const id = `custom_${Date.now()}`;
+    const newCustom: CustomSection = { id, title: "Nouvelle section", songIds: [] };
+    setCustomSections((prev) => [...prev, newCustom]);
+    // Add to sections list
+    setSections((prev) => [
+      ...prev,
+      { id, title: "Nouvelle section ⭐", visible: true, order: prev.length },
+    ]);
+    setEditingCustom(id);
+    setSongPickerOpen(true);
+  };
+
+  const removeCustomSection = (id: string) => {
+    setCustomSections((prev) => prev.filter((c) => c.id !== id));
+    setSections((prev) => prev.filter((s) => s.id !== id));
+    if (editingCustom === id) setEditingCustom(null);
+  };
+
+  const updateCustomTitle = (id: string, title: string) => {
+    setCustomSections((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title } : c))
+    );
+    updateTitle(id, title);
+  };
+
+  const updateCustomSongs = (id: string, songIds: string[]) => {
+    setCustomSections((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, songIds } : c))
+    );
+  };
+
   const handleSave = () => {
     if (!user) return;
     saveMutation.mutate(
       {
         config: {
           sections: sections.map((s, i) => ({ ...s, order: i })),
+          customSections,
           heroTitle: heroTitle || undefined,
           heroSubtitle: heroSubtitle || undefined,
           heroBgColor: heroBgColor || undefined,
@@ -668,7 +704,7 @@ function HomeTab() {
             {heroBgImage && (
               <div className="mt-2 relative rounded-lg overflow-hidden h-20">
                 <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" />
-                <button onClick={() => setHeroBgImage("")} className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white hover:bg-black/70"><X className="w-3 h-3" /></button>
+                <button onClick={() => setHeroBgImage("")} className="absolute top-1 right-1 p-1 rounded-full bg-background/50 text-foreground hover:bg-background/70"><X className="w-3 h-3" /></button>
               </div>
             )}
           </div>
@@ -682,57 +718,100 @@ function HomeTab() {
           Sections (ordre & visibilité)
         </h3>
         <div className="space-y-1.5">
-          {sections.map((section, idx) => (
-            <motion.div
-              key={section.id}
-              layout
-              className={`flex items-center gap-2 p-2.5 rounded-lg border transition-colors ${
-                section.visible
-                  ? "bg-background/60 border-border"
-                  : "bg-muted/30 border-border/50 opacity-60"
-              }`}
-            >
-              {/* Drag handle / reorder buttons */}
-              <div className="flex flex-col gap-0.5">
-                <button
-                  onClick={() => moveSection(idx, idx - 1)}
-                  disabled={idx === 0}
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-opacity text-xs leading-none"
-                >
-                  ▲
-                </button>
-                <button
-                  onClick={() => moveSection(idx, idx + 1)}
-                  disabled={idx === sections.length - 1}
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-opacity text-xs leading-none"
-                >
-                  ▼
-                </button>
-              </div>
-
-              {/* Editable title */}
-              <input
-                value={section.title}
-                onChange={(e) => updateTitle(section.id, e.target.value)}
-                className="flex-1 text-sm font-medium bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 min-w-0"
-              />
-
-              {/* Toggle visibility */}
-              <button
-                onClick={() => toggleVisibility(section.id)}
-                className={`p-1.5 rounded-lg transition-colors ${
+          {sections.map((section, idx) => {
+            const isCustom = section.id.startsWith("custom_");
+            return (
+              <motion.div
+                key={section.id}
+                layout
+                className={`flex items-center gap-2 p-2.5 rounded-lg border transition-colors ${
                   section.visible
-                    ? "text-primary hover:bg-primary/10"
-                    : "text-muted-foreground hover:bg-muted"
+                    ? "bg-background/60 border-border"
+                    : "bg-muted/30 border-border/50 opacity-60"
                 }`}
-                title={section.visible ? "Masquer" : "Afficher"}
               >
-                {section.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              </button>
-            </motion.div>
-          ))}
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={() => moveSection(idx, idx - 1)}
+                    disabled={idx === 0}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-opacity text-xs leading-none"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => moveSection(idx, idx + 1)}
+                    disabled={idx === sections.length - 1}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-opacity text-xs leading-none"
+                  >
+                    ▼
+                  </button>
+                </div>
+
+                <input
+                  value={section.title}
+                  onChange={(e) => {
+                    updateTitle(section.id, e.target.value);
+                    if (isCustom) updateCustomTitle(section.id, e.target.value);
+                  }}
+                  className="flex-1 text-sm font-medium bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 min-w-0"
+                />
+
+                {isCustom && (
+                  <>
+                    <button
+                      onClick={() => { setEditingCustom(section.id); setSongPickerOpen(true); }}
+                      className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                      title="Gérer les morceaux"
+                    >
+                      <Music className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {customSections.find((c) => c.id === section.id)?.songIds.length || 0}
+                    </span>
+                    <button
+                      onClick={() => removeCustomSection(section.id)}
+                      className="p-1.5 rounded-lg text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Supprimer la section"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={() => toggleVisibility(section.id)}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    section.visible
+                      ? "text-primary hover:bg-primary/10"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  title={section.visible ? "Masquer" : "Afficher"}
+                >
+                  {section.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+              </motion.div>
+            );
+          })}
         </div>
+
+        <button
+          onClick={addCustomSection}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors w-full justify-center"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Ajouter une section personnalisée
+        </button>
       </div>
+
+      {/* Song picker modal */}
+      {songPickerOpen && editingCustom && (
+        <SongPickerModal
+          sectionId={editingCustom}
+          selectedIds={customSections.find((c) => c.id === editingCustom)?.songIds || []}
+          onUpdate={(ids) => updateCustomSongs(editingCustom, ids)}
+          onClose={() => { setSongPickerOpen(false); setEditingCustom(null); }}
+        />
+      )}
 
       {/* Save button */}
       <motion.button
@@ -748,6 +827,156 @@ function HomeTab() {
         )}
         Sauvegarder
       </motion.button>
+    </div>
+  );
+}
+
+/** Modal to pick songs for a custom section */
+function SongPickerModal({
+  sectionId,
+  selectedIds,
+  onUpdate,
+  onClose,
+}: {
+  sectionId: string;
+  selectedIds: string[];
+  onUpdate: (ids: string[]) => void;
+  onClose: () => void;
+}) {
+  const [allSongs, setAllSongs] = useState<{ id: string; title: string; artist: string; cover_url: string | null }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+
+  useEffect(() => {
+    supabase
+      .from("custom_songs")
+      .select("id, title, artist, cover_url")
+      .not("stream_url", "is", null)
+      .order("title")
+      .then(({ data }) => {
+        setAllSongs(data || []);
+        setLoading(false);
+      });
+  }, []);
+
+  const filtered = search.trim()
+    ? allSongs.filter(
+        (s) =>
+          s.title.toLowerCase().includes(search.toLowerCase()) ||
+          s.artist.toLowerCase().includes(search.toLowerCase())
+      )
+    : allSongs;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDone = () => {
+    onUpdate(Array.from(selected));
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative w-full max-w-lg max-h-[80vh] rounded-2xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Choisir les morceaux</h3>
+            <p className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="p-3 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un morceau..."
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {/* Song list */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">Aucun morceau trouvé</p>
+          ) : (
+            filtered.map((song) => {
+              const isSelected = selected.has(song.id);
+              return (
+                <button
+                  key={song.id}
+                  onClick={() => toggle(song.id)}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors ${
+                    isSelected
+                      ? "bg-primary/10 border border-primary/20"
+                      : "hover:bg-secondary/60 border border-transparent"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                    isSelected ? "bg-primary border-primary" : "border-border"
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  {song.cover_url ? (
+                    <img src={song.cover_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                      <Music className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{song.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-3 border-t border-border flex items-center justify-between gap-3">
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Tout désélectionner
+          </button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleDone}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            Valider ({selected.size})
+          </motion.button>
+        </div>
+      </motion.div>
     </div>
   );
 }
