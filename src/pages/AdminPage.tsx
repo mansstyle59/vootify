@@ -1466,13 +1466,24 @@ function HomeTab() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Image de fond (URL, optionnel)</label>
-            <input
-              value={heroBgImage}
-              onChange={(e) => setHeroBgImage(e.target.value)}
-              placeholder="https://exemple.com/image.jpg"
-              className="w-full text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <label className="text-xs text-muted-foreground mb-1 block">Image de fond (optionnel)</label>
+            <div className="flex gap-2">
+              <input
+                value={heroBgImage}
+                onChange={(e) => setHeroBgImage(e.target.value)}
+                placeholder="https://exemple.com/image.jpg"
+                className="flex-1 text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <input ref={bgImageFileRef} type="file" accept="image/*" onChange={handleBgImageUpload} className="hidden" />
+              <button
+                onClick={() => bgImageFileRef.current?.click()}
+                disabled={uploadingBgImage}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex-shrink-0"
+              >
+                {uploadingBgImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                Importer
+              </button>
+            </div>
             {heroBgImage && (
               <div className="mt-2 relative rounded-lg overflow-hidden h-20">
                 <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" />
