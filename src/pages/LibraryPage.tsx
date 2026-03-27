@@ -925,22 +925,24 @@ const LibraryPage = () => {
                       whileTap={{ scale: 0.97 }}
                       disabled={enriching}
                       onClick={async () => {
-                        const missing = customSongs.filter((s: any) => !s.coverUrl || !s.album);
-                        if (missing.length === 0) { toast.info("Tous les morceaux ont déjà leurs métadonnées"); return; }
+                        const toEnrich = customSongs;
+                        if (toEnrich.length === 0) { toast.info("Aucun morceau à enrichir"); return; }
                         setEnriching(true);
-                        setEnrichProgress({ done: 0, total: missing.length });
+                        setEnrichProgress({ done: 0, total: toEnrich.length });
                         try {
                           const results = await batchSearchCovers(
-                            missing.map((s) => ({ artist: s.artist, album: s.album, title: s.title, coverUrl: s.coverUrl, year: (s as any).year })),
+                            toEnrich.map((s) => ({ artist: s.artist, album: s.album, title: s.title, coverUrl: "", year: (s as any).year })),
                             (done, total) => setEnrichProgress({ done, total })
                           );
                           let updated = 0;
                           for (const [idx, meta] of results.entries()) {
-                            const song = missing[idx] as any;
+                            const song = toEnrich[idx] as any;
                             const dbId = song._dbId || song.id.replace("custom-", "");
                             const updates: Record<string, any> = {};
-                            if (meta.coverUrl && !song.coverUrl) updates.cover_url = meta.coverUrl;
-                            if (meta.album && !song.album) updates.album = meta.album;
+                            if (meta.coverUrl) updates.cover_url = meta.coverUrl;
+                            if (meta.album) updates.album = meta.album;
+                            if (meta.artist) updates.artist = meta.artist;
+                            if (meta.title) updates.title = meta.title;
                             if (meta.genre) updates.genre = meta.genre;
                             if (meta.year) updates.year = meta.year;
                             if (Object.keys(updates).length > 0) {
