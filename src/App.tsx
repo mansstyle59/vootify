@@ -74,6 +74,7 @@ function AnimatedRoutes() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/request-access" element={<RequestAccessPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </motion.div>
