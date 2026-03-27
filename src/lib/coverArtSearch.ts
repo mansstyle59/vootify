@@ -1,9 +1,10 @@
 /**
- * Automatic metadata & cover art search using Deezer API (free, no key required).
+ * Automatic metadata & cover art search using Deezer API via edge function proxy.
  * Falls back to MusicBrainz + Cover Art Archive.
  */
 
-const DEEZER_API = "https://api.deezer.com";
+import { supabase } from "@/integrations/supabase/client";
+
 const MB_BASE = "https://musicbrainz.org/ws/2";
 const CAA_BASE = "https://coverartarchive.org";
 const USER_AGENT = "Vootify/1.0 (music-app)";
@@ -23,26 +24,28 @@ export interface DeezerMeta {
   source: "deezer" | "musicbrainz";
 }
 
+/** Call Deezer API through our edge function proxy to avoid CORS */
+async function deezerFetch(path: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+    body: { path },
+  });
+  if (error) throw error;
+  return data;
+}
+
 /**
  * Search Deezer for track metadata including cover, album, genre, year.
  */
 async function searchDeezer(artist: string, title: string, album?: string): Promise<DeezerMeta | null> {
   try {
-    // Build query: prefer artist + title, add album if available
     let query = `artist:"${artist}" track:"${title}"`;
     if (album) query = `artist:"${artist}" album:"${album}" track:"${title}"`;
 
-    const res = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(query)}&limit=3`);
-    if (!res.ok) return null;
+    let data = await deezerFetch(`/search?q=${encodeURIComponent(query)}&limit=3`);
 
-    const data = await res.json();
     if (!data.data || data.data.length === 0) {
-      // Retry with simpler query
-      const simpleRes = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(`${artist} ${title}`)}&limit=3`);
-      if (!simpleRes.ok) return null;
-      const simpleData = await simpleRes.json();
-      if (!simpleData.data || simpleData.data.length === 0) return null;
-      data.data = simpleData.data;
+      data = await deezerFetch(`/search?q=${encodeURIComponent(`${artist} ${title}`)}&limit=3`);
+      if (!data.data || data.data.length === 0) return null;
     }
 
     const track = data.data[0];
@@ -57,18 +60,13 @@ async function searchDeezer(artist: string, title: string, album?: string): Prom
 
     if (albumId) {
       try {
-        const albumRes = await fetch(`${DEEZER_API}/album/${albumId}`);
-        if (albumRes.ok) {
-          const albumData = await albumRes.json();
-          // Extract release year
-          if (albumData.release_date) {
-            const y = parseInt(albumData.release_date.split("-")[0], 10);
-            if (y > 1900 && y <= new Date().getFullYear() + 1) year = y;
-          }
-          // Extract genre
-          if (albumData.genres?.data?.length > 0) {
-            genre = albumData.genres.data[0].name;
-          }
+        const albumData = await deezerFetch(`/album/${albumId}`);
+        if (albumData.release_date) {
+          const y = parseInt(albumData.release_date.split("-")[0], 10);
+          if (y > 1900 && y <= new Date().getFullYear() + 1) year = y;
+        }
+        if (albumData.genres?.data?.length > 0) {
+          genre = albumData.genres.data[0].name;
         }
       } catch {
         // Album detail fetch failed, continue with what we have
@@ -94,7 +92,6 @@ async function searchDeezer(artist: string, title: string, album?: string): Prom
  * Search MusicBrainz + Cover Art Archive as fallback.
  */
 async function searchMusicBrainz(artist: string, title: string, album?: string, year?: number): Promise<DeezerMeta | null> {
-  // Try album search
   if (album) {
     try {
       let query = `release:${encodeLucene(album)} AND artist:${encodeLucene(artist)}`;
@@ -112,7 +109,6 @@ async function searchMusicBrainz(artist: string, title: string, album?: string, 
     } catch { /* silent */ }
   }
 
-  // Try recording search
   try {
     const query = `recording:${encodeLucene(title)} AND artist:${encodeLucene(artist)}`;
     const url = `${MB_BASE}/recording/?query=${encodeURIComponent(query)}&fmt=json&limit=3`;
@@ -161,13 +157,11 @@ export async function searchCoverArt(params: {
   const { artist, title, album, year } = params;
   if (!artist) return null;
 
-  // Try Deezer first (fast, rich metadata)
   if (title) {
     const deezer = await searchDeezer(artist, title, album);
     if (deezer) return deezer;
   }
 
-  // Fallback to MusicBrainz (cover only)
   if (title || album) {
     const mb = await searchMusicBrainz(artist, title || "", album, year);
     if (mb) return mb;
@@ -178,8 +172,6 @@ export async function searchCoverArt(params: {
 
 /**
  * Batch search covers + metadata for multiple songs.
- * Groups by album to avoid redundant searches.
- * Returns a map of index → DeezerMeta.
  */
 export async function batchSearchCovers(
   songs: Array<{
@@ -206,7 +198,6 @@ export async function batchSearchCovers(
       ? `${song.artist.toLowerCase()}|||${song.album.toLowerCase()}`
       : "";
 
-    // Check album cache
     if (albumKey && albumCache.has(albumKey)) {
       const cached = albumCache.get(albumKey);
       if (cached) results.set(song.index, cached);
@@ -215,7 +206,6 @@ export async function batchSearchCovers(
       continue;
     }
 
-    // Small delay to be respectful
     await delay(300);
 
     const result = await searchCoverArt({
