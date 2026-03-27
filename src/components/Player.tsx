@@ -50,6 +50,7 @@ export function MiniPlayer() {
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
 
@@ -135,6 +136,8 @@ export function MiniPlayer() {
 
     if (!isNewTrack) return; // Same track — handled by play/pause effect above
     lastSongIdRef.current = currentSong.id;
+    usePlayerStore.setState({ nextPreloaded: false });
+    preloadedSongIdRef.current = null;
 
     // Abort any in-flight load for a previous track
     loadAbortRef.current?.abort();
@@ -304,6 +307,7 @@ export function MiniPlayer() {
         preloadRef.current.load();
         preloadedSongIdRef.current = nextSong.id;
         console.log("[preload] Buffering next:", nextSong.title);
+        usePlayerStore.setState({ nextPreloaded: true });
       }
     };
 
@@ -661,9 +665,12 @@ export function MiniPlayer() {
               </button>
               <button
                 onClick={next}
-                className="p-2 text-foreground active:scale-90 transition-transform"
+                className="relative p-2 text-foreground active:scale-90 transition-transform"
               >
                 <SkipForward className="w-5 h-5 fill-current" />
+                {nextPreloaded && (
+                  <span className="absolute top-1.5 right-1.5 w-[6px] h-[6px] rounded-full bg-primary animate-pulse" />
+                )}
               </button>
               <button
                 onClick={closePlayer}
@@ -876,6 +883,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const [showQueue, setShowQueue] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
+  const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -1314,8 +1322,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   )}
                 </AnimatePresence>
               </motion.button>
-              <motion.button whileTap={{ scale: 0.8 }} onClick={next} className="transition-all">
+              <motion.button whileTap={{ scale: 0.8 }} onClick={next} className="relative transition-all">
                 <SkipForward className="w-9 h-9 text-foreground fill-current" />
+                {nextPreloaded && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                )}
               </motion.button>
               <motion.button whileTap={{ scale: 0.85 }} onClick={cycleRepeat} className="transition-all">
                 {repeat === "one" ? (

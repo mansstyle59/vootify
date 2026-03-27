@@ -22,6 +22,7 @@ interface PlayerState {
   crossfadeDuration: number; // in seconds
   _seekTime: number | null;
   resolveStep: string | null;
+  nextPreloaded: boolean;
   
 
   setUserId: (id: string | null) => void;
@@ -68,6 +69,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "12"),
   _seekTime: null,
   resolveStep: null,
+  nextPreloaded: false,
 
   setUserId: (id) => set({ userId: id }),
   setCrossfadeEnabled: (enabled) => { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); set({ crossfadeEnabled: enabled }); },
