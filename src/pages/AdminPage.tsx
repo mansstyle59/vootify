@@ -1344,7 +1344,7 @@ function RequestsTab() {
 
   useEffect(() => { loadRequests(); }, []);
 
-  const handleAction = async (id: string, status: "approved" | "rejected", userId?: string) => {
+  const handleAction = async (id: string, status: "approved" | "rejected", request?: any) => {
     setActionLoading(id);
     try {
       await supabase
@@ -1352,27 +1352,31 @@ function RequestsTab() {
         .update({ status, resolved_at: new Date().toISOString() })
         .eq("id", id);
 
-      if (status === "approved" && userId) {
-        // Create or activate subscription for the user
+      if (status === "approved" && request) {
         const now = new Date();
         const expiresAt = new Date(now);
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        
-        // Check if subscription exists
+        const dur = request.requested_duration || 30;
+        const unit = request.requested_duration_unit || "days";
+        if (unit === "months") {
+          expiresAt.setMonth(expiresAt.getMonth() + dur);
+        } else {
+          expiresAt.setDate(expiresAt.getDate() + dur);
+        }
+
         const { data: existingSub } = await supabase
           .from("subscriptions")
           .select("id")
-          .eq("user_id", userId)
+          .eq("user_id", request.user_id)
           .maybeSingle();
 
         if (existingSub) {
           await supabase
             .from("subscriptions")
             .update({ status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
-            .eq("user_id", userId);
+            .eq("user_id", request.user_id);
         } else {
           await supabase.from("subscriptions").insert({
-            user_id: userId,
+            user_id: request.user_id,
             plan: "standard",
             status: "active",
             starts_at: now.toISOString(),
