@@ -8,8 +8,9 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2 } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
@@ -25,6 +26,7 @@ const AlbumDetailPage = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const { isAdmin } = useAdminAuth();
 
   const { scrollY } = useScroll();
   const bgY = useTransform(scrollY, [0, 400], [0, 120]);
@@ -204,7 +206,29 @@ const AlbumDetailPage = () => {
                       <Share2 className="w-4 h-4 text-muted-foreground" />
                       Partager
                     </button>
-                  </div>
+                      {isAdmin && (
+                        <>
+                          <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                          <button
+                            onClick={async () => {
+                              setMenuOpen(false);
+                              if (!id) return;
+                              const confirmed = window.confirm("Supprimer cet album et tous ses morceaux ?");
+                              if (!confirmed) return;
+                              await supabase.from("custom_songs").delete().eq("album", album.title).eq("artist", album.artist);
+                              const { error } = await supabase.from("custom_albums").delete().eq("id", id);
+                              if (error) { toast.error("Erreur suppression"); return; }
+                              toast.success("Album supprimé");
+                              navigate("/library");
+                            }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Supprimer l'album
+                          </button>
+                        </>
+                      )}
+                    </div>
                 </motion.div>
               </>
             )}
