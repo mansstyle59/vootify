@@ -564,9 +564,12 @@ export function MiniPlayer() {
           onEnded={handleEnded}
           onError={handleAudioError}
           preload="auto"
+          playsInline
+          // @ts-ignore — webkit attribute for iOS background playback
+          webkit-playsinline=""
         />
-        <audio ref={crossfadeRef} preload="auto" />
-        <audio ref={preloadRef} preload="auto" style={{ display: "none" }} />
+        <audio ref={crossfadeRef} preload="metadata" playsInline />
+        <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
