@@ -44,6 +44,8 @@ export function MiniPlayer() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const crossfadeRef = useRef<HTMLAudioElement | null>(null);
+  const preloadRef = useRef<HTMLAudioElement | null>(null);
+  const preloadedSongIdRef = useRef<string | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
