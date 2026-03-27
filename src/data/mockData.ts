@@ -7,6 +7,8 @@ export interface Song {
   coverUrl: string;
   streamUrl: string;
   liked: boolean;
+  year?: number;
+  genre?: string;
 }
 
 export interface Album {

@@ -32,6 +32,8 @@ function rowToSong(row: any): Song {
     coverUrl: row.cover_url || "",
     streamUrl: row.stream_url || "",
     liked: true,
+    year: row.year || undefined,
+    genre: row.genre || undefined,
   };
 }
 

@@ -13,6 +13,8 @@ function customRowToSong(row: any): Song {
     coverUrl: row.cover_url || "",
     streamUrl: row.stream_url || "",
     liked: false,
+    year: row.year || undefined,
+    genre: row.genre || undefined,
   };
 }
 
