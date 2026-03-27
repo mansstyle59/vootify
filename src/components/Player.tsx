@@ -1107,7 +1107,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   if (!currentSong) return null;
 
   const liked = isLiked(currentSong.id);
-  const progressPct = currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
+  const effectiveDuration = audioDuration > 0 ? audioDuration : currentSong.duration;
+  const progressPct = effectiveDuration > 0 ? (progress / effectiveDuration) * 100 : 0;
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
 
@@ -1116,7 +1117,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     if (!bar) return;
     const rect = bar.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const time = Math.floor(pct * currentSong.duration);
+    const time = Math.floor(pct * effectiveDuration);
     storeSeekTo(time);
   };
 
