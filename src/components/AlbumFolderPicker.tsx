@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
 import { FolderUp, FileArchive, Loader2, X, FileAudio, Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { extractID3 } from "@/lib/id3Utils";
-
+import { extractID3, crossReferenceBatch } from "@/lib/id3Utils";
+import { normalizeTitle, normalizeArtist } from "@/lib/metadataEnrich";
 
 export interface UploadedTrack {
   fileName: string;
@@ -89,22 +89,28 @@ async function uploadAndProcessFiles(
   setProgress: (p: { done: number; total: number }) => void,
 ): Promise<UploadedTrack[]> {
   audioFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-  const uploaded: UploadedTrack[] = [];
 
+  // Phase 1: Extract all ID3 metadata in batch
+  const allMeta = [];
+  for (let i = 0; i < audioFiles.length; i++) {
+    setProgress({ done: i, total: audioFiles.length * 2 });
+    const file = audioFiles[i];
+    const id3 = await extractID3(file, file.name);
+    allMeta.push(id3);
+  }
+
+  // Phase 2: Cross-reference batch to fill gaps (shared album, artist, cover)
+  const enriched = crossReferenceBatch(allMeta);
+
+  // Phase 3: Upload files
+  const uploaded: UploadedTrack[] = [];
   for (let i = 0; i < audioFiles.length; i++) {
     const file = audioFiles[i];
-    setProgress({ done: i, total: audioFiles.length });
+    const meta = enriched[i];
+    setProgress({ done: audioFiles.length + i, total: audioFiles.length * 2 });
 
     try {
-      // Extract ID3 metadata
-      const id3 = await extractID3(file, file.name);
-      const duration = id3.duration || await detectDuration(file);
-
-      let title = id3.title;
-      let artist = id3.artist;
-      let coverUrl = id3.coverUrl;
-
-      // Use ID3 metadata only - no external lookups
+      const duration = meta.duration || await detectDuration(file);
 
       const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -122,16 +128,16 @@ async function uploadAndProcessFiles(
         fileName: file.name,
         streamUrl: urlData.publicUrl,
         duration,
-        title: title || cleanTitle(file.name),
-        artist: artist || albumArtist,
-        coverUrl,
+        title: normalizeTitle(meta.title || cleanTitle(file.name)),
+        artist: normalizeArtist(meta.artist || meta.albumArtist || albumArtist || "Inconnu"),
+        coverUrl: meta.coverUrl,
       });
     } catch (err) {
       console.error(`Error processing ${file.name}:`, err);
     }
   }
 
-  setProgress({ done: audioFiles.length, total: audioFiles.length });
+  setProgress({ done: audioFiles.length * 2, total: audioFiles.length * 2 });
   return uploaded;
 }
 

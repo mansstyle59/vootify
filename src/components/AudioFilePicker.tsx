@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileAudio, Loader2, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { extractID3 } from "@/lib/id3Utils";
+import { normalizeTitle, normalizeArtist, cleanSongTitle } from "@/lib/metadataEnrich";
 
 
 export interface AudioFileMetadata {
@@ -66,8 +67,13 @@ const AudioFilePicker = ({ value, onChange, onDurationDetected, onMetadataExtrac
       }
     }
 
-    // Use ID3 metadata directly
-    let finalMeta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
+    // Normalize extracted metadata
+    let finalMeta = {
+      title: id3.title ? cleanSongTitle(id3.title) : undefined,
+      artist: id3.artist ? normalizeArtist(id3.artist) : undefined,
+      album: id3.album || undefined,
+      coverUrl: id3.coverUrl,
+    };
 
     if (onMetadataExtracted) {
       onMetadataExtracted(finalMeta);
