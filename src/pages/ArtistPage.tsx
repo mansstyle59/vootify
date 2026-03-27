@@ -249,46 +249,47 @@ const ArtistPage = () => {
           <Shuffle className="w-4 h-4" /> Aléatoire
         </button>
         {isAdmin && (
-          <button
-            onClick={async () => {
-              if (enriching || songs.length === 0) return;
-              setEnriching(true);
-              let updated = 0;
-              for (const song of songs) {
-                try {
-                  const rawId = song.id.replace(/^custom-/, "");
-                  const meta = await searchCoverArt({ artist: song.artist, title: song.title, album: song.album });
-                  if (!meta) continue;
-                  const updates: Record<string, any> = {};
-                  if (meta.coverUrl) updates.cover_url = meta.coverUrl;
-                  if (meta.album) updates.album = meta.album;
-                  if (meta.genre) updates.genre = meta.genre;
-                  if (meta.year) updates.year = meta.year;
-                  if (Object.keys(updates).length > 0) {
-                    await supabase.from("custom_songs").update(updates).eq("id", rawId);
-                    updated++;
-                  }
-                } catch { /* skip */ }
-                await new Promise((r) => setTimeout(r, 350));
-              }
-              // Refresh artist image
-              queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
-              queryClient.invalidateQueries({ queryKey: ["artist-songs", artistName] });
-              setEnriching(false);
-              toast.success(`${updated} titre${updated > 1 ? "s" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
-            }}
-            disabled={enriching}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors disabled:opacity-50"
-          >
-            {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {enriching ? "Enrichissement…" : "Enrichir Deezer"}
-          </button>
-          <button
-            onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
-          >
-            <ImagePlus className="w-4 h-4" /> Photo
-          </button>
+          <>
+            <button
+              onClick={async () => {
+                if (enriching || songs.length === 0) return;
+                setEnriching(true);
+                let updated = 0;
+                for (const song of songs) {
+                  try {
+                    const rawId = song.id.replace(/^custom-/, "");
+                    const meta = await searchCoverArt({ artist: song.artist, title: song.title, album: song.album });
+                    if (!meta) continue;
+                    const updates: Record<string, any> = {};
+                    if (meta.coverUrl) updates.cover_url = meta.coverUrl;
+                    if (meta.album) updates.album = meta.album;
+                    if (meta.genre) updates.genre = meta.genre;
+                    if (meta.year) updates.year = meta.year;
+                    if (Object.keys(updates).length > 0) {
+                      await supabase.from("custom_songs").update(updates).eq("id", rawId);
+                      updated++;
+                    }
+                  } catch { /* skip */ }
+                  await new Promise((r) => setTimeout(r, 350));
+                }
+                queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
+                queryClient.invalidateQueries({ queryKey: ["artist-songs", artistName] });
+                setEnriching(false);
+                toast.success(`${updated} titre${updated > 1 ? "s" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
+              }}
+              disabled={enriching}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors disabled:opacity-50"
+            >
+              {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {enriching ? "Enrichissement…" : "Enrichir Deezer"}
+            </button>
+            <button
+              onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
+            >
+              <ImagePlus className="w-4 h-4" /> Photo
+            </button>
+          </>
         )}
       </div>
 
