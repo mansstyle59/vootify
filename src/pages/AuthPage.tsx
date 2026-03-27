@@ -66,6 +66,8 @@ const AuthPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Identifiant"
               required
+              autoComplete="username"
+              inputMode="text"
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             />
           </div>
