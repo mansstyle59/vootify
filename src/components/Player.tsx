@@ -35,7 +35,7 @@ const glassButtonStyle = {
    ───────────────────────────────────────────── */
 export function MiniPlayer() {
   const {
-    currentSong, isPlaying, progress, volume, shuffle, repeat,
+    currentSong, isPlaying, progress, volume, shuffle, repeat, fullScreen,
     togglePlay, next, previous, setProgress, setVolume,
     toggleShuffle, cycleRepeat, toggleFullScreen, toggleLike, isLiked, closePlayer,
     _seekTime, crossfadeEnabled, crossfadeDuration
@@ -788,11 +788,11 @@ export function MiniPlayer() {
       <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
         className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
+        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
       >
         <div
           className="rounded-2xl overflow-hidden"
@@ -904,7 +904,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       initial={{ opacity: 0, y: "100%" }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
-      transition={{ type: "spring", damping: 30, stiffness: 220 }}
+      transition={{ type: "spring", damping: 28, stiffness: 200, mass: 0.8 }}
       drag="y"
       dragDirectionLock
       dragConstraints={{ top: 0, bottom: 0 }}
@@ -1094,7 +1094,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       initial={{ opacity: 0, y: "100%" }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
-      transition={{ type: "spring", damping: 30, stiffness: 220 }}
+      transition={{ type: "spring", damping: 28, stiffness: 200, mass: 0.8 }}
       drag="y"
       dragDirectionLock
       dragConstraints={{ top: 0, bottom: 0 }}
