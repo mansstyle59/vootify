@@ -224,6 +224,25 @@ const SearchPage = () => {
     setAddToPlaylistRelease(null);
   };
 
+  // Check which Friday releases have tracks available in local library
+  const availableReleases = useMemo(() => {
+    if (!allSongs || !newReleases.length) return new Set<number>();
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const available = new Set<number>();
+    for (const release of newReleases) {
+      const rArtist = normalize(release.artist);
+      const rTitle = normalize(release.title);
+      const hasMatch = allSongs.some((s) => {
+        const sArtist = normalize(s.artist);
+        const sAlbum = normalize(s.album || "");
+        return (sArtist.includes(rArtist) || rArtist.includes(sArtist)) &&
+               (sAlbum.includes(rTitle) || rTitle.includes(sAlbum));
+      });
+      if (hasMatch) available.add(release.albumId);
+    }
+    return available;
+  }, [allSongs, newReleases]);
+
   const recentIds = useMemo(
     () => new Set(recentlyPlayed.map((s) => s.id)),
     [recentlyPlayed]
