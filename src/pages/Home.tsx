@@ -224,6 +224,50 @@ const HomePage = () => {
             </div>
           );
         }
+
+        // Artists section
+        if (section.id === "artists") {
+          if (!loadingArtists && (!artists || artists.length === 0)) return null;
+          return (
+            <Section key={section.id} title={section.title}>
+              <HorizontalScroll>
+                {loadingArtists ? (
+                  <CoverSkeleton count={6} />
+                ) : (
+                  artists?.map((artist, i) => (
+                    <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                  ))
+                )}
+              </HorizontalScroll>
+            </Section>
+          );
+        }
+
+        // Albums section
+        if (section.id === "albums") {
+          if (!loadingAlbums && (!albums || albums.length === 0)) return null;
+          return (
+            <Section key={section.id} title={section.title}>
+              <HorizontalScroll>
+                {loadingAlbums ? (
+                  <CoverSkeleton count={6} />
+                ) : (
+                  albums?.map((album, i) => (
+                    <CoverCard
+                      key={album.id}
+                      title={album.title}
+                      subtitle={album.artist}
+                      imageUrl={album.cover_url || ""}
+                      index={i}
+                      onClick={() => navigate(`/album/${album.id}`)}
+                    />
+                  ))
+                )}
+              </HorizontalScroll>
+            </Section>
+          );
+        }
+
         const data = builtinDataMap[section.id];
         if (!data) return null;
         return (
@@ -232,43 +276,6 @@ const HomePage = () => {
           </div>
         );
       })}
-
-      {/* Artists section */}
-      {(loadingArtists || (artists && artists.length > 0)) && (
-        <Section title="Artistes">
-          <HorizontalScroll>
-            {loadingArtists ? (
-              <CoverSkeleton count={6} />
-            ) : (
-              artists?.map((artist, i) => (
-                <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
-              ))
-            )}
-          </HorizontalScroll>
-        </Section>
-      )}
-
-      {/* Albums section */}
-      {(loadingAlbums || (albums && albums.length > 0)) && (
-        <Section title="Albums">
-          <HorizontalScroll>
-            {loadingAlbums ? (
-              <CoverSkeleton count={6} />
-            ) : (
-              albums?.map((album, i) => (
-                <CoverCard
-                  key={album.id}
-                  title={album.title}
-                  subtitle={album.artist}
-                  imageUrl={album.cover_url || ""}
-                  index={i}
-                  onClick={() => navigate(`/album/${album.id}`)}
-                />
-              ))
-            )}
-          </HorizontalScroll>
-        </Section>
-      )}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <div className="px-4 md:px-8 py-20 text-center">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
