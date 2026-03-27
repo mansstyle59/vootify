@@ -115,6 +115,15 @@ const AuthPage = () => {
             Se connecter
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="w-full mt-3 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2"
+        >
+          <Send className="w-4 h-4" />
+          Faire une demande d'abonnement
+        </button>
       </motion.div>
     </div>
   );
