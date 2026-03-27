@@ -587,7 +587,7 @@ function PlaylistForm() {
                 key={idx}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${song.uploaded ? "opacity-50" : "liquid-glass"}`}
+                className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${song.uploaded || song.skipped ? "opacity-50" : "liquid-glass"}`}
               >
                 <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
                 {song.coverUrl ? (
@@ -601,7 +601,9 @@ function PlaylistForm() {
                   <input value={song.artist} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, artist: e.target.value } : s))}
                     className="w-full text-[10px] text-muted-foreground/60 bg-transparent focus:outline-none" placeholder="Artiste" />
                 </div>
-                {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
+                {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.skipped ? (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 shrink-0">Doublon</span>
+                ) : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
                   <button onClick={() => setSongs(p => p.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive">
                     <X className="w-3.5 h-3.5" />
                   </button>
