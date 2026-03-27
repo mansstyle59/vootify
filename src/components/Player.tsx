@@ -50,6 +50,7 @@ export function MiniPlayer() {
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const [nextPreloaded, setNextPreloaded] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const setResolveStep = useCallback((step: string | null) => usePlayerStore.setState({ resolveStep: step }), []);
 
