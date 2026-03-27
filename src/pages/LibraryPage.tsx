@@ -316,6 +316,7 @@ const LibraryPage = () => {
     ).then((ids) => setLibraryCachedIds(new Set(ids.filter(Boolean) as string[])));
   }, [tab, recentlyPlayed, likedSongs, customSongs]);
 
+  const { data: customSongs = [] } = useQuery({
     queryKey: ["custom-songs"],
     queryFn: async () => {
       const { data, error } = await supabase.from("custom_songs").select("*").order("created_at", { ascending: false });
