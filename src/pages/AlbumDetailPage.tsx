@@ -8,7 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, ListPlus, RotateCcw } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, RotateCcw } from "lucide-react";
+import { offlineCache } from "@/lib/offlineCache";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
@@ -21,6 +22,9 @@ const AlbumDetailPage = () => {
   const { user } = useAuth();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const heroRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const { scrollY } = useScroll();
   const bgY = useTransform(scrollY, [0, 400], [0, 120]);
@@ -145,6 +149,21 @@ const AlbumDetailPage = () => {
   const playAll = () => { if (tracks.length > 0) { setQueue(tracks); handlePlay(tracks[0]); } };
   const playShuffle = () => { if (tracks.length > 0) { const s = [...tracks].sort(() => Math.random() - 0.5); setQueue(s); handlePlay(s[0]); } };
 
+  const handleDownloadAll = async () => {
+    if (downloading || tracks.length === 0) return;
+    setDownloading(true);
+    let done = 0;
+    for (const song of tracks) {
+      try {
+        const resolved = song.id.startsWith("dz-") ? await deezerApi.resolveFullStream(song) : song;
+        if (resolved.streamUrl) await offlineCache.cacheSong(resolved);
+        done++;
+      } catch { /* skip */ }
+    }
+    setDownloading(false);
+    toast.success(`${done} titre${done > 1 ? "s" : ""} téléchargé${done > 1 ? "s" : ""}`);
+  };
+
   if (isLoading) {
     return (
       <div className="pb-40">
@@ -186,15 +205,83 @@ const AlbumDetailPage = () => {
 
         {/* Navigation bar */}
         <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-          <button onClick={() => navigate(-1)} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all">
+          <button onClick={() => navigate("/")} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <motion.div style={{ opacity: headerOpacity }} className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-foreground truncate max-w-[200px]">
             {album.title}
           </motion.div>
-          <button className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all">
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -8 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl bg-card/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/40 overflow-hidden"
+                >
+                  <div className="p-1.5 space-y-0.5">
+                    <button
+                      onClick={() => { playAll(); setMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                    >
+                      <Play className="w-4 h-4 text-primary" />
+                      Tout lire
+                    </button>
+                    <button
+                      onClick={() => { playShuffle(); setMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                    >
+                      <Shuffle className="w-4 h-4 text-primary" />
+                      Lecture aléatoire
+                    </button>
+                    <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                    <button
+                      onClick={() => { handleDownloadAll(); setMenuOpen(false); }}
+                      disabled={downloading}
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors disabled:opacity-40"
+                    >
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                      Télécharger tout
+                    </button>
+                    <button
+                      onClick={() => { setResolveKey((k) => k + 1); toast("Relance de la résolution HD…"); setMenuOpen(false); }}
+                      disabled={resolving}
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors disabled:opacity-40"
+                    >
+                      <RotateCcw className={`w-4 h-4 text-muted-foreground ${resolving ? "animate-spin" : ""}`} />
+                      Résolution HD
+                    </button>
+                    <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                    <button
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({ title: album.title, url: window.location.href }).catch(() => {});
+                        } else {
+                          navigator.clipboard.writeText(window.location.href);
+                          toast.success("Lien copié !");
+                        }
+                        setMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                    >
+                      <Share2 className="w-4 h-4 text-muted-foreground" />
+                      Partager
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Cover + Info */}
