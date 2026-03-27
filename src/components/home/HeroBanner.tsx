@@ -25,7 +25,7 @@ function getSubGreeting() {
   return "Détendez-vous avec vos morceaux préférés";
 }
 
-export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
+export function HeroBanner({ onCustomize, customSubtitle }: { onCustomize?: () => void; customSubtitle?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -157,7 +157,7 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
           transition={{ delay: 0.3 }}
           className="text-[14px] text-muted-foreground max-w-md leading-relaxed"
         >
-          {getSubGreeting()}
+          {customSubtitle || getSubGreeting()}
         </motion.p>
       </motion.div>
     </div>
