@@ -25,9 +25,11 @@ export interface HomeConfig {
 
 const DEFAULT_SECTIONS: HomeSection[] = [
   { id: "recently_added", title: "Ajoutés récemment 🆕", visible: true, order: 0 },
-  { id: "recently_listened", title: "Écoutés récemment 🕐", visible: true, order: 1 },
-  { id: "most_played", title: "Les plus écoutés 🔥", visible: true, order: 2 },
+  { id: "most_played", title: "Les plus écoutés 🔥", visible: true, order: 1 },
+  { id: "recently_listened", title: "Écoutés récemment 🕐", visible: true, order: 2 },
   { id: "recommended", title: "Recommandés pour vous ✨", visible: true, order: 3 },
+  { id: "artists", title: "Artistes 🎤", visible: true, order: 4 },
+  { id: "albums", title: "Albums 💿", visible: true, order: 5 },
 ];
 
 export function useHomeConfig() {
