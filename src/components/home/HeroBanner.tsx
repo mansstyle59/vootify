@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { Play, Headphones, Music2, LogIn, LogOut, Settings2, Disc3 } from "lucide-react";
+import { LogIn, LogOut, Settings2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -48,29 +48,6 @@ export function HeroBanner({ onCustomize }: { onCustomize?: () => void }) {
 
       {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-[1]" />
-
-      {/* Subtle floating icons — positioned to avoid text overlap */}
-      <motion.div
-        animate={{ y: [0, -10, 0], rotate: [0, 8, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-6 right-[42%] text-primary/8 pointer-events-none"
-      >
-        <Music2 className="w-8 h-8" />
-      </motion.div>
-      <motion.div
-        animate={{ y: [0, 8, 0], rotate: [0, -6, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-28 right-6 text-primary/6 pointer-events-none"
-      >
-        <Headphones className="w-7 h-7" />
-      </motion.div>
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-32 left-6 text-primary/5 pointer-events-none"
-      >
-        <Disc3 className="w-6 h-6" />
-      </motion.div>
 
       {/* User / Login — top right */}
       <motion.div
