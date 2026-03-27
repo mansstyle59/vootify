@@ -10,6 +10,7 @@ import AudioFilePicker from "@/components/AudioFilePicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { extractID3, crossReferenceBatch } from "@/lib/id3Utils";
+import { batchSearchCovers } from "@/lib/coverArtSearch";
 
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
