@@ -9,7 +9,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download,
   HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown,
-  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus
+  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,7 @@ import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
+import { batchSearchCovers } from "@/lib/coverArtSearch";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
