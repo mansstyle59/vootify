@@ -1557,17 +1557,8 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </motion.button>
             </div>
 
-            {/* Bottom actions */}
+            {/* Bottom actions — clean, no duplicates */}
             <div className="flex items-center justify-between">
-              <motion.button whileTap={{ scale: 1.2 }} className="p-1.5 transition-transform">
-                <motion.div animate={liked ? { scale: [1, 1.25, 1] } : {}} transition={{ duration: 0.3 }}>
-                  <Heart className={`w-6 h-6 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`}
-                    onClick={() => { toggleLike(currentSong); if (navigator.vibrate) navigator.vibrate(10); }}
-                  />
-                </motion.div>
-              </motion.button>
-
-
               {/* Download button */}
               <button
                 onClick={() => {
@@ -1596,22 +1587,16 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </button>
 
               {/* Auto mix toggle */}
-              {(
-                <button
-                  onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase transition-all active:scale-95 ${
-                    crossfadeEnabled
-                      ? "bg-primary/20 text-primary border border-primary/30"
-                      : "text-foreground/40 border border-foreground/10"
-                  }`}
-                >
-                  <Disc3 className={`w-4 h-4 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
-                  Auto mix
-                </button>
-              )}
-
-              <button onClick={() => setShowQueue(true)} className="p-1.5 active:scale-90 transition-transform">
-                <ListMusic className="w-6 h-6 text-foreground/50" />
+              <button
+                onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase transition-all active:scale-95 ${
+                  crossfadeEnabled
+                    ? "bg-primary/20 text-primary border border-primary/30"
+                    : "text-foreground/40 border border-foreground/10"
+                }`}
+              >
+                <Disc3 className={`w-4 h-4 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
+                Auto mix
               </button>
             </div>
           </motion.div>
