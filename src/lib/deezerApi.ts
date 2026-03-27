@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song, Album } from "@/data/mockData";
 import { jiosaavnApi } from "@/lib/jiosaavnApi";
 import { hdCache } from "@/lib/hdCache";
+import { resolveLog } from "@/lib/resolveLog";
 
 /** Normalize a string for fuzzy matching — aggressive cleaning */
 const norm = (s: string) =>
@@ -259,6 +260,18 @@ export const deezerApi = {
             resolvedViaCustom: true,
             ts: Date.now(),
           });
+          resolveLog.add({
+            songId: song.id,
+            originalTitle: song.title,
+            originalArtist: song.artist,
+            resolvedTitle: bestCustom.title,
+            resolvedArtist: bestCustom.artist,
+            source: "custom",
+            streamUrl: bestCustom.stream_url,
+            titleCorrected: norm(bestCustom.title) !== targetTitle,
+            artistCorrected: norm(bestCustom.artist.split(",")[0]) !== targetArtist,
+            ts: Date.now(),
+          });
           return resolved;
         }
       }
@@ -307,18 +320,44 @@ export const deezerApi = {
 
       if (bestMatch?.streamUrl && bestScore >= 40) {
         console.log("[resolve] JioSaavn HD:", bestMatch.title, `(score: ${bestScore})`);
+        // Verify title/artist coherence — use original metadata if match is good
+        const titleOk = matchScore(norm(bestMatch.title), targetTitle) >= 50;
+        const artistOk = matchScore(norm(bestMatch.artist.split(",")[0]), targetArtist) >= 40;
         hdCache.set(song.id, {
           streamUrl: bestMatch.streamUrl,
           coverUrl: bestMatch.coverUrl || undefined,
           ts: Date.now(),
         });
+        resolveLog.add({
+          songId: song.id,
+          originalTitle: song.title,
+          originalArtist: song.artist,
+          resolvedTitle: bestMatch.title,
+          resolvedArtist: bestMatch.artist,
+          source: "hd",
+          streamUrl: bestMatch.streamUrl,
+          titleCorrected: !titleOk,
+          artistCorrected: !artistOk,
+          ts: Date.now(),
+        });
+        // Keep original title/artist to avoid incoherent display
         return { ...song, streamUrl: bestMatch.streamUrl, coverUrl: bestMatch.coverUrl || song.coverUrl };
       }
     } catch (e) {
       console.error("[resolve] JioSaavn failed:", e);
     }
 
-    // No full stream found
+    // No full stream found — log it
+    resolveLog.add({
+      songId: song.id,
+      originalTitle: song.title,
+      originalArtist: song.artist,
+      source: "none",
+      streamUrl: "",
+      titleCorrected: false,
+      artistCorrected: false,
+      ts: Date.now(),
+    });
     console.warn("[resolve] no source found for:", song.title);
     return { ...song, streamUrl: "" };
   },

@@ -106,7 +106,6 @@ const PlaylistDetailPage = () => {
 
     const resolve = async () => {
       let done = 0;
-      let upgraded = 0;
 
       for (let i = 0; i < needsResolve.length; i += 4) {
         if (controller.signal.aborted) return;
@@ -129,7 +128,6 @@ const PlaylistDetailPage = () => {
 
             if (isHd && r.streamUrl !== batch[idx].streamUrl) {
               next.set(r.id, r);
-              upgraded++;
             }
           });
           return next;
@@ -138,9 +136,7 @@ const PlaylistDetailPage = () => {
 
       if (!controller.signal.aborted) {
         setResolving(false);
-        if (upgraded > 0) toast.success(`${upgraded} morceau${upgraded > 1 ? "x" : ""} HD`);
-        else toast("Aucun nouveau titre HD trouvé");
-        setTimeout(() => setResolveProgress(null), 1200);
+        setTimeout(() => setResolveProgress(null), 800);
       }
     };
 
