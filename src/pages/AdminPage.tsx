@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -812,7 +812,10 @@ function SongsTab() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editArtist, setEditArtist] = useState("");
+  const [editCoverUrl, setEditCoverUrl] = useState("");
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [saving, setSaving] = useState(false);
+  const coverFileRef = useRef<HTMLInputElement>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
 
@@ -884,10 +887,30 @@ function SongsTab() {
     setEditingId(s.id);
     setEditTitle(s.title);
     setEditArtist(s.artist);
+    setEditCoverUrl(s.cover_url || "");
   };
 
   const cancelEdit = () => {
     setEditingId(null);
+    setEditCoverUrl("");
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (max 5 Mo)"); return; }
+    setUploadingCover(true);
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("covers").upload(path, file);
+    if (error) { toast.error("Erreur d'upload"); setUploadingCover(false); return; }
+    const { data: urlData } = supabase.storage.from("covers").getPublicUrl(path);
+    setEditCoverUrl(urlData.publicUrl);
+    setUploadingCover(false);
+    toast.success("Image uploadée !");
+    // Reset file input
+    if (coverFileRef.current) coverFileRef.current.value = "";
   };
 
   const saveEdit = async (id: string) => {
@@ -895,7 +918,7 @@ function SongsTab() {
     setSaving(true);
     const { error } = await supabase
       .from("custom_songs")
-      .update({ title: editTitle.trim(), artist: editArtist.trim() })
+      .update({ title: editTitle.trim(), artist: editArtist.trim(), cover_url: editCoverUrl || null })
       .eq("id", id);
     setSaving(false);
     if (error) {
@@ -903,9 +926,10 @@ function SongsTab() {
       return;
     }
     setSongs((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, title: editTitle.trim(), artist: editArtist.trim() } : s))
+      prev.map((s) => (s.id === id ? { ...s, title: editTitle.trim(), artist: editArtist.trim(), cover_url: editCoverUrl || null } : s))
     );
     setEditingId(null);
+    setEditCoverUrl("");
     toast.success("Morceau modifié");
   };
 
@@ -976,15 +1000,37 @@ function SongsTab() {
               {selectedIds.has(s.id) && <Check className="w-3 h-3" />}
             </button>
 
-            <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
-              {s.cover_url ? (
-                <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                  <Music className="w-4 h-4 text-primary/30" />
-                </div>
-              )}
-            </div>
+            {editingId === s.id ? (
+              <div className="relative w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0 group/cover cursor-pointer" onClick={(e) => { e.stopPropagation(); coverFileRef.current?.click(); }}>
+                <input ref={coverFileRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                {uploadingCover ? (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  </div>
+                ) : editCoverUrl ? (
+                  <>
+                    <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
+                      <ImageIcon className="w-4 h-4 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                    <Upload className="w-4 h-4 text-primary/50" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
+                {s.cover_url ? (
+                  <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                    <Music className="w-4 h-4 text-primary/30" />
+                  </div>
+                )}
+              </div>
+            )}
             {editingId === s.id ? (
               <div className="flex-1 min-w-0 space-y-1.5">
                 <input
