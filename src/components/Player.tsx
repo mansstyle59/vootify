@@ -63,7 +63,52 @@ export function MiniPlayer() {
     audioRef.current.muted = false;
   }, [volume]);
 
-  // ── Silent playback watchdog (iOS bug detector) ──
+  // ── Web Lock API — prevent iOS from suspending the tab in background ──
+  useEffect(() => {
+    if (!isPlaying || !currentSong) return;
+    if (!("locks" in navigator)) return;
+
+    let released = false;
+    const lockPromise = (navigator as any).locks.request(
+      "vootify-audio-bg",
+      { mode: "exclusive", ifAvailable: false },
+      () => new Promise<void>((resolve) => {
+        // Hold the lock until playback stops
+        const check = setInterval(() => {
+          if (released) { clearInterval(check); resolve(); }
+        }, 1000);
+      })
+    );
+
+    return () => { released = true; };
+  }, [isPlaying, currentSong?.id]);
+
+  // ── Visibility change — resume playback when returning to app ──
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const audio = audioRef.current;
+        const state = usePlayerStore.getState();
+        if (audio && state.isPlaying && state.currentSong) {
+          // Ensure audio is actually playing after returning from background
+          if (audio.paused && audio.src) {
+            console.log("[bg-resume] Resuming audio after visibility change");
+            audio.volume = state.volume ?? volume;
+            audio.muted = false;
+            audio.play().catch(console.error);
+          }
+          // Re-sync media session
+          if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "playing";
+          }
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [volume]);
+
+  // ── Silent playback watchdog (iOS bug detector) — throttled in background ──
   const watchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTimeCheckRef = useRef<{ time: number; ts: number } | null>(null);
 
@@ -73,42 +118,53 @@ export function MiniPlayer() {
 
     lastTimeCheckRef.current = null;
 
-    watchdogRef.current = setInterval(() => {
-      const audio = audioRef.current;
-      if (!audio || audio.paused || !audio.src || audio.duration === 0) return;
+    // Use longer interval in background to save CPU
+    const getInterval = () => document.visibilityState === "visible" ? 2500 : 5000;
 
-      const now = Date.now();
-      const currentTime = audio.currentTime;
-      const prev = lastTimeCheckRef.current;
+    const startWatchdog = () => {
+      if (watchdogRef.current) clearInterval(watchdogRef.current);
+      watchdogRef.current = setInterval(() => {
+        const audio = audioRef.current;
+        if (!audio || audio.paused || !audio.src || audio.duration === 0) return;
 
-      if (prev) {
-        const wallElapsed = now - prev.ts;
-        const audioElapsed = (currentTime - prev.time) * 1000;
+        const now = Date.now();
+        const currentTime = audio.currentTime;
+        const prev = lastTimeCheckRef.current;
 
-        // If wall clock advanced >3s but audio didn't move → stuck/silent
-        if (wallElapsed > 3000 && audioElapsed < 500 && !audio.paused) {
-          console.warn("[watchdog] Audio stuck — attempting reload");
-          const src = audio.src;
-          const time = audio.currentTime;
-          audio.src = "";
-          audio.load();
-          // Small delay then reload
-          setTimeout(() => {
-            audio.src = src;
+        if (prev) {
+          const wallElapsed = now - prev.ts;
+          const audioElapsed = (currentTime - prev.time) * 1000;
+
+          if (wallElapsed > 4000 && audioElapsed < 500 && !audio.paused) {
+            console.warn("[watchdog] Audio stuck — attempting reload");
+            const src = audio.src;
+            const time = audio.currentTime;
+            audio.src = "";
             audio.load();
-            audio.currentTime = Math.max(0, time - 0.5);
-            audio.volume = volume;
-            audio.muted = false;
-            audio.play().catch((e) => console.error("[watchdog] Reload play failed:", e));
-          }, 100);
+            setTimeout(() => {
+              audio.src = src;
+              audio.load();
+              audio.currentTime = Math.max(0, time - 0.5);
+              audio.volume = volume;
+              audio.muted = false;
+              audio.play().catch((e) => console.error("[watchdog] Reload play failed:", e));
+            }, 100);
+          }
         }
-      }
 
-      lastTimeCheckRef.current = { time: currentTime, ts: now };
-    }, 2500);
+        lastTimeCheckRef.current = { time: currentTime, ts: now };
+      }, getInterval());
+    };
+
+    startWatchdog();
+
+    // Adjust watchdog frequency on visibility change
+    const onVisChange = () => startWatchdog();
+    document.addEventListener("visibilitychange", onVisChange);
 
     return () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
+      document.removeEventListener("visibilitychange", onVisChange);
     };
   }, [isPlaying, currentSong?.id, volume]);
 
@@ -508,9 +564,12 @@ export function MiniPlayer() {
           onEnded={handleEnded}
           onError={handleAudioError}
           preload="auto"
+          playsInline
+          // @ts-ignore — webkit attribute for iOS background playback
+          webkit-playsinline=""
         />
-        <audio ref={crossfadeRef} preload="auto" />
-        <audio ref={preloadRef} preload="auto" style={{ display: "none" }} />
+        <audio ref={crossfadeRef} preload="metadata" playsInline />
+        <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -568,9 +627,12 @@ export function MiniPlayer() {
         onEnded={handleEnded}
         onError={handleAudioError}
         preload="auto"
+        playsInline
+        // @ts-ignore — webkit attribute for iOS background playback
+        webkit-playsinline=""
       />
-      <audio ref={crossfadeRef} preload="auto" />
-      <audio ref={preloadRef} preload="auto" style={{ display: "none" }} />
+      <audio ref={crossfadeRef} preload="metadata" playsInline />
+      <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
