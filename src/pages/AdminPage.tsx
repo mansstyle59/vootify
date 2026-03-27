@@ -305,10 +305,13 @@ function SongsTab() {
   const [editTitle, setEditTitle] = useState("");
   const [editArtist, setEditArtist] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  const isSelecting = selectedIds.size > 0;
 
   const loadSongs = async () => {
     setLoading(true);
-    // Fetch all songs by paginating past the 1000-row default limit
     let allSongs: any[] = [];
     let from = 0;
     const PAGE = 1000;
@@ -333,6 +336,40 @@ function SongsTab() {
     await supabase.from("custom_songs").delete().eq("id", id);
     setSongs((prev) => prev.filter((s) => s.id !== id));
     toast.success("Morceau supprimé");
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!confirm(`Supprimer ${count} morceau${count > 1 ? "x" : ""} ? Cette action est irréversible.`)) return;
+    setDeleting(true);
+    const ids = Array.from(selectedIds);
+    // Delete in batches of 50
+    for (let i = 0; i < ids.length; i += 50) {
+      const batch = ids.slice(i, i + 50);
+      await supabase.from("custom_songs").delete().in("id", batch);
+    }
+    setSongs((prev) => prev.filter((s) => !selectedIds.has(s.id)));
+    setSelectedIds(new Set());
+    setDeleting(false);
+    toast.success(`${count} morceau${count > 1 ? "x" : ""} supprimé${count > 1 ? "s" : ""}`);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === songs.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(songs.map((s) => s.id)));
+    }
   };
 
   const startEdit = (s: any) => {
@@ -368,11 +405,69 @@ function SongsTab() {
 
   return (
     <div className="space-y-2">
+      {/* Toolbar */}
+      {songs.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
+          >
+            {selectedIds.size === songs.length ? (
+              <><X className="w-3.5 h-3.5" /> Tout désélectionner</>
+            ) : (
+              <><Check className="w-3.5 h-3.5" /> Tout sélectionner</>
+            )}
+          </button>
+          {isSelecting && (
+            <>
+              <span className="text-xs text-muted-foreground">
+                {selectedIds.size} sélectionné{selectedIds.size > 1 ? "s" : ""}
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors ml-auto"
+              >
+                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Supprimer ({selectedIds.size})
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                title="Annuler la sélection"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {songs.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Aucun morceau custom</p>
       ) : (
         songs.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group">
+          <div
+            key={s.id}
+            className={`flex items-center gap-3 p-3 rounded-xl border group transition-colors cursor-pointer ${
+              selectedIds.has(s.id)
+                ? "bg-primary/10 border-primary/30"
+                : "bg-secondary/30 border-border"
+            }`}
+            onClick={() => isSelecting && toggleSelect(s.id)}
+          >
+            {/* Checkbox */}
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleSelect(s.id); }}
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                selectedIds.has(s.id)
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-muted-foreground/40 hover:border-primary/60"
+              }`}
+            >
+              {selectedIds.has(s.id) && <Check className="w-3 h-3" />}
+            </button>
+
             {s.cover_url && (
               <img src={s.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
             )}
@@ -385,6 +480,7 @@ function SongsTab() {
                   placeholder="Titre"
                   autoFocus
                   onKeyDown={(e) => e.key === "Enter" && saveEdit(s.id)}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <input
                   value={editArtist}
@@ -392,6 +488,7 @@ function SongsTab() {
                   className="w-full text-xs bg-background/80 border border-border rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                   placeholder="Artiste"
                   onKeyDown={(e) => e.key === "Enter" && saveEdit(s.id)}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </div>
             ) : (
@@ -403,7 +500,7 @@ function SongsTab() {
             {editingId === s.id ? (
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => saveEdit(s.id)}
+                  onClick={(e) => { e.stopPropagation(); saveEdit(s.id); }}
                   disabled={saving}
                   className="p-1.5 rounded-full text-primary hover:bg-primary/10 transition-colors"
                   title="Sauvegarder"
@@ -411,31 +508,31 @@ function SongsTab() {
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 </button>
                 <button
-                  onClick={cancelEdit}
+                  onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
                   className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
                   title="Annuler"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
+            ) : !isSelecting ? (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => startEdit(s)}
+                  onClick={(e) => { e.stopPropagation(); startEdit(s); }}
                   className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
                   title="Modifier"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => handleDelete(s.id)}
+                  onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
                   className="p-1.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
                   title="Supprimer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         ))
       )}
