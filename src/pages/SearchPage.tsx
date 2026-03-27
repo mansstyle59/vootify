@@ -53,15 +53,36 @@ const SearchPage = () => {
     let cancelled = false;
     const fetchNew = async () => {
       try {
-        // "Nouveautés du vendredi" — Deezer editorial selection (France)
-        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
-          body: { path: "/playlist/1111141961/tracks?limit=25" },
-        });
+        // First try cached data from DB
+        const { data: cached } = await supabase
+          .from("friday_releases")
+          .select("album_id, title, artist, cover_url")
+          .order("position", { ascending: true })
+          .limit(25);
+
+        if (!cancelled && cached && cached.length > 0) {
+          setNewReleases(cached.map((r: any) => ({
+            id: r.album_id, title: r.title, artist: r.artist,
+            coverUrl: r.cover_url, albumId: r.album_id,
+          })));
+          return;
+        }
+
+        // Fallback: fetch directly from Deezer playlists
+        const playlistIds = ["1071669561", "1478649355"];
+        const results = await Promise.allSettled(
+          playlistIds.map((pid) =>
+            supabase.functions.invoke("deezer-proxy", {
+              body: { path: `/playlist/${pid}/tracks?limit=25` },
+            })
+          )
+        );
         if (cancelled) return;
-        if (!error && data?.data?.length) {
-          const seen = new Set<number>();
-          const releases: DeezerNewRelease[] = [];
-          for (const t of data.data) {
+        const seen = new Set<number>();
+        const releases: DeezerNewRelease[] = [];
+        for (const r of results) {
+          if (r.status !== "fulfilled" || r.value.error || !r.value.data?.data) continue;
+          for (const t of r.value.data.data) {
             const albumId = t.album?.id;
             if (!albumId || seen.has(albumId)) continue;
             seen.add(albumId);
@@ -73,19 +94,8 @@ const SearchPage = () => {
               albumId,
             });
           }
-          setNewReleases(releases.slice(0, 20));
-          return;
         }
-        // Fallback: editorial releases France
-        const fallback = await supabase.functions.invoke("deezer-proxy", {
-          body: { path: "/editorial/85/releases?limit=20" },
-        });
-        if (!cancelled && !fallback.error && fallback.data?.data) {
-          setNewReleases(fallback.data.data.map((a: any) => ({
-            id: a.id, title: a.title || "", artist: a.artist?.name || "",
-            coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "", albumId: a.id,
-          })));
-        }
+        setNewReleases(releases.slice(0, 20));
       } catch { /* silent */ }
     };
     fetchNew();
