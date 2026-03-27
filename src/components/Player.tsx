@@ -1048,7 +1048,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   } = usePlayerStore();
 
   const [showQueue, setShowQueue] = useState(false);
-  const resolveStep = usePlayerStore((s) => s.resolveStep);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
