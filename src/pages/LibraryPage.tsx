@@ -17,7 +17,7 @@ import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
-import { normalizeTitle, normalizeArtist, normalizeText, autoEnrichCustomSongs } from "@/lib/metadataEnrich";
+import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";

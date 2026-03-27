@@ -4,7 +4,7 @@ import JSZip from "jszip";
 import { FolderUp, FileArchive, Loader2, X, FileAudio, Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { extractID3 } from "@/lib/id3Utils";
-import { deezerApi } from "@/lib/deezerApi";
+
 
 export interface UploadedTrack {
   fileName: string;
