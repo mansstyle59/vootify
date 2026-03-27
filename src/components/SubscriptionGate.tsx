@@ -146,29 +146,27 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
 
               {/* Duration */}
               <div className="text-left">
-                <label className="text-xs text-muted-foreground font-medium mb-1 block">
+                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
                   Durée d'abonnement souhaitée
                 </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={duration}
-                      onChange={(e) => setDuration(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <select
-                    value={durationUnit}
-                    onChange={(e) => setDurationUnit(e.target.value as "days" | "months")}
-                    className="bg-muted/50 border border-border rounded-xl px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="days">Jours</option>
-                    <option value="months">Mois</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  {durationOptions.map((opt) => {
+                    const isSelected = selectedDuration.value === opt.value && selectedDuration.unit === opt.unit;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => setSelectedDuration({ value: opt.value, unit: opt.unit })}
+                        className={`py-2.5 rounded-xl text-sm font-medium transition-colors border ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/50 text-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
