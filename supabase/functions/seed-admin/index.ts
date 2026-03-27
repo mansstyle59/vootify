@@ -45,7 +45,7 @@ serve(async (req) => {
         email: adminEmail,
         password: adminPassword,
         email_confirm: true,
-        user_metadata: { display_name: "Admin VOO" },
+        user_metadata: { display_name: "Vootify Admin" },
       });
 
       if (createError) throw createError;
