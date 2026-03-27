@@ -28,7 +28,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const adminEmail = "adminvoo@voomusic.app";
+    const adminEmail = "vootifyadmin@vootify.app";
     const adminPassword = "123456";
 
     // Check if admin already exists
@@ -45,7 +45,7 @@ serve(async (req) => {
         email: adminEmail,
         password: adminPassword,
         email_confirm: true,
-        user_metadata: { display_name: "Admin VOO" },
+        user_metadata: { display_name: "Vootify Admin" },
       });
 
       if (createError) throw createError;
