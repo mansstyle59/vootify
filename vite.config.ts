@@ -138,6 +138,27 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          // Supabase Storage (covers, avatars, audio thumbnails) — cache aggressively
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/(covers|avatars)\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "supabase-storage-images",
+              expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // JioSaavn audio streams — cache for offline playback
+          {
+            urlPattern: /^https:\/\/.*\.saavncdn\.com\/.*\.(mp4|mp3|m4a)/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audio-streams",
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
         ],
       },
     }),
