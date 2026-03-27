@@ -92,7 +92,7 @@ const HomePage = () => {
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative overflow-y-auto">
-      <HeroBanner customSubtitle={homeConfig?.heroSubtitle} />
+      <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {visibleSections.map((section) => {
         const data = sectionDataMap[section.id];

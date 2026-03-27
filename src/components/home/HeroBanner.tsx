@@ -25,7 +25,7 @@ function getSubGreeting() {
   return "Détendez-vous avec vos morceaux préférés";
 }
 
-export function HeroBanner({ onCustomize, customSubtitle }: { onCustomize?: () => void; customSubtitle?: string }) {
+export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { onCustomize?: () => void; customSubtitle?: string; bgColor?: string; bgImage?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -46,18 +46,29 @@ export function HeroBanner({ onCustomize, customSubtitle }: { onCustomize?: () =
     <div ref={ref} className="relative overflow-hidden mb-1" style={{ minHeight: "260px" }}>
       {/* Parallax background */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "linear-gradient(160deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--accent) / 0.05) 40%, hsl(var(--background)) 100%)",
-          }}
-        />
-        <div
-          className="absolute top-0 right-0 w-80 h-80 rounded-full -translate-y-1/3 translate-x-1/4"
-          style={{
-            background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
-          }}
-        />
+        {bgImage ? (
+          <>
+            <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-background/60" />
+          </>
+        ) : bgColor ? (
+          <div className="absolute inset-0" style={{ background: bgColor }} />
+        ) : (
+          <>
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(160deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--accent) / 0.05) 40%, hsl(var(--background)) 100%)",
+              }}
+            />
+            <div
+              className="absolute top-0 right-0 w-80 h-80 rounded-full -translate-y-1/3 translate-x-1/4"
+              style={{
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
+              }}
+            />
+          </>
+        )}
       </motion.div>
 
       {/* Bottom fade to background */}

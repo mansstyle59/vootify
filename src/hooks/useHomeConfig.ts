@@ -12,6 +12,8 @@ export interface HomeConfig {
   sections: HomeSection[];
   heroTitle?: string;
   heroSubtitle?: string;
+  heroBgColor?: string;
+  heroBgImage?: string;
 }
 
 const DEFAULT_SECTIONS: HomeSection[] = [
@@ -45,6 +47,8 @@ export function useHomeConfig() {
         sections: mergeSections(raw.sections || []),
         heroTitle: raw.heroTitle,
         heroSubtitle: raw.heroSubtitle,
+        heroBgColor: raw.heroBgColor,
+        heroBgImage: raw.heroBgImage,
       };
     },
     staleTime: 60_000,
@@ -82,6 +86,8 @@ export function useSaveHomeConfig() {
         sections: config.sections,
         heroTitle: config.heroTitle,
         heroSubtitle: config.heroSubtitle,
+        heroBgColor: config.heroBgColor,
+        heroBgImage: config.heroBgImage,
       };
 
       // Check if a row exists

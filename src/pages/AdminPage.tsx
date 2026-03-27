@@ -563,6 +563,8 @@ function HomeTab() {
   const [sections, setSections] = useState<HomeSection[]>([]);
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [heroBgColor, setHeroBgColor] = useState("");
+  const [heroBgImage, setHeroBgImage] = useState("");
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -570,6 +572,8 @@ function HomeTab() {
       setSections([...config.sections].sort((a, b) => a.order - b.order));
       setHeroTitle(config.heroTitle || "");
       setHeroSubtitle(config.heroSubtitle || "");
+      setHeroBgColor(config.heroBgColor || "");
+      setHeroBgImage(config.heroBgImage || "");
     }
   }, [config]);
 
@@ -601,6 +605,8 @@ function HomeTab() {
           sections: sections.map((s, i) => ({ ...s, order: i })),
           heroTitle: heroTitle || undefined,
           heroSubtitle: heroSubtitle || undefined,
+          heroBgColor: heroBgColor || undefined,
+          heroBgImage: heroBgImage || undefined,
         },
         userId: user.id,
       },
@@ -621,7 +627,7 @@ function HomeTab() {
           <LayoutDashboard className="w-4 h-4 text-primary" />
           Bannière d'accueil
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Sous-titre personnalisé (optionnel)</label>
             <input
@@ -630,6 +636,41 @@ function HomeTab() {
               placeholder="Ex: Bienvenue sur votre plateforme musicale"
               className="w-full text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
             />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Couleur de fond (optionnel)</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={heroBgColor || "#000000"}
+                onChange={(e) => setHeroBgColor(e.target.value)}
+                className="w-9 h-9 rounded-lg border border-border cursor-pointer bg-transparent p-0.5"
+              />
+              <input
+                value={heroBgColor}
+                onChange={(e) => setHeroBgColor(e.target.value)}
+                placeholder="#1a1a2e ou rgb(26,26,46)"
+                className="flex-1 text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {heroBgColor && (
+                <button onClick={() => setHeroBgColor("")} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Image de fond (URL, optionnel)</label>
+            <input
+              value={heroBgImage}
+              onChange={(e) => setHeroBgImage(e.target.value)}
+              placeholder="https://exemple.com/image.jpg"
+              className="w-full text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            {heroBgImage && (
+              <div className="mt-2 relative rounded-lg overflow-hidden h-20">
+                <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" />
+                <button onClick={() => setHeroBgImage("")} className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white hover:bg-black/70"><X className="w-3 h-3" /></button>
+              </div>
+            )}
           </div>
         </div>
       </div>
