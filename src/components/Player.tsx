@@ -580,13 +580,13 @@ export function MiniPlayer() {
           style={{
             ...glassStyle,
             ...(miniDominantColor ? {
-              background: `linear-gradient(135deg, ${miniDominantColor}, hsl(0 0% 4% / 0.8))`,
+              background: `linear-gradient(135deg, ${miniDominantColor}, hsl(var(--card) / 0.9))`,
               transition: "background 0.8s ease-in-out",
             } : {}),
           }}
         >
           {/* Progress line */}
-          <div className="h-[3px] w-full" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+          <div className="h-[3px] w-full" style={{ background: "hsl(var(--muted))" }}>
             <div
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${progressPct}%` }}
@@ -944,7 +944,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
           />
         </AnimatePresence>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(0 0% 0% / 0.3) 60%, hsl(0 0% 0% / 0.6) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 60%, hsl(var(--background) / 0.7) 100%)" }} />
       </div>
 
       {/* Drag handle indicator */}
@@ -982,10 +982,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {/* Now Playing */}
             <div className="sticky top-0 z-10 pt-2 pb-3" style={{ background: `${bgColor}ee` }}>
               <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/40 mb-2">En cours de lecture</h3>
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 border border-white/10">
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-foreground/10 border border-foreground/10">
                 <div className="relative">
                   <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-lg" />
-                  <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-black/30">
+                  <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-background/30">
                     {isPlaying && <AudioVisualizer isPlaying={isPlaying} />}
                   </div>
                 </div>
@@ -1054,13 +1054,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: i * 0.02 }}
-                            whileDrag={{ scale: 1.03, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}
+                            whileDrag={{ scale: 1.03, backgroundColor: "hsl(var(--foreground) / 0.08)", borderRadius: 12, boxShadow: "0 8px 30px hsl(0 0% 0% / 0.2)" }}
                             className="group cursor-grab active:cursor-grabbing"
                             style={{ touchAction: "pan-x" }}
                           >
                             <div
                               onClick={() => { play(song); setQueue(queue); }}
-                              className="w-full flex items-center gap-2 p-2.5 rounded-xl text-left hover:bg-white/5 active:bg-white/10 transition-colors"
+                              className="w-full flex items-center gap-2 p-2.5 rounded-xl text-left hover:bg-foreground/5 active:bg-foreground/10 transition-colors"
                             >
                               <GripVertical className="w-4 h-4 text-foreground/20 shrink-0 touch-none" />
                               <span className="w-4 text-center text-[11px] text-foreground/30 tabular-nums font-medium">{i + 1}</span>
@@ -1097,7 +1097,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                           <button
                             key={song.id}
                             onClick={() => { play(song); setQueue(queue); }}
-                            className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-white/5 transition-colors opacity-40 hover:opacity-70"
+                            className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-foreground/5 transition-colors opacity-40 hover:opacity-70"
                           >
                             <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
                             <div className="min-w-0 flex-1">
@@ -1233,7 +1233,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 onMouseUp={() => setIsSeeking(false)}
                 onMouseLeave={() => setIsSeeking(false)}
               >
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[5px] rounded-full" style={{ background: "hsl(0 0% 100% / 0.12)" }}>
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[5px] rounded-full" style={{ background: "hsl(var(--muted))" }}>
                   <div
                     className="h-full rounded-full relative"
                     style={{
@@ -1262,10 +1262,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                           exit={{ opacity: 0, y: 5, scale: 0.8 }}
                           className="absolute -right-5 -top-10 px-2 py-1 rounded-lg text-[11px] font-bold text-foreground tabular-nums"
                           style={{
-                            background: "hsl(240 8% 14% / 0.8)",
+                            background: "hsl(var(--card) / 0.9)",
                             backdropFilter: "blur(12px)",
                             WebkitBackdropFilter: "blur(12px)",
-                            border: "1px solid hsl(0 0% 100% / 0.1)",
+                            border: "1px solid hsl(var(--border))",
                           }}
                         >
                           {formatDuration(Math.floor(progress))}
