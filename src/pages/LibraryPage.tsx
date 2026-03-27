@@ -522,6 +522,7 @@ const LibraryPage = () => {
                           song={s}
                           index={i}
                           showIndex
+                          cached={libraryCachedIds.has(s.id)}
                           isActive={currentSong?.id === s.id}
                           isPlaying={currentSong?.id === s.id && isPlaying}
                           onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(recentMusic); play(s); } }}
@@ -555,6 +556,7 @@ const LibraryPage = () => {
                           song={s}
                           index={i}
                           showIndex
+                          cached={libraryCachedIds.has(s.id)}
                           isActive={currentSong?.id === s.id}
                           isPlaying={currentSong?.id === s.id && isPlaying}
                           onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(filterFullStreams(likedSongs)); play(s); } }}
@@ -845,6 +847,7 @@ const LibraryPage = () => {
                           key={s.id}
                           song={s}
                           index={i}
+                          cached={libraryCachedIds.has(s.id)}
                           showIndex={!selectMode}
                           selectable={selectMode}
                           selected={selectedIds.has(s.id)}
@@ -947,6 +950,7 @@ const LibraryPage = () => {
                           key={s.id}
                           song={s}
                           index={i}
+                          cached
                           isActive={currentSong?.id === s.id}
                           isPlaying={currentSong?.id === s.id && isPlaying}
                           onClick={() => { setQueue(cachedSongs); play(s); }}
