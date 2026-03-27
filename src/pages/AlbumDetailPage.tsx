@@ -59,7 +59,6 @@ const AlbumDetailPage = () => {
 
     const controller = new AbortController();
     setResolvedTracks(rawTracks);
-    setResolving(true);
 
     const dzTracksNeedingResolve = rawTracks.filter(
       (t) =>
@@ -72,8 +71,9 @@ const AlbumDetailPage = () => {
       return () => controller.abort();
     }
 
+    setResolving(true);
+
     (async () => {
-      let upgraded = 0;
       const updated = [...rawTracks];
 
       for (let i = 0; i < updated.length; i += 4) {
@@ -95,7 +95,6 @@ const AlbumDetailPage = () => {
 
           if (isHd && resolved[j].streamUrl !== updated[idx].streamUrl) {
             updated[idx] = resolved[j];
-            upgraded++;
           }
         }
 
@@ -104,11 +103,6 @@ const AlbumDetailPage = () => {
 
       if (!controller.signal.aborted) {
         setResolving(false);
-        if (upgraded > 0) {
-          toast.success(`${upgraded} titre${upgraded > 1 ? "s" : ""} résolu${upgraded > 1 ? "s" : ""} en HD`);
-        } else {
-          toast("Aucun nouveau titre HD trouvé");
-        }
       }
     })();
 
@@ -254,7 +248,7 @@ const AlbumDetailPage = () => {
                       Télécharger tout
                     </button>
                     <button
-                      onClick={() => { setResolveKey((k) => k + 1); toast("Relance de la résolution HD…"); setMenuOpen(false); }}
+                      onClick={() => { setResolveKey((k) => k + 1); setMenuOpen(false); }}
                       disabled={resolving}
                       className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors disabled:opacity-40"
                     >
@@ -357,7 +351,7 @@ const AlbumDetailPage = () => {
           </button>
         )}
         <button
-          onClick={() => { setResolveKey((k) => k + 1); toast("Relance de la résolution HD…"); }}
+          onClick={() => setResolveKey((k) => k + 1)}
           disabled={resolving}
           className="p-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-muted-foreground hover:text-foreground hover:bg-white/[0.12] active:scale-[0.95] transition-all disabled:opacity-40"
           title="Relancer la résolution HD"
