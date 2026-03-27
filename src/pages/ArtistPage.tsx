@@ -21,6 +21,8 @@ const ArtistPage = () => {
   const userId = usePlayerStore((s) => s.userId);
   const { isAdmin } = useAdminAuth();
   const [enriching, setEnriching] = useState(false);
+  const [showImageInput, setShowImageInput] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const { scrollY } = useScroll();
   const bgY = useTransform(scrollY, [0, 400], [0, 120]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
