@@ -666,7 +666,7 @@ const SearchPage = () => {
             className="px-4 md:px-8"
           >
             {dzLoading && (!albumResults || albumResults.length === 0) ? (
-              <div className="rounded-xl bg-secondary/30 overflow-hidden">
+              <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
                 {Array.from({ length: 8 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
             ) : (
@@ -757,9 +757,9 @@ const SearchPage = () => {
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-medium">{artistFilter}</span></>}
                     </p>
-                    <div className="rounded-xl bg-secondary/30 overflow-hidden">
+                    <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
                       {filteredResults.map((song, i) => (
-                        <div key={`${song.id}-${i}`} onClick={() => handlePlayTrack(song, filteredResults)}>
+                        <div key={`${song.id}-${i}`} onClick={() => handlePlayTrack(song, filteredResults)} className="border-b border-white/[0.04] last:border-b-0">
                           <SongCard song={song} index={i} />
                         </div>
                       ))}

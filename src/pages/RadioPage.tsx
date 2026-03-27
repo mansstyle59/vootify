@@ -287,8 +287,8 @@ const RadioPage = () => {
         }`}
       >
         {/* Cover */}
-        <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-          <img src={displayCover} alt={station.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }} />
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-secondary/40 ring-1 ring-white/[0.06]">
+          <img src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }} />
           <div className={`absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity ${isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
             {isActivePlaying ? <Volume2 className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
           </div>
