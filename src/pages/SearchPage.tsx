@@ -23,6 +23,10 @@ import {
   Disc3,
   Sparkles,
   Play,
+  PlusCircle,
+  ListMusic,
+  Plus,
+  Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
