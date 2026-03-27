@@ -123,6 +123,7 @@ export function searchLocalSongs(
     const t = normalize(song.title);
     const ar = normalize(song.artist);
     const al = normalize(song.album);
+    const ge = normalize(song.genre || "");
     let score = 0;
 
     // Exact matches (highest priority)
@@ -138,6 +139,8 @@ export function searchLocalSongs(
     else if (al.startsWith(q)) score += 60;
     else if (al.includes(q)) score += 40;
 
+    if (ge && (ge === q || ge.includes(q))) score += 50;
+
     // Per-word matching (including fuzzy)
     for (const w of qWords) {
       if (t.includes(w)) score += 20;
@@ -148,6 +151,8 @@ export function searchLocalSongs(
 
       if (al.includes(w)) score += 12;
       else if (fuzzyWordMatch(w, al)) score += 5;
+
+      if (ge && (ge.includes(w) || fuzzyWordMatch(w, ge))) score += 8;
     }
 
     // Popularity boost (recently played)
