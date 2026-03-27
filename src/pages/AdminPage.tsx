@@ -173,6 +173,8 @@ function UsersTab() {
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showCredsDialog, setShowCredsDialog] = useState(false);
+  const [createdCreds, setCreatedCreds] = useState<{ identifier: string; password: string; displayName: string } | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
