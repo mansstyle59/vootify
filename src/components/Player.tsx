@@ -564,19 +564,29 @@ export function MiniPlayer() {
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   }, [currentSong, isLive, radioMeta, isPlaying]);
 
-  // Update position state for lock screen scrubber — throttled to every 5s
+  // Update position state for lock screen scrubber — use actual audio duration
   const lastPositionSyncRef = useRef(0);
   useEffect(() => {
     if (!("mediaSession" in navigator) || !currentSong || isLive) return;
     const now = Date.now();
-    if (now - lastPositionSyncRef.current < 5000) return;
+    // Throttle: every 1s when visible, every 5s in background
+    const interval = document.visibilityState === "visible" ? 1000 : 5000;
+    if (now - lastPositionSyncRef.current < interval) return;
     lastPositionSyncRef.current = now;
-    if ("setPositionState" in navigator.mediaSession && currentSong.duration > 0) {
+
+    // Use the ACTUAL audio duration (not Deezer metadata which can be wrong)
+    const audio = audioRef.current;
+    const realDuration = audio && isFinite(audio.duration) && audio.duration > 0
+      ? audio.duration
+      : currentSong.duration;
+
+    if ("setPositionState" in navigator.mediaSession && realDuration > 0) {
       try {
+        const pos = Math.max(0, Math.min(progress, realDuration));
         navigator.mediaSession.setPositionState({
-          duration: currentSong.duration,
+          duration: realDuration,
           playbackRate: 1,
-          position: Math.min(progress, currentSong.duration),
+          position: pos,
         });
       } catch { /* ignore */ }
     }
