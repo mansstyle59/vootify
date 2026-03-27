@@ -54,11 +54,11 @@ const SearchPage = () => {
     const fetchNew = async () => {
       try {
         // First try cached data from DB
-        const { data: cached } = await supabase
-          .from("friday_releases")
+        const { data: cached } = await (supabase
+          .from("friday_releases" as any)
           .select("album_id, title, artist, cover_url")
           .order("position", { ascending: true })
-          .limit(25);
+          .limit(25) as any);
 
         if (!cancelled && cached && cached.length > 0) {
           setNewReleases(cached.map((r: any) => ({
