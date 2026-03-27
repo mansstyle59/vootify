@@ -701,11 +701,110 @@ function UsersTab() {
           );
         })
       )}
+
+      {/* Share playlist dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              Envoyer une playlist à {shareTargetUser?.display_name || "l'utilisateur"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2 flex-1 overflow-hidden flex flex-col">
+            <div className="space-y-2">
+              <Label>Nom de la playlist *</Label>
+              <Input
+                value={sharePlaylistName}
+                onChange={(e) => setSharePlaylistName(e.target.value)}
+                placeholder="Ex : Ma sélection du moment"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Rechercher des morceaux</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={shareSearch}
+                  onChange={(e) => setShareSearch(e.target.value)}
+                  placeholder="Titre, artiste, album..."
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {shareSelectedSongs.size} morceau{shareSelectedSongs.size > 1 ? "x" : ""} sélectionné{shareSelectedSongs.size > 1 ? "s" : ""}
+              </p>
+              {shareSelectedSongs.size > 0 && (
+                <button
+                  onClick={() => setShareSelectedSongs(new Set())}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Tout désélectionner
+                </button>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-1 min-h-0 max-h-[40vh]">
+              {filteredShareSongs.map((song) => {
+                const isSelected = shareSelectedSongs.has(song.id);
+                return (
+                  <button
+                    key={song.id}
+                    onClick={() => {
+                      const next = new Set(shareSelectedSongs);
+                      if (isSelected) next.delete(song.id);
+                      else next.add(song.id);
+                      setShareSelectedSongs(next);
+                    }}
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all ${
+                      isSelected ? "bg-primary/15 border border-primary/30" : "bg-secondary/30 border border-transparent hover:bg-secondary/60"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                      {song.cover_url ? (
+                        <img src={song.cover_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Music className="w-4 h-4 text-muted-foreground/30" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{song.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      isSelected ? "border-primary bg-primary" : "border-muted-foreground/30"
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                  </button>
+                );
+              })}
+              {filteredShareSongs.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-8">Aucun morceau trouvé</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSendPlaylist}
+              disabled={shareSending || shareSelectedSongs.size === 0 || !sharePlaylistName.trim()}
+              className="gap-1.5"
+            >
+              {shareSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Envoyer ({shareSelectedSongs.size})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-function SongsTab() {
   const [songs, setSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
