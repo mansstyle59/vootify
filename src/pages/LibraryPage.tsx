@@ -293,15 +293,18 @@ const LibraryPage = () => {
       const { data, error } = await supabase.from("custom_songs").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       const songs = (data || []).map((s: any): Song & { _dbId: string } => ({
-        _dbId: s.id, id: `custom-${s.id}`, title: s.title, artist: s.artist,
-        album: s.album || "", duration: s.duration, coverUrl: s.cover_url || "",
+        _dbId: s.id, id: `custom-${s.id}`,
+        title: normalizeTitle(s.title),
+        artist: normalizeArtist(s.artist),
+        album: s.album ? normalizeText(s.album) : "",
+        duration: s.duration, coverUrl: s.cover_url || "",
         streamUrl: s.stream_url || "", liked: false,
       }));
 
-      // Auto-fix missing durations
-      const toFix = songs.filter((s) => !s.duration && s.streamUrl);
-      if (toFix.length > 0) {
-        Promise.all(toFix.map((s) => new Promise<void>((resolve) => {
+      // Auto-fix missing durations via Audio element
+      const toFixDuration = songs.filter((s) => !s.duration && s.streamUrl);
+      if (toFixDuration.length > 0) {
+        Promise.all(toFixDuration.map((s) => new Promise<void>((resolve) => {
           const audio = new Audio();
           audio.preload = "metadata";
           audio.src = s.streamUrl;
@@ -314,6 +317,20 @@ const LibraryPage = () => {
           setTimeout(() => resolve(), 5000);
         }))).then(() => queryClient.invalidateQueries({ queryKey: ["custom-songs"] }));
       }
+
+      // Auto-enrich missing metadata (cover, album, duration) via Deezer
+      const toEnrich = songs.filter((s) => !s.coverUrl || !s.album || !s.duration);
+      if (toEnrich.length > 0) {
+        autoEnrichCustomSongs(
+          toEnrich.map((s) => ({
+            dbId: s._dbId, title: s.title, artist: s.artist,
+            album: s.album || null, coverUrl: s.coverUrl || null, duration: s.duration,
+          }))
+        ).then((count) => {
+          if (count > 0) queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+        });
+      }
+
       return songs as Song[];
     },
     staleTime: 60 * 1000,
