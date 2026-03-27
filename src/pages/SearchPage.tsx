@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { toast } from "sonner";
-import { hdCache } from "@/lib/hdCache";
+import { useNavigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { deezerApi } from "@/lib/deezerApi";
@@ -64,9 +64,7 @@ const SearchPage = () => {
   }, [userId]);
 
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
-  const [hdOnly, setHdOnly] = useState(false);
   const [customOnly, setCustomOnly] = useState(false);
-  const [resolveProgress, setResolveProgress] = useState<{ resolved: number; total: number } | null>(null);
   const [dzPage, setDzPage] = useState(1);
   const [allDzResults, setAllDzResults] = useState<Song[]>([]);
   const [hasMoreDz, setHasMoreDz] = useState(true);
@@ -149,7 +147,7 @@ const SearchPage = () => {
 
   const PAGE_SIZE = 50;
 
-  const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
+  const isFullStream = (s: Song) => !!s.streamUrl;
 
   // Deezer search (page 1)
   const { data: dzResults, isLoading: dzLoading, isError: dzError, error: dzErrorMsg } = useQuery({
@@ -172,72 +170,6 @@ const SearchPage = () => {
     setHasMoreDz((dzResults?.length || 0) >= PAGE_SIZE || extraDzResults.length > 0);
   }, [dzResults, extraDzResults]);
 
-  // Background HD resolution — triggered only when dzResults change, NOT allDzResults
-  const resolveAbortRef = useRef<AbortController | null>(null);
-  const resolvedIdsRef = useRef<Set<string>>(new Set());
-
-  // Reset resolved tracking when query changes
-  useEffect(() => {
-    resolvedIdsRef.current.clear();
-  }, [debouncedQuery]);
-
-  useEffect(() => {
-    resolveAbortRef.current?.abort();
-
-    if (!dzResults || dzResults.length === 0) {
-      setResolveProgress(null);
-      return;
-    }
-
-    const previewTracks = dzResults.filter(
-      (s) => s.id.startsWith("dz-") && !resolvedIdsRef.current.has(s.id) && s.streamUrl && (s.streamUrl.includes("dzcdn.net") || s.streamUrl.includes("cdn-preview"))
-    ).slice(0, 40);
-
-    if (previewTracks.length === 0) {
-      setResolveProgress(null);
-      return;
-    }
-
-    const controller = new AbortController();
-    resolveAbortRef.current = controller;
-    let resolvedCount = 0;
-    const total = previewTracks.length;
-    setResolveProgress({ resolved: 0, total });
-
-    const resolveInBackground = async () => {
-      let upgradedCount = 0;
-      for (let i = 0; i < previewTracks.length; i += 6) {
-        if (controller.signal.aborted) return;
-        const batch = previewTracks.slice(i, i + 6);
-        const resolved = await Promise.all(
-          batch.map((s) => deezerApi.resolveFullStream(s).catch(() => s))
-        );
-        if (controller.signal.aborted) return;
-
-        // Mark as resolved so we don't re-process
-        batch.forEach((s) => resolvedIdsRef.current.add(s.id));
-        resolvedCount += batch.length;
-        setResolveProgress({ resolved: resolvedCount, total });
-
-        const resolvedMap = new Map(resolved.filter((r, idx) => r.streamUrl !== batch[idx].streamUrl).map((r) => [r.id, r]));
-        upgradedCount += resolvedMap.size;
-        if (resolvedMap.size > 0) {
-          setAllDzResults((prev) =>
-            prev.map((s) => resolvedMap.get(s.id) || s)
-          );
-        }
-      }
-      if (!controller.signal.aborted) {
-        if (upgradedCount > 0) {
-          toast.success(`${upgradedCount}/${total} morceaux upgradés en HD`);
-        }
-        setTimeout(() => setResolveProgress(null), 1500);
-      }
-    };
-
-    resolveInBackground();
-    return () => { controller.abort(); setResolveProgress(null); };
-  }, [dzResults, debouncedQuery]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !debouncedQuery || !hasMoreDz) return;
@@ -412,16 +344,14 @@ const SearchPage = () => {
     if (!mergedResults) return [];
     let results = mergedResults;
     if (customOnly) results = results.filter((s) => s.id.startsWith("custom-") || s.resolvedViaCustom);
-    if (hdOnly) results = results.filter(isFullStream);
     if (artistFilter) results = results.filter((song) => song.artist.includes(artistFilter));
     return results;
-  }, [mergedResults, artistFilter, hdOnly, customOnly]);
+  }, [mergedResults, artistFilter, customOnly]);
 
   const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
-    const resolved = song.id.startsWith("dz-") ? await deezerApi.resolveFullStream(song) : song;
     setQueue(allSongs);
-    play(resolved);
+    play(song);
   };
 
   const handleRemoveRecent = (term: string) => {
