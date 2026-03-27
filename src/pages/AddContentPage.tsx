@@ -158,7 +158,7 @@ function SongForm() {
 
       if (existing && existing.length > 0) {
         // Duplicate found — skip entirely, no upload
-        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, skipped: true } as any : s));
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, skipped: true } : s));
         skipped++;
         continue;
       }
