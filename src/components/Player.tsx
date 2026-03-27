@@ -702,7 +702,8 @@ export function MiniPlayer() {
 
   if (!currentSong) return null;
 
-  const progressPct = !isLive && currentSong.duration > 0 ? (progress / currentSong.duration) * 100 : 0;
+  const effectiveDuration = audioDuration > 0 ? audioDuration : currentSong.duration;
+  const progressPct = !isLive && effectiveDuration > 0 ? (progress / effectiveDuration) * 100 : 0;
 
   // ── Radio bubble mini-player ──
   if (isLive) {
@@ -1097,6 +1098,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
   const [showQueue, setShowQueue] = useState(false);
   const resolveStep = usePlayerStore((s) => s.resolveStep);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
+  const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isSeeking, setIsSeeking] = useState(false);
