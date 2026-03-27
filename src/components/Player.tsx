@@ -154,8 +154,8 @@ export function MiniPlayer() {
 
     const runWatchdog = () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
-      // Longer interval in background = less CPU
-      const interval = document.visibilityState === "visible" ? 3000 : 8000;
+      // Longer interval = less CPU
+      const interval = document.visibilityState === "visible" ? 5000 : 10000;
       watchdogRef.current = setInterval(() => {
         const audio = audioRef.current;
         if (!audio || audio.paused || !audio.src || !isFinite(audio.duration)) return;
@@ -368,31 +368,29 @@ export function MiniPlayer() {
           }
         }, FADE_STEP);
       } else {
-        // Direct load — minimal latency
+        // Direct load — instant play
         audio.src = srcToUse;
         audio.volume = volume;
         audio.muted = false;
+        audio.play().catch((e) => {
+          console.warn("[player] Immediate play failed, waiting canplay:", e);
+          const onCanPlay = () => {
+            audio.removeEventListener("canplay", onCanPlay);
+            audio.volume = volume;
+            audio.muted = false;
+            audio.play().catch(console.error);
+          };
+          audio.addEventListener("canplay", onCanPlay, { once: true });
+        });
 
-        const onCanPlay = () => {
-          audio.removeEventListener("canplay", onCanPlay);
-          audio.volume = volume;
-          audio.muted = false;
-          audio.play().catch((e) => {
-            console.error("[player] Play failed:", e);
-            setTimeout(() => audio.play().catch(() => {}), 150);
-          });
-        };
-        audio.addEventListener("canplay", onCanPlay, { once: true });
-
-        // Safety timeout
+        // Safety timeout — shorter for streaming-grade responsiveness
         setTimeout(() => {
-          audio.removeEventListener("canplay", onCanPlay);
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
             audio.muted = false;
             audio.play().catch(console.error);
           }
-        }, 1800);
+        }, 600);
       }
     };
 
@@ -445,7 +443,7 @@ export function MiniPlayer() {
     };
 
     // Delay preload slightly so it doesn't compete with current track loading
-    const timer = setTimeout(preloadNext, 1500);
+    const timer = setTimeout(preloadNext, 400);
     return () => clearTimeout(timer);
   }, [currentSong?.id]);
 
@@ -465,10 +463,10 @@ export function MiniPlayer() {
       }
     }
 
-    // ── Throttle UI progress updates in background to save CPU ──
+    // ── Throttle UI progress updates to save CPU ──
     const now = Date.now();
     const isVisible = document.visibilityState === "visible";
-    const throttleMs = isVisible ? 0 : 2000;
+    const throttleMs = isVisible ? 250 : 3000;
     if (now - lastProgressUpdateRef.current >= throttleMs) {
       setProgress(t);
       lastProgressUpdateRef.current = now;
@@ -515,7 +513,7 @@ export function MiniPlayer() {
   const isLive = currentSong ? currentSong.duration === 0 : false;
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverForColor = isLive ? (radioMeta?.coverUrl || currentSong?.coverUrl) : currentSong?.coverUrl;
-  const miniDominantColor = useDominantColor(coverForColor);
+  const miniDominantColor: string | null = null; // Skip expensive canvas op on mini player
 
   // ── Media Session API: lock screen metadata ──
   // IMPORTANT: Don't remove action handlers on cleanup — iOS loses the Now Playing session
@@ -1165,11 +1163,11 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             key={currentSong.id}
             src={currentSong.coverUrl}
             alt=""
-            initial={{ opacity: 0, scale: 2.2 }}
-            animate={{ opacity: 0.25, scale: 2 }}
-            exit={{ opacity: 0, scale: 1.8 }}
-            transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="absolute inset-0 w-full h-full object-cover blur-[120px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.25 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="absolute inset-0 w-full h-full object-cover scale-[2] blur-[120px]"
           />
         </AnimatePresence>
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 60%, hsl(var(--background) / 0.7) 100%)" }} />
@@ -1365,10 +1363,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   key={currentSong.id}
                   src={currentSong.coverUrl}
                   alt={currentSong.title}
-                  initial={{ opacity: 0, scale: 0.85, rotateY: -12, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, scale: 1, rotateY: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, scale: 0.9, rotateY: 12, filter: "blur(6px)" }}
-                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   className="w-full max-w-[340px] aspect-square rounded-2xl object-cover"
                   style={{ boxShadow: `0 24px 80px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)` }}
                 />
@@ -1394,10 +1392,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     {resolveStep ? (
                       <motion.span
                         key={resolveStep}
-                        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
                         className="absolute inset-0 inline-flex items-center gap-1.5 text-primary"
                       >
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1406,10 +1404,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     ) : (
                       <motion.span
                         key="artist-badge"
-                        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
                         className="absolute inset-0 inline-flex items-center gap-2"
                       >
                         <p className="text-[15px] text-foreground/60 truncate">
