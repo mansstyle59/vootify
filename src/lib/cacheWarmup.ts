@@ -74,8 +74,8 @@ export function startCacheWarmup(userId: string) {
   };
 
   if ("requestIdleCallback" in window) {
-    requestIdleCallback(run, { timeout: 3000 });
+    requestIdleCallback(run, { timeout: 8000 });
   } else {
-    setTimeout(run, 2000);
+    setTimeout(run, 5000);
   }
 }

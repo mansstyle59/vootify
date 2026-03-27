@@ -54,7 +54,7 @@ export function initRoutePrefetch() {
     { capture: true, passive: true }
   );
 
-  // Prefetch all main navigation routes immediately on idle
+  // Prefetch main nav routes after a longer idle delay to not compete with initial render
   const prefetchAll = () => {
     prefetchRoute("/");
     prefetchRoute("/search");
@@ -63,8 +63,8 @@ export function initRoutePrefetch() {
   };
 
   if ("requestIdleCallback" in window) {
-    requestIdleCallback(prefetchAll, { timeout: 1500 });
+    requestIdleCallback(prefetchAll, { timeout: 5000 });
   } else {
-    setTimeout(prefetchAll, 1000);
+    setTimeout(prefetchAll, 3000);
   }
 }
