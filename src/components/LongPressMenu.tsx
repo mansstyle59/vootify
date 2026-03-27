@@ -13,6 +13,7 @@ interface LongPressMenuProps {
 
 export function LongPressMenu({ song, children }: LongPressMenuProps) {
   const [open, setOpen] = useState(false);
+  const [pressing, setPressing] = useState(false);
   const [showPlaylistSub, setShowPlaylistSub] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -22,8 +23,10 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
 
   const startPress = useCallback(() => {
     didLongPressRef.current = false;
+    setPressing(true);
     timerRef.current = setTimeout(() => {
       didLongPressRef.current = true;
+      setPressing(false);
       setOpen(true);
       if (navigator.vibrate) navigator.vibrate(15);
     }, 500);
@@ -31,6 +34,7 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
 
   const cancelPress = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    setPressing(false);
   }, []);
 
   // Close on outside click
