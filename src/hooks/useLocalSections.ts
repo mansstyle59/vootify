@@ -13,21 +13,11 @@ function rowToSong(row: any): Song {
     coverUrl: row.cover_url || "",
     streamUrl: row.stream_url || "",
     liked: false,
+    year: row.year || undefined,
+    genre: row.genre || undefined,
   };
 }
 
-function customRowToSong(row: any): Song {
-  return {
-    id: `custom-${row.id}`,
-    title: row.title,
-    artist: row.artist,
-    album: row.album || "",
-    duration: row.duration || 0,
-    coverUrl: row.cover_url || "",
-    streamUrl: row.stream_url || "",
-    liked: false,
-  };
-}
 
 /** Recently added custom songs (by admin) */
 export function useRecentlyAdded(limit = 20) {
@@ -41,7 +31,7 @@ export function useRecentlyAdded(limit = 20) {
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data || []).map(customRowToSong);
+      return (data || []).map(rowToSong);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -123,7 +113,7 @@ export function useRecommended(limit = 20) {
       if (error) throw error;
       if (!allSongs || allSongs.length === 0) return [];
 
-      const mapped = allSongs.map(customRowToSong);
+      const mapped = allSongs.map(rowToSong);
 
       // If user has liked songs, prioritize same artists
       if (likedSongs.length > 0) {

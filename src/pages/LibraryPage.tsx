@@ -154,12 +154,21 @@ function PremiumSongRow({
             </span>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground/70 leading-tight mt-1 truncate">
-          {formatArtist(song.artist)}
-        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className="text-[11px] text-muted-foreground/70 leading-tight truncate">
+            {formatArtist(song.artist)}
+          </p>
+          {song.genre && (
+            <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+              {song.genre}
+            </span>
+          )}
+          {song.year && (
+            <span className="shrink-0 text-[9px] text-muted-foreground/40">{song.year}</span>
+          )}
+        </div>
       </div>
 
-      {/* Duration */}
       <span className="text-[11px] text-muted-foreground/50 tabular-nums flex-shrink-0 font-medium">
         {formatDuration(song.duration)}
       </span>

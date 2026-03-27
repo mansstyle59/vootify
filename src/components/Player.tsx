@@ -1379,6 +1379,24 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     </span>
                   )}
                 </div>
+                {(currentSong.album || currentSong.genre || currentSong.year) && (
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    {currentSong.album && (
+                      <span className="text-[11px] text-foreground/40 truncate max-w-[150px]">{currentSong.album}</span>
+                    )}
+                    {currentSong.album && (currentSong.genre || currentSong.year) && (
+                      <span className="text-foreground/20">•</span>
+                    )}
+                    {currentSong.year && (
+                      <span className="text-[11px] text-foreground/40">{currentSong.year}</span>
+                    )}
+                    {currentSong.genre && (
+                      <span className="inline-flex px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold">
+                        {currentSong.genre}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <motion.button
                 whileTap={{ scale: 1.3 }}

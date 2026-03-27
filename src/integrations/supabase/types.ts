@@ -108,10 +108,12 @@ export type Database = {
           cover_url: string | null
           created_at: string
           duration: number
+          genre: string | null
           id: string
           stream_url: string | null
           title: string
           user_id: string
+          year: number | null
         }
         Insert: {
           album?: string | null
@@ -119,10 +121,12 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           duration?: number
+          genre?: string | null
           id?: string
           stream_url?: string | null
           title: string
           user_id: string
+          year?: number | null
         }
         Update: {
           album?: string | null
@@ -130,10 +134,12 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           duration?: number
+          genre?: string | null
           id?: string
           stream_url?: string | null
           title?: string
           user_id?: string
+          year?: number | null
         }
         Relationships: []
       }

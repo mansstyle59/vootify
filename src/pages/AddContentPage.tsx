@@ -179,6 +179,7 @@ function SongForm() {
         const { error: updateErr } = await supabase.from("custom_songs").update({
           album: song.album.trim() || null, duration: song.duration || 0,
           cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+          year: song.year || null, genre: song.genre || null,
         }).eq("id", existing[0].id);
         if (updateErr) { toast.error(`Erreur mise à jour: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
         replaced++;
@@ -187,6 +188,7 @@ function SongForm() {
         const { error: dbErr } = await supabase.from("custom_songs").insert({
           user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
           album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+          year: song.year || null, genre: song.genre || null,
         });
         if (dbErr) { toast.error(`Erreur DB: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
       }
@@ -446,6 +448,7 @@ function PlaylistForm() {
         user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
         album: song.album.trim() || null, duration: song.duration || 0,
         cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+        year: song.year || null, genre: song.genre || null,
       }, { onConflict: "title,artist" });
 
       await addSongToPlaylist(created.id, {
