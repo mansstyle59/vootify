@@ -148,6 +148,8 @@ const HomePage = () => {
     recently_listened: { songs: recentlyListened, loading: loadingListened },
     most_played: { songs: mostPlayed, loading: loadingMost },
     recommended: { songs: recommended, loading: loadingRecommended },
+    artists: { songs: undefined, loading: false }, // special rendering
+    albums: { songs: undefined, loading: false },  // special rendering
   }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
   const visibleSections = useMemo(() => {
