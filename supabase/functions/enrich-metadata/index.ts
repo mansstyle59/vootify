@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     const mode = body.mode || "songs"; // "songs" or "albums"
     const offset = body.offset || 0;
     const onlyMissing = body.only_missing !== false;
+    const songIds: string[] | undefined = body.song_ids; // optional: enrich specific songs only
 
     if (mode === "albums") {
       // Enrich custom_albums
@@ -175,12 +176,16 @@ Deno.serve(async (req) => {
     // Default: enrich songs
     let query = supabase
       .from("custom_songs")
-      .select("id, title, artist, album, cover_url, genre, year")
-      .order("created_at", { ascending: true })
-      .range(offset, offset + BATCH_SIZE - 1);
+      .select("id, title, artist, album, cover_url, genre, year");
 
-    if (onlyMissing) {
-      query = query.or("genre.is.null,year.is.null");
+    if (songIds && songIds.length > 0) {
+      // Enrich specific songs by IDs
+      query = query.in("id", songIds);
+    } else {
+      query = query.order("created_at", { ascending: true }).range(offset, offset + BATCH_SIZE - 1);
+      if (onlyMissing) {
+        query = query.or("genre.is.null,year.is.null");
+      }
     }
 
     const { data: songs, error } = await query;
@@ -222,7 +227,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        done: songs.length < BATCH_SIZE,
+        done: songIds ? true : songs.length < BATCH_SIZE,
         updated,
         processed: songs.length,
         offset,
