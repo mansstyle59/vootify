@@ -5,7 +5,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2, Mail, Calendar, LogIn } from "lucide-react";
+import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn } from "lucide-react";
 
 /**
  * Blocks access to the app if the user has no active subscription.
