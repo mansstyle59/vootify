@@ -91,11 +91,6 @@ const SearchPage = () => {
     fetchNew();
     return () => { cancelled = true; };
   }, []);
-      } catch { /* silent */ }
-    };
-    fetchNew();
-    return () => { cancelled = true; };
-  }, []);
 
   const { data: allSongs, isLoading } = useAllLocalSongs();
 
