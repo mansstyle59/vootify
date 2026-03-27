@@ -28,6 +28,7 @@ const RadioPage = lazy(() => import("./pages/RadioPage"));
 const AddContentPage = lazy(() => import("./pages/AddContentPage"));
 const PlaylistDetailPage = lazy(() => import("./pages/PlaylistDetailPage"));
 const AlbumDetailPage = lazy(() => import("./pages/AlbumDetailPage"));
+const ArtistPage = lazy(() => import("./pages/ArtistPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
@@ -70,6 +71,7 @@ function AnimatedRoutes() {
             <Route path="/add" element={<AddContentPage />} />
             <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
             <Route path="/album/:id" element={<AlbumDetailPage />} />
+            <Route path="/artist/:name" element={<ArtistPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminPage />} />
