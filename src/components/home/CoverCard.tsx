@@ -11,10 +11,12 @@ interface CoverCardProps {
   onClick?: () => void;
   rounded?: boolean;
   preserveRatio?: boolean;
+  /** Show play button — only for cards that trigger playback */
+  showPlay?: boolean;
 }
 
 export const CoverCard = memo(function CoverCard({
-  title, subtitle, imageUrl, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false,
+  title, subtitle, imageUrl, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false, showPlay = false,
 }: CoverCardProps) {
   return (
     <motion.div
@@ -45,25 +47,27 @@ export const CoverCard = memo(function CoverCard({
         {/* Subtle gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Play/Pause button — centered, Apple Music style */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div
-            initial={false}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isActive
-                ? "opacity-100 scale-100 bg-primary shadow-[0_2px_16px_hsl(var(--primary)/0.5)]"
-                : "opacity-80 scale-100 md:opacity-0 md:scale-75 group-hover:opacity-100 group-hover:scale-100 bg-primary/90 shadow-[0_2px_16px_hsl(var(--primary)/0.4)]"
-            }`}
-          >
-            {isActive ? (
-              <Pause className="w-5 h-5 text-primary-foreground fill-current" />
-            ) : (
-              <Play className="w-5 h-5 text-primary-foreground fill-current ml-0.5" />
-            )}
-          </motion.div>
-        </div>
+        {/* Play/Pause button — only on playable cards */}
+        {(showPlay || isActive) && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <motion.div
+              initial={false}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+                isActive
+                  ? "opacity-100 scale-100 bg-primary shadow-[0_2px_16px_hsl(var(--primary)/0.5)]"
+                  : "opacity-80 scale-100 md:opacity-0 md:scale-75 group-hover:opacity-100 group-hover:scale-100 bg-primary/90 shadow-[0_2px_16px_hsl(var(--primary)/0.4)]"
+              }`}
+            >
+              {isActive ? (
+                <Pause className="w-5 h-5 text-primary-foreground fill-current" />
+              ) : (
+                <Play className="w-5 h-5 text-primary-foreground fill-current ml-0.5" />
+              )}
+            </motion.div>
+          </div>
+        )}
       </div>
       <h3 className={`text-sm font-bold truncate leading-tight ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
         {title}

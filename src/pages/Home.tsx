@@ -199,6 +199,7 @@ const HomePage = () => {
                 index={i}
                 isActive={currentSong?.id === song.id && isPlaying}
                 onClick={() => handlePlayTrack(song, songs)}
+                showPlay
               />
             ))
           )}
