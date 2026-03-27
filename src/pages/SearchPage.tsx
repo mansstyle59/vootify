@@ -437,10 +437,21 @@ const SearchPage = () => {
 
   return (
     <div className="pb-40 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
-        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Rechercher</h1>
-        <p className="text-sm text-muted-foreground mb-5">Trouvez vos artistes et morceaux préférés</p>
+      {/* Hero header */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/5" />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <SearchIcon className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Rechercher</h1>
+              <p className="text-sm text-muted-foreground">Trouvez vos artistes et morceaux préférés</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search bar with autocomplete */}

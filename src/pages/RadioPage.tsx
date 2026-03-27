@@ -360,13 +360,15 @@ const RadioPage = () => {
         className="group cursor-pointer"
         onClick={() => playStation(station)}
       >
-        <div className={`relative aspect-square rounded-lg overflow-hidden mb-1 ring-[1.5px] transition-all duration-300 ${
-          isActive ? "ring-primary shadow-lg shadow-primary/20" : "ring-transparent"
+        <div className={`relative aspect-square rounded-2xl overflow-hidden mb-2 ring-[1.5px] transition-all duration-300 ${
+          isActive ? "ring-primary shadow-lg shadow-primary/20" : "ring-white/[0.06]"
         }`}>
+          {/* Neutral background for logo */}
+          <div className="absolute inset-0 bg-secondary/40" />
           <img
             src={displayCover}
             alt={station.name}
-            className="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
+            className="relative w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop'; }}
           />
 
