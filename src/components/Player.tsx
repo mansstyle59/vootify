@@ -515,11 +515,10 @@ export function MiniPlayer() {
   const miniDominantColor: string | null = null; // Skip expensive canvas op on mini player
 
   // ── Media Session API: lock screen metadata ──
-  // IMPORTANT: Don't remove action handlers on cleanup — iOS loses the Now Playing session
+  // Re-register handlers whenever song changes to ensure iOS doesn't drop them
   useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
+    if (!("mediaSession" in navigator) || !currentSong) return;
 
-    // Set action handlers once (idempotent)
     navigator.mediaSession.setActionHandler("play", () => {
       const store = usePlayerStore.getState();
       if (!store.isPlaying) store.togglePlay();
@@ -534,6 +533,9 @@ export function MiniPlayer() {
     navigator.mediaSession.setActionHandler("nexttrack", () => {
       usePlayerStore.getState().next();
     });
+    navigator.mediaSession.setActionHandler("stop", () => {
+      usePlayerStore.getState().closePlayer();
+    });
     // Explicitly disable 10s skip buttons on iOS lock screen — show prev/next track instead
     navigator.mediaSession.setActionHandler("seekbackward", null);
     navigator.mediaSession.setActionHandler("seekforward", null);
@@ -542,7 +544,6 @@ export function MiniPlayer() {
       if (details.seekTime != null && audioRef.current) {
         audioRef.current.currentTime = details.seekTime;
         usePlayerStore.getState().setProgress(details.seekTime);
-        // Immediately sync position to lock screen
         if ("setPositionState" in navigator.mediaSession && audioRef.current.duration > 0) {
           try {
             navigator.mediaSession.setPositionState({
@@ -554,7 +555,7 @@ export function MiniPlayer() {
         }
       }
     });
-  }, []); // Only once
+  }, [currentSong?.id]);
 
   // Update metadata whenever song/radio changes
   useEffect(() => {
