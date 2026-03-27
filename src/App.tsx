@@ -106,17 +106,12 @@ function AppContent() {
     }
   }, [user, loading, loadUserData, setUserId]);
 
-  const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-    toast.success("Contenu mis à jour ✨");
-  }, [queryClient]);
-
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <PullToRefresh onRefresh={handleRefresh} className="flex-1 scrollbar-hide">
+      <div className="flex-1 scrollbar-hide overflow-y-auto">
         <AnimatedRoutes />
-      </PullToRefresh>
+      </div>
       {/* NotificationBell moved into HeroBanner */}
       <MiniPlayer />
       <MobileNav />
