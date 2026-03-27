@@ -151,11 +151,12 @@ const SearchPage = () => {
   const isFullStream = (s: Song) => !!s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview");
 
   // Deezer search (page 1)
-  const { data: dzResults, isLoading: dzLoading } = useQuery({
+  const { data: dzResults, isLoading: dzLoading, isError: dzError, error: dzErrorMsg } = useQuery({
     queryKey: ["deezer-search", debouncedQuery],
     queryFn: () => deezerApi.searchTracks(debouncedQuery, PAGE_SIZE),
     enabled: debouncedQuery.length >= 2,
     staleTime: 2 * 60 * 1000,
+    retry: 1,
   });
 
   const [extraDzResults, setExtraDzResults] = useState<Song[]>([]);
@@ -666,7 +667,25 @@ const SearchPage = () => {
             exit={{ opacity: 0 }}
             className="px-4 md:px-8"
           >
-            {dzLoading && (!albumResults || albumResults.length === 0) ? (
+            {dzError ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-16"
+              >
+                <SearchIcon className="w-12 h-12 text-destructive/40 mx-auto mb-4" />
+                <p className="text-foreground font-medium mb-1">Impossible de charger les résultats</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {(dzErrorMsg as Error)?.message || "Erreur réseau — vérifiez votre connexion"}
+                </p>
+                <button
+                  onClick={() => { setDebouncedQuery(""); setTimeout(() => setDebouncedQuery(query.trim()), 100); }}
+                  className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  Réessayer
+                </button>
+              </motion.div>
+            ) : dzLoading && (!albumResults || albumResults.length === 0) ? (
               <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
                 {Array.from({ length: 8 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
