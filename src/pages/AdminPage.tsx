@@ -1105,29 +1105,37 @@ function RadiosTab() {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editGenre, setEditGenre] = useState("");
+  const [editCoverUrl, setEditCoverUrl] = useState("");
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const radioCoverRef = useRef<HTMLInputElement>(null);
 
   const isSelecting = selectedIds.size > 0;
 
-  useEffect(() => {
-    (async () => {
-      const PAGE = 1000;
-      let all: any[] = [];
-      let from = 0;
-      while (true) {
-        const { data } = await supabase
-          .from("custom_radio_stations")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .range(from, from + PAGE - 1);
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < PAGE) break;
-        from += PAGE;
-      }
-      setRadios(all);
-      setLoading(false);
-    })();
-  }, []);
+  const loadRadios = async () => {
+    setLoading(true);
+    const PAGE = 1000;
+    let all: any[] = [];
+    let from = 0;
+    while (true) {
+      const { data } = await supabase
+        .from("custom_radio_stations")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (!data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    setRadios(all);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadRadios(); }, []);
 
   const handleDelete = async (id: string) => {
     await supabase.from("custom_radio_stations").delete().eq("id", id);
@@ -1161,6 +1169,52 @@ function RadiosTab() {
   const toggleSelectAll = () => {
     if (selectedIds.size === radios.length) setSelectedIds(new Set());
     else setSelectedIds(new Set(radios.map((r) => r.id)));
+  };
+
+  const startEdit = (r: any) => {
+    setEditingId(r.id);
+    setEditName(r.name);
+    setEditGenre(r.genre || "");
+    setEditCoverUrl(r.cover_url || "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditCoverUrl("");
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Sélectionnez une image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (max 5 Mo)"); return; }
+    setUploadingCover(true);
+    const ext = file.name.split(".").pop();
+    const path = `radio/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("covers").upload(path, file);
+    if (error) { toast.error("Erreur d'upload"); setUploadingCover(false); return; }
+    const { data: urlData } = supabase.storage.from("covers").getPublicUrl(path);
+    setEditCoverUrl(urlData.publicUrl);
+    setUploadingCover(false);
+    toast.success("Image uploadée !");
+    if (radioCoverRef.current) radioCoverRef.current.value = "";
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editName.trim()) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("custom_radio_stations")
+      .update({ name: editName.trim(), genre: editGenre.trim() || null, cover_url: editCoverUrl || null })
+      .eq("id", id);
+    setSaving(false);
+    if (error) { toast.error("Erreur lors de la modification"); return; }
+    setRadios((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, name: editName.trim(), genre: editGenre.trim() || null, cover_url: editCoverUrl || null } : r))
+    );
+    setEditingId(null);
+    setEditCoverUrl("");
+    toast.success("Radio modifiée");
   };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
@@ -1224,18 +1278,101 @@ function RadiosTab() {
             >
               {selectedIds.has(r.id) && <Check className="w-3 h-3" />}
             </button>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{r.genre || "Radio"}</p>
-            </div>
-            {!isSelecting && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
-                className="p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+
+            {editingId === r.id ? (
+              <div className="relative w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0 group/cover cursor-pointer" onClick={(e) => { e.stopPropagation(); radioCoverRef.current?.click(); }}>
+                <input ref={radioCoverRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                {uploadingCover ? (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  </div>
+                ) : editCoverUrl ? (
+                  <>
+                    <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
+                      <ImageIcon className="w-4 h-4 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                    <Upload className="w-4 h-4 text-primary/50" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
+                {r.cover_url ? (
+                  <img src={r.cover_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                    <Radio className="w-4 h-4 text-primary/30" />
+                  </div>
+                )}
+              </div>
             )}
+
+            {editingId === r.id ? (
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full text-sm font-medium bg-background/80 border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Nom"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit(r.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <input
+                  value={editGenre}
+                  onChange={(e) => setEditGenre(e.target.value)}
+                  className="w-full text-xs bg-background/80 border border-border rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Genre"
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit(r.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{r.genre || "Radio"}</p>
+              </div>
+            )}
+
+            {editingId === r.id ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); saveEdit(r.id); }}
+                  disabled={saving}
+                  className="p-1.5 rounded-full text-primary hover:bg-primary/10 transition-colors"
+                  title="Sauvegarder"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                  title="Annuler"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : !isSelecting ? (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => { e.stopPropagation(); startEdit(r); }}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                  title="Modifier"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ) : null}
           </div>
         ))
       )}
