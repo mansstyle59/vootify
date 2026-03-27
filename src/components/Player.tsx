@@ -514,14 +514,19 @@ export function MiniPlayer() {
   const coverForColor = isLive ? (radioMeta?.coverUrl || currentSong?.coverUrl) : currentSong?.coverUrl;
   const miniDominantColor: string | null = null; // Skip expensive canvas op on mini player
 
-  // ── Media Session API: lock screen metadata ──
-  // Re-register handlers on EVERY render cycle to prevent iOS from reverting to 10s skip
+  // ── Media Session API: lock screen controls ──
+  // Music → previoustrack + nexttrack (skip buttons)
+  // Radio (live) → play/pause only (no skip, no seek)
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
     if (!currentSong) return;
 
     const ms = navigator.mediaSession;
+    const liveStream = currentSong.duration === 0;
 
+    console.log(`[mediaSession] Registering handlers — mode: ${liveStream ? "RADIO" : "MUSIC"}`);
+
+    // Common: play / pause / stop
     try {
       ms.setActionHandler("play", () => {
         const store = usePlayerStore.getState();
@@ -537,43 +542,56 @@ export function MiniPlayer() {
     } catch { /* unsupported */ }
 
     try {
-      ms.setActionHandler("previoustrack", () => {
-        usePlayerStore.getState().previous();
-      });
-    } catch { /* unsupported */ }
-
-    try {
-      ms.setActionHandler("nexttrack", () => {
-        usePlayerStore.getState().next();
-      });
-    } catch { /* unsupported */ }
-
-    try {
       ms.setActionHandler("stop", () => {
         usePlayerStore.getState().closePlayer();
       });
     } catch { /* unsupported */ }
 
-    // iOS lock screen: disable seek actions to avoid default ±10s controls.
-    // Keep only previous/next track actions for music-style controls.
-    try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
-    try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
+    if (liveStream) {
+      // ── RADIO mode: remove all skip/seek actions ──
+      // This gives iOS a clean play/pause-only lock screen
+      try { ms.setActionHandler("previoustrack", null); } catch { /* unsupported */ }
+      try { ms.setActionHandler("nexttrack", null); } catch { /* unsupported */ }
+      try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
+      try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
+      try { ms.setActionHandler("seekto", null); } catch { /* unsupported */ }
+    } else {
+      // ── MUSIC mode: previoustrack + nexttrack buttons ──
+      try {
+        ms.setActionHandler("previoustrack", () => {
+          usePlayerStore.getState().previous();
+        });
+      } catch { /* unsupported */ }
 
-    ms.setActionHandler("seekto", (details) => {
-      if (details.seekTime != null && audioRef.current) {
-        audioRef.current.currentTime = details.seekTime;
-        usePlayerStore.getState().setProgress(details.seekTime);
-        if ("setPositionState" in ms && audioRef.current.duration > 0) {
-          try {
-            ms.setPositionState({
-              duration: audioRef.current.duration,
-              playbackRate: 1,
-              position: details.seekTime,
-            });
-          } catch { /* ignore */ }
-        }
-      }
-    });
+      try {
+        ms.setActionHandler("nexttrack", () => {
+          usePlayerStore.getState().next();
+        });
+      } catch { /* unsupported */ }
+
+      // Disable ±10s seek to force track-skip buttons on iOS
+      try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
+      try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
+
+      // Allow scrubbing on lock screen
+      try {
+        ms.setActionHandler("seekto", (details) => {
+          if (details.seekTime != null && audioRef.current) {
+            audioRef.current.currentTime = details.seekTime;
+            usePlayerStore.getState().setProgress(details.seekTime);
+            if ("setPositionState" in ms && audioRef.current.duration > 0) {
+              try {
+                ms.setPositionState({
+                  duration: audioRef.current.duration,
+                  playbackRate: 1,
+                  position: details.seekTime,
+                });
+              } catch { /* ignore */ }
+            }
+          }
+        });
+      } catch { /* unsupported */ }
+    }
   }, [currentSong?.id]);
 
   // Update metadata whenever song/radio changes
