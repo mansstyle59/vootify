@@ -78,7 +78,7 @@ async function getCachedCustomSongs() {
   return _customSongsCache.data;
 }
 
-async function callDeezer(body: Record<string, unknown>, timeoutMs = 8000) {
+async function callDeezer(body: Record<string, unknown>, timeoutMs = 15000) {
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error("La recherche a expiré. Réessayez.")), timeoutMs)
   );
