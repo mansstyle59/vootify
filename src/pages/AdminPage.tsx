@@ -976,9 +976,15 @@ function SongsTab() {
               {selectedIds.has(s.id) && <Check className="w-3 h-3" />}
             </button>
 
-            {s.cover_url && (
-              <img src={s.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
-            )}
+            <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
+              {s.cover_url ? (
+                <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                  <Music className="w-4 h-4 text-primary/30" />
+                </div>
+              )}
+            </div>
             {editingId === s.id ? (
               <div className="flex-1 min-w-0 space-y-1.5">
                 <input
