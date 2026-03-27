@@ -180,26 +180,23 @@ export function MiniPlayer() {
     const prevSongId = lastSongIdRef.current;
     const isNewTrack = prevSongId !== currentSong.id;
 
-    if (!isNewTrack) return; // Same track — handled by play/pause effect above
+    if (!isNewTrack) return;
     lastSongIdRef.current = currentSong.id;
     usePlayerStore.setState({ nextPreloaded: false });
-    preloadedSongIdRef.current = null;
 
-    // Abort any in-flight load for a previous track
+    // Abort any in-flight load
     loadAbortRef.current?.abort();
-    const abortController = new AbortController();
-    loadAbortRef.current = abortController;
+    const ac = new AbortController();
+    loadAbortRef.current = ac;
 
-    // Immediately stop current audio
     audio.pause();
     if (navigator.vibrate) navigator.vibrate(8);
 
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
 
-      // PRIORITY: check offline cache first
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
-      if (abortController.signal.aborted) return;
+      if (ac.signal.aborted) return;
 
       if (cachedUrl) {
         const cachedCover = await offlineCache.getCachedCoverUrl(songToPlay.id);
@@ -208,7 +205,6 @@ export function MiniPlayer() {
           usePlayerStore.setState({ currentSong: songToPlay });
         }
       } else {
-        // Resolve stream if needed
         const needsResolution =
           !songToPlay.streamUrl ||
           (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
@@ -217,7 +213,7 @@ export function MiniPlayer() {
           setResolveStep("Recherche Custom…");
           try {
             const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
-            if (abortController.signal.aborted) return;
+            if (ac.signal.aborted) return;
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
@@ -235,14 +231,47 @@ export function MiniPlayer() {
         }
       }
 
-      if (abortController.signal.aborted) return;
+      if (ac.signal.aborted) return;
 
       setPlayingFromCache(!!cachedUrl);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
 
+      // ── Use preloaded audio element for gapless transition ──
+      if (
+        preloadedSongIdRef.current === currentSong.id &&
+        preloadRef.current?.src &&
+        !crossfadeEnabled
+      ) {
+        // Swap: preloaded → main, old main → preload slot
+        const preloaded = preloadRef.current;
+        const oldMain = audio;
+        // Transfer event listeners by swapping refs
+        preloadRef.current = oldMain;
+        audioRef.current = preloaded;
+        // Set up events on new main
+        preloaded.onended = handleEnded;
+        preloaded.onerror = handleAudioError;
+        preloaded.ontimeupdate = handleTimeUpdate;
+        preloaded.volume = volume;
+        preloaded.muted = false;
+        preloaded.play().catch((e) => {
+          console.error("[player] Gapless play failed:", e);
+          setTimeout(() => preloaded.play().catch(() => {}), 200);
+        });
+        // Clean old main
+        oldMain.onended = null;
+        oldMain.onerror = null;
+        oldMain.ontimeupdate = null;
+        oldMain.pause();
+        oldMain.removeAttribute("src");
+        preloadedSongIdRef.current = null;
+        return;
+      }
+
+      preloadedSongIdRef.current = null;
+
       if (crossfadeEnabled && prevSongId && audio.src && !audio.paused) {
-        // Crossfade
         if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
         const oldAudio = crossfadeRef.current!;
         oldAudio.src = audio.src;
@@ -257,13 +286,12 @@ export function MiniPlayer() {
           oldAudio.volume = Math.max(0, volume * (1 - step / steps));
           if (step >= steps) {
             oldAudio.pause();
-            oldAudio.src = "";
+            oldAudio.removeAttribute("src");
             if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
             fadeIntervalRef.current = null;
           }
         }, FADE_STEP);
 
-        // Load new track with fade in
         audio.src = srcToUse;
         audio.volume = 0;
         audio.muted = false;
@@ -292,12 +320,12 @@ export function MiniPlayer() {
           audio.muted = false;
           audio.play().catch((e) => {
             console.error("[player] Play failed:", e);
-            setTimeout(() => audio.play().catch(() => {}), 200);
+            setTimeout(() => audio.play().catch(() => {}), 150);
           });
         };
         audio.addEventListener("canplay", onCanPlay, { once: true });
 
-        // Safety timeout reduced to 2s
+        // Safety timeout
         setTimeout(() => {
           audio.removeEventListener("canplay", onCanPlay);
           if (audio.paused && usePlayerStore.getState().isPlaying) {
@@ -305,12 +333,12 @@ export function MiniPlayer() {
             audio.muted = false;
             audio.play().catch(console.error);
           }
-        }, 2000);
+        }, 1800);
       }
     };
 
     loadAndPlay();
-  }, [currentSong?.id]); // Only re-run when the track ID changes
+  }, [currentSong?.id]);
 
   // ── Preload next track for instant transitions ──
   useEffect(() => {
