@@ -1217,7 +1217,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   <p className="text-sm font-bold text-primary truncate">{currentSong.title}</p>
                   <p className="text-xs text-foreground/50 truncate">{currentSong.artist}</p>
                 </div>
-                <span className="text-xs text-foreground/40 tabular-nums">{formatDuration(currentSong.duration)}</span>
+                <span className="text-xs text-foreground/40 tabular-nums">{formatDuration(effectiveDuration)}</span>
               </div>
             </div>
 
@@ -1501,7 +1501,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </div>
               <div className="flex justify-between mt-1.5 text-[11px] text-foreground/50 tabular-nums font-medium">
                 <span>{formatDuration(Math.floor(progress))}</span>
-                <span>-{formatDuration(Math.max(0, currentSong.duration - Math.floor(progress)))}</span>
+                <span>-{formatDuration(Math.max(0, Math.floor(effectiveDuration) - Math.floor(progress)))}</span>
               </div>
             </div>
 
