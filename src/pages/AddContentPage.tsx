@@ -355,97 +355,16 @@ function PlaylistForm() {
 
     setLoading(false);
     toast.success(`Playlist "${name.trim()}" créée avec ${addedCount} titre${addedCount > 1 ? "s" : ""} !`);
-    setName(""); setCoverUrl(""); setSongs([]); setDeezerTracks([]); setDeezerInfo(null); setDeezerUrl("");
+    setName(""); setCoverUrl(""); setSongs([]);
   };
 
-  const totalTracks = songs.filter(s => s.title.trim() && s.artist.trim()).length + deezerTracks.length;
+  const totalTracks = songs.filter(s => s.title.trim() && s.artist.trim()).length;
 
   return (
     <div className="space-y-5">
       <FieldInput label="Nom de la playlist" value={name} onChange={setName} placeholder="Ma playlist" required />
       <CoverImagePicker value={coverUrl} onChange={setCoverUrl} />
 
-      {/* Deezer Import Section */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground flex items-center gap-2">
-          <Download className="w-4 h-4 text-primary" />
-          Importer depuis Deezer
-        </p>
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-            <input
-              value={deezerUrl}
-              onChange={(e) => setDeezerUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleDeezerImport()}
-              placeholder="Coller un lien Deezer playlist..."
-              className="w-full pl-9 pr-3 py-3 rounded-xl bg-secondary/50 border border-border/50 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.95 }}
-            onClick={handleDeezerImport}
-            disabled={deezerLoading || !deezerUrl.trim()}
-            className="px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-          >
-            {deezerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
-            Importer
-          </motion.button>
-        </div>
-
-        {/* Deezer tracks preview */}
-        <AnimatePresence>
-          {deezerTracks.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-1.5 overflow-hidden"
-            >
-              <div className="flex items-center justify-between px-1">
-                <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
-                  {deezerTracks.length} titres Deezer
-                </p>
-                <button
-                  onClick={() => { setDeezerTracks([]); setDeezerInfo(null); }}
-                  className="text-[10px] text-destructive/70 hover:text-destructive font-medium"
-                >
-                  Retirer tout
-                </button>
-              </div>
-              <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl">
-                {deezerTracks.map((t, idx) => (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.02 }}
-                    className="flex items-center gap-2.5 p-2 rounded-xl liquid-glass"
-                  >
-                    <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums">{idx + 1}</span>
-                    {t.coverUrl ? (
-                      <img src={t.coverUrl} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center"><Music className="w-3 h-3 text-muted-foreground/40" /></div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{t.title}</p>
-                      <p className="text-[10px] text-muted-foreground/60 truncate">{t.artist}</p>
-                    </div>
-                    <button
-                      onClick={() => setDeezerTracks(prev => prev.filter((_, i) => i !== idx))}
-                      className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/30 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       {/* Local audio files section */}
       <div className="space-y-3">
