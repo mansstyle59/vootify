@@ -435,7 +435,19 @@ function UsersTab() {
                         <Shield className="w-4 h-4" />
                       )}
                     </button>
-                  )}
+                   )}
+                  <button
+                    onClick={() => {
+                      setEditUserId(u.user_id);
+                      setEditEmail("");
+                      setEditPassword("");
+                      setShowEditDialog(true);
+                    }}
+                    className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
+                    title="Modifier identifiants"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => {
                       if (confirm(`Supprimer ${u.display_name || "cet utilisateur"} ? Cette action est irréversible.`)) {
