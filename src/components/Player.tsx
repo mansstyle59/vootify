@@ -978,6 +978,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked, next, previous, queue
   } = usePlayerStore();
+  const navigate = useNavigate();
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
