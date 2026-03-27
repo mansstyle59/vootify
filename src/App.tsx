@@ -14,6 +14,7 @@ import { useEffect, useState, useCallback, lazy, Suspense, startTransition, memo
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
+import { PageFade } from "@/components/PageFade";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
