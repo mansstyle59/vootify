@@ -241,7 +241,7 @@ export function MiniPlayer() {
 
     if (!isNewTrack) return;
     lastSongIdRef.current = currentSong.id;
-    usePlayerStore.setState({ nextPreloaded: false });
+    usePlayerStore.setState({ nextPreloaded: false, audioDuration: 0 });
 
     // Abort any in-flight load
     loadAbortRef.current?.abort();
