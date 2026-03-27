@@ -853,6 +853,54 @@ const LibraryPage = () => {
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
                       {libraryAlbums.length} album{libraryAlbums.length > 1 ? "s" : ""}
                     </p>
+                    {isAdmin && (
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.97 }}
+                        disabled={enriching}
+                        onClick={async () => {
+                          if (libraryAlbums.length === 0) { toast.info("Aucun album à enrichir"); return; }
+                          setEnriching(true);
+                          setEnrichProgress({ done: 0, total: libraryAlbums.length });
+                          try {
+                            let offset = 0;
+                            let totalUpdated = 0;
+                            let done = false;
+                            while (!done) {
+                              const { data, error } = await supabase.functions.invoke("enrich-metadata", {
+                                body: { mode: "albums", offset, only_missing: true },
+                              });
+                              if (error) throw error;
+                              totalUpdated += data.updated || 0;
+                              offset = data.nextOffset || offset + 50;
+                              done = data.done;
+                              setEnrichProgress({ done: Math.min(offset, libraryAlbums.length), total: libraryAlbums.length });
+                            }
+                            if (totalUpdated > 0) {
+                              toast.success(`${totalUpdated} album${totalUpdated > 1 ? "s" : ""} enrichi${totalUpdated > 1 ? "s" : ""} via Deezer`);
+                              queryClient.invalidateQueries({ queryKey: ["library-albums"] });
+                              queryClient.invalidateQueries({ queryKey: ["home-albums"] });
+                            } else {
+                              toast.info("Aucune nouvelle métadonnée trouvée");
+                            }
+                          } catch (e) { toast.error("Erreur lors de l'enrichissement"); console.error(e); }
+                          setEnriching(false);
+                        }}
+                        className="w-full mb-4 py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-border/30"
+                      >
+                        {enriching ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Deezer... {enrichProgress.total > 0 ? `${enrichProgress.done}/${enrichProgress.total}` : ""}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            Enrichir covers albums Deezer
+                          </>
+                        )}
+                      </motion.button>
+                    )}
                     <div className="grid grid-cols-2 gap-3">
                       {libraryAlbums.map((album, i) => (
                         <motion.button
