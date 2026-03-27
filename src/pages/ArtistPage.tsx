@@ -91,15 +91,30 @@ const ArtistPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch real artist photo from Deezer
+  // Fetch custom artist image (manual override — highest priority)
+  const { data: customArtistImage } = useQuery({
+    queryKey: ["custom-artist-image", artistName],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("artist_images")
+        .select("image_url")
+        .eq("artist_name", artistName)
+        .maybeSingle();
+      return data?.image_url || null;
+    },
+    enabled: !!artistName,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  // Fetch real artist photo from Deezer (fallback)
   const { data: artistImageUrl } = useQuery({
     queryKey: ["artist-image", artistName],
     queryFn: () => searchArtistImage(artistName),
-    enabled: !!artistName,
+    enabled: !!artistName && !customArtistImage,
     staleTime: 24 * 60 * 60 * 1000, // 24h cache
   });
 
-  const coverUrl = artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
+  const coverUrl = customArtistImage || artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
 
   const albums = useMemo(() => {
     const map = new Map<string, { title: string; coverUrl: string; count: number }>();
