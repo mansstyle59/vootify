@@ -97,7 +97,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-2" style={{ minHeight: "300px" }}>
+    <div ref={ref} className="relative overflow-hidden mb-2" style={{ minHeight: "280px" }}>
       {/* Parallax background layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
         {bgImage ? (
@@ -214,14 +214,14 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
       {/* Main content */}
       <motion.div
         style={{ opacity }}
-        className="relative z-10 px-5 md:px-8 pt-16 pb-10 flex flex-col justify-end gpu-layer"
+        className="relative z-10 px-5 md:px-8 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-8 flex flex-col justify-end gpu-layer"
       >
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1, type: "spring", stiffness: 200 }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full w-fit mb-5"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full w-fit mb-4 mt-1"
           style={{
             background: "hsl(var(--primary) / 0.1)",
             border: "1px solid hsl(var(--primary) / 0.15)",
@@ -244,7 +244,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="text-[30px] md:text-[38px] font-black text-foreground mb-2 leading-[1.1] tracking-tight"
+          className="text-[28px] md:text-[36px] font-black text-foreground mb-1.5 leading-[1.1] tracking-tight"
         >
           {getGreeting(user ? displayName : null)}{" "}
           <motion.span
@@ -262,7 +262,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4 }}
-          className="text-[14px] md:text-[15px] text-muted-foreground max-w-md leading-relaxed"
+          className="text-[13px] md:text-[14px] text-muted-foreground max-w-md leading-relaxed"
         >
           {customSubtitle || getSubGreeting()}
         </motion.p>
@@ -273,7 +273,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="flex flex-wrap gap-2 mt-5"
+            className="flex flex-wrap gap-2 mt-4"
           >
             {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.5} />}
             {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.65} />}
