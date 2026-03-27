@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { genreGroups, genreDefs, defaultGenreColor, buildTagToGroupMap } from "@/lib/genreGroups";
 import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
@@ -104,43 +105,55 @@ const SearchPage = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // Play a Friday release album
+  const { data: allSongs, isLoading } = useAllLocalSongs();
+
+  // Play a Friday release album — only full tracks, no 30s previews
   const playFridayRelease = useCallback(async (release: DeezerNewRelease) => {
     try {
       const { data } = await supabase.functions.invoke("deezer-proxy", {
         body: { path: `/album/${release.albumId}/tracks?limit=50` },
       });
-      const tracks: Song[] = (data?.data || []).map((t: any) => ({
-        id: `deezer-${t.id}`,
-        title: t.title || "",
-        artist: t.artist?.name || release.artist,
-        album: release.title,
-        duration: t.duration || 0,
-        coverUrl: release.coverUrl,
-        streamUrl: t.preview || "",
-        liked: false,
-      }));
-      if (tracks.length > 0) {
-        setQueue(tracks);
-        play(tracks[0]);
+      const deezerTracks = data?.data || [];
+      if (deezerTracks.length === 0) {
+        toast.error("Aucun morceau trouvé pour cet album");
+        return;
+      }
+
+      // Try to match each Deezer track against the local library for full streams
+      const library = allSongs || [];
+      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      const fullTracks: Song[] = [];
+      for (const t of deezerTracks) {
+        const dTitle = normalize(t.title || "");
+        const dArtist = normalize(t.artist?.name || release.artist);
+
+        const match = library.find((s) => {
+          const sTitle = normalize(s.title);
+          const sArtist = normalize(s.artist);
+          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
+                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
+        });
+
+        if (match && match.streamUrl) {
+          fullTracks.push({
+            ...match,
+            album: release.title,
+            coverUrl: release.coverUrl || match.coverUrl,
+          });
+        }
+      }
+
+      if (fullTracks.length > 0) {
+        setQueue(fullTracks);
+        play(fullTracks[0]);
+      } else {
+        toast.info("Morceaux non disponibles en version complète dans votre bibliothèque");
       }
     } catch {
-      // If album fetch fails, create a single track entry
-      const single: Song = {
-        id: `deezer-album-${release.albumId}`,
-        title: release.title,
-        artist: release.artist,
-        album: release.title,
-        duration: 30,
-        coverUrl: release.coverUrl,
-        streamUrl: "",
-        liked: false,
-      };
-      play(single);
+      toast.error("Impossible de charger cet album");
     }
-  }, [play, setQueue]);
-
-  const { data: allSongs, isLoading } = useAllLocalSongs();
+  }, [play, setQueue, allSongs]);
 
   const recentIds = useMemo(
     () => new Set(recentlyPlayed.map((s) => s.id)),
