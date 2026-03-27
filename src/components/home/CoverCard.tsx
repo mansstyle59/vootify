@@ -57,7 +57,7 @@ export const CoverCard = memo(function CoverCard({
               className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
                 isActive
                   ? "opacity-100 scale-100 bg-primary shadow-[0_2px_16px_hsl(var(--primary)/0.5)]"
-                  : "opacity-80 scale-100 md:opacity-0 md:scale-75 group-hover:opacity-100 group-hover:scale-100 bg-primary/90 shadow-[0_2px_16px_hsl(var(--primary)/0.4)]"
+                  : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 bg-primary/90 shadow-[0_2px_16px_hsl(var(--primary)/0.4)]"
               }`}
             >
               {isActive ? (
