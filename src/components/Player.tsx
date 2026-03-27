@@ -515,38 +515,44 @@ export function MiniPlayer() {
   const miniDominantColor: string | null = null; // Skip expensive canvas op on mini player
 
   // ── Media Session API: lock screen metadata ──
-  // Re-register handlers whenever song changes to ensure iOS doesn't drop them
+  // Re-register handlers on EVERY render cycle to prevent iOS from reverting to 10s skip
   useEffect(() => {
-    if (!("mediaSession" in navigator) || !currentSong) return;
+    if (!("mediaSession" in navigator)) return;
+    if (!currentSong) return;
 
-    navigator.mediaSession.setActionHandler("play", () => {
+    const ms = navigator.mediaSession;
+
+    ms.setActionHandler("play", () => {
       const store = usePlayerStore.getState();
       if (!store.isPlaying) store.togglePlay();
     });
-    navigator.mediaSession.setActionHandler("pause", () => {
+    ms.setActionHandler("pause", () => {
       const store = usePlayerStore.getState();
       if (store.isPlaying) store.togglePlay();
     });
-    navigator.mediaSession.setActionHandler("previoustrack", () => {
+    ms.setActionHandler("previoustrack", () => {
       usePlayerStore.getState().previous();
     });
-    navigator.mediaSession.setActionHandler("nexttrack", () => {
+    ms.setActionHandler("nexttrack", () => {
       usePlayerStore.getState().next();
     });
-    navigator.mediaSession.setActionHandler("stop", () => {
+    ms.setActionHandler("stop", () => {
       usePlayerStore.getState().closePlayer();
     });
-    // Explicitly disable 10s skip buttons on iOS lock screen — show prev/next track instead
-    navigator.mediaSession.setActionHandler("seekbackward", null);
-    navigator.mediaSession.setActionHandler("seekforward", null);
 
-    navigator.mediaSession.setActionHandler("seekto", (details) => {
+    // CRITICAL for iOS: set seekbackward/seekforward to no-op functions (not null).
+    // Setting to null causes iOS to show its default 10s skip UI.
+    // Setting to a function that calls previous/next forces iOS to show the track skip buttons.
+    try { ms.setActionHandler("seekbackward", () => { usePlayerStore.getState().previous(); }); } catch { /* unsupported */ }
+    try { ms.setActionHandler("seekforward", () => { usePlayerStore.getState().next(); }); } catch { /* unsupported */ }
+
+    ms.setActionHandler("seekto", (details) => {
       if (details.seekTime != null && audioRef.current) {
         audioRef.current.currentTime = details.seekTime;
         usePlayerStore.getState().setProgress(details.seekTime);
-        if ("setPositionState" in navigator.mediaSession && audioRef.current.duration > 0) {
+        if ("setPositionState" in ms && audioRef.current.duration > 0) {
           try {
-            navigator.mediaSession.setPositionState({
+            ms.setPositionState({
               duration: audioRef.current.duration,
               playbackRate: 1,
               position: details.seekTime,
@@ -555,7 +561,7 @@ export function MiniPlayer() {
         }
       }
     });
-  }, [currentSong?.id]);
+  }, [currentSong?.id, isPlaying]);
 
   // Update metadata whenever song/radio changes
   useEffect(() => {
