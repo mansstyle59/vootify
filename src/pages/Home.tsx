@@ -21,28 +21,19 @@ const HomePage = () => {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const queryClient = useQueryClient();
 
-  // Refresh on app visibility change (returning to app)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        queryClient.invalidateQueries();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [queryClient]);
+  // Removed aggressive refetch on visibility change — staleTime handles freshness
 
   // Use local override while customizer is open, otherwise DB config
   const activeSections = localSections ?? sections;
 
-  const handlePlayTrack = async (song: Song, allSongs: Song[]) => {
+  const handlePlayTrack = (song: Song, allSongs: Song[]) => {
     if (currentSong?.id === song.id) {
       togglePlay();
       return;
     }
-    const resolved = await deezerApi.resolveFullStream(song);
+    // Don't pre-resolve here — Player handles resolution to avoid double latency
     setQueue(allSongs);
-    play(resolved);
+    play(song);
   };
 
   const personalizedMix = (() => {
