@@ -90,7 +90,14 @@ export function AppSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                  {isAdmin && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-primary/40 text-primary bg-primary/10 font-semibold shrink-0">
+                      Admin
+                    </Badge>
+                  )}
+                </div>
               </div>
             </button>
             <button
