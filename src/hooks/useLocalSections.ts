@@ -31,7 +31,7 @@ export function useRecentlyAdded(limit = 20) {
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data || []).map(customRowToSong);
+      return (data || []).map(rowToSong);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -113,7 +113,7 @@ export function useRecommended(limit = 20) {
       if (error) throw error;
       if (!allSongs || allSongs.length === 0) return [];
 
-      const mapped = allSongs.map(customRowToSong);
+      const mapped = allSongs.map(rowToSong);
 
       // If user has liked songs, prioritize same artists
       if (likedSongs.length > 0) {
