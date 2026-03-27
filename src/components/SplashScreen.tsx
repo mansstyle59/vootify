@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const letters = "VOOTIFY".split("");
-
 export function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    // Ultra-fast splash — 1.1s
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onFinish, 300);
-    }, 1100);
+      setTimeout(onFinish, 350);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [onFinish]);
 
@@ -20,88 +17,79 @@ export function SplashScreen({ onFinish }: { onFinish: () => void }) {
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.03 }}
-          transition={{ duration: 0.35, ease: "easeInOut" }}
+          exit={{ opacity: 0, scale: 1.05 }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-background overflow-hidden will-change-transform"
         >
-          {/* Ambient glow */}
+          {/* Ambient glow — subtle and refined */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 0.15, scale: 1.2 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="absolute w-[500px] h-[500px] rounded-full"
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 0.12, scale: 1.3 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute w-[450px] h-[450px] rounded-full"
             style={{
-              background: "radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)",
+              background: "radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 65%)",
             }}
           />
 
-          {/* Logo */}
+          {/* Logo with spring animation */}
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 220, damping: 18, delay: 0.05 }}
-            className="relative mb-6"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 280, damping: 20, delay: 0.05 }}
+            className="relative mb-5"
           >
             <motion.div
-              animate={{ boxShadow: [
-                "0 0 30px hsl(var(--primary) / 0.3)",
-                "0 0 60px hsl(var(--primary) / 0.5)",
-                "0 0 30px hsl(var(--primary) / 0.3)",
-              ]}}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="rounded-[26px] overflow-hidden"
+              animate={{
+                boxShadow: [
+                  "0 0 20px hsl(var(--primary) / 0.2)",
+                  "0 0 50px hsl(var(--primary) / 0.4)",
+                  "0 0 20px hsl(var(--primary) / 0.2)",
+                ],
+              }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="rounded-[28px] overflow-hidden"
             >
               <img
                 src="/pwa-icon-512.png"
                 alt="Vootify"
-                className="w-28 h-28 rounded-[26px]"
+                className="w-24 h-24 rounded-[28px]"
                 fetchPriority="high"
               />
             </motion.div>
           </motion.div>
 
-          {/* Letter-by-letter title */}
-          <div className="flex items-center gap-[2px]">
-            {letters.map((letter, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 20, scale: 0.5 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  delay: 0.3 + i * 0.06,
-                  type: "spring",
-                  stiffness: 350,
-                  damping: 20,
-                }}
-                className="text-4xl font-display font-black tracking-[0.3em] text-primary"
-              >
-                {letter}
-              </motion.span>
-            ))}
-          </div>
+          {/* Brand name — smooth fade in */}
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            className="text-3xl font-display font-black tracking-[0.25em] text-primary"
+          >
+            VOOTIFY
+          </motion.h1>
 
           {/* Tagline */}
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 0.5, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.4 }}
-            className="mt-3 text-xs font-medium tracking-[0.25em] uppercase text-muted-foreground"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 0.45, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            className="mt-2 text-[11px] font-semibold tracking-[0.3em] uppercase text-muted-foreground"
           >
             Ta musique, sans limites
           </motion.p>
 
-          {/* Loading bar */}
+          {/* Minimal loading indicator */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="absolute bottom-24 w-32 h-[3px] rounded-full bg-muted overflow-hidden"
+            transition={{ delay: 0.9 }}
+            className="absolute bottom-28 w-8 h-8"
           >
             <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ duration: 0.7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="h-full w-1/2 rounded-full bg-primary/60"
+              className="w-full h-full rounded-full border-2 border-transparent border-t-primary/50"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
             />
           </motion.div>
         </motion.div>
