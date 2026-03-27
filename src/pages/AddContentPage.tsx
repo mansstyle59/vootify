@@ -369,6 +369,8 @@ function PlaylistForm() {
   const processFiles = async (files: FileList) => {
     setProcessing(true);
     const entries: SongEntry[] = [];
+    let firstCover = "";
+    let firstAlbum = "";
     for (const file of Array.from(files)) {
       if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd`); continue; }
       const id3 = await extractID3(file, file.name);
@@ -376,6 +378,10 @@ function PlaylistForm() {
       let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
       if (meta.title) id3Filled.add("title");
       if (meta.artist) id3Filled.add("artist");
+
+      // Capture first cover & album for auto-fill
+      if (!firstCover && meta.coverUrl) firstCover = meta.coverUrl;
+      if (!firstAlbum && meta.album) firstAlbum = meta.album;
 
       let duration = id3.duration && id3.duration > 0 ? Math.round(id3.duration) : 0;
       if (!duration) {
@@ -390,14 +396,17 @@ function PlaylistForm() {
         } catch { duration = 0; }
       }
 
-      // Use ID3 metadata only
-
       entries.push({
         file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
         duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
       });
     }
     setSongs((prev) => [...prev, ...entries]);
+
+    // Auto-fill playlist name & cover from metadata if empty
+    if (!name.trim() && firstAlbum) setName(firstAlbum);
+    if (!coverUrl.trim() && firstCover) setCoverUrl(firstCover);
+
     setProcessing(false);
     if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} prêt${entries.length > 1 ? "s" : ""}`);
   };
