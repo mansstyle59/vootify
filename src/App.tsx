@@ -54,23 +54,25 @@ const queryClient = new QueryClient({
 const AnimatedRoutes = memo(function AnimatedRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/library" element={<LibraryPage />} />
-        <Route path="/radio" element={<RadioPage />} />
-        <Route path="/add" element={<AddContentPage />} />
-        <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
-        <Route path="/album/:id" element={<AlbumDetailPage />} />
-        <Route path="/artist/:name" element={<ArtistPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/request-access" element={<RequestAccessPage />} />
-        <Route path="/genre/:name" element={<GenrePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <PageFade>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/library" element={<LibraryPage />} />
+          <Route path="/radio" element={<RadioPage />} />
+          <Route path="/add" element={<AddContentPage />} />
+          <Route path="/playlist/:id" element={<PlaylistDetailPage />} />
+          <Route path="/album/:id" element={<AlbumDetailPage />} />
+          <Route path="/artist/:name" element={<ArtistPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/request-access" element={<RequestAccessPage />} />
+          <Route path="/genre/:name" element={<GenrePage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PageFade>
     </Suspense>
   );
 });
