@@ -1261,13 +1261,28 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {currentSong.album || "Ma bibliothèque"}
           </p>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={() => setShowQueue(!showQueue)}
-          className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
-        >
-          {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => {
+              const q = encodeURIComponent(
+                `${currentSong.title} ${currentSong.artist}`.trim()
+              );
+              onClose();
+              setTimeout(() => navigate(`/search?q=${q}`), 150);
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
+          >
+            <Search className="w-4 h-4 text-white/80" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => setShowQueue(!showQueue)}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
+          >
+            {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
+          </motion.button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
