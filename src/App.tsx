@@ -7,7 +7,6 @@ import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
-import { NotificationBell } from "@/components/NotificationBell";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence, motion } from "framer-motion"; // force refresh
