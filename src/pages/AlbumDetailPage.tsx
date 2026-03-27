@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
+import { VirtualSongList } from "@/components/VirtualSongList";
 import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, RotateCcw } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -362,20 +363,12 @@ const AlbumDetailPage = () => {
 
       {/* ─── TRACK LIST ─── */}
       <div className="px-4 md:px-8">
-        <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
-          {tracks.map((song, i) => (
-            <motion.div
-              key={song.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.05 * Math.min(i, 10), duration: 0.3 }}
-              onClick={() => handlePlay(song)}
-              className="border-b border-white/[0.04] last:border-b-0"
-            >
-              <SongCard song={song} index={i} showIndex />
-            </motion.div>
-          ))}
-        </div>
+        <VirtualSongList
+          songs={tracks}
+          showIndex
+          onClickSong={(song) => handlePlay(song)}
+          className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+        />
       </div>
     </div>
   );

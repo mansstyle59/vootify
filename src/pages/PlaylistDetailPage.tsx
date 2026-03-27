@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { SongCard } from "@/components/MusicCards";
+import { VirtualSongList } from "@/components/VirtualSongList";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle } from "lucide-react";
@@ -487,28 +488,25 @@ const PlaylistDetailPage = () => {
             <p className="text-muted-foreground/50 text-xs">Ajoutez des morceaux depuis la recherche</p>
           </div>
         ) : (
-          <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
-            {displaySongs.map((song, i) => (
-              <motion.div
-                key={song.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.03 * Math.min(i, 15), duration: 0.3 }}
+          <VirtualSongList
+            songs={displaySongs}
+            showIndex
+            className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+            renderRow={(song, i, songCard) => (
+              <div
                 draggable={!isDeezerPlaylist}
                 onDragStart={!isDeezerPlaylist ? () => handleDragStart(i) : undefined}
                 onDragOver={!isDeezerPlaylist ? (e) => handleDragOver(e, i) : undefined}
                 onDrop={!isDeezerPlaylist ? () => handleDrop(i) : undefined}
                 onDragEnd={!isDeezerPlaylist ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
-                className={`flex items-center gap-1 group border-b border-white/[0.04] last:border-b-0 ${overIdx === i ? "border-t-2 !border-t-primary" : ""} ${dragIdx === i ? "opacity-40" : ""}`}
+                className={`flex items-center gap-1 group ${overIdx === i ? "border-t-2 !border-t-primary" : ""} ${dragIdx === i ? "opacity-40" : ""}`}
               >
                 {!isDeezerPlaylist && (
                   <div className="cursor-grab active:cursor-grabbing p-1 pl-2 text-muted-foreground/30 hover:text-muted-foreground transition-colors">
                     <GripVertical className="w-4 h-4" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <SongCard song={song} index={i} showIndex />
-                </div>
+                <div className="flex-1 min-w-0">{songCard}</div>
                 {cachedIds.has(song.id) && <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0 mr-1" />}
                 {!isDeezerPlaylist && (
                   <button
@@ -518,9 +516,9 @@ const PlaylistDetailPage = () => {
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            )}
+          />
         )}
       </div>
     </div>
