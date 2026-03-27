@@ -489,6 +489,8 @@ const LibraryPage = () => {
     { key: "recent", label: "Récents", icon: Clock },
     { key: "liked", label: "Aimés", icon: Heart },
     { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "albums", label: "Albums", icon: Disc3 },
+    { key: "artists", label: "Artistes", icon: User },
     { key: "custom", label: "Mes titres", icon: Music },
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
