@@ -67,4 +67,4 @@ export const CoverCard = memo(function CoverCard({
       </p>
     </motion.div>
   );
-}
+});
