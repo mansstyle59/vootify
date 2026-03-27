@@ -121,7 +121,7 @@ function SongForm() {
         title: normalizeTitle(meta.title || file.name.replace(/\.[^.]+$/, "")),
         artist: normalizeArtist(meta.artist || ""),
         album: meta.album ? normalizeText(meta.album) : "",
-        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
+        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
       });
     }
     setSongs((prev) => [...prev, ...entries]);
@@ -399,7 +399,7 @@ function PlaylistForm() {
 
       entries.push({
         file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
-        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
+        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
       });
     }
     setSongs((prev) => [...prev, ...entries]);
