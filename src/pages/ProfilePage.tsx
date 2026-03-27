@@ -268,13 +268,6 @@ const ProfilePage = () => {
             Sauvegarder
           </button>
 
-          {/* Theme Settings */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="hidden"
-          >
 
           {/* Audio Settings */}
           <motion.div
