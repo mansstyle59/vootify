@@ -173,6 +173,12 @@ function UsersTab() {
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [editingCreds, setEditingCreds] = useState(false);
 
   const loadUsers = async () => {
     const { data: profiles } = await supabase
