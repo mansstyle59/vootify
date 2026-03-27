@@ -63,52 +63,49 @@ export function MiniPlayer() {
     audioRef.current.muted = false;
   }, [volume]);
 
-  // ── Web Lock API — prevent iOS from suspending the tab in background ──
+  // ── Web Lock API — prevent iOS/browser from suspending the tab ──
   useEffect(() => {
     if (!isPlaying || !currentSong) return;
     if (!("locks" in navigator)) return;
 
     let released = false;
-    const lockPromise = (navigator as any).locks.request(
+    (navigator as any).locks.request(
       "vootify-audio-bg",
-      { mode: "exclusive", ifAvailable: false },
+      { mode: "exclusive" },
       () => new Promise<void>((resolve) => {
-        // Hold the lock until playback stops
         const check = setInterval(() => {
           if (released) { clearInterval(check); resolve(); }
-        }, 1000);
+        }, 2000);
       })
     );
-
     return () => { released = true; };
   }, [isPlaying, currentSong?.id]);
 
-  // ── Visibility change — resume playback when returning to app ──
+  // ── Visibility change — resume playback + re-sync media session ──
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        const audio = audioRef.current;
-        const state = usePlayerStore.getState();
-        if (audio && state.isPlaying && state.currentSong) {
-          // Ensure audio is actually playing after returning from background
-          if (audio.paused && audio.src) {
-            console.log("[bg-resume] Resuming audio after visibility change");
-            audio.volume = state.volume ?? volume;
-            audio.muted = false;
-            audio.play().catch(console.error);
-          }
-          // Re-sync media session
-          if ("mediaSession" in navigator) {
-            navigator.mediaSession.playbackState = "playing";
-          }
-        }
+      if (document.visibilityState !== "visible") return;
+      const audio = audioRef.current;
+      const state = usePlayerStore.getState();
+      if (!audio || !state.isPlaying || !state.currentSong) return;
+
+      // Resume if audio got paused by OS
+      if (audio.paused && audio.src) {
+        console.log("[bg-resume] Resuming audio after visibility change");
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }
+      // Re-sync media session state
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [volume]);
 
-  // ── Silent playback watchdog (iOS bug detector) — throttled in background ──
+  // ── Watchdog — detect stuck audio, throttled in background ──
   const watchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTimeCheckRef = useRef<{ time: number; ts: number } | null>(null);
 
@@ -118,53 +115,46 @@ export function MiniPlayer() {
 
     lastTimeCheckRef.current = null;
 
-    // Use longer interval in background to save CPU
-    const getInterval = () => document.visibilityState === "visible" ? 2500 : 5000;
-
-    const startWatchdog = () => {
+    const runWatchdog = () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
+      // Longer interval in background = less CPU
+      const interval = document.visibilityState === "visible" ? 3000 : 8000;
       watchdogRef.current = setInterval(() => {
         const audio = audioRef.current;
-        if (!audio || audio.paused || !audio.src || audio.duration === 0) return;
+        if (!audio || audio.paused || !audio.src || !isFinite(audio.duration)) return;
 
         const now = Date.now();
-        const currentTime = audio.currentTime;
+        const ct = audio.currentTime;
         const prev = lastTimeCheckRef.current;
 
         if (prev) {
-          const wallElapsed = now - prev.ts;
-          const audioElapsed = (currentTime - prev.time) * 1000;
-
-          if (wallElapsed > 4000 && audioElapsed < 500 && !audio.paused) {
-            console.warn("[watchdog] Audio stuck — attempting reload");
+          const wall = now - prev.ts;
+          const audioD = (ct - prev.time) * 1000;
+          // Stuck detection: wall advanced but audio didn't
+          if (wall > 5000 && audioD < 500 && !audio.paused) {
+            console.warn("[watchdog] Audio stuck — reloading");
             const src = audio.src;
-            const time = audio.currentTime;
+            const pos = ct;
             audio.src = "";
-            audio.load();
             setTimeout(() => {
               audio.src = src;
-              audio.load();
-              audio.currentTime = Math.max(0, time - 0.5);
+              audio.currentTime = Math.max(0, pos - 0.3);
               audio.volume = volume;
               audio.muted = false;
-              audio.play().catch((e) => console.error("[watchdog] Reload play failed:", e));
-            }, 100);
+              audio.play().catch(console.error);
+            }, 80);
           }
         }
-
-        lastTimeCheckRef.current = { time: currentTime, ts: now };
-      }, getInterval());
+        lastTimeCheckRef.current = { time: ct, ts: now };
+      }, interval);
     };
 
-    startWatchdog();
-
-    // Adjust watchdog frequency on visibility change
-    const onVisChange = () => startWatchdog();
-    document.addEventListener("visibilitychange", onVisChange);
-
+    runWatchdog();
+    const onVis = () => runWatchdog();
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       if (watchdogRef.current) clearInterval(watchdogRef.current);
-      document.removeEventListener("visibilitychange", onVisChange);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, [isPlaying, currentSong?.id, volume]);
 
@@ -190,26 +180,23 @@ export function MiniPlayer() {
     const prevSongId = lastSongIdRef.current;
     const isNewTrack = prevSongId !== currentSong.id;
 
-    if (!isNewTrack) return; // Same track — handled by play/pause effect above
+    if (!isNewTrack) return;
     lastSongIdRef.current = currentSong.id;
     usePlayerStore.setState({ nextPreloaded: false });
-    preloadedSongIdRef.current = null;
 
-    // Abort any in-flight load for a previous track
+    // Abort any in-flight load
     loadAbortRef.current?.abort();
-    const abortController = new AbortController();
-    loadAbortRef.current = abortController;
+    const ac = new AbortController();
+    loadAbortRef.current = ac;
 
-    // Immediately stop current audio
     audio.pause();
     if (navigator.vibrate) navigator.vibrate(8);
 
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
 
-      // PRIORITY: check offline cache first
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
-      if (abortController.signal.aborted) return;
+      if (ac.signal.aborted) return;
 
       if (cachedUrl) {
         const cachedCover = await offlineCache.getCachedCoverUrl(songToPlay.id);
@@ -218,7 +205,6 @@ export function MiniPlayer() {
           usePlayerStore.setState({ currentSong: songToPlay });
         }
       } else {
-        // Resolve stream if needed
         const needsResolution =
           !songToPlay.streamUrl ||
           (songToPlay.id.startsWith("dz-") && songToPlay.streamUrl && (songToPlay.streamUrl.includes("cdn-preview") || songToPlay.streamUrl.includes("dzcdn.net")));
@@ -227,7 +213,7 @@ export function MiniPlayer() {
           setResolveStep("Recherche Custom…");
           try {
             const resolved = await deezerApi.resolveFullStream(songToPlay, (step) => setResolveStep(step));
-            if (abortController.signal.aborted) return;
+            if (ac.signal.aborted) return;
             if (resolved.streamUrl && resolved.streamUrl !== songToPlay.streamUrl) {
               songToPlay = resolved;
               usePlayerStore.setState({ currentSong: resolved });
@@ -245,14 +231,47 @@ export function MiniPlayer() {
         }
       }
 
-      if (abortController.signal.aborted) return;
+      if (ac.signal.aborted) return;
 
       setPlayingFromCache(!!cachedUrl);
       const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
 
+      // ── Use preloaded audio element for gapless transition ──
+      if (
+        preloadedSongIdRef.current === currentSong.id &&
+        preloadRef.current?.src &&
+        !crossfadeEnabled
+      ) {
+        // Swap: preloaded → main, old main → preload slot
+        const preloaded = preloadRef.current;
+        const oldMain = audio;
+        // Transfer event listeners by swapping refs
+        preloadRef.current = oldMain;
+        audioRef.current = preloaded;
+        // Set up events on new main
+        preloaded.onended = handleEnded;
+        preloaded.onerror = handleAudioError;
+        preloaded.ontimeupdate = handleTimeUpdate;
+        preloaded.volume = volume;
+        preloaded.muted = false;
+        preloaded.play().catch((e) => {
+          console.error("[player] Gapless play failed:", e);
+          setTimeout(() => preloaded.play().catch(() => {}), 200);
+        });
+        // Clean old main
+        oldMain.onended = null;
+        oldMain.onerror = null;
+        oldMain.ontimeupdate = null;
+        oldMain.pause();
+        oldMain.removeAttribute("src");
+        preloadedSongIdRef.current = null;
+        return;
+      }
+
+      preloadedSongIdRef.current = null;
+
       if (crossfadeEnabled && prevSongId && audio.src && !audio.paused) {
-        // Crossfade
         if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
         const oldAudio = crossfadeRef.current!;
         oldAudio.src = audio.src;
@@ -267,13 +286,12 @@ export function MiniPlayer() {
           oldAudio.volume = Math.max(0, volume * (1 - step / steps));
           if (step >= steps) {
             oldAudio.pause();
-            oldAudio.src = "";
+            oldAudio.removeAttribute("src");
             if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
             fadeIntervalRef.current = null;
           }
         }, FADE_STEP);
 
-        // Load new track with fade in
         audio.src = srcToUse;
         audio.volume = 0;
         audio.muted = false;
@@ -302,12 +320,12 @@ export function MiniPlayer() {
           audio.muted = false;
           audio.play().catch((e) => {
             console.error("[player] Play failed:", e);
-            setTimeout(() => audio.play().catch(() => {}), 200);
+            setTimeout(() => audio.play().catch(() => {}), 150);
           });
         };
         audio.addEventListener("canplay", onCanPlay, { once: true });
 
-        // Safety timeout reduced to 2s
+        // Safety timeout
         setTimeout(() => {
           audio.removeEventListener("canplay", onCanPlay);
           if (audio.paused && usePlayerStore.getState().isPlaying) {
@@ -315,12 +333,12 @@ export function MiniPlayer() {
             audio.muted = false;
             audio.play().catch(console.error);
           }
-        }, 2000);
+        }, 1800);
       }
     };
 
     loadAndPlay();
-  }, [currentSong?.id]); // Only re-run when the track ID changes
+  }, [currentSong?.id]);
 
   // ── Preload next track for instant transitions ──
   useEffect(() => {
@@ -373,13 +391,21 @@ export function MiniPlayer() {
   }, [currentSong?.id]);
 
   const preemptiveTriggeredRef = useRef(false);
+  const lastProgressUpdateRef = useRef(0);
 
   const handleTimeUpdate = useCallback(() => {
     if (!audioRef.current) return;
     const audio = audioRef.current;
     const t = audio.currentTime;
-    // Use fractional time for smooth progress
-    setProgress(t);
+
+    // ── Throttle UI progress updates in background to save CPU ──
+    const now = Date.now();
+    const isVisible = document.visibilityState === "visible";
+    const throttleMs = isVisible ? 0 : 2000; // Update every 2s in background
+    if (now - lastProgressUpdateRef.current >= throttleMs) {
+      setProgress(t);
+      lastProgressUpdateRef.current = now;
+    }
 
     // Preemptive crossfade: start next track before current ends
     const { crossfadeEnabled, crossfadeDuration, repeat } = usePlayerStore.getState();
@@ -387,13 +413,12 @@ export function MiniPlayer() {
       crossfadeEnabled &&
       !preemptiveTriggeredRef.current &&
       audio.duration > 0 &&
-      audio.duration - audio.currentTime <= crossfadeDuration &&
-      audio.duration - audio.currentTime > 0.5 &&
+      audio.duration - t <= crossfadeDuration &&
+      audio.duration - t > 0.5 &&
       repeat !== "one"
     ) {
       preemptiveTriggeredRef.current = true;
 
-      // Start fading out current track
       const steps = (crossfadeDuration * 1000) / FADE_STEP;
       let step = 0;
       const fadeOutInterval = setInterval(() => {
@@ -401,12 +426,9 @@ export function MiniPlayer() {
         if (audioRef.current) {
           audioRef.current.volume = Math.max(0, volume * (1 - step / steps));
         }
-        if (step >= steps) {
-          clearInterval(fadeOutInterval);
-        }
+        if (step >= steps) clearInterval(fadeOutInterval);
       }, FADE_STEP);
 
-      // Trigger next song (crossfade logic in the main effect will handle fade-in)
       next();
     }
   }, [setProgress, volume, next]);
@@ -484,9 +506,13 @@ export function MiniPlayer() {
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   }, [currentSong, isLive, radioMeta, isPlaying]);
 
-  // Update position state for lock screen scrubber
+  // Update position state for lock screen scrubber — throttled to every 5s
+  const lastPositionSyncRef = useRef(0);
   useEffect(() => {
     if (!("mediaSession" in navigator) || !currentSong || isLive) return;
+    const now = Date.now();
+    if (now - lastPositionSyncRef.current < 5000) return;
+    lastPositionSyncRef.current = now;
     if ("setPositionState" in navigator.mediaSession && currentSong.duration > 0) {
       try {
         navigator.mediaSession.setPositionState({
