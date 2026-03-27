@@ -123,11 +123,12 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
             didLongPressRef.current = false;
           }
         }}
+        className={`rounded-xl ${pressing ? "bg-primary/[0.06]" : ""}`}
         style={{
-          transform: pressing ? "scale(0.95)" : "scale(1)",
+          transform: pressing ? "scale(0.96)" : "scale(1)",
           transition: pressing
-            ? "transform 0.5s cubic-bezier(0.2, 0, 0.2, 1)"
-            : "transform 0.15s ease-out",
+            ? "transform 0.5s cubic-bezier(0.2, 0, 0.2, 1), background-color 0.3s ease"
+            : "transform 0.15s ease-out, background-color 0.15s ease-out",
         }}
       >
         {children}
