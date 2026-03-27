@@ -693,28 +693,56 @@ const LibraryPage = () => {
                   <EmptyState icon={Heart} title="Pas encore de favoris" subtitle="Likez des morceaux pour les retrouver ici" />
                 ) : (
                   <>
+                    <div className="relative mb-3">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                      <input
+                        type="text"
+                        value={likedSearch}
+                        onChange={(e) => setLikedSearch(e.target.value)}
+                        placeholder="Rechercher dans mes titres..."
+                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                      />
+                      {likedSearch && (
+                        <button onClick={() => setLikedSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                     <ActionButtons
                       onPlayAll={() => { const full = filterFullStreams(likedSongs); setQueue(full); play(full[0]); }}
                       onShuffle={() => { const s = filterFullStreams([...likedSongs]).sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                    <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
-                      {filterFullStreams(likedSongs).length} titre{filterFullStreams(likedSongs).length > 1 ? "s" : ""}
-                    </p>
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
-                      {filterFullStreams(likedSongs).map((s, i) => (
-                        <PremiumSongRow
-                          key={s.id}
-                          song={s}
-                          index={i}
-                          showIndex
-                          cached={libraryCachedIds.has(s.id)}
-                          isActive={currentSong?.id === s.id}
-                          isPlaying={currentSong?.id === s.id && isPlaying}
-                          onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(filterFullStreams(likedSongs)); play(s); } }}
-                          onSwipeLeft={() => toggleLike(s)}
-                        />
-                      ))}
-                    </div>
+                    {(() => {
+                      const fullLiked = filterFullStreams(likedSongs);
+                      const filtered = likedSearch.trim()
+                        ? fullLiked.filter((s) => {
+                            const q = likedSearch.toLowerCase().trim();
+                            return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q));
+                          })
+                        : fullLiked;
+                      return (
+                        <>
+                          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
+                            {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
+                          </p>
+                          <div className="rounded-2xl liquid-glass overflow-hidden">
+                            {filtered.map((s, i) => (
+                              <PremiumSongRow
+                                key={s.id}
+                                song={s}
+                                index={i}
+                                showIndex
+                                cached={libraryCachedIds.has(s.id)}
+                                isActive={currentSong?.id === s.id}
+                                isPlaying={currentSong?.id === s.id && isPlaying}
+                                onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(filtered); play(s); } }}
+                                onSwipeLeft={() => toggleLike(s)}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>
