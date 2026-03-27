@@ -1128,13 +1128,13 @@ const LibraryPage = () => {
                           exit={{ opacity: 0, height: 0 }}
                           className="overflow-hidden mb-3"
                         >
-                          <div className="flex items-center gap-2 px-1">
+                          <div className="flex items-center gap-2 px-1 overflow-x-auto scrollbar-hide pb-1 -mb-1">
                             <button
                               onClick={() => {
                                 if (selectedIds.size === sortedCustomSongs.length) setSelectedIds(new Set());
                                 else setSelectedIds(new Set(sortedCustomSongs.map((s) => s.id)));
                               }}
-                              className="px-3 py-1.5 rounded-full text-xs font-medium liquid-glass text-foreground"
+                              className="px-3 py-1.5 rounded-full text-xs font-medium liquid-glass text-foreground whitespace-nowrap flex-shrink-0"
                             >
                               {selectedIds.size === sortedCustomSongs.length ? "Tout désélectionner" : "Tout sélectionner"}
                             </button>
