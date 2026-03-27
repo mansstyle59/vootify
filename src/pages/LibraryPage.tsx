@@ -17,13 +17,13 @@ import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
-import { normalizeTitle, normalizeArtist, normalizeText, autoEnrichCustomSongs } from "@/lib/metadataEnrich";
+import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
 type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom";
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
-  songs.filter((s) => s.streamUrl && !s.streamUrl.includes("dzcdn.net") && !s.streamUrl.includes("cdn-preview"));
+  songs.filter((s) => s.streamUrl);
 
 /** Filter out radio stations (duration === 0) from recently played */
 const filterMusicOnly = (songs: Song[]) =>
@@ -350,18 +350,6 @@ const LibraryPage = () => {
         }))).then(() => queryClient.invalidateQueries({ queryKey: ["custom-songs"] }));
       }
 
-      // Auto-enrich missing metadata (cover, album, duration) via Deezer
-      const toEnrich = songs.filter((s) => !s.coverUrl || !s.album || !s.duration);
-      if (toEnrich.length > 0) {
-        autoEnrichCustomSongs(
-          toEnrich.map((s) => ({
-            dbId: s._dbId, title: s.title, artist: s.artist,
-            album: s.album || null, coverUrl: s.coverUrl || null, duration: s.duration,
-          }))
-        ).then((count) => {
-          if (count > 0) queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
-        });
-      }
 
       return songs as Song[];
     },

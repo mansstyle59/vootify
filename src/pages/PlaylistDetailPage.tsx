@@ -8,7 +8,7 @@ import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
-import { deezerApi } from "@/lib/deezerApi";
+
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,38 +29,10 @@ const PlaylistDetailPage = () => {
   const coverOpacity = useTransform(scrollY, [0, 250], [1, 0.5]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
 
-  const isDeezerPlaylist = id?.startsWith("dz-");
-  const deezerRawId = isDeezerPlaylist ? id!.replace("dz-", "") : null;
-
   const userPlaylist = playlists.find((p) => p.id === id);
 
-  const [dzInfo, setDzInfo] = useState<{ title: string; picture: string } | null>(null);
-  const [dzSongs, setDzSongs] = useState<Song[]>([]);
-  const [dzLoading, setDzLoading] = useState(false);
-  const [dzError, setDzError] = useState(false);
-
-  useEffect(() => {
-    if (!isDeezerPlaylist || !deezerRawId) return;
-    let cancelled = false;
-    const fetchDz = async (retry = false) => {
-      setDzLoading(true); setDzError(false);
-      try {
-        const [info, tracks] = await Promise.all([deezerApi.getPlaylistInfo(deezerRawId), deezerApi.getPlaylistTracks(deezerRawId, 50)]);
-        if (cancelled) return;
-        setDzInfo({ title: info.title, picture: info.picture }); setDzSongs(tracks);
-      } catch (e) {
-        if (!retry && !cancelled) { await fetchDz(true); return; }
-        if (!cancelled) setDzError(true);
-      } finally { if (!cancelled) setDzLoading(false); }
-    };
-    fetchDz();
-    return () => { cancelled = true; };
-  }, [isDeezerPlaylist, deezerRawId]);
-
-  const playlist = isDeezerPlaylist
-    ? dzInfo ? { id: id!, name: dzInfo.title, cover_url: dzInfo.picture, created_at: "" } : null
-    : userPlaylist;
-  const songs: Song[] = isDeezerPlaylist ? dzSongs : (id ? playlistSongs[id] || [] : []);
+  const playlist = userPlaylist;
+  const songs: Song[] = id ? playlistSongs[id] || [] : [];
 
   const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -78,7 +50,7 @@ const PlaylistDetailPage = () => {
     );
   }, [songs]);
 
-  useEffect(() => { if (id && !isDeezerPlaylist) loadPlaylistSongs(id); }, [id, isDeezerPlaylist]);
+  useEffect(() => { if (id) loadPlaylistSongs(id); }, [id]);
 
   // No resolution needed — songs play directly
 
@@ -122,26 +94,6 @@ const PlaylistDetailPage = () => {
     reader.readAsDataURL(file);
   };
 
-  if (isDeezerPlaylist && dzLoading) {
-    return (
-      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Chargement de la playlist…</p>
-      </div>
-    );
-  }
-
-  if (isDeezerPlaylist && dzError) {
-    return (
-      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground mb-2">Playlist indisponible</p>
-        <div className="flex gap-3">
-          <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm rounded-full bg-secondary text-secondary-foreground">Retour</button>
-          <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm rounded-full bg-primary text-primary-foreground">Réessayer</button>
-        </div>
-      </div>
-    );
-  }
 
   if (!playlist) {
     return (
@@ -184,7 +136,7 @@ const PlaylistDetailPage = () => {
             {playlist.name}
           </motion.div>
           <div className="flex items-center gap-2">
-            {!isDeezerPlaylist && (
+            {true && (
               <label className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all cursor-pointer">
                 <ImageIcon className="w-5 h-5" />
                 <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
@@ -247,7 +199,7 @@ const PlaylistDetailPage = () => {
                         <Share2 className="w-4 h-4 text-muted-foreground" />
                         Partager
                       </button>
-                      {!isDeezerPlaylist && (
+                      {true && (
                         <>
                           <div className="h-px bg-white/[0.06] mx-2 my-1" />
                           <label className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors cursor-pointer">
@@ -430,21 +382,21 @@ const PlaylistDetailPage = () => {
             className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
             renderRow={(song, i, songCard) => (
               <div
-                draggable={!isDeezerPlaylist}
-                onDragStart={!isDeezerPlaylist ? () => handleDragStart(i) : undefined}
-                onDragOver={!isDeezerPlaylist ? (e) => handleDragOver(e, i) : undefined}
-                onDrop={!isDeezerPlaylist ? () => handleDrop(i) : undefined}
-                onDragEnd={!isDeezerPlaylist ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
+                draggable={true}
+                onDragStart={true ? () => handleDragStart(i) : undefined}
+                onDragOver={true ? (e) => handleDragOver(e, i) : undefined}
+                onDrop={true ? () => handleDrop(i) : undefined}
+                onDragEnd={true ? () => { setDragIdx(null); setOverIdx(null); } : undefined}
                 className={`flex items-center gap-1 group ${overIdx === i ? "border-t-2 !border-t-primary" : ""} ${dragIdx === i ? "opacity-40" : ""}`}
               >
-                {!isDeezerPlaylist && (
+                {true && (
                   <div className="cursor-grab active:cursor-grabbing p-1 pl-2 text-muted-foreground/30 hover:text-muted-foreground transition-colors">
                     <GripVertical className="w-4 h-4" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">{songCard}</div>
                 {cachedIds.has(song.id) && <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0 mr-1" />}
-                {!isDeezerPlaylist && (
+                {true && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleRemove(song.id); }}
                     className="p-1.5 mr-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/40 hover:text-destructive"

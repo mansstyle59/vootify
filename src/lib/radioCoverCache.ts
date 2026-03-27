@@ -1,7 +1,7 @@
 /**
  * Local cache for radio metadata cover art URLs.
- * Key: "artist - title" → coverUrl from Deezer.
- * Avoids repeated edge function calls for the same song.
+ * Key: "artist - title" → coverUrl.
+ * Avoids repeated lookups for the same song.
  */
 
 const CACHE_KEY = "radio-cover-cache";

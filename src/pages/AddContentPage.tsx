@@ -10,7 +10,7 @@ import AudioFilePicker from "@/components/AudioFilePicker";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { extractID3 } from "@/lib/id3Utils";
-import { deezerApi } from "@/lib/deezerApi";
+
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 
 type Tab = "song" | "playlist" | "radio";
@@ -101,20 +101,7 @@ function SongForm() {
       }
       if (duration) id3Filled.add("duration");
 
-      if (!meta.title || !meta.artist || !meta.coverUrl) {
-        const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
-        const query = meta.title && meta.artist ? `${meta.artist} ${meta.title}` : meta.title || cleanName;
-        try {
-          const results = await deezerApi.searchTracks(query, 3);
-          if (results.length > 0) {
-            const best = results[0];
-            if (!meta.title) meta.title = best.title;
-            if (!meta.artist) meta.artist = best.artist;
-            if (!meta.album) meta.album = best.album;
-            if (!meta.coverUrl) meta.coverUrl = best.coverUrl;
-          }
-        } catch {}
-      }
+      // Use ID3 metadata only
 
       entries.push({
         file,
@@ -282,87 +269,6 @@ function PlaylistForm() {
   const [processing, setProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Deezer import state
-  const [deezerUrl, setDeezerUrl] = useState("");
-  const [deezerLoading, setDeezerLoading] = useState(false);
-  const [deezerTracks, setDeezerTracks] = useState<{ id: string; title: string; artist: string; album: string; duration: number; coverUrl: string; streamUrl: string }[]>([]);
-  const [deezerInfo, setDeezerInfo] = useState<{ title: string; picture: string } | null>(null);
-
-  const extractPlaylistId = async (input: string): Promise<string | null> => {
-    const trimmed = input.trim();
-    // Direct ID
-    if (/^\d+$/.test(trimmed)) return trimmed;
-    // Standard URL: deezer.com/.../playlist/123
-    const stdMatch = trimmed.match(/deezer\.com\/(?:\w+\/)?playlist\/(\d+)/);
-    if (stdMatch) return stdMatch[1];
-    // Short link: dz.page.link or link.deezer.com
-    if (trimmed.includes("dz.page.link") || trimmed.includes("link.deezer.com") || trimmed.includes("dzr.page.link")) {
-      try {
-        const data = await callDeezerProxy({ action: "resolve_short_link", url: trimmed });
-        if (data.playlist_id) return data.playlist_id;
-      } catch {}
-    }
-    return null;
-  };
-
-  const callDeezerProxy = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke("deezer-proxy", { body });
-    if (error) throw new Error(error.message);
-    if (data?.error) throw new Error(data.error);
-    return data;
-  };
-
-  const handleDeezerImport = async () => {
-    if (!deezerUrl.trim()) return;
-    setDeezerLoading(true);
-    setDeezerTracks([]);
-    setDeezerInfo(null);
-
-    try {
-      const playlistId = await extractPlaylistId(deezerUrl);
-      if (!playlistId) {
-        toast.error("Lien de playlist Deezer invalide");
-        setDeezerLoading(false);
-        return;
-      }
-
-      console.log("DEEZER IMPORT: playlist ID =", playlistId);
-      const data = await callDeezerProxy({ action: "playlist", id: playlistId });
-
-      if (!data || !data.tracks?.data?.length) {
-        toast.error("Playlist vide ou introuvable");
-        setDeezerLoading(false);
-        return;
-      }
-
-      const info = {
-        title: data.title || "Playlist Deezer",
-        picture: data.picture_medium || data.picture_big || data.picture || "",
-      };
-      setDeezerInfo(info);
-
-      // Auto-fill name and cover if empty
-      if (!name.trim()) setName(info.title);
-      if (!coverUrl.trim() && info.picture) setCoverUrl(info.picture);
-
-      const tracks = (data.tracks.data as any[]).map((t: any) => ({
-        id: `dz-${t.id}`,
-        title: t.title || "Sans titre",
-        artist: t.artist?.name || "Inconnu",
-        album: t.album?.title || "",
-        duration: t.duration || 0,
-        coverUrl: t.album?.cover_medium || t.album?.cover_big || "",
-        streamUrl: t.preview || "",
-      }));
-
-      setDeezerTracks(tracks);
-      toast.success(`${tracks.length} titres trouvés dans "${info.title}"`);
-    } catch (e: any) {
-      console.error("Deezer import error:", e);
-      toast.error("Erreur lors de l'import: " + (e.message || "Erreur inconnue"));
-    }
-    setDeezerLoading(false);
-  };
 
   const processFiles = async (files: FileList) => {
     setProcessing(true);
@@ -388,17 +294,7 @@ function PlaylistForm() {
         } catch { duration = 0; }
       }
 
-      if (!meta.title || !meta.artist || !meta.coverUrl) {
-        const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/^\d{1,3}[\s.\-_]+/, "").trim();
-        try {
-          const results = await deezerApi.searchTracks(meta.title || cleanName, 3);
-          if (results.length > 0) {
-            if (!meta.title) meta.title = results[0].title;
-            if (!meta.artist) meta.artist = results[0].artist;
-            if (!meta.coverUrl) meta.coverUrl = results[0].coverUrl;
-          }
-        } catch {}
-      }
+      // Use ID3 metadata only
 
       entries.push({
         file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
@@ -456,109 +352,19 @@ function PlaylistForm() {
       addedCount++;
     }
 
-    // Add Deezer tracks to playlist
-    for (let i = 0; i < deezerTracks.length; i++) {
-      const t = deezerTracks[i];
-      await addSongToPlaylist(created.id, {
-        id: t.id, title: t.title, artist: t.artist, album: t.album,
-        duration: t.duration, coverUrl: t.coverUrl, streamUrl: t.streamUrl, liked: false,
-      });
-      addedCount++;
-    }
 
     setLoading(false);
     toast.success(`Playlist "${name.trim()}" créée avec ${addedCount} titre${addedCount > 1 ? "s" : ""} !`);
-    setName(""); setCoverUrl(""); setSongs([]); setDeezerTracks([]); setDeezerInfo(null); setDeezerUrl("");
+    setName(""); setCoverUrl(""); setSongs([]);
   };
 
-  const totalTracks = songs.filter(s => s.title.trim() && s.artist.trim()).length + deezerTracks.length;
+  const totalTracks = songs.filter(s => s.title.trim() && s.artist.trim()).length;
 
   return (
     <div className="space-y-5">
       <FieldInput label="Nom de la playlist" value={name} onChange={setName} placeholder="Ma playlist" required />
       <CoverImagePicker value={coverUrl} onChange={setCoverUrl} />
 
-      {/* Deezer Import Section */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground flex items-center gap-2">
-          <Download className="w-4 h-4 text-primary" />
-          Importer depuis Deezer
-        </p>
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-            <input
-              value={deezerUrl}
-              onChange={(e) => setDeezerUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleDeezerImport()}
-              placeholder="Coller un lien Deezer playlist..."
-              className="w-full pl-9 pr-3 py-3 rounded-xl bg-secondary/50 border border-border/50 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.95 }}
-            onClick={handleDeezerImport}
-            disabled={deezerLoading || !deezerUrl.trim()}
-            className="px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-          >
-            {deezerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
-            Importer
-          </motion.button>
-        </div>
-
-        {/* Deezer tracks preview */}
-        <AnimatePresence>
-          {deezerTracks.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-1.5 overflow-hidden"
-            >
-              <div className="flex items-center justify-between px-1">
-                <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
-                  {deezerTracks.length} titres Deezer
-                </p>
-                <button
-                  onClick={() => { setDeezerTracks([]); setDeezerInfo(null); }}
-                  className="text-[10px] text-destructive/70 hover:text-destructive font-medium"
-                >
-                  Retirer tout
-                </button>
-              </div>
-              <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl">
-                {deezerTracks.map((t, idx) => (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.02 }}
-                    className="flex items-center gap-2.5 p-2 rounded-xl liquid-glass"
-                  >
-                    <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums">{idx + 1}</span>
-                    {t.coverUrl ? (
-                      <img src={t.coverUrl} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center"><Music className="w-3 h-3 text-muted-foreground/40" /></div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{t.title}</p>
-                      <p className="text-[10px] text-muted-foreground/60 truncate">{t.artist}</p>
-                    </div>
-                    <button
-                      onClick={() => setDeezerTracks(prev => prev.filter((_, i) => i !== idx))}
-                      className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/30 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       {/* Local audio files section */}
       <div className="space-y-3">

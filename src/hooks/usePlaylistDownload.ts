@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { offlineCache } from "@/lib/offlineCache";
-import { deezerApi } from "@/lib/deezerApi";
+
 import { Song } from "@/data/mockData";
 
 export type DownloadStatus = "pending" | "resolving" | "downloading" | "done" | "error" | "skipped";
