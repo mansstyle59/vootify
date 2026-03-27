@@ -443,9 +443,11 @@ const RadioPage = () => {
     const stationLogo = getStationLogo(station.name, station.coverUrl);
     const displayCover = dynamicCover || stationLogo || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop";
 
+    // Show now playing from live metadata, or from myradioendirect scrape
+    const myRadioMeta = (station as any)._nowPlaying;
     const nowPlayingText = isActive && radioMetadata?.artist && radioMetadata?.title
       ? `${radioMetadata.artist} — ${radioMetadata.title}`
-      : null;
+      : (!isActive && myRadioMeta) ? myRadioMeta : null;
 
 
     return (
