@@ -12,6 +12,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { PageTransition } from "@/components/PageTransition";
 import { PageLoader } from "@/components/PageLoader";
 import { NetworkStatus } from "@/components/NetworkStatus";
@@ -114,18 +115,20 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <AdminAuthProvider>
-            <Sonner />
-            <NetworkStatus />
-            {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </AdminAuthProvider>
-        </AuthProvider>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <AdminAuthProvider>
+              <Sonner />
+              <NetworkStatus />
+              {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </AdminAuthProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };
