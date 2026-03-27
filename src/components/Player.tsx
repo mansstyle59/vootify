@@ -574,7 +574,7 @@ export function MiniPlayer() {
         }
       }
     });
-  }, [currentSong?.id, isPlaying]);
+  }, [currentSong?.id]);
 
   // Update metadata whenever song/radio changes
   useEffect(() => {
