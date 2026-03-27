@@ -506,9 +506,13 @@ export function MiniPlayer() {
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   }, [currentSong, isLive, radioMeta, isPlaying]);
 
-  // Update position state for lock screen scrubber
+  // Update position state for lock screen scrubber — throttled to every 5s
+  const lastPositionSyncRef = useRef(0);
   useEffect(() => {
     if (!("mediaSession" in navigator) || !currentSong || isLive) return;
+    const now = Date.now();
+    if (now - lastPositionSyncRef.current < 5000) return;
+    lastPositionSyncRef.current = now;
     if ("setPositionState" in navigator.mediaSession && currentSong.duration > 0) {
       try {
         navigator.mediaSession.setPositionState({
