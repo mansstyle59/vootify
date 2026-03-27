@@ -555,29 +555,38 @@ function PlaylistForm() {
                 key={idx}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${song.uploaded || song.skipped ? "opacity-50" : "liquid-glass"}`}
+                className={`p-2.5 rounded-xl space-y-2 transition-all ${song.uploaded || song.skipped ? "opacity-50" : "liquid-glass"}`}
               >
-                <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
-                {song.coverUrl ? (
-                  <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
-                ) : (
-                  <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center"><Music className="w-3.5 h-3.5 text-muted-foreground/40" /></div>
-                )}
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  <input value={song.title} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, title: e.target.value } : s))}
-                    className={`w-full text-xs font-semibold text-foreground bg-transparent focus:outline-none ${song.id3Filled.has("title") ? "text-primary" : ""}`} placeholder="Titre *" />
-                  <input value={song.artist} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, artist: e.target.value } : s))}
-                    className={`w-full text-[10px] text-muted-foreground/60 bg-transparent focus:outline-none ${song.id3Filled.has("artist") ? "text-primary/70" : ""}`} placeholder="Artiste *" />
-                  <div className="flex gap-2">
-                    <input value={song.album} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, album: e.target.value } : s))}
-                      className="flex-1 text-[10px] text-muted-foreground/50 bg-transparent focus:outline-none" placeholder="Album" />
-                    <input value={song.year ? String(song.year) : ""} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, year: parseInt(e.target.value) || undefined } : s))}
-                      className="w-12 text-[10px] text-muted-foreground/50 bg-transparent focus:outline-none text-right" placeholder="Année" />
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
+                  <SongCoverThumb
+                    coverUrl={song.coverUrl}
+                    disabled={song.uploaded || song.skipped}
+                    onChange={(url) => setSongs(p => p.map((s, i) => i === idx ? { ...s, coverUrl: url } : s))}
+                  />
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <input value={song.title} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, title: e.target.value } : s))}
+                      className={`w-full text-xs font-semibold text-foreground bg-transparent focus:outline-none ${song.id3Filled.has("title") ? "text-primary" : ""}`} placeholder="Titre *" />
+                    <input value={song.artist} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, artist: e.target.value } : s))}
+                      className={`w-full text-[10px] text-muted-foreground/60 bg-transparent focus:outline-none ${song.id3Filled.has("artist") ? "text-primary/70" : ""}`} placeholder="Artiste *" />
+                    <div className="flex gap-2">
+                      <input value={song.album} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, album: e.target.value } : s))}
+                        className="flex-1 text-[10px] text-muted-foreground/50 bg-transparent focus:outline-none" placeholder="Album" />
+                      <input value={song.genre || ""} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, genre: e.target.value } : s))}
+                        className="flex-1 text-[10px] text-muted-foreground/50 bg-transparent focus:outline-none" placeholder="Genre" />
+                      <input value={song.year ? String(song.year) : ""} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, year: parseInt(e.target.value) || undefined } : s))}
+                        className="w-12 text-[10px] text-muted-foreground/50 bg-transparent focus:outline-none text-right" placeholder="Année" />
+                    </div>
                   </div>
+                  {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.skipped ? (
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 shrink-0">Doublon</span>
+                  ) : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
+                    <button onClick={() => setSongs(p => p.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-                {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.skipped ? (
-                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 shrink-0">Doublon</span>
-                ) : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
+              </motion.div>
                   <button onClick={() => setSongs(p => p.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive">
                     <X className="w-3.5 h-3.5" />
                   </button>
