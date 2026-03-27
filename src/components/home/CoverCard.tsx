@@ -42,25 +42,25 @@ export const CoverCard = memo(function CoverCard({
             <Music className="w-10 h-10 text-primary/30" />
           </div>
         )}
-        {/* Gradient overlay */}
+        {/* Subtle gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Play button */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        {/* Play/Pause button — solid primary, Apple Music style */}
+        <div className="absolute bottom-2 right-2">
           <motion.div
             initial={false}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
               isActive
-                ? "opacity-100 scale-100 bg-primary glow-primary"
-                : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 liquid-glass"
+                ? "opacity-100 scale-100 bg-primary shadow-[0_2px_12px_hsl(var(--primary)/0.5)]"
+                : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 bg-primary shadow-[0_2px_12px_hsl(var(--primary)/0.4)]"
             }`}
           >
             {isActive ? (
-              <Pause className="w-5 h-5 text-primary-foreground" />
+              <Pause className="w-4 h-4 text-primary-foreground fill-current" />
             ) : (
-              <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
+              <Play className="w-4 h-4 text-primary-foreground fill-current ml-0.5" />
             )}
           </motion.div>
         </div>
