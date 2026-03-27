@@ -1082,6 +1082,26 @@ const LibraryPage = () => {
                                 >
                                   <ListPlus className="w-3 h-3" /> File
                                 </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={async () => {
+                                      const ids = Array.from(selectedIds);
+                                      const confirmed = window.confirm(`Supprimer ${ids.length} titre${ids.length > 1 ? "s" : ""} définitivement ?`);
+                                      if (!confirmed) return;
+                                      const batchSize = 50;
+                                      for (let i = 0; i < ids.length; i += batchSize) {
+                                        const batch = ids.slice(i, i + batchSize);
+                                        await supabase.from("custom_songs").delete().in("id", batch);
+                                      }
+                                      toast.success(`${ids.length} titre${ids.length > 1 ? "s" : ""} supprimé${ids.length > 1 ? "s" : ""}`);
+                                      setSelectMode(false); setSelectedIds(new Set());
+                                      queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+                                    }}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium"
+                                  >
+                                    <Trash2 className="w-3 h-3" /> Supprimer
+                                  </button>
+                                )}
                                 <div className="relative">
                                   <button
                                     onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
