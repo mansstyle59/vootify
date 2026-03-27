@@ -1,22 +1,32 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Music, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oups ! Page introuvable</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
+    <div className="flex min-h-screen items-center justify-center p-6 bg-background">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center max-w-sm"
+      >
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+          <Music className="w-10 h-10 text-primary" />
+        </div>
+        <h1 className="text-5xl font-display font-bold text-foreground mb-2">404</h1>
+        <p className="text-base text-muted-foreground mb-8">
+          Cette page n'existe pas ou a été déplacée.
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/30 hover:brightness-110 active:scale-[0.97] transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
           Retour à l'accueil
-        </a>
-      </div>
+        </button>
+      </motion.div>
     </div>
   );
 };
