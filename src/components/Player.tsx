@@ -246,6 +246,10 @@ export function MiniPlayer() {
     loadAbortRef.current = ac;
 
     audio.pause();
+    // Keep media session in "playing" state during track transition so iOS doesn't flip the button
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = "playing";
+    }
     if (navigator.vibrate) navigator.vibrate(8);
 
     const loadAndPlay = async () => {
