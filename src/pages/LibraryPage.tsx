@@ -417,6 +417,42 @@ const LibraryPage = () => {
     enabled: tab === "custom",
   });
 
+  // Albums query
+  const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
+    queryKey: ["library-albums"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_albums")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 2 * 60 * 1000,
+    enabled: tab === "albums",
+  });
+
+  // Artists query (derived from custom_songs)
+  const { data: libraryArtists = [], isLoading: loadingLibArtists } = useQuery({
+    queryKey: ["library-artists"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("artist, cover_url")
+        .not("stream_url", "is", null);
+      if (error) throw error;
+      const artistMap = new Map<string, { name: string; cover: string; count: number }>();
+      for (const row of data || []) {
+        const existing = artistMap.get(row.artist);
+        if (existing) { existing.count++; if (!existing.cover && row.cover_url) existing.cover = row.cover_url; }
+        else artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1 });
+      }
+      return Array.from(artistMap.values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    },
+    staleTime: 2 * 60 * 1000,
+    enabled: tab === "artists",
+  });
+
   // Check which songs in current view are cached offline
   useEffect(() => {
     const allSongs = [
