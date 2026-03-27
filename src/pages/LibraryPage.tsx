@@ -279,6 +279,7 @@ const LibraryPage = () => {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [queryClient, userId, loadUserData]);
 
+  const [libraryCachedIds, setLibraryCachedIds] = useState<Set<string>>(new Set());
   const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
