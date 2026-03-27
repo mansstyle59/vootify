@@ -53,41 +53,38 @@ const SearchPage = () => {
     let cancelled = false;
     const fetchNew = async () => {
       try {
-        // Fetch new releases from France (genre 85) and Belgium (genre 129) editorial
-        const [frRes, beRes] = await Promise.allSettled([
-          supabase.functions.invoke("deezer-proxy", { body: { path: "/editorial/85/releases?limit=15" } }),
-          supabase.functions.invoke("deezer-proxy", { body: { path: "/editorial/129/releases?limit=10" } }),
-        ]);
+        // "Nouveautés du vendredi" — Deezer editorial selection (France)
+        const { data, error } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: "/playlist/1111141961/tracks?limit=25" },
+        });
         if (cancelled) return;
-        const seen = new Set<number>();
-        const releases: DeezerNewRelease[] = [];
-        for (const r of [frRes, beRes]) {
-          if (r.status !== "fulfilled" || r.value.error || !r.value.data?.data) continue;
-          for (const a of r.value.data.data) {
-            if (seen.has(a.id)) continue;
-            seen.add(a.id);
+        if (!error && data?.data?.length) {
+          const seen = new Set<number>();
+          const releases: DeezerNewRelease[] = [];
+          for (const t of data.data) {
+            const albumId = t.album?.id;
+            if (!albumId || seen.has(albumId)) continue;
+            seen.add(albumId);
             releases.push({
-              id: a.id,
-              title: a.title || "",
-              artist: a.artist?.name || "",
-              coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "",
-              albumId: a.id,
+              id: albumId,
+              title: t.album?.title || t.title || "",
+              artist: t.artist?.name || "",
+              coverUrl: t.album?.cover_xl || t.album?.cover_big || t.album?.cover_medium || "",
+              albumId,
             });
           }
-        }
-        if (releases.length === 0) {
-          // Fallback to global chart
-          const { data, error } = await supabase.functions.invoke("deezer-proxy", {
-            body: { path: "/chart/0/albums?limit=20" },
-          });
-          if (!error && data?.data) {
-            setNewReleases(data.data.map((a: any) => ({
-              id: a.id, title: a.title || "", artist: a.artist?.name || "",
-              coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "", albumId: a.id,
-            })));
-          }
-        } else {
           setNewReleases(releases.slice(0, 20));
+          return;
+        }
+        // Fallback: editorial releases France
+        const fallback = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: "/editorial/85/releases?limit=20" },
+        });
+        if (!cancelled && !fallback.error && fallback.data?.data) {
+          setNewReleases(fallback.data.data.map((a: any) => ({
+            id: a.id, title: a.title || "", artist: a.artist?.name || "",
+            coverUrl: a.cover_xl || a.cover_big || a.cover_medium || "", albumId: a.id,
+          })));
         }
       } catch { /* silent */ }
     };
@@ -529,7 +526,7 @@ const SearchPage = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Nouveautés 🇫🇷 🇧🇪
+                    Nouveautés du vendredi 🇫🇷
                   </h2>
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
