@@ -46,7 +46,7 @@ const AdminPage = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-40">
+    <div className="min-h-screen pb-40 animate-fade-in">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-destructive/10 via-destructive/5 to-background" />
         <div className="relative px-4 md:px-8 pt-6 pb-6">
