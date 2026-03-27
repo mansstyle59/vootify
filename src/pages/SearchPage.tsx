@@ -93,6 +93,39 @@ const SearchPage = () => {
     return extractArtists(searchResults).slice(0, 8);
   }, [searchResults]);
 
+  // Extract artists with cover photos for display cards
+  const artistCards = useMemo(() => {
+    if (searchResults.length === 0) return [];
+    const map = new Map<string, { name: string; coverUrl: string; songCount: number }>();
+    for (const s of searchResults) {
+      s.artist.split(",").forEach((a) => {
+        const name = a.trim();
+        if (!name) return;
+        if (!map.has(name)) {
+          map.set(name, { name, coverUrl: s.coverUrl, songCount: 1 });
+        } else {
+          map.get(name)!.songCount++;
+        }
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount).slice(0, 10);
+  }, [searchResults]);
+
+  // Extract albums with cover photos for display cards
+  const albumCards = useMemo(() => {
+    if (searchResults.length === 0) return [];
+    const map = new Map<string, { title: string; artist: string; coverUrl: string; songCount: number }>();
+    for (const s of searchResults) {
+      if (!s.album) continue;
+      if (!map.has(s.album)) {
+        map.set(s.album, { title: s.album, artist: s.artist.split(",")[0].trim(), coverUrl: s.coverUrl, songCount: 1 });
+      } else {
+        map.get(s.album)!.songCount++;
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount).slice(0, 10);
+  }, [searchResults]);
+
   const filteredResults = useMemo(() => {
     if (!artistFilter) return searchResults;
     return searchResults.filter((s) => s.artist.includes(artistFilter));
