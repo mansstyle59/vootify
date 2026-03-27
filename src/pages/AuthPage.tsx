@@ -24,7 +24,9 @@ const AuthPage = () => {
     setError("");
     setLoading(true);
 
-    const result = await signIn(email, password);
+    // Auto-append domain if user enters plain identifier
+    const loginEmail = email.includes("@") ? email : `${email}@vootify.app`;
+    const result = await signIn(loginEmail, password);
 
     if (result.error) {
       setError("Identifiant ou mot de passe incorrect");
@@ -58,7 +60,7 @@ const AuthPage = () => {
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Identifiant"
