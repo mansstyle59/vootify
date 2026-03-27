@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -35,7 +35,7 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
   const [alreadyRequested, setAlreadyRequested] = useState(false);
 
   // Check if user already has a pending request
-  useState(() => {
+  useEffect(() => {
     if (!user) return;
     supabase
       .from("access_requests")
@@ -49,7 +49,7 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
           setAlreadyRequested(true);
         }
       });
-  });
+  }, [user]);
 
   const handleSignOut = async () => {
     setSigningOut(true);
