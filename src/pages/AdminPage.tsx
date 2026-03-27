@@ -1768,6 +1768,7 @@ function SubscriptionsTab() {
                   { label: "30 jours", value: 30 },
                   { label: "90 jours", value: 90 },
                   { label: "1 an", value: 365 },
+                  { label: "Illimité", value: 0 },
                 ].map(d => (
                   <button
                     key={d.value}
