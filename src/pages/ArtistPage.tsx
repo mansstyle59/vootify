@@ -1,21 +1,26 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { formatDuration } from "@/data/mockData";
 import type { Song } from "@/data/mockData";
-import { searchArtistImage } from "@/lib/coverArtSearch";
+import { searchArtistImage, searchCoverArt } from "@/lib/coverArtSearch";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { toast } from "sonner";
 
 const ArtistPage = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const userId = usePlayerStore((s) => s.userId);
+  const { isAdmin } = useAdminAuth();
+  const [enriching, setEnriching] = useState(false);
   const { scrollY } = useScroll();
   const bgY = useTransform(scrollY, [0, 400], [0, 120]);
   const headerOpacity = useTransform(scrollY, [200, 350], [0, 1]);
@@ -219,13 +224,49 @@ const ArtistPage = () => {
       </motion.div>
 
       {/* Actions */}
-      <div className="px-4 flex gap-3 my-4">
+      <div className="px-4 flex gap-3 my-4 flex-wrap">
         <button onClick={handlePlayAll} className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm shadow-lg hover:shadow-xl transition-shadow">
           <Play className="w-4 h-4" /> Lecture
         </button>
         <button onClick={handleShuffle} className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors">
           <Shuffle className="w-4 h-4" /> Aléatoire
         </button>
+        {isAdmin && (
+          <button
+            onClick={async () => {
+              if (enriching || songs.length === 0) return;
+              setEnriching(true);
+              let updated = 0;
+              for (const song of songs) {
+                try {
+                  const rawId = song.id.replace(/^custom-/, "");
+                  const meta = await searchCoverArt({ artist: song.artist, title: song.title, album: song.album });
+                  if (!meta) continue;
+                  const updates: Record<string, any> = {};
+                  if (meta.coverUrl) updates.cover_url = meta.coverUrl;
+                  if (meta.album) updates.album = meta.album;
+                  if (meta.genre) updates.genre = meta.genre;
+                  if (meta.year) updates.year = meta.year;
+                  if (Object.keys(updates).length > 0) {
+                    await supabase.from("custom_songs").update(updates).eq("id", rawId);
+                    updated++;
+                  }
+                } catch { /* skip */ }
+                await new Promise((r) => setTimeout(r, 350));
+              }
+              // Refresh artist image
+              queryClient.invalidateQueries({ queryKey: ["artist-image", artistName] });
+              queryClient.invalidateQueries({ queryKey: ["artist-songs", artistName] });
+              setEnriching(false);
+              toast.success(`${updated} titre${updated > 1 ? "s" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
+            }}
+            disabled={enriching}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors disabled:opacity-50"
+          >
+            {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            {enriching ? "Enrichissement…" : "Enrichir Deezer"}
+          </button>
+        )}
       </div>
 
       {/* Listening Stats */}
