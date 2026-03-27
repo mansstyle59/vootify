@@ -1283,4 +1283,42 @@ const LibraryPage = () => {
   );
 };
 
+/** Artist card with Deezer photo for library */
+function ArtistLibraryCard({ artist, index, navigate }: {
+  artist: { name: string; cover: string; count: number };
+  index: number;
+  navigate: ReturnType<typeof import("react-router-dom").useNavigate>;
+}) {
+  const { data: deezerImage } = useQuery({
+    queryKey: ["artist-image", artist.name],
+    queryFn: () => searchArtistImage(artist.name),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  const imageUrl = deezerImage || artist.cover;
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.03 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+      className="flex flex-col items-center text-center group"
+    >
+      <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary shadow-lg mb-2 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+        {imageUrl ? (
+          <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <User className="w-8 h-8 text-primary/30" />
+          </div>
+        )}
+      </div>
+      <p className="text-xs font-bold text-foreground truncate max-w-[96px]">{artist.name}</p>
+      <p className="text-[10px] text-muted-foreground">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+    </motion.button>
+  );
+}
+
 export default LibraryPage;
