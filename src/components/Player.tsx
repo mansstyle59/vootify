@@ -854,7 +854,7 @@ export function MiniPlayer() {
                       >
                         {currentSong.artist}
                         {playingFromCache && (
-                          <span className="ml-1.5 inline-flex items-center gap-1 text-emerald-400">
+                          <span className="ml-1.5 inline-flex items-center gap-1 text-primary">
                             <WifiOff className="w-2.5 h-2.5" />
                             <span className="font-semibold text-[10px]">OFFLINE</span>
                           </span>
@@ -1414,7 +1414,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                           {currentSong.artist}
                         </p>
                         {isCached ? (
-                          <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                             <WifiOff className="w-2.5 h-2.5" />
                             OFFLINE
                           </span>
@@ -1448,7 +1448,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   animate={liked ? { scale: [1, 1.3, 1] } : {}}
                   transition={{ duration: 0.3 }}
                 >
-                  <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(141_73%_42%/0.4)]" : "text-foreground/40"}`} />
+                  <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.4)]" : "text-foreground/40"}`} />
                 </motion.div>
               </motion.button>
               </motion.div>
@@ -1483,7 +1483,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                       className="absolute right-0 top-1/2 -translate-y-1/2 w-[16px] h-[16px] rounded-full bg-foreground"
                       style={{
                         boxShadow: isSeeking
-                          ? "0 0 12px hsl(141 73% 42% / 0.5), 0 2px 8px rgba(0,0,0,0.3)"
+                          ? "0 0 12px hsl(var(--primary) / 0.5), 0 2px 8px rgba(0,0,0,0.3)"
                           : "0 2px 6px rgba(0,0,0,0.3)",
                         transition: "box-shadow 0.2s",
                       }}
@@ -1519,7 +1519,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {/* Transport controls — ultra premium */}
             <div className="flex items-center justify-between w-full mb-6">
               <motion.button whileTap={{ scale: 0.85 }} onClick={toggleShuffle} className="transition-all">
-                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" : "text-foreground/50"}`} />
+                <Shuffle className={`w-6 h-6 ${shuffle ? "text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" : "text-foreground/50"}`} />
               </motion.button>
               <motion.button whileTap={{ scale: 0.8 }} onClick={previous} className="transition-all">
                 <SkipBack className="w-9 h-9 text-foreground fill-current" />
@@ -1557,9 +1557,9 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </motion.button>
               <motion.button whileTap={{ scale: 0.85 }} onClick={cycleRepeat} className="transition-all">
                 {repeat === "one" ? (
-                  <Repeat1 className="w-6 h-6 text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" />
+                  <Repeat1 className="w-6 h-6 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
                 ) : (
-                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary drop-shadow-[0_0_8px_hsl(141_73%_42%/0.5)]" : "text-foreground/50"}`} />
+                  <Repeat className={`w-6 h-6 ${repeat === "all" ? "text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" : "text-foreground/50"}`} />
                 )}
               </motion.button>
             </div>
