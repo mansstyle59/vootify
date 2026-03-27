@@ -546,18 +546,23 @@ function ResolveTab() {
   const [entries, setEntries] = useState<import("@/lib/resolveLog").ResolveLogEntry[]>([]);
   const [dbLoading, setDbLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "custom" | "hd" | "none">("all");
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 30;
 
   const fetchDB = async () => {
     setDbLoading(true);
-    const data = await resolveLog.fetchFromDB(500);
+    const data = await resolveLog.fetchFromDB(1000);
     setEntries(data);
     setDbLoading(false);
   };
 
   useEffect(() => { fetchDB(); }, []);
+  useEffect(() => { setPage(1); }, [filter]);
 
   const stats = resolveLog.statsFromEntries(entries);
   const filtered = filter === "all" ? entries : entries.filter((e) => e.source === filter);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const statCards = [
     { label: "Total", value: stats.total, color: "text-foreground" },
@@ -580,7 +585,7 @@ function ResolveTab() {
       </div>
 
       {/* Filter + actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {(["all", "custom", "hd", "none"] as const).map((f) => (
           <button
             key={f}
@@ -614,7 +619,7 @@ function ResolveTab() {
       </div>
 
       {/* Entries list */}
-      <div className="space-y-1.5 max-h-[60vh] overflow-y-auto scrollbar-hide">
+      <div className="space-y-1.5">
         {dbLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -622,7 +627,7 @@ function ResolveTab() {
         ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-12 text-sm">Aucune résolution enregistrée</p>
         ) : (
-          filtered.map((e, i) => {
+          paginated.map((e, i) => {
             const sourceColor = e.source === "custom" ? "text-primary" : e.source === "hd" ? "text-blue-400" : "text-destructive";
             const sourceLabel = e.source === "custom" ? "Custom" : e.source === "hd" ? "HD" : "Échec";
             return (
@@ -658,6 +663,36 @@ function ResolveTab() {
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {!dbLoading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors disabled:opacity-30"
+          >
+            ← Précédent
+          </button>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1.5 rounded-xl text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors disabled:opacity-30"
+          >
+            Suivant →
+          </button>
+        </div>
+      )}
+
+      {/* Count info */}
+      {!dbLoading && filtered.length > 0 && (
+        <p className="text-center text-[10px] text-muted-foreground/50">
+          {filtered.length} entrée{filtered.length > 1 ? "s" : ""} · Page {page}/{totalPages}
+        </p>
+      )}
     </div>
   );
 }
