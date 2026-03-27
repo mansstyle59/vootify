@@ -12,10 +12,6 @@ import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomiz
 import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
 import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { HomeCustomizer, type HomeSection } from "@/components/home/HomeCustomizer";
-import { CustomPlaylistSection } from "@/components/home/CustomPlaylistSection";
-import { useGlobalHomeConfig } from "@/hooks/useGlobalHomeConfig";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay, likedSongs } = usePlayerStore();
