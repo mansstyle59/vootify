@@ -8,6 +8,7 @@ import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
