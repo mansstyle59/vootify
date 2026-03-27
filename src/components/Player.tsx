@@ -1002,8 +1002,13 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         </div>
 
 
-        {/* Transport — large play/pause centered, matching music player */}
-        <div className="flex items-center justify-center w-full mb-6">
+        {/* Transport — prev / play / next */}
+        <div className="flex items-center justify-center gap-8 w-full mb-6">
+          {queue.length > 1 && (
+            <motion.button whileTap={{ scale: 0.75 }} onClick={previous} className="p-1">
+              <SkipBack className="w-8 h-8 text-foreground/70 fill-current" />
+            </motion.button>
+          )}
           <button
             onClick={togglePlay}
             className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
@@ -1020,6 +1025,11 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
               <Play className="w-8 h-8 text-foreground fill-current ml-1" />
             )}
           </button>
+          {queue.length > 1 && (
+            <motion.button whileTap={{ scale: 0.75 }} onClick={next} className="p-1">
+              <SkipForward className="w-8 h-8 text-foreground/70 fill-current" />
+            </motion.button>
+          )}
         </div>
 
         {/* Bottom actions */}
