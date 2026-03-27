@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayerStore } from "@/stores/playerStore";
 import { getEffectiveUserId } from "@/lib/deviceId";
 
-import { Music, ListMusic, Radio, Loader2, CheckCircle, Sparkles, Upload, FileAudio, X, Trash2, Plus, Play, Link, Download, ExternalLink } from "lucide-react";
+import { Music, ListMusic, Radio, Loader2, CheckCircle, Sparkles, Upload, FileAudio, X, Trash2, Plus, Play, Link, Download, ExternalLink, ChevronDown, ChevronUp, Info } from "lucide-react";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import AudioFilePicker from "@/components/AudioFilePicker";
 import { toast } from "sonner";
