@@ -4,7 +4,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, LogOut, Send, CheckCircle } from "lucide-react";
+import { ShieldX, Crown, LogOut, Send, CheckCircle, Loader2 } from "lucide-react";
 
 /**
  * Blocks access to the app if the user has no active subscription.
@@ -124,10 +124,11 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
             <button
               type="button"
               onClick={handleRequest}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5"
+              disabled={sending}
+              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
             >
-              <Send className="w-4 h-4" />
-              Faire une demande d'accès
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sending ? "Envoi…" : "Faire une demande d'accès"}
             </button>
           ) : (
             <motion.div
