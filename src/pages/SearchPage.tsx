@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 
 const SearchPage = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
