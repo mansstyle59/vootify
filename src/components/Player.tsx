@@ -17,11 +17,11 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 
 /* ── Shared glass styles — uses CSS custom properties for theme ── */
 const glassStyle = {
-  background: "hsl(var(--card) / 0.85)",
-  backdropFilter: "blur(60px) saturate(1.6)",
-  WebkitBackdropFilter: "blur(60px) saturate(1.6)",
-  border: "1px solid hsl(var(--border) / 0.5)",
-  boxShadow: "0 8px 32px hsl(0 0% 0% / 0.25), inset 0 1px 0 hsl(var(--foreground) / 0.05)",
+  background: "hsl(var(--card) / 0.92)",
+  backdropFilter: "blur(60px) saturate(1.8)",
+  WebkitBackdropFilter: "blur(60px) saturate(1.8)",
+  border: "1px solid hsl(var(--border) / 0.4)",
+  boxShadow: "0 -2px 20px hsl(0 0% 0% / 0.15), 0 8px 32px hsl(0 0% 0% / 0.25)",
 };
 
 const glassButtonStyle = {
@@ -827,7 +827,7 @@ export function MiniPlayer() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="fixed left-0 right-0 z-50 md:bottom-0 px-2 pb-1"
+        className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
         style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div
@@ -841,10 +841,10 @@ export function MiniPlayer() {
           }}
         >
           {/* Progress line */}
-          <div className="h-[3px] w-full" style={{ background: "hsl(var(--muted))" }}>
+          <div className="h-[2.5px] w-full" style={{ background: "hsl(var(--foreground) / 0.08)" }}>
             <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${progressPct}%` }}
+              className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${progressPct}%`, background: "hsl(var(--primary))" }}
             />
           </div>
 
@@ -910,9 +910,9 @@ export function MiniPlayer() {
               </button>
               <button
                 onClick={togglePlay}
-                className="p-2 text-foreground active:scale-90 transition-transform"
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform"
               >
-                {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-0.5" />}
+                {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
               </button>
               <button
                 onClick={next}
@@ -996,18 +996,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
 
       {/* Top bar — matches music player style */}
       <div className="relative z-10 flex items-center justify-between px-5 pb-2">
-        <button onClick={onClose} className="p-1 active:scale-90 transition-transform">
-          <ChevronDown className="w-7 h-7 text-foreground" />
+            <button onClick={onClose} className="p-1 active:scale-90 transition-transform">
+          <ChevronDown className="w-7 h-7 text-foreground/70" />
         </button>
         <div className="flex-1 text-center px-4">
           <div className="flex items-center justify-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-[11px] font-bold text-primary tracking-widest uppercase">EN DIRECT</span>
           </div>
-          <p className="text-[12px] font-bold text-foreground truncate">{stationName}</p>
+          <p className="text-[12px] font-bold text-foreground/80 truncate">{stationName}</p>
         </div>
         <button onClick={() => {}} className="p-1 active:scale-90 transition-transform">
-          <MoreHorizontal className="w-6 h-6 text-foreground" />
+          <MoreHorizontal className="w-6 h-6 text-foreground/70" />
         </button>
       </div>
 
@@ -1096,12 +1096,18 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-center w-full mb-6">
           <button
             onClick={togglePlay}
-            className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform bg-foreground"
+            className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            style={{
+              background: "hsl(var(--foreground) / 0.12)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid hsl(var(--foreground) / 0.15)",
+            }}
           >
             {isPlaying ? (
-              <Pause className="w-9 h-9 text-background fill-current" />
+              <Pause className="w-8 h-8 text-foreground fill-current" />
             ) : (
-              <Play className="w-9 h-9 text-background fill-current ml-1" />
+              <Play className="w-8 h-8 text-foreground fill-current ml-1" />
             )}
           </button>
         </div>
@@ -1503,12 +1509,12 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 onMouseUp={() => setIsSeeking(false)}
                 onMouseLeave={() => setIsSeeking(false)}
               >
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[5px] rounded-full" style={{ background: "hsl(var(--muted))" }}>
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[4px] rounded-full" style={{ background: "hsl(var(--foreground) / 0.1)" }}>
                   <div
                     className="h-full rounded-full relative"
                     style={{
                       width: `${progressPct}%`,
-                      background: "linear-gradient(90deg, hsl(var(--primary) / 0.8), hsl(var(--foreground) / 0.7))",
+                      background: "hsl(var(--foreground) / 0.85)",
                       transition: isSeeking ? "none" : "width 0.3s linear",
                     }}
                   >
@@ -1565,21 +1571,25 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   togglePlay();
                   if (navigator.vibrate) navigator.vibrate(8);
                 }}
-                className="w-[76px] h-[76px] rounded-full flex items-center justify-center transition-all bg-foreground"
+                className="w-[72px] h-[72px] rounded-full flex items-center justify-center transition-all"
                 style={{
+                  background: "hsl(var(--foreground) / 0.12)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  border: "1px solid hsl(var(--foreground) / 0.15)",
                   boxShadow: isPlaying
-                    ? "0 0 30px hsl(var(--primary) / 0.25), 0 8px 30px hsl(0 0% 0% / 0.3)"
-                    : "0 8px 30px hsl(0 0% 0% / 0.3)",
+                    ? "0 0 24px hsl(var(--primary) / 0.2), 0 8px 24px hsl(0 0% 0% / 0.25)"
+                    : "0 8px 24px hsl(0 0% 0% / 0.25)",
                 }}
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {isPlaying ? (
                     <motion.div key="pause" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
-                      <Pause className="w-9 h-9 text-background fill-current" />
+                      <Pause className="w-8 h-8 text-foreground fill-current" />
                     </motion.div>
                   ) : (
                     <motion.div key="play" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
-                      <Play className="w-9 h-9 text-background fill-current ml-1" />
+                      <Play className="w-8 h-8 text-foreground fill-current ml-1" />
                     </motion.div>
                   )}
                 </AnimatePresence>
