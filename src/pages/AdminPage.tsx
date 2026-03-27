@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity } from "lucide-react";
+import { resolveLog } from "@/lib/resolveLog";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "resolve";
 
 interface UserProfile {
   user_id: string;
@@ -41,6 +42,7 @@ const AdminPage = () => {
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "logs", label: "Logs", icon: ScrollText },
+    { key: "resolve", label: "Résolution", icon: Activity },
   ];
 
   return (
@@ -90,6 +92,7 @@ const AdminPage = () => {
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
+        {tab === "resolve" && <ResolveTab />}
       </div>
     </div>
   );
@@ -535,6 +538,110 @@ function LogsTab() {
           );
         })
       )}
+    </div>
+  );
+}
+
+function ResolveTab() {
+  const [entries, setEntries] = useState(resolveLog.getAll());
+  const stats = resolveLog.stats();
+  const [filter, setFilter] = useState<"all" | "custom" | "hd" | "none">("all");
+
+  const refresh = () => setEntries(resolveLog.getAll());
+
+  const filtered = filter === "all" ? entries : entries.filter((e) => e.source === filter);
+
+  const statCards = [
+    { label: "Total", value: stats.total, color: "text-foreground" },
+    { label: "Custom", value: stats.custom, color: "text-primary" },
+    { label: "HD", value: stats.hd, color: "text-blue-400" },
+    { label: "Échecs", value: stats.none, color: "text-destructive" },
+    { label: "Corrigés", value: stats.corrected, color: "text-orange-400" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Stats grid */}
+      <div className="grid grid-cols-5 gap-2">
+        {statCards.map((c) => (
+          <div key={c.label} className="rounded-xl bg-secondary/50 border border-border p-3 text-center">
+            <p className={`text-xl font-bold ${c.color}`}>{c.value}</p>
+            <p className="text-[10px] text-muted-foreground">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter + actions */}
+      <div className="flex items-center gap-2">
+        {(["all", "custom", "hd", "none"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              filter === f
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
+            }`}
+          >
+            {f === "all" ? "Tous" : f === "custom" ? "Custom" : f === "hd" ? "HD" : "Échecs"}
+          </button>
+        ))}
+        <div className="flex-1" />
+        <button
+          onClick={refresh}
+          className="px-3 py-1 rounded-full text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
+        >
+          Rafraîchir
+        </button>
+        <button
+          onClick={() => { resolveLog.clear(); setEntries([]); toast.success("Logs vidés"); }}
+          className="px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+        >
+          Vider
+        </button>
+      </div>
+
+      {/* Entries list */}
+      <div className="space-y-1.5 max-h-[60vh] overflow-y-auto scrollbar-hide">
+        {filtered.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12 text-sm">Aucune résolution enregistrée dans cette session</p>
+        ) : (
+          [...filtered].reverse().map((e, i) => {
+            const sourceColor = e.source === "custom" ? "text-primary" : e.source === "hd" ? "text-blue-400" : "text-destructive";
+            const sourceLabel = e.source === "custom" ? "Custom" : e.source === "hd" ? "HD" : "Échec";
+            return (
+              <motion.div
+                key={`${e.songId}-${e.ts}-${i}`}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.02, 0.3) }}
+                className="p-3 rounded-xl bg-secondary/30 border border-border"
+              >
+                <div className="flex items-start gap-2">
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${sourceColor} bg-current/10`}
+                    style={{ backgroundColor: `hsl(var(--secondary))` }}
+                  >
+                    {sourceLabel}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{e.originalTitle}</p>
+                    <p className="text-xs text-muted-foreground truncate">{e.originalArtist}</p>
+                    {e.resolvedTitle && e.resolvedTitle !== e.originalTitle && (
+                      <p className="text-[11px] text-orange-400 mt-0.5 truncate">→ {e.resolvedTitle}</p>
+                    )}
+                    {e.resolvedArtist && e.resolvedArtist !== e.originalArtist && (
+                      <p className="text-[11px] text-orange-400 truncate">→ {e.resolvedArtist}</p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">
+                    {new Date(e.ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
