@@ -136,6 +136,8 @@ export function MiniPlayer() {
 
     if (!isNewTrack) return; // Same track — handled by play/pause effect above
     lastSongIdRef.current = currentSong.id;
+    setNextPreloaded(false);
+    preloadedSongIdRef.current = null;
 
     // Abort any in-flight load for a previous track
     loadAbortRef.current?.abort();
@@ -305,6 +307,7 @@ export function MiniPlayer() {
         preloadRef.current.load();
         preloadedSongIdRef.current = nextSong.id;
         console.log("[preload] Buffering next:", nextSong.title);
+        setNextPreloaded(true);
       }
     };
 
@@ -662,9 +665,12 @@ export function MiniPlayer() {
               </button>
               <button
                 onClick={next}
-                className="p-2 text-foreground active:scale-90 transition-transform"
+                className="relative p-2 text-foreground active:scale-90 transition-transform"
               >
                 <SkipForward className="w-5 h-5 fill-current" />
+                {nextPreloaded && (
+                  <span className="absolute top-1.5 right-1.5 w-[6px] h-[6px] rounded-full bg-primary animate-pulse" />
+                )}
               </button>
               <button
                 onClick={closePlayer}
