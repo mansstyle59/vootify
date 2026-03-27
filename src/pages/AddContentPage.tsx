@@ -60,6 +60,7 @@ interface SongEntry {
   streamUrl: string;
   uploading: boolean;
   uploaded: boolean;
+  skipped: boolean;
   id3Filled: Set<string>;
 }
 
@@ -120,7 +121,7 @@ function SongForm() {
         title: normalizeTitle(meta.title || file.name.replace(/\.[^.]+$/, "")),
         artist: normalizeArtist(meta.artist || ""),
         album: meta.album ? normalizeText(meta.album) : "",
-        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
+        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
       });
     }
     setSongs((prev) => [...prev, ...entries]);
@@ -135,14 +136,32 @@ function SongForm() {
   const removeSong = (idx: number) => { setSongs((prev) => prev.filter((_, i) => i !== idx)); };
 
   const handleSubmit = async () => {
-    const toUpload = songs.filter((s) => !s.uploaded && s.title.trim() && s.artist.trim());
+    const toUpload = songs.filter((s) => !s.uploaded && !s.skipped && s.title.trim() && s.artist.trim());
     if (toUpload.length === 0) return;
     setSubmitting(true);
 
+    let imported = 0;
+    let skipped = 0;
+
     for (let i = 0; i < songs.length; i++) {
       const song = songs[i];
-      if (song.uploaded || !song.title.trim() || !song.artist.trim()) continue;
+      if (song.uploaded || song.skipped || !song.title.trim() || !song.artist.trim()) continue;
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: true } : s));
+
+      // Check for duplicate BEFORE uploading the file
+      const { data: existing } = await supabase
+        .from("custom_songs")
+        .select("id")
+        .ilike("title", song.title.trim())
+        .ilike("artist", song.artist.trim())
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        // Duplicate found — skip entirely, no upload
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, skipped: true } : s));
+        skipped++;
+        continue;
+      }
 
       const ext = song.file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -152,29 +171,20 @@ function SongForm() {
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
       const streamUrl = urlData.publicUrl;
 
-      const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", song.title.trim()).eq("artist", song.artist.trim()).limit(1);
-      if (existing && existing.length > 0) {
-        const { error: updateErr } = await supabase.from("custom_songs").update({
-          album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
-        }).eq("id", existing[0].id);
-        if (updateErr) { toast.error(`Erreur mise à jour: ${song.title}`); await supabase.storage.from("audio").remove([path]); }
-        else toast.success(`"${song.title}" mis à jour`);
-        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: !updateErr } : s));
-        continue;
-      }
-
       const { error: dbErr } = await supabase.from("custom_songs").insert({
         user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
         album: song.album.trim() || null, duration: song.duration || 0, cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
       });
       if (dbErr) { toast.error(`Erreur DB: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false, uploaded: true, streamUrl } : s));
+      imported++;
     }
     setSubmitting(false);
-    toast.success(`${toUpload.length} chanson${toUpload.length > 1 ? "s" : ""} ajoutée${toUpload.length > 1 ? "s" : ""} !`);
+    if (imported > 0) toast.success(`${imported} chanson${imported > 1 ? "s" : ""} ajoutée${imported > 1 ? "s" : ""}`);
+    if (skipped > 0) toast.info(`${skipped} doublon${skipped > 1 ? "s" : ""} ignoré${skipped > 1 ? "s" : ""}`);
   };
 
-  const pendingCount = songs.filter((s) => !s.uploaded && s.title.trim() && s.artist.trim()).length;
+  const pendingCount = songs.filter((s) => !s.uploaded && !s.skipped && s.title.trim() && s.artist.trim()).length;
 
   return (
     <div className="space-y-4">
@@ -206,7 +216,7 @@ function SongForm() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
               className={`rounded-2xl p-3.5 space-y-2.5 transition-all ${
-                song.uploaded ? "liquid-glass opacity-60" : "liquid-glass"
+                song.uploaded || song.skipped ? "liquid-glass opacity-60" : "liquid-glass"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -222,14 +232,17 @@ function SongForm() {
                   <p className="text-[10px] text-muted-foreground/60 truncate">{song.artist || "Artiste inconnu"}</p>
                 </div>
                 {song.uploaded && <CheckCircle className="w-5 h-5 text-primary shrink-0" />}
+                {song.skipped && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">Doublon</span>
+                )}
                 {song.uploading && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
-                {!song.uploaded && !song.uploading && (
+                {!song.uploaded && !song.uploading && !song.skipped && (
                   <button type="button" onClick={() => removeSong(idx)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
-              {!song.uploaded && (
+              {!song.uploaded && !song.skipped && (
                 <div className="grid grid-cols-2 gap-2">
                   <input value={song.title} onChange={(e) => updateSong(idx, "title", e.target.value)} placeholder="Titre *"
                     className={`px-3 py-2 rounded-xl bg-secondary/50 border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 ${song.id3Filled.has("title") ? "border-primary/30" : "border-border/30"}`} />
@@ -389,7 +402,7 @@ function PlaylistForm() {
 
       entries.push({
         file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
-        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, id3Filled,
+        duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
       });
     }
     setSongs((prev) => [...prev, ...entries]);
@@ -574,7 +587,7 @@ function PlaylistForm() {
                 key={idx}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${song.uploaded ? "opacity-50" : "liquid-glass"}`}
+                className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${song.uploaded || song.skipped ? "opacity-50" : "liquid-glass"}`}
               >
                 <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
                 {song.coverUrl ? (
@@ -588,7 +601,9 @@ function PlaylistForm() {
                   <input value={song.artist} onChange={(e) => setSongs(p => p.map((s, i) => i === idx ? { ...s, artist: e.target.value } : s))}
                     className="w-full text-[10px] text-muted-foreground/60 bg-transparent focus:outline-none" placeholder="Artiste" />
                 </div>
-                {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
+                {song.uploaded ? <CheckCircle className="w-4 h-4 text-primary" /> : song.skipped ? (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 shrink-0">Doublon</span>
+                ) : song.uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : (
                   <button onClick={() => setSongs(p => p.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive">
                     <X className="w-3.5 h-3.5" />
                   </button>
