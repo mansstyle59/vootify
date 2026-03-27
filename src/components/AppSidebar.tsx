@@ -25,6 +25,7 @@ const routeImports: Record<string, () => Promise<unknown>> = {
   "/library": () => import("@/pages/LibraryPage"),
   "/radio": () => import("@/pages/RadioPage"),
   "/add": () => import("@/pages/AddContentPage"),
+  "/admin": () => import("@/pages/AdminPage"),
 };
 
 const prefetched = new Set<string>();
