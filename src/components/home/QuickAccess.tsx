@@ -60,9 +60,9 @@ export function QuickAccess() {
   // Add recent radios
   for (const r of recentRadios || []) {
     items.push({
-      id: `radio-${r.song_id}`,
-      label: r.title,
-      sublabel: "Radio",
+      id: `radio-${r.id}`,
+      label: r.name,
+      sublabel: r.genre || "Radio",
       imageUrl: r.cover_url || "",
       type: "radio",
       action: () => navigate("/radio"),
