@@ -2194,16 +2194,40 @@ function RequestsTab() {
           <Mail className="w-3 h-3 flex-shrink-0" />
           {r.user_email}
         </p>
-        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-          <Crown className="w-3 h-3 flex-shrink-0" />
-          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-            r.requested_plan === "vip" ? "bg-red-500/15 text-red-500" :
-            r.requested_plan === "gold" ? "bg-yellow-500/15 text-yellow-500" :
-            "bg-primary/15 text-primary"
-          }`}>
-            {r.requested_plan || "Premium"}
-          </span>
-        </p>
+        {showActions ? (
+          <div className="flex items-center gap-1 mt-0.5">
+            <Crown className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            {(["premium", "gold", "vip"] as const).map((p) => {
+              const current = planOverrides[r.id] || r.requested_plan || "premium";
+              const isActive = current === p;
+              const colors = p === "vip" ? "bg-red-500 text-white" : p === "gold" ? "bg-yellow-500 text-black" : "bg-primary text-primary-foreground";
+              const inactiveColors = p === "vip" ? "text-red-500 border-red-500/30" : p === "gold" ? "text-yellow-500 border-yellow-500/30" : "text-primary border-primary/30";
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPlanOverrides((prev) => ({ ...prev, [r.id]: p }))}
+                  className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase border transition-all ${
+                    isActive ? `${colors} border-transparent` : `bg-transparent ${inactiveColors} opacity-50 hover:opacity-80`
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+            <Crown className="w-3 h-3 flex-shrink-0" />
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+              r.requested_plan === "vip" ? "bg-red-500/15 text-red-500" :
+              r.requested_plan === "gold" ? "bg-yellow-500/15 text-yellow-500" :
+              "bg-primary/15 text-primary"
+            }`}>
+              {r.requested_plan || "Premium"}
+            </span>
+          </p>
+        )}
         <p className="text-xs text-primary font-medium flex items-center gap-1.5 mt-0.5">
           <Clock className="w-3 h-3 flex-shrink-0" />
           {r.requested_duration === 0
