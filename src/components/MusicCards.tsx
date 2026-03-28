@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListPlus, ListEnd, Music } from "lucide-react";
+import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListEnd, Music } from "lucide-react";
 import { LazyImage } from "./LazyImage";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
-import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
-import { LongPressMenu } from "./LongPressMenu";
 import { toast } from "sonner";
 
 /** Determine the source badge type for a song */
@@ -33,22 +31,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
-  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu on outside click
-  useEffect(() => {
-    if (!showPlaylistMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowPlaylistMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showPlaylistMenu]);
-
-  const sourceType = getSongSourceType(song);
   const isBlocked = false;
 
   const handleClick = () => {
@@ -60,7 +43,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
     }
   };
 
-  const cardContent = (
+  return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -113,18 +96,21 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
         </p>
       </div>
 
-      {/* Action buttons — hidden on mobile, visible on desktop hover */}
-      <div className="hidden md:flex items-center gap-0.5 flex-shrink-0">
+      {/* Action buttons — always visible */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        {/* Like button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             toggleLike(song);
+            if (navigator.vibrate) navigator.vibrate(8);
           }}
-          className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          className="p-1.5 rounded-full transition-colors active:scale-90"
         >
-          <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
+          <Heart className={`w-4 h-4 transition-all ${liked ? "fill-primary text-primary scale-110" : "text-muted-foreground/40"}`} />
         </button>
 
+        {/* Add to queue */}
         {!isBlocked && song.duration > 0 && (
           <button
             onClick={(e) => {
@@ -132,60 +118,36 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
               const newQueue = [...queue.filter((s) => s.id !== song.id), song];
               setQueue(newQueue);
               toast.success(`"${song.title}" ajouté à la file`);
+              if (navigator.vibrate) navigator.vibrate(8);
             }}
-            className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1.5 rounded-full transition-colors active:scale-90 hidden md:block md:opacity-0 md:group-hover:opacity-100"
             title="Ajouter à la file d'attente"
           >
-            <ListEnd className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
+            <ListEnd className="w-4 h-4 text-muted-foreground/40 hover:text-primary transition-colors" />
           </button>
         )}
 
-        {song.duration > 0 && (
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPlaylistMenu(!showPlaylistMenu);
-              }}
-              className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Ajouter à une playlist"
-            >
-              <ListPlus className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
-            </button>
-            <AnimatePresence>
-              {showPlaylistMenu && (
-                <AddToPlaylistMenu song={song} onClose={() => setShowPlaylistMenu(false)} />
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+        {/* Download / offline */}
         {song.streamUrl && song.duration > 0 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!isCached && !isDownloading) download(song);
+              if (!isCached && !isDownloading) {
+                download(song);
+                if (navigator.vibrate) navigator.vibrate(8);
+              }
             }}
-            className={`p-1 rounded-full ${isCached || isDownloading ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}
-            title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger hors-ligne"}
+            className="p-1.5 rounded-full transition-colors active:scale-90"
+            title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger"}
           >
             {isCached ? (
-              <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              <CheckCircle className="w-4 h-4 text-primary" />
             ) : isDownloading ? (
-              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
             ) : (
-              <Download className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
+              <Download className="w-4 h-4 text-muted-foreground/40" />
             )}
           </button>
-        )}
-      </div>
-
-      {/* Mobile: only show liked heart + cached indicator inline */}
-      <div className="flex md:hidden items-center gap-0.5 flex-shrink-0">
-        {liked && (
-          <Heart className="w-3 h-3 fill-primary text-primary flex-shrink-0" />
-        )}
-        {isCached && (
-          <CheckCircle className="w-3 h-3 text-primary flex-shrink-0" />
         )}
       </div>
 
@@ -213,12 +175,6 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
       <span className="text-[11px] text-muted-foreground/60 tabular-nums flex-shrink-0 ml-0.5">{formatDuration(song.duration)}</span>
     </motion.div>
   );
-
-  // Wrap with long-press menu for music tracks
-  if (song.duration > 0) {
-    return <LongPressMenu song={song}>{cardContent}</LongPressMenu>;
-  }
-  return cardContent;
 });
 
 interface ContentCardProps {
