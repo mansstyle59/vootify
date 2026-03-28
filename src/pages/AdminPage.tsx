@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -1228,6 +1228,58 @@ function SongsTab() {
   );
 }
 
+/* ── Radio Card for Admin ── */
+function RadioCardAdmin({ station, isSelected, onEdit, onDelete, onSelect }: {
+  station: any;
+  isSelected: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      className={`group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+        isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
+      }`}
+      onClick={onSelect}
+    >
+      <div className="relative aspect-square rounded-xl overflow-hidden ring-[1.5px] ring-border/20">
+        {station.cover_url ? (
+          <img src={station.cover_url} alt={station.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+            <Radio className="w-8 h-8 text-primary/25" />
+          </div>
+        )}
+
+        {/* Overlay on hover */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+        {/* Action buttons */}
+        <div className="absolute top-2 right-2 flex gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="bg-black/70 hover:bg-black text-white p-2 rounded-full transition-colors"
+          >
+            <Pencil size={16} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="bg-black/70 hover:bg-destructive text-white p-2 rounded-full transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <h3 className="font-semibold text-sm truncate text-foreground">{station.name}</h3>
+        <p className="text-muted-foreground text-xs truncate mt-0.5">{station.genre || "Radio"}</p>
+      </div>
+    </div>
+  );
+}
+
 function RadiosTab() {
   const [radios, setRadios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1388,122 +1440,87 @@ function RadiosTab() {
       {radios.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Aucune radio custom</p>
       ) : (
-        radios.map((r) => (
-          <div
-            key={r.id}
-            className={`flex items-center gap-3 p-3 rounded-xl border group transition-colors cursor-pointer ${
-              selectedIds.has(r.id) ? "bg-primary/10 border-primary/30" : "bg-secondary/30 border-border"
-            }`}
-            onClick={() => isSelecting && toggleSelect(r.id)}
-          >
-            <button
-              onClick={(e) => { e.stopPropagation(); toggleSelect(r.id); }}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                selectedIds.has(r.id)
-                  ? "bg-primary border-primary text-primary-foreground"
-                  : "border-muted-foreground/40 hover:border-primary/60"
-              }`}
-            >
-              {selectedIds.has(r.id) && <Check className="w-3 h-3" />}
-            </button>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {radios.map((r) => {
+            const isSelected = selectedIds.has(r.id);
+            return (
+              <div key={r.id} className="relative">
+                {/* Selection checkbox overlay */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleSelect(r.id); }}
+                  className={`absolute top-2 left-2 z-20 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                    isSelected
+                      ? "bg-primary border-primary text-primary-foreground scale-100"
+                      : "border-white/60 bg-black/30 hover:border-primary/60 scale-90 opacity-0 group-hover:opacity-100"
+                  } ${isSelecting ? "!opacity-100 !scale-100" : ""}`}
+                >
+                  {isSelected && <Check className="w-3 h-3" />}
+                </button>
 
-            {editingId === r.id ? (
-              <div className="relative w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0 group/cover cursor-pointer" onClick={(e) => { e.stopPropagation(); radioCoverRef.current?.click(); }}>
-                <input ref={radioCoverRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
-                {uploadingCover ? (
-                  <div className="w-full h-full flex items-center justify-center bg-secondary">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  </div>
-                ) : editCoverUrl ? (
-                  <>
-                    <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
-                      <ImageIcon className="w-4 h-4 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                    <Upload className="w-4 h-4 text-primary/50" />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
-                {r.cover_url ? (
-                  <img src={r.cover_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                    <Radio className="w-4 h-4 text-primary/30" />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {editingId === r.id ? (
-              <div className="flex-1 min-w-0 space-y-1.5">
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full text-sm font-medium bg-background/80 border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Nom"
-                  autoFocus
-                  onKeyDown={(e) => e.key === "Enter" && saveEdit(r.id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <input
-                  value={editGenre}
-                  onChange={(e) => setEditGenre(e.target.value)}
-                  className="w-full text-xs bg-background/80 border border-border rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Genre"
-                  onKeyDown={(e) => e.key === "Enter" && saveEdit(r.id)}
-                  onClick={(e) => e.stopPropagation()}
+                <RadioCardAdmin
+                  station={r}
+                  isSelected={isSelected}
+                  onEdit={() => startEdit(r)}
+                  onDelete={() => handleDelete(r.id)}
+                  onSelect={() => isSelecting && toggleSelect(r.id)}
                 />
               </div>
-            ) : (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{r.genre || "Radio"}</p>
-              </div>
-            )}
-
-            {editingId === r.id ? (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={(e) => { e.stopPropagation(); saveEdit(r.id); }}
-                  disabled={saving}
-                  className="p-1.5 rounded-full text-primary hover:bg-primary/10 transition-colors"
-                  title="Sauvegarder"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
-                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
-                  title="Annuler"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : !isSelecting ? (
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => { e.stopPropagation(); startEdit(r); }}
-                  className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition-colors"
-                  title="Modifier"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
-                  className="p-1.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ))
+            );
+          })}
+        </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) cancelEdit(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier la station</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nom</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nom de la station" />
+            </div>
+            <div className="space-y-2">
+              <Label>Genre</Label>
+              <Input value={editGenre} onChange={(e) => setEditGenre(e.target.value)} placeholder="Pop, Rock, Jazz..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Pochette</Label>
+              <div className="flex items-center gap-3">
+                <div
+                  className="relative w-16 h-16 rounded-xl overflow-hidden bg-secondary cursor-pointer group/cover flex-shrink-0"
+                  onClick={() => radioCoverRef.current?.click()}
+                >
+                  <input ref={radioCoverRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                  {uploadingCover ? (
+                    <div className="w-full h-full flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+                  ) : editCoverUrl ? (
+                    <>
+                      <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
+                        <ImageIcon className="w-4 h-4 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                      <Upload className="w-5 h-5 text-primary/40" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Cliquez pour changer l'image</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={cancelEdit}>Annuler</Button>
+            <Button onClick={() => editingId && saveEdit(editingId)} disabled={saving || !editName.trim()}>
+              {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
