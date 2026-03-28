@@ -173,65 +173,150 @@ export function MiniPlayer() {
     return () => { released = true; };
   }, [isPlaying, currentSong?.id]);
 
+  // ── Silent keepalive — prevents iOS from killing the audio session in background ──
+  const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!isPlaying || !currentSong) {
+      if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
+      return;
+    }
+    // Periodically touch the AudioContext to keep it alive
+    keepaliveRef.current = setInterval(() => {
+      const ctx = audioCtxRef.current;
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      // Touch media session to prevent OS from reclaiming audio focus
+      if ("mediaSession" in navigator && navigator.mediaSession.playbackState !== "playing") {
+        navigator.mediaSession.playbackState = "playing";
+      }
+    }, 8000);
+    return () => {
+      if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
+    };
+  }, [isPlaying, currentSong?.id]);
+
   // ── Visibility change — resume playback + re-sync media session ──
   // Handles: returning from background, phone call interruption, app switching
   useEffect(() => {
     let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let wasPlayingBeforeHidden = false;
 
     const handleVisibility = () => {
-      if (document.visibilityState !== "visible") return;
       const audio = audioRef.current;
       const state = usePlayerStore.getState();
-      if (!audio || !state.isPlaying || !state.currentSong) return;
 
-      // Small delay to let iOS audio session re-activate
-      resumeTimer = setTimeout(() => {
-        if (audio.paused && audio.src) {
-          const isRadio = state.currentSong && state.currentSong.duration === 0;
-          console.log("[bg-resume] Resuming", isRadio ? "radio stream" : "track");
+      if (document.visibilityState === "hidden") {
+        // Going to background — remember state for recovery
+        wasPlayingBeforeHidden = state.isPlaying;
+        // Force media session sync before going background
+        if ("mediaSession" in navigator && state.isPlaying) {
+          navigator.mediaSession.playbackState = "playing";
+        }
+        return;
+      }
 
-          if (isRadio) {
-            // Radio: reload stream to get fresh data (stale buffer = silence)
-            const src = audio.src;
-            audio.src = "";
-            audio.src = src;
-            audio.load();
+      // Coming back to foreground
+      if (!audio || !state.currentSong) return;
+      const shouldResume = state.isPlaying || wasPlayingBeforeHidden;
+      if (!shouldResume) return;
+
+      // Ensure store is marked as playing (might have been paused externally)
+      if (!state.isPlaying && wasPlayingBeforeHidden) {
+        usePlayerStore.setState({ isPlaying: true });
+      }
+
+      // Progressive resume with escalating retry strategy
+      const isRadio = state.currentSong.duration === 0;
+      
+      const attemptResume = (attempt: number) => {
+        if (!audioRef.current) return;
+        const a = audioRef.current;
+        
+        if (a.paused && a.src) {
+          console.log(`[bg-resume] Attempt ${attempt} — resuming ${isRadio ? "radio" : "track"}`);
+
+          if (isRadio && attempt > 1) {
+            // Radio: reload stream on retry to get fresh data
+            const src = a.src;
+            a.src = "";
+            a.src = src;
+            a.load();
           }
 
-          audio.volume = volume;
-          audio.muted = false;
-          audio.play().catch((e) => {
-            console.warn("[bg-resume] Play failed, retrying:", e);
-            setTimeout(() => audio.play().catch(console.error), 500);
+          a.volume = volume;
+          a.muted = false;
+          a.play().then(() => {
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+            console.log("[bg-resume] Resumed successfully");
+          }).catch((e) => {
+            console.warn(`[bg-resume] Attempt ${attempt} failed:`, e);
+            if (attempt < 3) {
+              setTimeout(() => attemptResume(attempt + 1), 300 * attempt);
+            }
           });
         }
         // Re-sync media session state
         if ("mediaSession" in navigator) {
           navigator.mediaSession.playbackState = "playing";
         }
-      }, 300);
+      };
+
+      // Small delay to let iOS audio session re-activate
+      resumeTimer = setTimeout(() => attemptResume(1), 200);
     };
 
     // Handle audio interruptions (phone calls, Siri, etc.)
-    const handleInterrupt = () => {
+    const handlePause = () => {
       const audio = audioRef.current;
       if (!audio) return;
       const state = usePlayerStore.getState();
-      // If we were playing but got paused externally → mark for resume
-      if (state.isPlaying && audio.paused) {
-        console.log("[interrupt] Audio paused externally — will resume on focus");
+      if (state.isPlaying && audio.paused && document.visibilityState === "visible") {
+        // Interrupted while visible (phone call, Siri) — try immediate resume
+        console.log("[interrupt] Audio paused externally — attempting resume");
+        setTimeout(() => {
+          if (audio.paused && usePlayerStore.getState().isPlaying) {
+            audio.volume = volume;
+            audio.muted = false;
+            audio.play().catch(() => {
+              console.warn("[interrupt] Resume failed — user gesture may be needed");
+            });
+          }
+        }, 500);
+      }
+    };
+
+    // Stall recovery — when audio buffer runs out mid-playback
+    const handleStalled = () => {
+      const audio = audioRef.current;
+      const state = usePlayerStore.getState();
+      if (!audio || !state.isPlaying || !state.currentSong) return;
+      console.warn("[stall] Audio stalled — waiting for data");
+      // For radio, reload stream after 3s if still stalled
+      if (state.currentSong.duration === 0) {
+        setTimeout(() => {
+          if (audio.readyState < 2 && usePlayerStore.getState().isPlaying) {
+            console.log("[stall] Reloading radio stream");
+            const src = audio.src;
+            audio.src = "";
+            audio.src = src;
+            audio.load();
+            audio.play().catch(console.error);
+          }
+        }, 3000);
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
-    // 'pause' event on audio catches OS-level interruptions
     const audioEl = audioRef.current;
-    audioEl?.addEventListener("pause", handleInterrupt);
+    audioEl?.addEventListener("pause", handlePause);
+    audioEl?.addEventListener("stalled", handleStalled);
 
     return () => {
       if (resumeTimer) clearTimeout(resumeTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
-      audioEl?.removeEventListener("pause", handleInterrupt);
+      audioEl?.removeEventListener("pause", handlePause);
+      audioEl?.removeEventListener("stalled", handleStalled);
     };
   }, [volume]);
 
@@ -653,11 +738,18 @@ export function MiniPlayer() {
 
     console.log(`[mediaSession] Registering handlers — mode: ${liveStream ? "RADIO" : "MUSIC"}`);
 
-    // Common: play / pause / stop
+    // Common: play / pause / stop — with forced media session state sync
     try {
       ms.setActionHandler("play", () => {
         const store = usePlayerStore.getState();
         if (!store.isPlaying) store.togglePlay();
+        const audio = audioRef.current;
+        if (audio && audio.paused && audio.src) {
+          audio.volume = volume;
+          audio.muted = false;
+          audio.play().catch(console.error);
+        }
+        ms.playbackState = "playing";
       });
     } catch { /* unsupported */ }
 
@@ -665,20 +757,37 @@ export function MiniPlayer() {
       ms.setActionHandler("pause", () => {
         const store = usePlayerStore.getState();
         if (store.isPlaying) store.togglePlay();
+        ms.playbackState = "paused";
       });
     } catch { /* unsupported */ }
 
     try {
       ms.setActionHandler("stop", () => {
         usePlayerStore.getState().closePlayer();
+        ms.playbackState = "none";
       });
     } catch { /* unsupported */ }
 
     if (liveStream) {
-      // ── RADIO mode: remove all skip/seek actions ──
-      // This gives iOS a clean play/pause-only lock screen
-      try { ms.setActionHandler("previoustrack", null); } catch { /* unsupported */ }
-      try { ms.setActionHandler("nexttrack", null); } catch { /* unsupported */ }
+      // ── RADIO mode: skip stations if multiple in queue, otherwise no skip ──
+      const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
+      if (hasMultipleStations) {
+        try {
+          ms.setActionHandler("previoustrack", () => {
+            usePlayerStore.getState().previous();
+            ms.playbackState = "playing";
+          });
+        } catch { /* unsupported */ }
+        try {
+          ms.setActionHandler("nexttrack", () => {
+            usePlayerStore.getState().next();
+            ms.playbackState = "playing";
+          });
+        } catch { /* unsupported */ }
+      } else {
+        try { ms.setActionHandler("previoustrack", null); } catch { /* unsupported */ }
+        try { ms.setActionHandler("nexttrack", null); } catch { /* unsupported */ }
+      }
       try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
       try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
       try { ms.setActionHandler("seekto", null); } catch { /* unsupported */ }
