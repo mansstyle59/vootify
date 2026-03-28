@@ -2144,12 +2144,12 @@ function RequestsTab() {
         if (existingSub) {
           await supabase
             .from("subscriptions")
-            .update({ status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
+            .update({ plan: request.requested_plan || "premium", status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
             .eq("user_id", request.user_id);
         } else {
           await supabase.from("subscriptions").insert({
             user_id: request.user_id,
-            plan: "standard",
+            plan: request.requested_plan || "premium",
             status: "active",
             starts_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),
@@ -2205,6 +2205,16 @@ function RequestsTab() {
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                   <Mail className="w-3 h-3 flex-shrink-0" />
                   {r.user_email}
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                  <Crown className="w-3 h-3 flex-shrink-0" />
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    r.requested_plan === "vip" ? "bg-red-500/15 text-red-500" :
+                    r.requested_plan === "gold" ? "bg-yellow-500/15 text-yellow-500" :
+                    "bg-primary/15 text-primary"
+                  }`}>
+                    {r.requested_plan || "Premium"}
+                  </span>
                 </p>
                 <p className="text-xs text-primary font-medium flex items-center gap-1.5 mt-0.5">
                   <Clock className="w-3 h-3 flex-shrink-0" />
