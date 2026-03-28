@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3
+  Clock, Music, Heart, BarChart3, Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -29,20 +29,79 @@ function formatBytes(bytes: number): string {
 
 const GlassCard = ({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => (
   <motion.div
-    initial={{ opacity: 0, y: 16 }}
+    initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-    className={`rounded-2xl ${className}`}
+    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={`rounded-3xl ${className}`}
     style={{
-      background: "hsl(0 0% 100% / 0.03)",
-      backdropFilter: "blur(40px) saturate(1.5)",
-      WebkitBackdropFilter: "blur(40px) saturate(1.5)",
-      border: "1px solid hsl(0 0% 100% / 0.06)",
-      boxShadow: "0 4px 24px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
+      background: "hsl(var(--card) / 0.3)",
+      backdropFilter: "blur(48px) saturate(1.6)",
+      WebkitBackdropFilter: "blur(48px) saturate(1.6)",
+      border: "1px solid hsl(var(--border) / 0.08)",
+      boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
     }}
   >
     {children}
   </motion.div>
+);
+
+const StatCard = ({ icon: Icon, value, label, delay }: { icon: any; value: string; label: string; delay: number }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+    className="p-4 rounded-2xl text-center"
+    style={{
+      background: "hsl(var(--card) / 0.25)",
+      border: "1px solid hsl(var(--border) / 0.06)",
+      boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.02)",
+    }}
+  >
+    <div
+      className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center"
+      style={{ background: "hsl(var(--primary) / 0.1)" }}
+    >
+      <Icon className="w-4 h-4 text-primary" />
+    </div>
+    <p className="text-xl font-bold text-foreground leading-none">{value}</p>
+    <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">{label}</p>
+  </motion.div>
+);
+
+const MenuRow = ({
+  icon: Icon,
+  iconBg,
+  title,
+  subtitle,
+  onClick,
+  trailing,
+}: {
+  icon: any;
+  iconBg?: string;
+  title: string;
+  subtitle: string;
+  onClick?: () => void;
+  trailing?: React.ReactNode;
+}) => (
+  <button
+    onClick={onClick}
+    className="w-full p-4 flex items-center gap-3.5 transition-colors active:scale-[0.98] active:opacity-80"
+    style={{ background: "transparent" }}
+    onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(var(--foreground) / 0.02)")}
+    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+  >
+    <div
+      className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+      style={{ background: iconBg || "hsl(var(--primary) / 0.1)" }}
+    >
+      <Icon className="w-4.5 h-4.5 text-primary" />
+    </div>
+    <div className="flex-1 min-w-0 text-left">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="text-[11px] text-muted-foreground/60 font-medium">{subtitle}</p>
+    </div>
+    {trailing || <ChevronRight className="w-4 h-4 text-muted-foreground/20 flex-shrink-0" />}
+  </button>
 );
 
 const ProfilePage = () => {
@@ -62,7 +121,6 @@ const ProfilePage = () => {
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
 
-  // Listening stats
   const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
   const [tracksPlayed, setTracksPlayed] = useState(0);
   const [likedCount, setLikedCount] = useState(0);
@@ -95,7 +153,6 @@ const ProfilePage = () => {
     offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
   }, []);
 
-  // Load listening stats
   useEffect(() => {
     if (!user) return;
     Promise.all([
@@ -174,44 +231,98 @@ const ProfilePage = () => {
   const swPercent = maxEstimate > 0 ? ((swCacheSize || 0) / maxEstimate) * 100 : 0;
   const offlinePercent = maxEstimate > 0 ? ((offlineCacheSize || 0) / maxEstimate) * 100 : 0;
 
+  const plan = isActive && subscription ? normalizePlan(subscription.plan) : "free";
+  const planBadge: Record<string, { bg: string; border: string; text: string }> = {
+    premium: { bg: "hsl(var(--primary) / 0.12)", border: "hsl(var(--primary) / 0.2)", text: "hsl(var(--primary))" },
+    gold: { bg: "hsl(45 90% 55% / 0.12)", border: "hsl(45 90% 55% / 0.2)", text: "hsl(45 90% 55%)" },
+    vip: { bg: "hsl(0 70% 55% / 0.12)", border: "hsl(0 70% 55% / 0.2)", text: "hsl(0 70% 55%)" },
+  };
+  const badge = planBadge[plan];
+
   return (
     <div className="min-h-screen pb-40">
-      {/* Ambient bg */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/8 rounded-full blur-[150px]" />
-        <div className="absolute bottom-1/3 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[120px]" />
+      {/* Ambient background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div
+          className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full"
+          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.08) 0%, transparent 70%)", filter: "blur(80px)" }}
+        />
+        <div
+          className="absolute bottom-[20%] right-[-10%] w-[400px] h-[400px] rounded-full"
+          style={{ background: "radial-gradient(ellipse, hsl(var(--accent) / 0.06) 0%, transparent 70%)", filter: "blur(100px)" }}
+        />
+        <div
+          className="absolute top-[50%] left-[-5%] w-[300px] h-[300px] rounded-full"
+          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.04) 0%, transparent 70%)", filter: "blur(80px)" }}
+        />
       </div>
 
       {/* Header */}
-      <div className="relative px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour
-        </button>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="sticky top-0 z-30 px-4 md:px-8 py-3"
+        style={{
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
+          background: "hsl(var(--background) / 0.6)",
+          backdropFilter: "blur(40px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.4)",
+          borderBottom: "1px solid hsl(var(--border) / 0.06)",
+        }}
+      >
+        <div className="max-w-lg mx-auto flex items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </button>
+          <h1 className="flex-1 text-center text-sm font-bold text-foreground">Profil</h1>
+          <div className="w-14" /> {/* balance */}
+        </div>
+      </motion.div>
 
-      <div className="px-4 md:px-8 max-w-lg mx-auto space-y-5">
-        {/* Profile hero card */}
-        <GlassCard className="p-6 text-center relative overflow-hidden" delay={0}>
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] to-transparent pointer-events-none" />
-          
-          <div className="relative">
+      <div className="px-4 md:px-8 max-w-lg mx-auto space-y-4 mt-4">
+        {/* Hero profile */}
+        <GlassCard className="relative overflow-hidden" delay={0}>
+          {/* Decorative gradient */}
+          <div
+            className="absolute inset-x-0 top-0 h-32 pointer-events-none"
+            style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.08) 0%, transparent 100%)" }}
+          />
+
+          <div className="relative p-6 pb-5 text-center">
+            {/* Avatar */}
             <div className="relative group cursor-pointer mx-auto w-fit" onClick={() => fileInputRef.current?.click()}>
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-primary/40 to-primary/10 blur-sm" />
-              <Avatar className="relative w-24 h-24 border-2 border-white/10 shadow-2xl">
+              <div
+                className="absolute -inset-1.5 rounded-full"
+                style={{
+                  background: "linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.1))",
+                  filter: "blur(6px)",
+                }}
+              />
+              <Avatar className="relative w-24 h-24 shadow-2xl" style={{ border: "2px solid hsl(var(--border) / 0.15)" }}>
                 <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-                <AvatarFallback className="text-xl font-bold bg-primary/20 text-primary">
+                <AvatarFallback
+                  className="text-xl font-bold"
+                  style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
+                >
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 {uploading ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
               </div>
               {isAdmin && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-primary/90 border-2 border-background flex items-center justify-center">
+                <div
+                  className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "hsl(var(--primary) / 0.9)",
+                    border: "2px solid hsl(var(--background))",
+                  }}
+                >
                   <Shield className="w-3.5 h-3.5 text-primary-foreground" />
                 </div>
               )}
@@ -220,69 +331,66 @@ const ProfilePage = () => {
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
 
             <h2 className="mt-4 text-lg font-bold text-foreground">{displayName || "Utilisateur"}</h2>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="text-xs text-muted-foreground/60 font-medium">{user.email}</p>
 
-            {isActive && subscription && (() => {
-              const plan = normalizePlan(subscription.plan);
-              const badgeColors: Record<string, string> = {
-                premium: "bg-primary/15 border-primary/20 text-primary",
-                gold: "bg-yellow-500/15 border-yellow-500/20 text-yellow-500",
-                vip: "bg-red-500/15 border-red-500/20 text-red-500",
-              };
-              const cls = badgeColors[plan] || "bg-primary/15 border-primary/20 text-primary";
-              return (
-                <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${cls}`}>
-                  <Crown className="w-3.5 h-3.5" />
-                  <span className="text-xs font-semibold capitalize">{getPlanConfig(plan).label}</span>
-                </div>
-              );
-            })()}
+            {badge && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full"
+                style={{
+                  background: badge.bg,
+                  border: `1px solid ${badge.border}`,
+                  color: badge.text,
+                }}
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold capitalize">{getPlanConfig(plan).label}</span>
+              </motion.div>
+            )}
           </div>
         </GlassCard>
 
-        {/* Listening stats */}
-        <GlassCard className="p-5" delay={0.04}>
+        {/* Stats */}
+        <GlassCard className="p-5" delay={0.05}>
           <div className="flex items-center gap-2.5 mb-4">
-            <BarChart3 className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Statistiques d'écoute</h3>
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center"
+              style={{ background: "hsl(var(--primary) / 0.1)" }}
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <h3 className="text-sm font-bold text-foreground">Statistiques d'écoute</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                icon: Clock,
-                value: totalListeningSeconds >= 3600
-                  ? `${Math.floor(totalListeningSeconds / 3600)}h ${Math.floor((totalListeningSeconds % 3600) / 60)}m`
-                  : `${Math.floor(totalListeningSeconds / 60)}m`,
-                label: "Temps d'écoute",
-              },
-              { icon: Music, value: tracksPlayed.toString(), label: "Morceaux joués" },
-              { icon: Heart, value: likedCount.toString(), label: "Favoris" },
-              { icon: Headphones, value: playlistCount.toString(), label: "Playlists" },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-                className="p-3.5 rounded-xl text-center"
-                style={{
-                  background: "hsl(0 0% 100% / 0.03)",
-                  border: "1px solid hsl(0 0% 100% / 0.05)",
-                  boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.02)",
-                }}
-              >
-                <stat.icon className="w-4 h-4 text-primary mx-auto mb-1.5" />
-                <p className="text-lg font-bold text-foreground leading-none">{stat.value}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">{stat.label}</p>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatCard
+              icon={Clock}
+              value={totalListeningSeconds >= 3600
+                ? `${Math.floor(totalListeningSeconds / 3600)}h${Math.floor((totalListeningSeconds % 3600) / 60)}m`
+                : `${Math.floor(totalListeningSeconds / 60)}m`}
+              label="Temps d'écoute"
+              delay={0.1}
+            />
+            <StatCard icon={Music} value={tracksPlayed.toString()} label="Morceaux joués" delay={0.15} />
+            <StatCard icon={Heart} value={likedCount.toString()} label="Favoris" delay={0.2} />
+            <StatCard icon={Headphones} value={playlistCount.toString()} label="Playlists" delay={0.25} />
           </div>
         </GlassCard>
 
         {/* Edit name */}
-        <GlassCard className="p-5 space-y-4" delay={0.08}>
+        <GlassCard className="p-5 space-y-4" delay={0.1}>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center"
+              style={{ background: "hsl(var(--primary) / 0.1)" }}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <h3 className="text-sm font-bold text-foreground">Informations</h3>
+          </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">
+            <label className="block text-[11px] font-semibold text-muted-foreground/60 mb-1.5 uppercase tracking-wider">
               Nom d'affichage
             </label>
             <input
@@ -290,24 +398,46 @@ const ProfilePage = () => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Votre nom"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 text-sm transition-all"
+              className="w-full px-4 py-2.5 rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
+              style={{
+                background: "hsl(var(--foreground) / 0.03)",
+                border: "1px solid hsl(var(--border) / 0.08)",
+                boxShadow: "inset 0 1px 2px hsl(0 0% 0% / 0.1)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "hsl(var(--primary) / 0.3)";
+                e.currentTarget.style.boxShadow = "inset 0 1px 2px hsl(0 0% 0% / 0.1), 0 0 0 3px hsl(var(--primary) / 0.08)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "hsl(var(--border) / 0.08)";
+                e.currentTarget.style.boxShadow = "inset 0 1px 2px hsl(0 0% 0% / 0.1)";
+              }}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">
+            <label className="block text-[11px] font-semibold text-muted-foreground/60 mb-1.5 uppercase tracking-wider">
               Email
             </label>
             <input
               type="email"
               value={user.email || ""}
               disabled
-              className="w-full px-4 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] text-muted-foreground text-sm cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-2xl text-sm text-muted-foreground/50 cursor-not-allowed"
+              style={{
+                background: "hsl(var(--foreground) / 0.015)",
+                border: "1px solid hsl(var(--border) / 0.05)",
+              }}
             />
           </div>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+            style={{
+              background: "hsl(var(--primary))",
+              color: "hsl(var(--primary-foreground))",
+              boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)",
+            }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Sauvegarder
@@ -315,46 +445,38 @@ const ProfilePage = () => {
         </GlassCard>
 
         {/* Quick links */}
-        <GlassCard className="divide-y divide-white/[0.04]" delay={0.16}>
-          <button
-            onClick={() => navigate("/audio-settings")}
-            className="w-full p-4 flex items-center gap-3 hover:bg-white/[0.03] transition-colors active:scale-[0.98]"
-          >
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-              <Headphones className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold text-foreground">Paramètres audio</p>
-              <p className="text-[11px] text-muted-foreground">Égaliseur, crossfade, presets</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
-          </button>
+        <GlassCard delay={0.15}>
+          <div style={{ borderBottom: "1px solid hsl(var(--border) / 0.05)" }}>
+            <MenuRow
+              icon={Headphones}
+              title="Paramètres audio"
+              subtitle="Égaliseur, crossfade, presets"
+              onClick={() => navigate("/audio-settings")}
+            />
+          </div>
 
           {isAdmin && (
-            <button
-              onClick={() => navigate("/admin")}
-              className="w-full p-4 flex items-center gap-3 hover:bg-white/[0.03] transition-colors active:scale-[0.98]"
-            >
-              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-4.5 h-4.5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-foreground">Administration</p>
-                <p className="text-[11px] text-muted-foreground">Gérer les utilisateurs et contenus</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
-            </button>
+            <div style={{ borderBottom: "1px solid hsl(var(--border) / 0.05)" }}>
+              <MenuRow
+                icon={Shield}
+                title="Administration"
+                subtitle="Gérer les utilisateurs et contenus"
+                onClick={() => navigate("/admin")}
+              />
+            </div>
           )}
 
-          {/* Biometric toggle */}
           {biometricSupported && (
-            <div className="w-full p-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <div className="p-4 flex items-center gap-3.5">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "hsl(var(--primary) / 0.1)" }}
+              >
                 <Fingerprint className="w-4.5 h-4.5 text-primary" />
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <p className="text-sm font-semibold text-foreground">Face ID / Touch ID</p>
-                <p className="text-[11px] text-muted-foreground">Connexion biométrique rapide</p>
+                <p className="text-[11px] text-muted-foreground/60 font-medium">Connexion biométrique rapide</p>
               </div>
               <button
                 onClick={() => {
@@ -366,12 +488,13 @@ const ProfilePage = () => {
                     toast("Connectez-vous avec votre mot de passe pour activer Face ID");
                   }
                 }}
-                className={`relative w-11 h-6 rounded-full transition-colors ${biometricOn ? "bg-primary" : "bg-muted"}`}
+                className="relative w-12 h-7 rounded-full transition-colors"
+                style={{ background: biometricOn ? "hsl(var(--primary))" : "hsl(var(--muted))" }}
               >
                 <motion.div
-                  animate={{ x: biometricOn ? 20 : 2 }}
+                  animate={{ x: biometricOn ? 22 : 3 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                  className="absolute top-1.5 w-4 h-4 rounded-full bg-white shadow-sm"
                 />
               </button>
             </div>
@@ -379,32 +502,46 @@ const ProfilePage = () => {
         </GlassCard>
 
         {/* Storage */}
-        <GlassCard className="p-5 space-y-4" delay={0.24}>
+        <GlassCard className="p-5 space-y-4" delay={0.2}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+            <div
+              className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ background: "hsl(var(--primary) / 0.1)" }}
+            >
               <Database className="w-4.5 h-4.5 text-primary" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Stockage</h3>
-              <p className="text-[11px] text-muted-foreground">
+              <h3 className="text-sm font-bold text-foreground">Stockage</h3>
+              <p className="text-[11px] text-muted-foreground/60 font-medium">
                 {totalUsed > 0 ? `${formatBytes(totalUsed)} utilisé` : "Calcul…"}
               </p>
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 rounded-full bg-white/[0.04] overflow-hidden flex">
+          <div
+            className="h-2.5 rounded-full overflow-hidden flex"
+            style={{ background: "hsl(var(--foreground) / 0.03)" }}
+          >
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${swPercent}%` }}
               transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="h-full rounded-l-full bg-primary"
+              className="h-full"
+              style={{
+                background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
+                borderRadius: offlinePercent > 0 ? "9999px 0 0 9999px" : "9999px",
+              }}
             />
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${offlinePercent}%` }}
               transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-              className="h-full bg-primary/50"
+              className="h-full"
+              style={{
+                background: "hsl(var(--primary) / 0.35)",
+                borderRadius: "0 9999px 9999px 0",
+              }}
             />
           </div>
 
@@ -412,11 +549,11 @@ const ProfilePage = () => {
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                <span className="text-xs text-muted-foreground">Cache navigateur</span>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--primary))" }} />
+                <span className="text-xs text-muted-foreground font-medium">Cache navigateur</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground">
+                <span className="text-xs font-semibold text-foreground">
                   {swCacheSize !== null ? formatBytes(swCacheSize) : "…"}
                 </span>
                 <button
@@ -427,7 +564,11 @@ const ProfilePage = () => {
                     setSwCacheSize(0);
                     toast.success("Cache navigateur vidé !");
                   }}
-                  className="px-2 py-0.5 rounded-md bg-destructive/10 text-destructive text-[10px] font-medium hover:bg-destructive/20 transition-colors active:scale-95"
+                  className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors active:scale-95"
+                  style={{
+                    background: "hsl(var(--destructive) / 0.08)",
+                    color: "hsl(var(--destructive))",
+                  }}
                 >
                   Vider
                 </button>
@@ -436,14 +577,14 @@ const ProfilePage = () => {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-primary/50" />
-                <span className="text-xs text-muted-foreground">Hors-ligne</span>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.35)" }} />
+                <span className="text-xs text-muted-foreground font-medium">Hors-ligne</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground">
+                <span className="text-xs font-semibold text-foreground">
                   {offlineCount} titre{offlineCount > 1 ? "s" : ""} · {offlineCacheSize !== null ? formatBytes(offlineCacheSize) : "…"}
                 </span>
-                <HardDrive className="w-3.5 h-3.5 text-muted-foreground/30" />
+                <HardDrive className="w-3.5 h-3.5 text-muted-foreground/25" />
               </div>
             </div>
           </div>
@@ -456,7 +597,12 @@ const ProfilePage = () => {
               setSwCacheSize(0);
               toast.success("Tout le cache a été vidé !");
             }}
-            className="w-full py-2 rounded-xl bg-destructive/8 text-destructive text-xs font-medium hover:bg-destructive/15 transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]"
+            className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
+            style={{
+              background: "hsl(var(--destructive) / 0.06)",
+              color: "hsl(var(--destructive))",
+              border: "1px solid hsl(var(--destructive) / 0.08)",
+            }}
           >
             <Trash2 className="w-3.5 h-3.5" />
             Vider tout le cache
@@ -464,10 +610,10 @@ const ProfilePage = () => {
         </GlassCard>
 
         {/* Logout */}
-        <GlassCard delay={0.32}>
+        <GlassCard delay={0.25}>
           <button
             onClick={async () => { await signOut(); navigate("/"); }}
-            className="w-full p-4 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-[0.98]"
+            className="w-full p-4 flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors active:scale-[0.98]"
           >
             <LogOut className="w-4 h-4" />
             Se déconnecter
