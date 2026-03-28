@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { motion } from "framer-motion";
-import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn, User, Star, Gem } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Crown, Send, CheckCircle, Loader2, Mail, LogIn, User, Star, Gem, Sparkles, Clock,
+} from "lucide-react";
 
 const durationOptions = [
   { label: "7 jours", value: 7, unit: "days" as const },
@@ -14,9 +16,9 @@ const durationOptions = [
 ];
 
 const planOptions = [
-  { key: "premium", label: "Premium", icon: Crown, color: "bg-primary text-primary-foreground border-primary" },
-  { key: "gold", label: "Gold", icon: Star, color: "bg-yellow-500 text-black border-yellow-500" },
-  { key: "vip", label: "VIP", icon: Gem, color: "bg-red-500 text-white border-red-500" },
+  { key: "premium", label: "Premium", icon: Crown, desc: "Accès standard", gradient: "from-emerald-500 to-green-600", glow: "shadow-emerald-500/30" },
+  { key: "gold", label: "Gold", icon: Star, desc: "Accès étendu", gradient: "from-amber-400 to-yellow-500", glow: "shadow-amber-400/30" },
+  { key: "vip", label: "VIP", icon: Gem, desc: "Accès illimité", gradient: "from-rose-500 to-red-600", glow: "shadow-rose-500/30" },
 ];
 
 const RequestAccessPage = () => {
@@ -31,9 +33,17 @@ const RequestAccessPage = () => {
   const [pseudo, setPseudo] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(initialPlan);
   const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
+  const [shakeFields, setShakeFields] = useState(false);
+
+  const selectedPlanInfo = planOptions.find((p) => p.key === selectedPlan) || planOptions[0];
+  const isFormValid = contactEmail.trim().length > 0 && pseudo.trim().length > 0;
 
   const handleRequest = async () => {
-    if (!contactEmail.trim() || !pseudo.trim()) return;
+    if (!isFormValid) {
+      setShakeFields(true);
+      setTimeout(() => setShakeFields(false), 600);
+      return;
+    }
     setSending(true);
     try {
       const userId = user?.id || "00000000-0000-0000-0000-000000000000";
@@ -45,7 +55,7 @@ const RequestAccessPage = () => {
           .select("display_name")
           .eq("user_id", user.id)
           .maybeSingle();
-        
+
         await supabase.from("access_requests").insert({
           user_id: user.id,
           user_email: contactEmail.trim(),
@@ -72,157 +82,214 @@ const RequestAccessPage = () => {
     }
   };
 
-  const selectedPlanInfo = planOptions.find((p) => p.key === selectedPlan) || planOptions[0];
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
+      {/* Ambient glow */}
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-15 blur-[120px] pointer-events-none"
+        style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.2))" }}
+      />
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-sm w-full"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="text-center max-w-md w-full relative z-10"
       >
-        <div className="relative inline-flex mb-6">
-          <div className="w-20 h-20 rounded-2xl bg-destructive/10 flex items-center justify-center">
-            <ShieldX className="w-10 h-10 text-destructive" />
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-            <Crown className="w-4 h-4 text-primary" />
-          </div>
-        </div>
-
-        <h1 className="text-2xl font-display font-bold text-foreground mb-2">
-          Demande d'abonnement
-        </h1>
-        <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
-          Remplissez le formulaire ci-dessous pour demander l'activation de votre accès.
-        </p>
-
-        <div className="space-y-3">
-          {!requested ? (
-            <>
-              {/* Plan selector */}
-              <div className="text-left">
-                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
-                  Plan souhaité
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {planOptions.map((opt) => {
-                    const isSelected = selectedPlan === opt.key;
-                    const Icon = opt.icon;
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        onClick={() => setSelectedPlan(opt.key)}
-                        className={`py-2.5 rounded-xl text-sm font-medium transition-all border flex items-center justify-center gap-1.5 ${
-                          isSelected
-                            ? opt.color
-                            : "bg-muted/50 text-foreground border-border hover:bg-muted"
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Pseudo */}
-              <div className="text-left">
-                <label className="text-xs text-muted-foreground font-medium mb-1 block">
-                  Pseudo
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={pseudo}
-                    onChange={(e) => setPseudo(e.target.value)}
-                    placeholder="Votre pseudo"
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="text-left">
-                <label className="text-xs text-muted-foreground font-medium mb-1 block">
-                  Adresse email de contact
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="email"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="votre@email.com"
-                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="text-left">
-                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
-                  Durée d'abonnement souhaitée
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {durationOptions.map((opt) => {
-                    const isSelected = selectedDuration.value === opt.value && selectedDuration.unit === opt.unit;
-                    return (
-                      <button
-                        key={opt.label}
-                        type="button"
-                        onClick={() => setSelectedDuration({ value: opt.value, unit: opt.unit })}
-                        className={`py-2.5 rounded-xl text-sm font-medium transition-colors border ${
-                          isSelected
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted/50 text-foreground border-border hover:bg-muted"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleRequest}
-                disabled={sending || !contactEmail.trim() || !pseudo.trim()}
-                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2"
-              >
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {sending ? "Envoi…" : `Demander ${selectedPlanInfo.label}`}
-              </button>
-            </>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full py-4 rounded-xl bg-primary/10 text-primary font-medium text-sm flex flex-col items-center justify-center gap-2"
-            >
-              <CheckCircle className="w-6 h-6" />
-              <span>Demande envoyée !</span>
-              <span className="text-xs text-muted-foreground font-normal">
-                Plan demandé : <span className="font-semibold capitalize">{selectedPlanInfo.label}</span>
-              </span>
-              <span className="text-xs text-muted-foreground font-normal">
-                Vous recevrez vos informations de connexion par email une fois approuvée.
-              </span>
-            </motion.div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => navigate("/auth")}
-            className="w-full py-3.5 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2.5"
+        {/* Header */}
+        <div className="mb-5">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.15 }}
+            className="relative inline-flex mb-3"
           >
-            <LogIn className="w-4 h-4" />
-            Se connecter
-          </button>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/10">
+              <Sparkles className="w-7 h-7 text-primary" />
+            </div>
+          </motion.div>
+          <h1 className="text-2xl font-display font-bold text-foreground mb-1">
+            Demande d'abonnement
+          </h1>
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
+            Choisissez votre plan et envoyez votre demande d'accès.
+          </p>
         </div>
+
+        {/* Form card */}
+        <div
+          className="rounded-2xl p-5 space-y-4"
+          style={{
+            background: "hsl(var(--card) / 0.6)",
+            backdropFilter: "blur(40px)",
+            WebkitBackdropFilter: "blur(40px)",
+            border: "1px solid hsl(var(--border) / 0.5)",
+          }}
+        >
+          <AnimatePresence mode="wait">
+            {!requested ? (
+              <motion.div key="form" exit={{ opacity: 0, scale: 0.95 }} className="space-y-4">
+                {/* Plan selector */}
+                <div className="text-left">
+                  <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2 block">
+                    Plan souhaité
+                  </label>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {planOptions.map((opt) => {
+                      const isSelected = selectedPlan === opt.key;
+                      const Icon = opt.icon;
+                      return (
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          key={opt.key}
+                          type="button"
+                          onClick={() => setSelectedPlan(opt.key)}
+                          className={`relative py-3 rounded-xl text-sm font-semibold transition-all flex flex-col items-center justify-center gap-1 ${
+                            isSelected
+                              ? `bg-gradient-to-br ${opt.gradient} text-white shadow-lg ${opt.glow} border-0`
+                              : "bg-muted/40 text-foreground border border-border/60 hover:bg-muted/70"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span>{opt.label}</span>
+                          {isSelected && (
+                            <motion.div
+                              layoutId="plan-dot"
+                              className="absolute -bottom-1 w-6 h-1 rounded-full bg-white/80"
+                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            />
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Pseudo */}
+                <motion.div
+                  className="text-left"
+                  animate={shakeFields && !pseudo.trim() ? { x: [0, -8, 8, -6, 6, 0] } : {}}
+                  transition={{ duration: 0.5 }}
+                >
+                  <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1.5 block">
+                    Pseudo
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+                    <input
+                      type="text"
+                      value={pseudo}
+                      onChange={(e) => setPseudo(e.target.value)}
+                      placeholder="Votre pseudo"
+                      className="w-full bg-background/50 border border-border/60 rounded-xl px-3 py-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Email */}
+                <motion.div
+                  className="text-left"
+                  animate={shakeFields && !contactEmail.trim() ? { x: [0, -8, 8, -6, 6, 0] } : {}}
+                  transition={{ duration: 0.5 }}
+                >
+                  <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1.5 block">
+                    Adresse email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+                    <input
+                      type="email"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      placeholder="votre@email.com"
+                      className="w-full bg-background/50 border border-border/60 rounded-xl px-3 py-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Duration */}
+                <div className="text-left">
+                  <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" /> Durée souhaitée
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {durationOptions.map((opt) => {
+                      const isSelected = selectedDuration.value === opt.value && selectedDuration.unit === opt.unit;
+                      return (
+                        <motion.button
+                          whileTap={{ scale: 0.93 }}
+                          key={opt.label}
+                          type="button"
+                          onClick={() => setSelectedDuration({ value: opt.value, unit: opt.unit })}
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                              : "bg-background/50 text-foreground border-border/60 hover:bg-muted/70"
+                          }`}
+                        >
+                          {opt.label}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  whileHover={isFormValid ? { scale: 1.01 } : {}}
+                  type="button"
+                  onClick={handleRequest}
+                  disabled={sending}
+                  className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2.5 mt-1 ${
+                    isFormValid
+                      ? `bg-gradient-to-r ${selectedPlanInfo.gradient} text-white shadow-lg ${selectedPlanInfo.glow}`
+                      : "bg-muted text-muted-foreground"
+                  } disabled:opacity-60`}
+                >
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {sending ? "Envoi…" : `Demander ${selectedPlanInfo.label}`}
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="w-full py-8 flex flex-col items-center justify-center gap-3"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20, delay: 0.2 }}
+                  className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center mb-1"
+                >
+                  <CheckCircle className="w-7 h-7 text-primary" />
+                </motion.div>
+                <span className="text-lg font-bold text-foreground">Demande envoyée !</span>
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${selectedPlanInfo.gradient} text-white`}>
+                  {(() => { const I = selectedPlanInfo.icon; return <I className="w-3 h-3" />; })()}
+                  {selectedPlanInfo.label}
+                </div>
+                <span className="text-xs text-muted-foreground font-normal max-w-[250px] leading-relaxed">
+                  Vous recevrez vos identifiants par email une fois votre accès approuvé.
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Login */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="button"
+          onClick={() => navigate("/auth")}
+          className="w-full mt-3 py-3 rounded-xl bg-muted/40 text-muted-foreground font-medium text-sm hover:bg-muted/60 transition-all flex items-center justify-center gap-2 border border-border/30"
+        >
+          <LogIn className="w-4 h-4" />
+          Déjà un compte ? Se connecter
+        </motion.button>
       </motion.div>
     </div>
   );
