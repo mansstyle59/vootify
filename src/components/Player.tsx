@@ -102,6 +102,11 @@ export function MiniPlayer() {
   const lastSongIdRef = useRef<string | null>(null);
   const [resumeBanner, setResumeBanner] = useState<string | null>(null);
   const resumeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [closing, setClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setClosing(true);
+  }, []);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
@@ -511,6 +516,14 @@ export function MiniPlayer() {
     };
   }, []);
 
+  // Handle close animation completion
+  const onExitComplete = useCallback(() => {
+    if (closing) {
+      closePlayer();
+      setClosing(false);
+    }
+  }, [closing, closePlayer]);
+
   if (!currentSong) return null;
 
   const effectiveDuration = audioDuration > 0 ? audioDuration : currentSong.duration;
@@ -525,74 +538,79 @@ export function MiniPlayer() {
 
     return (
       <>
-        <motion.div
-          initial={{ y: "100%", opacity: 0 }}
-          animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
-          exit={{ y: "100%", opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 28 }}
-          className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-          style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
-        >
-          <div className="rounded-2xl overflow-hidden" style={glassStyle}>
-            <MiniPlayerProgress percent={0} isLive />
-            <div className="flex items-center gap-3 px-3 py-2.5">
-              <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={toggleFullScreen}>
-                <motion.div
-                  className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
-                  style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
-                  whileTap={{ scale: 0.92 }}
-                >
-                  {bubbleCover ? (
-                    <motion.img
-                      key={bubbleCover}
-                      src={bubbleCover}
-                      alt={currentSong.title}
-                      className="w-full h-full object-cover"
-                      initial={{ opacity: 0, scale: 1.1 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4 }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                      <Music className="w-5 h-5 text-primary/40" />
+        <AnimatePresence onExitComplete={onExitComplete}>
+          {!closing && (
+            <motion.div
+              key="mini-radio"
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
+              exit={{ y: "100%", opacity: 0, scale: 0.9, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
+              style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
+            >
+              <div className="rounded-2xl overflow-hidden" style={glassStyle}>
+                <MiniPlayerProgress percent={0} isLive />
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={toggleFullScreen}>
+                    <motion.div
+                      className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
+                      style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
+                      whileTap={{ scale: 0.92 }}
+                    >
+                      {bubbleCover ? (
+                        <motion.img
+                          key={bubbleCover}
+                          src={bubbleCover}
+                          alt={currentSong.title}
+                          className="w-full h-full object-cover"
+                          initial={{ opacity: 0, scale: 1.1 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.4 }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                          <Music className="w-5 h-5 text-primary/40" />
+                        </div>
+                      )}
+                      {isPlaying && (
+                        <div className="absolute inset-0 rounded-xl" style={{ boxShadow: "inset 0 0 12px hsl(var(--primary) / 0.15)" }} />
+                      )}
+                      {isPlaying && (
+                        <div className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      )}
+                    </motion.div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
+                      <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
+                        <span>{radioArtist}</span>
+                        <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
+                      </div>
                     </div>
-                  )}
-                  {isPlaying && (
-                    <div className="absolute inset-0 rounded-xl" style={{ boxShadow: "inset 0 0 12px hsl(var(--primary) / 0.15)" }} />
-                  )}
-                  {isPlaying && (
-                    <div className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  )}
-                </motion.div>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
-                  <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
-                    <span>{radioArtist}</span>
-                    <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {hasMultipleStations && (
+                      <button onClick={previous} className="p-2 active:scale-90 transition-transform">
+                        <SkipBack className="w-4 h-4 text-foreground fill-current" />
+                      </button>
+                    )}
+                    <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
+                      {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
+                    </button>
+                    {hasMultipleStations && (
+                      <button onClick={next} className="p-2 active:scale-90 transition-transform">
+                        <SkipForward className="w-4 h-4 text-foreground fill-current" />
+                      </button>
+                    )}
+                    <button onClick={handleClose} className="p-2 text-muted-foreground active:scale-90 transition-transform">
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-0.5">
-                {hasMultipleStations && (
-                  <button onClick={previous} className="p-2 active:scale-90 transition-transform">
-                    <SkipBack className="w-4 h-4 text-foreground fill-current" />
-                  </button>
-                )}
-                <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
-                  {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
-                </button>
-                {hasMultipleStations && (
-                  <button onClick={next} className="p-2 active:scale-90 transition-transform">
-                    <SkipForward className="w-4 h-4 text-foreground fill-current" />
-                  </button>
-                )}
-                <button onClick={closePlayer} className="p-2 text-muted-foreground active:scale-90 transition-transform">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <ResumeBanner message={resumeBanner} />
       </>
     );
@@ -601,72 +619,77 @@ export function MiniPlayer() {
   // ── Standard music mini-player ──
   return (
     <>
-      <motion.div
-        initial={{ y: "100%", opacity: 0 }}
-        animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
-        exit={{ y: "100%", opacity: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
-      >
-        <div className="rounded-2xl overflow-hidden" style={glassStyle}>
-          <MiniPlayerProgress percent={progressPct} isLive={false} />
-          <div className="flex items-center gap-3 px-3 py-2.5">
-            <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={toggleFullScreen}>
-              <motion.div
-                className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
-                style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
-                whileTap={{ scale: 0.92 }}
-              >
-                {currentSong.coverUrl ? (
-                  <motion.img
-                    key={currentSong.coverUrl}
-                    src={currentSong.coverUrl}
-                    alt={currentSong.title}
-                    className="w-full h-full object-cover"
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4 }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                    <Music className="w-5 h-5 text-primary/40" />
+      <AnimatePresence onExitComplete={onExitComplete}>
+        {!closing && (
+          <motion.div
+            key="mini-music"
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
+            exit={{ y: "100%", opacity: 0, scale: 0.9, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
+            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+            className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
+            style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
+          >
+            <div className="rounded-2xl overflow-hidden" style={glassStyle}>
+              <MiniPlayerProgress percent={progressPct} isLive={false} />
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={toggleFullScreen}>
+                  <motion.div
+                    className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
+                    style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
+                    whileTap={{ scale: 0.92 }}
+                  >
+                    {currentSong.coverUrl ? (
+                      <motion.img
+                        key={currentSong.coverUrl}
+                        src={currentSong.coverUrl}
+                        alt={currentSong.title}
+                        className="w-full h-full object-cover"
+                        initial={{ opacity: 0, scale: 1.1 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4 }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                        <Music className="w-5 h-5 text-primary/40" />
+                      </div>
+                    )}
+                    {isPlaying && (
+                      <div className="absolute inset-0 rounded-xl" style={{ boxShadow: "inset 0 0 12px hsl(var(--primary) / 0.15)" }} />
+                    )}
+                  </motion.div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{currentSong.title}</p>
+                    <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center">
+                      {currentSong.artist}
+                      {playingFromCache && (
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-primary">
+                          <WifiOff className="w-2.5 h-2.5" />
+                          <span className="font-semibold text-[10px]">OFFLINE</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-                {isPlaying && (
-                  <div className="absolute inset-0 rounded-xl" style={{ boxShadow: "inset 0 0 12px hsl(var(--primary) / 0.15)" }} />
-                )}
-              </motion.div>
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{currentSong.title}</p>
-                <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center">
-                  {currentSong.artist}
-                  {playingFromCache && (
-                    <span className="ml-1.5 inline-flex items-center gap-1 text-primary">
-                      <WifiOff className="w-2.5 h-2.5" />
-                      <span className="font-semibold text-[10px]">OFFLINE</span>
-                    </span>
-                  )}
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <button onClick={() => toggleLike(currentSong)} className="p-2 active:scale-90 transition-transform">
+                    <Heart className={`w-4 h-4 transition-colors ${isLiked(currentSong.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                  </button>
+                  <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
+                    {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
+                  </button>
+                  <button onClick={next} className="relative p-2 text-foreground active:scale-90 transition-transform">
+                    <SkipForward className="w-5 h-5 fill-current" />
+                  </button>
+                  <button onClick={handleClose} className="p-2 text-muted-foreground active:scale-90 transition-transform">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-0.5">
-              <button onClick={() => toggleLike(currentSong)} className="p-2 active:scale-90 transition-transform">
-                <Heart className={`w-4 h-4 transition-colors ${isLiked(currentSong.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-              </button>
-              <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
-                {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
-              </button>
-              <button onClick={next} className="relative p-2 text-foreground active:scale-90 transition-transform">
-                <SkipForward className="w-5 h-5 fill-current" />
-              </button>
-              <button onClick={closePlayer} className="p-2 text-muted-foreground active:scale-90 transition-transform">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ResumeBanner message={resumeBanner} />
     </>
   );
