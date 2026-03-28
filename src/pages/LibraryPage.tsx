@@ -172,20 +172,20 @@ function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-[11px] font-bold whitespace-nowrap transition-colors flex-shrink-0 ${
-        isActive ? "text-primary-foreground" : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-secondary/40"
+      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+        isActive ? "text-primary-foreground" : "text-muted-foreground/60 active:scale-95"
       }`}
+      style={!isActive ? { background: "hsl(var(--foreground) / 0.04)" } : undefined}
     >
       {isActive && (
         <motion.div
           layoutId="libraryTab"
-          className="absolute inset-0 rounded-2xl bg-primary"
-          style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          className="absolute inset-0 rounded-full bg-primary"
+          transition={{ type: "spring", stiffness: 500, damping: 32 }}
         />
       )}
       <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className="w-3.5 h-3.5" />
+        <Icon className="w-3 h-3" />
         {label}
       </span>
     </button>
@@ -198,28 +198,21 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
 }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <motion.button
-        whileTap={{ scale: 0.93 }}
+      <button
         onClick={onPlayAll}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground text-[12px] font-bold"
-        style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[12px] font-bold active:scale-[0.96] transition-transform"
       >
         <Play className="w-3.5 h-3.5 fill-current" />
         Tout lire
-      </motion.button>
-      <motion.button
-        whileTap={{ scale: 0.93 }}
+      </button>
+      <button
         onClick={onShuffle}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[12px] font-semibold text-foreground"
-        style={{
-          background: "hsl(var(--secondary) / 0.5)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid hsl(var(--border) / 0.15)",
-        }}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-[0.96] transition-transform"
+        style={{ background: "hsl(var(--foreground) / 0.06)" }}
       >
         <Shuffle className="w-3.5 h-3.5" />
         Aléatoire
-      </motion.button>
+      </button>
       {extra}
     </div>
   );
@@ -228,24 +221,16 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
 /* ── Empty State ── */
 function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-20 text-center"
-    >
+    <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
       <div
-        className="p-5 rounded-2xl mb-4"
-        style={{
-          background: "hsl(var(--card) / 0.5)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid hsl(var(--border) / 0.1)",
-        }}
+        className="p-5 rounded-full mb-4"
+        style={{ background: "hsl(var(--foreground) / 0.04)" }}
       >
-        <Icon className="w-9 h-9 text-muted-foreground/30" />
+        <Icon className="w-8 h-8 text-muted-foreground/25" />
       </div>
-      <p className="text-foreground font-bold text-[13px]">{title}</p>
-      <p className="text-[11px] text-muted-foreground/50 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
-    </motion.div>
+      <p className="text-foreground font-bold text-[14px]">{title}</p>
+      <p className="text-[11px] text-muted-foreground/45 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
+    </div>
   );
 }
 
@@ -624,21 +609,13 @@ const LibraryPage = () => {
         className="sticky top-0 z-20 transition-colors duration-500"
         style={{
           background: headerColor
-            ? `linear-gradient(180deg, ${headerColor}18 0%, hsl(var(--background) / 0.92) 100%)`
-            : "hsl(var(--background) / 0.82)",
-          backdropFilter: "blur(48px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(48px) saturate(1.8)",
-          borderBottom: "1px solid hsl(var(--border) / 0.06)",
+            ? `linear-gradient(180deg, ${headerColor}12 0%, hsl(var(--background)) 100%)`
+            : "hsl(var(--background) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+          borderBottom: "1px solid hsl(var(--border) / 0.05)",
         }}
       >
-        {/* Decorative orbs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full opacity-[0.04]"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-          <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full opacity-[0.03]"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-        </div>
-
         <div className="relative px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
           {isOffline && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
@@ -652,34 +629,25 @@ const LibraryPage = () => {
 
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
-              <h1 className="text-[22px] md:text-[28px] font-black text-foreground leading-tight tracking-tight">
+              <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">
                 {isOffline ? "Hors-ligne" : "Bibliothèque"}
               </h1>
-              <p className="text-[11px] text-muted-foreground/45 mt-0.5 font-medium">
-                {isOffline ? "Écoutez sans connexion" : "Morceaux, playlists & favoris"}
-              </p>
             </div>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={() => {
                 queryClient.invalidateQueries();
                 if (userId) loadUserData(userId);
                 toast.success("Bibliothèque actualisée");
               }}
-              className="p-2.5 rounded-2xl text-muted-foreground/50 hover:text-foreground transition-all"
-              style={{
-                background: "hsl(var(--card) / 0.45)",
-                backdropFilter: "blur(16px)",
-                border: "1px solid hsl(var(--border) / 0.08)",
-                boxShadow: "0 2px 12px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
-              }}
+              className="p-2.5 rounded-full text-muted-foreground/50 active:scale-90 transition-all"
+              style={{ background: "hsl(var(--foreground) / 0.05)" }}
             >
               <RefreshCw className="w-4 h-4" />
-            </motion.button>
+            </button>
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
             {visibleTabs.map(({ key, label, icon }) => (
               <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
             ))}
@@ -708,19 +676,18 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(recentMusic); play(recentMusic[0]); }}
                       onShuffle={() => { const s = [...recentMusic].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                       extra={
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
+                        <button
                           onClick={() => clearRecentlyPlayed()}
-                          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full bg-destructive/10 text-destructive text-xs font-medium"
+                          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full bg-destructive/10 text-destructive text-xs font-medium active:scale-95 transition-transform"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </motion.button>
+                        </button>
                       }
                     />
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
                     </p>
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {recentMusic.map((s, i) => (
                         <PremiumSongRow
                           key={`${s.id}-${i}`}
@@ -779,7 +746,7 @@ const LibraryPage = () => {
                           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                             {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
                           </p>
-                          <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                          <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                             {filtered.map((s, i) => (
                               <PremiumSongRow
                                 key={s.id}
@@ -805,16 +772,16 @@ const LibraryPage = () => {
             {/* ── PLAYLISTS ── */}
             {tab === "playlists" && (
               <div>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
+                <button
                   onClick={() => setShowCreate(!showCreate)}
-                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-sm font-medium transition-all w-full"
+                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-xl w-full text-foreground text-sm font-medium active:scale-[0.98] transition-all"
+                  style={{ background: "hsl(var(--foreground) / 0.04)" }}
                 >
-                  <div className="p-1.5 rounded-xl bg-primary/15">
+                  <div className="p-1.5 rounded-lg bg-primary/10">
                     <Plus className="w-4 h-4 text-primary" />
                   </div>
                   Nouvelle Playlist
-                </motion.button>
+                </button>
 
                 <AnimatePresence>
                   {showCreate && (
@@ -861,7 +828,7 @@ const LibraryPage = () => {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/playlist/${p.id}`)}
                             className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
-                            style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}
+                            style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -937,7 +904,7 @@ const LibraryPage = () => {
                                 }
                               }}
                               className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
-                              style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}
+                              style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -1438,7 +1405,7 @@ const LibraryPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {sortedCustomSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1470,7 +1437,7 @@ const LibraryPage = () => {
             {tab === "downloads" && (
               <div>
                 {cacheSize > 0 && (
-                  <div className="rounded-2xl p-4 mb-4" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                  <div className="rounded-2xl p-4 mb-4" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-primary/10">
@@ -1541,7 +1508,7 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
                       onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {cachedSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
