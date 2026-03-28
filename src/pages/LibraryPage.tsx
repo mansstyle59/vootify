@@ -1565,7 +1565,29 @@ const LibraryPage = () => {
                 )}
 
                 {cachedSongs.length === 0 ? (
-                  <EmptyState icon={Download} title="Aucun morceau téléchargé" subtitle="Téléchargez des morceaux pour les écouter hors-ligne" />
+                  <div className="flex flex-col items-center gap-4 py-12">
+                    <div className="p-4 rounded-full" style={{ background: "hsl(var(--primary) / 0.1)" }}>
+                      <Download className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-foreground">Aucun morceau téléchargé</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">Téléchargez des morceaux pour les écouter hors-ligne</p>
+                    </div>
+                    {!isOffline && !isGuest && (
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleDownloadAllLibrary}
+                        disabled={downloadingAll}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/30 disabled:opacity-50"
+                      >
+                        {downloadingAll ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" />{downloadAllProgress.current}/{downloadAllProgress.total}</>
+                        ) : (
+                          <><Download className="w-4 h-4" />Tout télécharger</>
+                        )}
+                      </motion.button>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <ActionButtons
