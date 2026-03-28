@@ -2172,7 +2172,6 @@ function RequestsTab() {
 
   const pending = requests.filter(r => r.status === "pending");
   const resolved = requests.filter(r => r.status !== "pending");
-  const [showHistory, setShowHistory] = useState(false);
 
   const RequestCard = ({ r, showActions = true }: { r: any; showActions?: boolean }) => (
     <motion.div
