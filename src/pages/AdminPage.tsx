@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, type CustomSection } from "@/hooks/useHomeConfig";
+import { useSaveAppSetting } from "@/hooks/useAppSettings";
 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
