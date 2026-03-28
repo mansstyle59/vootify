@@ -56,6 +56,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
+  const { isAdmin } = useAdminAuth();
+  const queryClient = useQueryClient();
+  const [refreshingArtists, setRefreshingArtists] = useState(false);
 
   // Fetch unique artists with cover images
   const { data: artists, isLoading: loadingArtists } = useQuery({
