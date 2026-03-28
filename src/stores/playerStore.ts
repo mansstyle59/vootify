@@ -130,12 +130,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   loadUserData: async (userId) => {
     try {
-      const [liked, playlists, recent] = await Promise.all([
+      const [liked, playlists, recent, audioSettings] = await Promise.all([
         musicDb.getLikedSongs(userId),
         musicDb.getPlaylists(userId),
         musicDb.getRecentlyPlayed(userId),
+        supabase.from("user_audio_settings").select("*").eq("user_id", userId).maybeSingle(),
       ]);
-      set({ likedSongs: liked, playlists, recentlyPlayed: recent, userId });
+      const settings = audioSettings.data;
+      set({
+        likedSongs: liked,
+        playlists,
+        recentlyPlayed: recent,
+        userId,
+        ...(settings ? {
+          crossfadeEnabled: settings.crossfade_enabled,
+          crossfadeDuration: Number(settings.crossfade_duration),
+          bassBoost: Number(settings.bass_boost),
+          trebleBoost: Number(settings.treble_boost),
+        } : {}),
+      });
     } catch (e) {
       console.error("Failed to load user data:", e);
       toast.error("Erreur lors du chargement de vos données");
