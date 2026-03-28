@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
-import { Play, ListPlus, ListMusic, Plus, Check, ChevronRight } from "lucide-react";
+import { Play, ListPlus, ListMusic, Plus, ChevronRight } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useNavigate } from "react-router-dom";
@@ -103,32 +103,35 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-20px" }}
-      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-4 md:mb-5"
+      viewport={{ once: true, margin: "-16px" }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="mb-5 md:mb-6"
     >
-      <div className="flex items-center justify-between pl-5 pr-4 md:pl-9 md:pr-8 mb-2.5">
-        <div className="flex items-center gap-2 mr-2 min-w-0">
-          <h2 className="text-[15px] md:text-base font-bold text-foreground leading-tight line-clamp-1">{title}</h2>
+      {/* Header */}
+      <div className="flex items-center justify-between pl-5 pr-4 md:pl-9 md:pr-8 mb-3">
+        <div className="flex items-center gap-1.5 mr-2 min-w-0">
+          <h2 className="text-[14px] md:text-[15px] font-bold text-foreground leading-tight line-clamp-1 tracking-tight">
+            {title}
+          </h2>
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}
-              className="flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-medium text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+              className="flex items-center px-1.5 py-0.5 rounded-full text-xs text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-        <div className="flex items-center gap-1.5 relative flex-shrink-0">
+        <div className="flex items-center gap-1 relative flex-shrink-0">
           {action}
           {hasSongs && onPlayAll && (
             <button
               onClick={onPlayAll}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/10 hover:bg-primary/15 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
             >
-              <Play className="w-3 h-3" />
+              <Play className="w-2.5 h-2.5" />
               <span className="hidden sm:inline">Tout lire</span>
             </button>
           )}
@@ -136,16 +139,13 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
             <>
               <button
                 onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                className="flex items-center gap-1 px-2 py-1 rounded-full bg-secondary/50 hover:bg-secondary/70 text-secondary-foreground text-[11px] font-medium transition-colors"
+                className="flex items-center px-1.5 py-1 rounded-full bg-secondary/40 hover:bg-secondary/60 text-muted-foreground text-[10px] transition-colors"
               >
                 <ListPlus className="w-3 h-3" />
               </button>
               <AnimatePresence>
                 {showPlaylistPicker && songs && (
-                  <AddAllToPlaylistMenu
-                    songs={songs}
-                    onClose={() => setShowPlaylistPicker(false)}
-                  />
+                  <AddAllToPlaylistMenu songs={songs} onClose={() => setShowPlaylistPicker(false)} />
                 )}
               </AnimatePresence>
             </>

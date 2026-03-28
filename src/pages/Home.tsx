@@ -269,7 +269,7 @@ const HomePage = () => {
 
       <QuickAccess />
 
-      <div className="mt-4" />
+      <div className="mt-3" />
 
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
@@ -287,18 +287,18 @@ const HomePage = () => {
           if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
           return (
             <Section key={section.id} title={section.title}>
-              <div className="px-4 md:px-8 overflow-visible">
+              <div className="px-4 md:px-8">
                 {loadingTopArtists ? (
-                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2">
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 pt-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
-                        <div className="w-[72px] h-[72px] rounded-full bg-muted animate-pulse" />
-                        <div className="w-12 h-3 rounded bg-muted animate-pulse" />
+                      <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-[64px] h-[64px] rounded-full bg-secondary/40 animate-pulse" />
+                        <div className="w-10 h-2.5 rounded bg-secondary/40 animate-pulse" />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-3 -mx-1 px-1">
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 pt-1">
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
@@ -392,15 +392,15 @@ const HomePage = () => {
       })}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="px-4 md:px-8 py-20 text-center"
+          className="px-4 md:px-8 py-16 text-center"
         >
-          <div className="w-24 h-24 rounded-3xl liquid-glass flex items-center justify-center mx-auto mb-5 glow-primary">
-            <Music className="w-11 h-11 text-primary/50" />
+          <div className="w-20 h-20 rounded-2xl bg-secondary/40 flex items-center justify-center mx-auto mb-4">
+            <Music className="w-9 h-9 text-muted-foreground/30" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Aucune musique pour le moment</h2>
-          <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto leading-relaxed">
+          <h2 className="text-lg font-bold text-foreground mb-1.5">Aucune musique pour le moment</h2>
+          <p className="text-[12px] text-muted-foreground/60 max-w-xs mx-auto leading-relaxed">
             L'administrateur n'a pas encore ajouté de morceaux. Revenez bientôt !
           </p>
         </motion.div>
@@ -470,55 +470,51 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
 
   const imageUrl = customImage || deezerImage || artist.cover;
   const isTop3 = index < 3;
-  const size = isTop3 ? "w-[80px] h-[80px]" : "w-[68px] h-[68px]";
+  const size = isTop3 ? "w-[68px] h-[68px]" : "w-[58px] h-[58px]";
   const ringColor = index === 0
-    ? "ring-yellow-400/70 shadow-yellow-400/20"
+    ? "ring-yellow-400/60"
     : index === 1
-    ? "ring-gray-300/70 shadow-gray-300/20"
+    ? "ring-gray-300/60"
     : index === 2
-    ? "ring-amber-600/60 shadow-amber-600/15"
-    : "ring-border/50";
+    ? "ring-amber-600/50"
+    : "ring-border/40";
 
   return (
     <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.06, type: "spring", stiffness: 200, damping: 18 }}
+      transition={{ delay: index * 0.05, type: "spring", stiffness: 220, damping: 20 }}
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-      className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
+      className="flex flex-col items-center gap-1 flex-shrink-0 group"
     >
       <div className="relative">
-        <div className={`${size} rounded-full overflow-hidden ring-2 ${ringColor} shadow-lg transition-transform group-hover:scale-105 group-active:scale-95`}>
+        <div className={`${size} rounded-full overflow-hidden ring-[1.5px] ${ringColor} transition-transform group-hover:scale-105 group-active:scale-95`}>
           {imageUrl ? (
-            <LazyImage
-              src={imageUrl}
-              alt={artist.name}
-              className="w-full h-full object-cover"
-            />
+            <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/25 to-primary/5 flex items-center justify-center">
-              <User className="w-1/3 h-1/3 text-primary/40" />
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              <User className="w-1/3 h-1/3 text-primary/35" />
             </div>
           )}
         </div>
         {/* Rank badge */}
         <div
-          className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-md ${
+          className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black ${
             index === 0
               ? "bg-yellow-400 text-yellow-950"
               : index === 1
               ? "bg-gray-200 text-gray-700"
               : index === 2
               ? "bg-amber-600 text-amber-50"
-              : "bg-secondary text-secondary-foreground border border-border"
+              : "bg-secondary text-secondary-foreground border border-border/50"
           }`}
         >
           {index + 1}
         </div>
       </div>
-      <div className="text-center max-w-[80px]">
-        <p className="text-[11px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[9px] text-muted-foreground font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+      <div className="text-center max-w-[68px]">
+        <p className="text-[10px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
+        <p className="text-[8px] text-muted-foreground/60 font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
     </motion.button>
   );
