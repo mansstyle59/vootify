@@ -402,7 +402,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="text-[20px] md:text-[28px] font-black text-foreground mb-0.5 leading-[1.15] tracking-tight"
+          className="text-[26px] md:text-[36px] font-black text-foreground mb-2 leading-[1.1] tracking-tight"
         >
           {getGreeting(user ? displayName : null)}{" "}
           <motion.span
@@ -420,7 +420,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4 }}
-          className="text-[11px] md:text-[12px] text-muted-foreground max-w-[280px] md:max-w-md leading-relaxed italic"
+          className="text-[13px] md:text-[14px] text-muted-foreground max-w-[320px] md:max-w-lg leading-relaxed italic"
         >
           « {quote.text} »
           <span className="not-italic text-[10px] text-muted-foreground/60 ml-1">— {quote.author}</span>
@@ -431,7 +431,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.4 }}
-          className="flex gap-2 mt-2.5"
+          className="flex gap-3 mt-5"
         >
           <motion.button
             whileTap={{ scale: 0.93 }}
@@ -484,7 +484,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex flex-wrap gap-1.5 mt-2"
+            className="flex flex-wrap gap-2.5 mt-5"
           >
             {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.6} />}
             {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.75} />}
@@ -498,14 +498,14 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.4 }}
-            className="grid grid-cols-2 gap-1.5 mt-2.5"
+            className="grid grid-cols-2 gap-2 mt-5"
           >
             {shortcuts.slice(0, 6).map((s) => (
               <motion.button
                 key={`${s.type}-${s.id}`}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => navigate(s.route)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left overflow-hidden"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left overflow-hidden"
                 style={{
                   background: "hsl(var(--card) / 0.5)",
                   backdropFilter: "blur(12px)",
@@ -520,7 +520,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                     {s.type === "radio" ? <Radio className="w-3.5 h-3.5 text-primary" /> : s.type === "playlist" ? <ListMusic className="w-3.5 h-3.5 text-primary" /> : s.type === "album" ? <Music className="w-3.5 h-3.5 text-primary" /> : <Headphones className="w-3.5 h-3.5 text-primary" />}
                   </div>
                 )}
-                <span className="text-[10px] font-semibold text-foreground truncate">{s.label}</span>
+                <span className="text-[11px] font-semibold text-foreground truncate">{s.label}</span>
               </motion.button>
             ))}
           </motion.div>
