@@ -85,13 +85,15 @@ function PremiumSongRow({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={selectable ? onSelect : onClick}
-      className={`group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
-        selected
-          ? "bg-primary/10 ring-1 ring-primary/20"
+      className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98]"
+      style={{
+        background: selected
+          ? "hsl(var(--primary) / 0.08)"
           : isActive
-          ? "bg-primary/6 ring-1 ring-primary/10"
-          : "hover:bg-secondary/40"
-      }`}
+          ? "hsl(var(--primary) / 0.05)"
+          : "transparent",
+        boxShadow: selected || isActive ? "inset 0 0 0 1px hsl(var(--primary) / 0.12)" : "none",
+      }}
     >
       {selectable ? (
         <div className="w-6 flex-shrink-0 flex items-center justify-center">
@@ -638,13 +640,22 @@ const LibraryPage = () => {
         className="sticky top-0 z-20 transition-colors duration-500"
         style={{
           background: headerColor
-            ? `linear-gradient(180deg, ${headerColor}20 0%, hsl(var(--background) / 0.95) 100%)`
-            : "hsl(var(--background) / 0.85)",
-          backdropFilter: "blur(40px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+            ? `linear-gradient(180deg, ${headerColor}18 0%, hsl(var(--background) / 0.92) 100%)`
+            : "hsl(var(--background) / 0.82)",
+          backdropFilter: "blur(48px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(48px) saturate(1.8)",
+          borderBottom: "1px solid hsl(var(--border) / 0.06)",
         }}
       >
-        <div className="px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
+        {/* Decorative orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full opacity-[0.04]"
+            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
+          <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full opacity-[0.03]"
+            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
+        </div>
+
+        <div className="relative px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
           {isOffline && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
               background: "hsl(45 100% 50% / 0.06)",
@@ -657,10 +668,10 @@ const LibraryPage = () => {
 
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
-              <h1 className="text-[22px] md:text-[26px] font-black text-foreground leading-tight tracking-tight">
+              <h1 className="text-[22px] md:text-[28px] font-black text-foreground leading-tight tracking-tight">
                 {isOffline ? "Hors-ligne" : "Bibliothèque"}
               </h1>
-              <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-medium">
+              <p className="text-[11px] text-muted-foreground/45 mt-0.5 font-medium">
                 {isOffline ? "Écoutez sans connexion" : "Morceaux, playlists & favoris"}
               </p>
             </div>
@@ -671,10 +682,12 @@ const LibraryPage = () => {
                 if (userId) loadUserData(userId);
                 toast.success("Bibliothèque actualisée");
               }}
-              className="p-2.5 rounded-xl text-muted-foreground/60 hover:text-foreground transition-all"
+              className="p-2.5 rounded-2xl text-muted-foreground/50 hover:text-foreground transition-all"
               style={{
-                background: "hsl(var(--card) / 0.5)",
-                border: "1px solid hsl(var(--border) / 0.1)",
+                background: "hsl(var(--card) / 0.45)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid hsl(var(--border) / 0.08)",
+                boxShadow: "0 2px 12px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
               }}
             >
               <RefreshCw className="w-4 h-4" />
@@ -682,7 +695,7 @@ const LibraryPage = () => {
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
             {visibleTabs.map(({ key, label, icon }) => (
               <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
             ))}
@@ -723,7 +736,7 @@ const LibraryPage = () => {
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
                     </p>
-                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
                       {recentMusic.map((s, i) => (
                         <PremiumSongRow
                           key={`${s.id}-${i}`}
@@ -782,7 +795,7 @@ const LibraryPage = () => {
                           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                             {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
                           </p>
-                          <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
+                          <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
                             {filtered.map((s, i) => (
                               <PremiumSongRow
                                 key={s.id}
@@ -863,7 +876,8 @@ const LibraryPage = () => {
                           <motion.button
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/playlist/${p.id}`)}
-                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-all"
+                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
+                            style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -938,7 +952,8 @@ const LibraryPage = () => {
                                   play(spSongs[0]);
                                 }
                               }}
-                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-all"
+                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
+                              style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -1074,17 +1089,17 @@ const LibraryPage = () => {
                           }}
                           className="text-left group"
                         >
-                          <div className="aspect-square rounded-xl overflow-hidden bg-secondary shadow-md mb-1.5 relative">
+                          <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
                             {album.cover_url ? (
-                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                                <Disc3 className="w-8 h-8 text-primary/30" />
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
+                                <Disc3 className="w-8 h-8 text-primary/25" />
                               </div>
                             )}
                           </div>
-                          <p className="text-xs font-bold text-foreground truncate">{album.title}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
+                          <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
+                          <p className="text-[9px] text-muted-foreground/45 truncate font-medium">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
                         </motion.button>
                       ))}
                     </div>
@@ -1439,7 +1454,7 @@ const LibraryPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
                       {sortedCustomSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1471,7 +1486,7 @@ const LibraryPage = () => {
             {tab === "downloads" && (
               <div>
                 {cacheSize > 0 && (
-                  <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 p-4 mb-4">
+                  <div className="rounded-2xl p-4 mb-4" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-primary/10">
@@ -1542,7 +1557,7 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
                       onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
                       {cachedSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1615,17 +1630,22 @@ function ArtistLibraryCard({ artist, index, navigate }: {
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
       className="flex flex-col items-center text-center group"
     >
-      <div className="w-[76px] h-[76px] rounded-full overflow-hidden bg-secondary mb-2 ring-[1.5px] ring-border/20 group-hover:ring-primary/30 transition-all" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.12)" }}>
+      <div
+        className="w-[76px] h-[76px] rounded-full overflow-hidden mb-2 transition-all duration-300 group-hover:scale-105"
+        style={{
+          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12), 0 0 0 1.5px hsl(var(--border) / 0.15)",
+        }}
+      >
         {imageUrl ? (
           <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-300" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
             <User className="w-6 h-6 text-primary/20" />
           </div>
         )}
       </div>
       <p className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{artist.name}</p>
-      <p className="text-[9px] text-muted-foreground/45 font-medium">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+      <p className="text-[9px] text-muted-foreground/40 font-medium">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
     </motion.button>
   );
 }
