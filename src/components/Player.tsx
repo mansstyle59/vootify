@@ -869,11 +869,12 @@ export function MiniPlayer() {
           onError={handleAudioError}
           preload="auto"
           playsInline
+          crossOrigin="anonymous"
           // @ts-ignore — webkit attribute for iOS background playback
           webkit-playsinline=""
         />
-        <audio ref={crossfadeRef} preload="metadata" playsInline />
-        <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
+        <audio ref={crossfadeRef} preload="metadata" playsInline crossOrigin="anonymous" />
+        <audio ref={preloadRef} preload="metadata" playsInline crossOrigin="anonymous" style={{ display: "none" }} />
         <motion.div
           initial={{ y: "100%", opacity: 0 }}
           animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
@@ -962,11 +963,12 @@ export function MiniPlayer() {
         onError={handleAudioError}
         preload="auto"
         playsInline
+        crossOrigin="anonymous"
         // @ts-ignore — webkit attribute for iOS background playback
         webkit-playsinline=""
       />
-      <audio ref={crossfadeRef} preload="metadata" playsInline />
-      <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
+      <audio ref={crossfadeRef} preload="metadata" playsInline crossOrigin="anonymous" />
+      <audio ref={preloadRef} preload="metadata" playsInline crossOrigin="anonymous" style={{ display: "none" }} />
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
         animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
