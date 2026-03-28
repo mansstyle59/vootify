@@ -296,6 +296,27 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_prices: {
+        Row: {
+          period: string
+          plan: string
+          price: string
+          updated_at: string
+        }
+        Insert: {
+          period?: string
+          plan: string
+          price?: string
+          updated_at?: string
+        }
+        Update: {
+          period?: string
+          plan?: string
+          price?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       playlist_songs: {
         Row: {
           album: string | null
