@@ -522,6 +522,51 @@ const PlaylistDetailPage = () => {
           />
         )}
       </div>
+      {/* Share to user dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              Envoyer la playlist
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-xs text-muted-foreground">
+              Envoyer « {playlist?.name} » ({displaySongs.length} titre{displaySongs.length !== 1 ? "s" : ""}) à un utilisateur
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Destinataire</label>
+              <select
+                value={shareTargetId}
+                onChange={(e) => setShareTargetId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">Choisir un utilisateur...</option>
+                {shareUsers.map((u) => (
+                  <option key={u.user_id} value={u.user_id}>
+                    {u.display_name || u.user_id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleShareToUser}
+              disabled={shareSending || !shareTargetId}
+              className="gap-1.5"
+            >
+              {shareSending && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Send className="w-4 h-4" />
+              Envoyer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
