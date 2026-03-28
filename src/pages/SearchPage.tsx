@@ -533,57 +533,54 @@ const SearchPage = () => {
             {/* Friday Releases */}
             {newReleases.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Nouveautés du vendredi 🇫🇷</h2>
-                </div>
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {newReleases.map((release, i) => (
-                    <div key={release.id} className="flex-shrink-0 w-[120px] snap-start">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.03, type: "spring", stiffness: 300, damping: 25 }}
-                        className="group"
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Nouveautés du vendredi 🇫🇷</h2>
+                <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
+                  {newReleases.map((release) => (
+                    <div key={release.id} className="flex-shrink-0 w-[140px] snap-start group">
+                      <div
+                        className="relative w-[140px] h-[140px] rounded-xl overflow-hidden mb-2"
+                        style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
                       >
-                        <div className="relative w-[120px] h-[120px] rounded-2xl overflow-hidden mb-2 transition-all"
-                          style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)" }}
-                        >
-                          <button onClick={() => playFridayRelease(release)} className="w-full h-full">
-                            {release.coverUrl ? (
-                              <LazyImage src={release.coverUrl} alt={release.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" fallback wrapperClassName="w-full h-full" />
-                            ) : (
-                              <div className="w-full h-full bg-secondary/50 flex items-center justify-center"><Music className="w-6 h-6 text-muted-foreground/40" /></div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                              <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{ background: "hsl(var(--primary) / 0.9)", backdropFilter: "blur(12px)", boxShadow: "0 4px 20px hsl(var(--primary) / 0.4)" }}
-                              >
-                                <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
-                              </div>
-                            </div>
-                          </button>
-                          {availableReleases.has(release.albumId) && (
-                            <div className="absolute bottom-2 left-2 flex items-center gap-0.5 px-2 py-0.5 rounded-full shadow-md"
-                              style={{ background: "hsl(142 71% 45% / 0.9)", backdropFilter: "blur(8px)" }}
-                            >
-                              <Check className="w-2.5 h-2.5 text-white" />
-                              <span className="text-[8px] font-bold text-white leading-none">DISPO</span>
+                        <button onClick={() => playFridayRelease(release)} className="w-full h-full">
+                          {release.coverUrl ? (
+                            <LazyImage src={release.coverUrl} alt={release.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" fallback wrapperClassName="w-full h-full" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                              <Music className="w-6 h-6 text-muted-foreground/15" />
                             </div>
                           )}
+                        </button>
+                        {/* Play button */}
+                        <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
-                            onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
-                            className="absolute top-2 right-2 w-7 h-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all active:scale-90"
-                            style={{ background: "hsl(0 0% 0% / 0.5)", backdropFilter: "blur(12px)" }}
+                            onClick={() => playFridayRelease(release)}
+                            className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                            style={{ background: "hsl(var(--primary))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)" }}
                           >
-                            <PlusCircle className="w-4 h-4 text-white" />
+                            <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
                           </button>
                         </div>
-                        <button onClick={() => playFridayRelease(release)} className="text-left w-full">
-                          <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{release.title}</p>
-                          <p className="text-[10px] text-muted-foreground/50 truncate">{release.artist}</p>
+                        {availableReleases.has(release.albumId) && (
+                          <div
+                            className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
+                            style={{ background: "hsl(var(--primary) / 0.85)" }}
+                          >
+                            <Check className="w-2 h-2 text-primary-foreground" />
+                            <span className="text-[8px] font-bold text-primary-foreground">DISPO</span>
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all active:scale-90"
+                          style={{ background: "hsl(0 0% 0% / 0.5)" }}
+                        >
+                          <PlusCircle className="w-3.5 h-3.5 text-white" />
                         </button>
-                      </motion.div>
+                      </div>
+                      <button onClick={() => playFridayRelease(release)} className="text-left w-full">
+                        <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{release.title}</p>
+                        <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{release.artist}</p>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -593,54 +590,35 @@ const SearchPage = () => {
             {/* Genre Cards */}
             {genreCards.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.1))", border: "1px solid hsl(var(--primary) / 0.1)" }}
-                  >
-                    <Disc3 className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Parcourir par genre</h2>
-                </div>
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Parcourir par genre</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {genreCards.map((g, i) => {
+                  {genreCards.map((g) => {
                     const def = genreDefs[g.genre] || defaultGenreColor;
                     return (
-                      <motion.button
+                      <button
                         key={g.genre}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-                        whileTap={{ scale: 0.96 }}
-                        whileHover={{ y: -2 }}
                         onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
-                        className="relative h-[110px] rounded-2xl overflow-hidden text-left group"
+                        className="relative h-[100px] rounded-xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
                         style={{
                           background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
-                          boxShadow: `0 8px 28px ${def.from}25, 0 2px 8px ${def.to}15`,
+                          boxShadow: `0 4px 16px ${def.from}20`,
                         }}
                       >
                         {g.coverUrl ? (
-                          <img src={g.coverUrl} alt="" className="absolute -right-2 -bottom-2 w-[76px] h-[76px] rounded-xl object-cover rotate-[25deg] opacity-35 group-hover:opacity-55 group-hover:scale-110 transition-all duration-500 shadow-2xl" />
+                          <img src={g.coverUrl} alt="" className="absolute -right-2 -bottom-2 w-[70px] h-[70px] rounded-lg object-cover rotate-[20deg] opacity-30 transition-opacity duration-300 group-hover:opacity-45" />
                         ) : (
-                          <span className="absolute -right-1 -bottom-1 text-[56px] rotate-[20deg] opacity-15 select-none group-hover:opacity-25 transition-opacity">{def.emoji}</span>
+                          <span className="absolute -right-1 -bottom-1 text-[48px] rotate-[18deg] opacity-15 select-none">{def.emoji}</span>
                         )}
-                        {/* Noise texture */}
-                        <div className="absolute inset-0 opacity-[0.05]" style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                        }} />
-                        <div className="relative z-10 p-3.5 h-full flex flex-col justify-between">
+                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-lg drop-shadow-md">{def.emoji}</span>
-                            <h3 className="text-[15px] font-bold text-white drop-shadow-md leading-tight">{g.genre}</h3>
+                            <span className="text-base">{def.emoji}</span>
+                            <h3 className="text-[14px] font-bold text-white leading-tight">{g.genre}</h3>
                           </div>
                           {g.count > 0 && (
-                            <p className="text-[10px] text-white/60 font-semibold self-start px-2 py-0.5 rounded-full"
-                              style={{ background: "hsl(0 0% 0% / 0.15)", backdropFilter: "blur(8px)" }}
-                            >{g.count} titres</p>
+                            <p className="text-[10px] text-white/55 font-medium">{g.count} titres</p>
                           )}
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </motion.button>
+                      </button>
                     );
                   })}
                 </div>
@@ -649,38 +627,24 @@ const SearchPage = () => {
 
             {/* Library Stats */}
             {allSongs && allSongs.length > 0 && (
-              <section className="pt-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ ...glassCard }}>
-                    <Music className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Votre bibliothèque</h2>
-                </div>
+              <section>
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Votre bibliothèque</h2>
                 <div className="flex justify-around">
                   {[
-                    { icon: <Music className="w-4.5 h-4.5" />, value: allSongs.length, label: "Morceaux" },
-                    { icon: <User className="w-4.5 h-4.5" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes" },
-                    { icon: <Disc3 className="w-4.5 h-4.5" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums" },
-                  ].map((stat, i) => (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.08, type: "spring", stiffness: 250, damping: 20 }}
-                      className="flex flex-col items-center gap-1.5"
-                    >
-                      <div className="w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center text-primary"
-                        style={{
-                          background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
-                          border: "2px solid hsl(var(--primary) / 0.15)",
-                          boxShadow: "0 4px 20px hsl(var(--primary) / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
-                        }}
+                    { icon: <Music className="w-4 h-4" />, value: allSongs.length, label: "Morceaux" },
+                    { icon: <User className="w-4 h-4" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes" },
+                    { icon: <Disc3 className="w-4 h-4" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary"
+                        style={{ background: "hsl(var(--primary) / 0.08)" }}
                       >
                         {stat.icon}
-                        <span className="text-base font-black leading-tight mt-0.5 tabular-nums">{stat.value}</span>
+                        <span className="text-base font-black leading-tight mt-1 tabular-nums">{stat.value}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground/60 font-semibold tracking-wide">{stat.label}</span>
-                    </motion.div>
+                      <span className="text-[10px] text-muted-foreground/50 font-semibold">{stat.label}</span>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -688,9 +652,9 @@ const SearchPage = () => {
           </motion.div>
         ) : (
           /* ══════════════ RESULTS MODE ══════════════ */
-          <motion.div key="results" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="px-4 md:px-8">
+          <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8">
             {isLoading ? (
-              <div className="rounded-2xl overflow-hidden" style={{ ...glassCard }}>
+              <div className="rounded-xl overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.02)" }}>
                 {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
             ) : (
