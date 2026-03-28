@@ -86,6 +86,7 @@ export function MiniPlayer() {
   const resumeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backgroundPauseGraceUntilRef = useRef(0);
   const pauseSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const explicitPauseRequestRef = useRef(false);
 
   const showResumeBanner = useCallback((msg: string) => {
     if (resumeBannerTimer.current) clearTimeout(resumeBannerTimer.current);
@@ -102,6 +103,7 @@ export function MiniPlayer() {
       clearTimeout(pauseSyncTimerRef.current);
       pauseSyncTimerRef.current = null;
     }
+    explicitPauseRequestRef.current = false;
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
     if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
   }, []);
@@ -338,6 +340,7 @@ export function MiniPlayer() {
       if (!audio || !state.currentSong) return;
       const shouldResume = state.isPlaying || wasPlayingBeforeHidden;
       if (!shouldResume) return;
+      if (explicitPauseRequestRef.current && audio.paused) return;
 
       // Ensure store is marked as playing (might have been paused externally)
       if (!state.isPlaying && wasPlayingBeforeHidden) {
@@ -365,6 +368,7 @@ export function MiniPlayer() {
           a.volume = volume;
           a.muted = false;
           a.play().then(() => {
+            explicitPauseRequestRef.current = false;
             if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
             console.log("[bg-resume] Resumed successfully");
             showResumeBanner("Lecture reprise ▶");
@@ -401,6 +405,10 @@ export function MiniPlayer() {
       if (!audio) return;
       const state = usePlayerStore.getState();
       if (!state.isPlaying || !audio.paused) return;
+      if (explicitPauseRequestRef.current) {
+        schedulePauseSync();
+        return;
+      }
 
       // If user intent is still "playing", try progressive auto-resume
       // (important for iOS lock-screen/background interruptions)
@@ -424,6 +432,7 @@ export function MiniPlayer() {
           a.volume = volume;
           a.muted = false;
           a.play().then(() => {
+            explicitPauseRequestRef.current = false;
             if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
             if (document.visibilityState === "visible") showResumeBanner("Lecture reprise ▶");
           }).catch(() => {
@@ -941,6 +950,7 @@ export function MiniPlayer() {
 
     safeSet("play", () => {
       const store = usePlayerStore.getState();
+      explicitPauseRequestRef.current = false;
       if (!store.isPlaying) store.togglePlay();
       const audio = audioRef.current;
       if (audio?.paused && audio.src) {
@@ -952,6 +962,15 @@ export function MiniPlayer() {
     });
 
     safeSet("pause", () => {
+      const inBackgroundTransition =
+        document.visibilityState === "hidden" || Date.now() < backgroundPauseGraceUntilRef.current;
+
+      if (inBackgroundTransition) {
+        schedulePauseSync();
+        return;
+      }
+
+      explicitPauseRequestRef.current = true;
       const store = usePlayerStore.getState();
       if (store.isPlaying) store.togglePlay();
       audioRef.current?.pause();
@@ -1000,7 +1019,7 @@ export function MiniPlayer() {
     return () => {
       // Don't null handlers — let next registration override
     };
-  }, [currentSong?.id, queueLen, volume]);
+  }, [currentSong?.id, queueLen, volume, schedulePauseSync]);
 
   // ── Sync position state to lock screen scrubber ──
   const syncPositionState = useCallback(() => {
