@@ -103,6 +103,8 @@ const PlaylistDetailPage = () => {
       setShareSending(false);
     }
   };
+
+  useEffect(() => {
     if (songs.length === 0) return;
     Promise.all(songs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
       (ids) => setCachedIds(new Set(ids.filter(Boolean) as string[]))
