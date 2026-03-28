@@ -102,6 +102,11 @@ export function MiniPlayer() {
   const lastSongIdRef = useRef<string | null>(null);
   const [resumeBanner, setResumeBanner] = useState<string | null>(null);
   const resumeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [closing, setClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setClosing(true);
+  }, []);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
