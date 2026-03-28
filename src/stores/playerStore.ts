@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 
 
@@ -91,18 +92,26 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setCrossfadeEnabled: (enabled) => {
     try { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); } catch {}
     set({ crossfadeEnabled: enabled });
+    const userId = get().userId;
+    if (userId) saveAudioSettings(userId, { crossfade_enabled: enabled });
   },
   setCrossfadeDuration: (duration) => {
     try { localStorage.setItem("crossfadeDuration", JSON.stringify(duration)); } catch {}
     set({ crossfadeDuration: duration });
+    const userId = get().userId;
+    if (userId) saveAudioSettings(userId, { crossfade_duration: duration });
   },
   setBassBoost: (db) => {
     try { localStorage.setItem("bassBoost", JSON.stringify(db)); } catch {}
     set({ bassBoost: db });
+    const userId = get().userId;
+    if (userId) saveAudioSettings(userId, { bass_boost: db });
   },
   setTrebleBoost: (db) => {
     try { localStorage.setItem("trebleBoost", JSON.stringify(db)); } catch {}
     set({ trebleBoost: db });
+    const userId = get().userId;
+    if (userId) saveAudioSettings(userId, { treble_boost: db });
   },
 
   loadUserData: async (userId) => {
