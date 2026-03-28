@@ -2106,6 +2106,8 @@ function RequestsTab() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [planOverrides, setPlanOverrides] = useState<Record<string, string>>({});
+  const [filterStatus, setFilterStatus] = useState<"all" | "approved" | "rejected">("all");
+  const [filterPlan, setFilterPlan] = useState<"all" | "premium" | "gold" | "vip">("all");
 
   const loadRequests = async () => {
     const { data } = await supabase
@@ -2305,7 +2307,50 @@ function RequestsTab() {
               animate={{ opacity: 1, height: "auto" }}
               className="space-y-2 mt-2"
             >
-              {resolved.map((r) => <RequestCard key={r.id} r={r} showActions={false} />)}
+              {/* Filtres */}
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                <span className="text-[10px] text-muted-foreground self-center mr-1">Statut:</span>
+                {([["all", "Tous"], ["approved", "Approuvé"], ["rejected", "Rejeté"]] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setFilterStatus(val)}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${
+                      filterStatus === val
+                        ? "bg-primary text-primary-foreground border-transparent"
+                        : "bg-transparent text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <span className="text-[10px] text-muted-foreground self-center ml-2 mr-1">Plan:</span>
+                {([["all", "Tous"], ["premium", "Premium"], ["gold", "Gold"], ["vip", "VIP"]] as const).map(([val, label]) => {
+                  const colors = val === "vip" ? "bg-red-500 text-white" : val === "gold" ? "bg-yellow-500 text-black" : val === "premium" ? "bg-primary text-primary-foreground" : "bg-primary text-primary-foreground";
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => setFilterPlan(val)}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${
+                        filterPlan === val
+                          ? `${colors} border-transparent`
+                          : "bg-transparent text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {resolved
+                .filter(r => filterStatus === "all" || r.status === filterStatus)
+                .filter(r => filterPlan === "all" || (r.requested_plan || "premium") === filterPlan)
+                .map((r) => <RequestCard key={r.id} r={r} showActions={false} />)}
+              {resolved
+                .filter(r => filterStatus === "all" || r.status === filterStatus)
+                .filter(r => filterPlan === "all" || (r.requested_plan || "premium") === filterPlan)
+                .length === 0 && (
+                <p className="text-center text-muted-foreground text-xs py-4">Aucune demande correspondante</p>
+              )}
             </motion.div>
           )}
         </div>
