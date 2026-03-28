@@ -56,48 +56,51 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen pb-40 animate-fade-in">
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 0%, hsl(0 72% 51% / 0.08) 0%, transparent 60%), linear-gradient(180deg, hsl(var(--background)) 60%, hsl(var(--background)) 100%)",
-        }} />
-        <div className="relative px-4 md:px-8 pt-6 pb-5">
+        {/* Decorative gradient orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-[0.06]"
+            style={{ background: "radial-gradient(circle, hsl(0 72% 51%), transparent 70%)" }} />
+          <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full opacity-[0.04]"
+            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
+        </div>
+        <div className="relative px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-5">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            className="flex items-center gap-2 text-sm text-muted-foreground/60 hover:text-foreground transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{
-              background: "linear-gradient(135deg, hsl(0 72% 51% / 0.2), hsl(0 72% 51% / 0.08))",
-              border: "1px solid hsl(0 72% 51% / 0.15)",
-              boxShadow: "0 4px 20px hsl(0 72% 51% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{
+              background: "linear-gradient(135deg, hsl(0 72% 51% / 0.2), hsl(0 72% 51% / 0.05))",
+              border: "1px solid hsl(0 72% 51% / 0.12)",
+              boxShadow: "0 4px 24px hsl(0 72% 51% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
+              backdropFilter: "blur(20px)",
             }}>
-              <Shield className="w-5 h-5 text-destructive" />
+              <Shield className="w-5.5 h-5.5 text-destructive" />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold text-foreground">Administration</h1>
-              <p className="text-[12px] text-muted-foreground/70">Gérez votre application</p>
+              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground tracking-tight">Administration</h1>
+              <p className="text-[11px] text-muted-foreground/60 font-medium">Gérez votre application</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-1.5 px-4 md:px-8 mb-5 overflow-x-auto scrollbar-hide pb-1.5">
+      <div className="flex gap-1.5 px-4 md:px-8 mb-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 pt-1">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-              tab === key
-                ? "text-primary-foreground"
-                : "text-secondary-foreground hover:bg-secondary/80"
-            }`}
+            className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0"
+            style={{ color: tab === key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))" }}
           >
             {tab === key && (
               <motion.div
                 layoutId="adminTab"
-                className="absolute inset-0 bg-primary rounded-full shadow-lg shadow-primary/25"
+                className="absolute inset-0 bg-primary rounded-2xl"
+                style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.35)" }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
@@ -164,22 +167,26 @@ function StatsTab() {
       {cards.map((c, i) => (
         <motion.div
           key={c.label}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.06, type: "spring", stiffness: 250, damping: 20 }}
-          className={`rounded-2xl border ${c.border} p-4 flex flex-col items-center justify-center gap-1.5`}
+          initial={{ opacity: 0, y: 16, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 25 }}
+          className="rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5"
           style={{
-            background: "hsl(var(--secondary) / 0.4)",
-            boxShadow: "0 2px 12px hsl(0 0% 0% / 0.08)",
+            background: "hsl(var(--card) / 0.5)",
+            backdropFilter: "blur(20px) saturate(1.6)",
+            border: "1px solid hsl(var(--border) / 0.12)",
+            boxShadow: "0 2px 16px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
           }}
         >
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${c.color}`} style={{
-            background: "hsl(var(--secondary) / 0.6)",
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${c.color}`} style={{
+            background: "hsl(var(--card) / 0.6)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid hsl(var(--border) / 0.1)",
           }}>
             <c.icon className="w-4.5 h-4.5" />
           </div>
           <p className="text-2xl font-black text-foreground leading-none tabular-nums">{c.value}</p>
-          <p className="text-[10px] text-muted-foreground font-semibold leading-tight text-center">{c.label}</p>
+          <p className="text-[10px] text-muted-foreground/60 font-semibold leading-tight text-center">{c.label}</p>
         </motion.div>
       ))}
     </div>
@@ -625,7 +632,12 @@ function UsersTab() {
               key={u.user_id}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group"
+              className="flex items-center gap-3 p-3 rounded-2xl group"
+              style={{
+                background: "hsl(var(--card) / 0.5)",
+                backdropFilter: "blur(20px) saturate(1.6)",
+                border: "1px solid hsl(var(--border) / 0.12)",
+              }}
             >
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
                 {(u.display_name || "?").slice(0, 2).toUpperCase()}
@@ -1132,11 +1144,14 @@ function SongsTab() {
         songs.map((s) => (
           <div
             key={s.id}
-            className={`flex items-center gap-3 p-3 rounded-xl border group transition-colors cursor-pointer ${
-              selectedIds.has(s.id)
-                ? "bg-primary/10 border-primary/30"
-                : "bg-secondary/30 border-border"
+            className={`flex items-center gap-3 p-3 rounded-2xl group transition-all cursor-pointer ${
+              selectedIds.has(s.id) ? "ring-1 ring-primary/20" : ""
             }`}
+            style={{
+              background: selectedIds.has(s.id) ? "hsl(var(--primary) / 0.08)" : "hsl(var(--card) / 0.5)",
+              backdropFilter: "blur(20px) saturate(1.6)",
+              border: "1px solid hsl(var(--border) / 0.12)",
+            }}
             onClick={() => isSelecting && toggleSelect(s.id)}
           >
             {/* Checkbox */}
@@ -1611,11 +1626,16 @@ function LogsTab() {
         logs.map((log) => {
           const info = actionLabels[log.action] || { label: log.action, color: "text-foreground" };
           return (
-            <motion.div
+             <motion.div
               key={log.id}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-start gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+              className="flex items-start gap-3 p-3 rounded-2xl"
+              style={{
+                background: "hsl(var(--card) / 0.5)",
+                backdropFilter: "blur(20px) saturate(1.6)",
+                border: "1px solid hsl(var(--border) / 0.12)",
+              }}
             >
               <ScrollText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -1766,7 +1786,7 @@ function HomeTab() {
   return (
     <div className="space-y-6">
       {/* Hero customization */}
-      <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+       <div className="rounded-2xl p-4 space-y-3" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
           <LayoutDashboard className="w-4 h-4 text-primary" />
           Bannière d'accueil
@@ -2201,11 +2221,16 @@ function RequestsTab() {
   const resolved = requests.filter(r => r.status !== "pending");
 
   const RequestCard = ({ r, showActions = true }: { r: any; showActions?: boolean }) => (
-    <motion.div
+     <motion.div
       key={r.id}
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+      className="flex items-center gap-3 p-3 rounded-2xl"
+      style={{
+        background: "hsl(var(--card) / 0.5)",
+        backdropFilter: "blur(20px) saturate(1.6)",
+        border: "1px solid hsl(var(--border) / 0.12)",
+      }}
     >
       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
         {(r.display_name || "?").slice(0, 2).toUpperCase()}
@@ -2427,7 +2452,7 @@ function PriceEditor() {
   };
 
   return (
-    <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+     <div className="rounded-2xl p-4 space-y-3" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CreditCard className="w-4 h-4 text-primary" />
@@ -2610,7 +2635,7 @@ function SubscriptionsTab() {
           Retour
         </button>
 
-        <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+         <div className="rounded-2xl p-4 space-y-3" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
               {(user?.display_name || "?").slice(0, 2).toUpperCase()}
@@ -2656,7 +2681,7 @@ function SubscriptionsTab() {
         </div>
 
         {/* Bar chart */}
-        <div className="rounded-xl bg-secondary/30 border border-border p-4">
+        <div className="rounded-2xl p-4" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-primary" />
             <p className="text-sm font-medium text-foreground">Temps d'écoute (minutes)</p>
@@ -2773,7 +2798,12 @@ function SubscriptionsTab() {
             key={u.user_id}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl bg-secondary/30 border border-border p-3 space-y-2"
+             className="rounded-2xl p-3 space-y-2"
+             style={{
+               background: "hsl(var(--card) / 0.5)",
+               backdropFilter: "blur(20px) saturate(1.6)",
+               border: "1px solid hsl(var(--border) / 0.12)",
+             }}
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
