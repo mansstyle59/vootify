@@ -1242,6 +1242,8 @@ function RadioCardAdmin({ station, isSelected, onEdit, onDelete, onSelect }: {
   const revealActions = useCallback(() => {
     clearTimeout(hideTimer.current);
     setShowActions(true);
+    // Haptic feedback on first tap
+    if (navigator.vibrate) navigator.vibrate(10);
     hideTimer.current = setTimeout(() => setShowActions(false), 3000);
   }, []);
 
