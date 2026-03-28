@@ -115,7 +115,8 @@ const HomePage = () => {
       const { data, error } = await supabase
         .from("recently_played")
         .select("artist, cover_url")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .neq("album", "Radio en direct");
       if (error) throw error;
       const counts = new Map<string, { count: number; cover: string }>();
       for (const r of data || []) {
