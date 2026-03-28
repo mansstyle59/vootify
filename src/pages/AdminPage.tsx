@@ -887,7 +887,46 @@ function SongsTab() {
     }
   };
 
-  const loadSongs = async () => {
+  const handleEnrichCovers = async () => {
+    const missingCount = songs.filter((s) => !s.cover_url).length;
+    if (missingCount === 0) {
+      toast.info("Toutes les pochettes sont déjà présentes");
+      return;
+    }
+    if (!confirm(`Enrichir les pochettes manquantes (${missingCount} morceaux sans pochette) via Deezer ?`)) return;
+
+    setEnriching(true);
+    let totalUpdated = 0;
+    let offset = 0;
+
+    try {
+      while (true) {
+        setEnrichProgress(`${offset}+ traités…`);
+        const { data, error } = await supabase.functions.invoke("enrich-metadata", {
+          body: { mode: "songs", offset, only_missing: true },
+        });
+        if (error) throw error;
+        totalUpdated += data?.updated || 0;
+        if (data?.done) break;
+        offset = data?.nextOffset || offset + 50;
+      }
+
+      if (totalUpdated > 0) {
+        await loadSongs();
+      }
+      toast.success(
+        totalUpdated > 0
+          ? `${totalUpdated} pochette${totalUpdated > 1 ? "s" : ""} enrichie${totalUpdated > 1 ? "s" : ""}`
+          : "Aucune pochette trouvée sur Deezer"
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'enrichissement");
+    } finally {
+      setEnriching(false);
+      setEnrichProgress("");
+    }
+  };
+
     setLoading(true);
     let allSongs: any[] = [];
     let from = 0;
