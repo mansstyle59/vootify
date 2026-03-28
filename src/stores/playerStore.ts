@@ -21,6 +21,8 @@ interface PlayerState {
   crossfadeEnabled: boolean;
   crossfadeDuration: number; // in seconds
   _seekTime: number | null;
+  bassBoost: number; // -12 to +12 dB
+  trebleBoost: number; // -12 to +12 dB
   
   nextPreloaded: boolean;
   audioDuration: number; // real audio element duration (overrides metadata)
@@ -29,6 +31,8 @@ interface PlayerState {
   setUserId: (id: string | null) => void;
   setCrossfadeEnabled: (enabled: boolean) => void;
   setCrossfadeDuration: (duration: number) => void;
+  setBassBoost: (db: number) => void;
+  setTrebleBoost: (db: number) => void;
   loadUserData: (userId: string) => Promise<void>;
   play: (song: Song) => void;
   togglePlay: () => void;
@@ -69,6 +73,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "true"),
   crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "2"),
   _seekTime: null,
+  bassBoost: JSON.parse(localStorage.getItem("bassBoost") ?? "0"),
+  trebleBoost: JSON.parse(localStorage.getItem("trebleBoost") ?? "0"),
   
   nextPreloaded: false,
   audioDuration: 0,
@@ -76,6 +82,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setUserId: (id) => set({ userId: id }),
   setCrossfadeEnabled: (enabled) => { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); set({ crossfadeEnabled: enabled }); },
   setCrossfadeDuration: (duration) => { localStorage.setItem("crossfadeDuration", JSON.stringify(duration)); set({ crossfadeDuration: duration }); },
+  setBassBoost: (db) => { localStorage.setItem("bassBoost", JSON.stringify(db)); set({ bassBoost: db }); },
+  setTrebleBoost: (db) => { localStorage.setItem("trebleBoost", JSON.stringify(db)); set({ trebleBoost: db }); },
 
 
 
