@@ -298,7 +298,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="text-[34px] md:text-[40px] font-black text-foreground leading-[1.02] tracking-tight"
         >
-          {getGreeting(displayName)}
+          {getGreeting()}
         </motion.h1>
 
         {/* Daily quote */}
