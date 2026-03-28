@@ -3,7 +3,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, MoreHorizontal, PlusCircle, Disc3,
-  Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search
+  Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -1211,10 +1211,24 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     togglePlay, next, previous, seekTo: storeSeekTo,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue,
     crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
+    bassBoost, trebleBoost, setBassBoost, setTrebleBoost,
   } = usePlayerStore();
 
   const navigate = useNavigate();
   const [showQueue, setShowQueue] = useState(false);
+  const [showEQ, setShowEQ] = useState(false);
+
+  const eqPresets = [
+    { label: "Normal", emoji: "🎵", bass: 0, treble: 0 },
+    { label: "Bass Boost", emoji: "🔊", bass: 10, treble: -2 },
+    { label: "Pop", emoji: "🎤", bass: 2, treble: 4 },
+    { label: "Rock", emoji: "🎸", bass: 5, treble: 3 },
+    { label: "Jazz", emoji: "🎷", bass: 3, treble: -1 },
+    { label: "Classique", emoji: "🎻", bass: -2, treble: 4 },
+    { label: "Voix", emoji: "🎙️", bass: -3, treble: 5 },
+    { label: "Électro", emoji: "⚡", bass: 8, treble: 5 },
+  ];
+  const activePreset = eqPresets.find(p => p.bass === bassBoost && p.treble === trebleBoost)?.label || null;
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
@@ -1706,6 +1720,70 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </motion.button>
             </div>
 
+            {/* EQ Panel */}
+            <AnimatePresence>
+              {showEQ && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden mb-4"
+                >
+                  <div className="rounded-2xl p-4" style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-3">Égaliseur</p>
+                    
+                    {/* Presets */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {eqPresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          onClick={() => { setBassBoost(preset.bass); setTrebleBoost(preset.treble); if (navigator.vibrate) navigator.vibrate(8); }}
+                          className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all active:scale-95 ${
+                            activePreset === preset.label
+                              ? "bg-primary/25 text-primary border border-primary/40"
+                              : "bg-white/8 text-white/50 border border-white/5"
+                          }`}
+                        >
+                          {preset.emoji} {preset.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Bass slider */}
+                    <div className="flex items-center gap-3 mb-2.5">
+                      <span className="text-[11px] text-white/40 w-14 shrink-0">Basses</span>
+                      <input
+                        type="range"
+                        min={-12}
+                        max={12}
+                        step={1}
+                        value={bassBoost}
+                        onChange={(e) => setBassBoost(Number(e.target.value))}
+                        className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-primary [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
+                      />
+                      <span className="text-[11px] text-white/40 w-8 text-right tabular-nums">{bassBoost > 0 ? "+" : ""}{bassBoost}</span>
+                    </div>
+
+                    {/* Treble slider */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-white/40 w-14 shrink-0">Aigus</span>
+                      <input
+                        type="range"
+                        min={-12}
+                        max={12}
+                        step={1}
+                        value={trebleBoost}
+                        onChange={(e) => setTrebleBoost(Number(e.target.value))}
+                        className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-primary [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
+                      />
+                      <span className="text-[11px] text-white/40 w-8 text-right tabular-nums">{trebleBoost > 0 ? "+" : ""}{trebleBoost}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Bottom actions — minimal row */}
             <div className="flex items-center justify-between">
               <button
@@ -1722,6 +1800,18 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 ) : (
                   <Download className="w-5 h-5" />
                 )}
+              </button>
+
+              <button
+                onClick={() => setShowEQ(!showEQ)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase transition-all active:scale-95 ${
+                  showEQ || activePreset !== "Normal"
+                    ? "bg-primary/20 text-primary border border-primary/30"
+                    : "text-white/30 border border-white/10"
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                EQ
               </button>
 
               <button
