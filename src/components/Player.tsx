@@ -14,7 +14,7 @@ import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
-import { getGlobalAudio } from "@/lib/globalAudio";
+import { audioManager, getGlobalAudio } from "@/lib/audioManager";
 
 /* ── Shared glass styles ── */
 const glassStyle = {
