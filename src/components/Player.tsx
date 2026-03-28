@@ -1396,7 +1396,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {currentSong.album || "Ma bibliothèque"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="w-[72px] flex items-center justify-end gap-2">
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={() => {
