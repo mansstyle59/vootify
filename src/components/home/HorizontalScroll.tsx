@@ -26,7 +26,7 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
   }, [checkScroll]);
 
   return (
-    <div className="relative">
+    <div className="relative -mx-2 px-2">
       {/* Fade edges */}
       <div
         className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none transition-opacity duration-200"
