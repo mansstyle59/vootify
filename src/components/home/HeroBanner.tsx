@@ -25,10 +25,9 @@ const QUOTES = [
   "Musique : le remède universel.",
 ];
 
-function getGreeting(name?: string | null) {
+function getGreeting() {
   const h = new Date().getHours();
-  const base = h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
-  return name ? `${base}, ${name}` : base;
+  return h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
 }
 
 function getDailyQuote() {
@@ -299,7 +298,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="text-[34px] md:text-[40px] font-black text-foreground leading-[1.02] tracking-tight"
         >
-          {getGreeting(displayName)}
+          {getGreeting()}
         </motion.h1>
 
         {/* Daily quote */}
