@@ -340,29 +340,44 @@ export function MiniPlayer() {
       resumeTimer = setTimeout(() => attemptResume(1), 200);
     };
 
-    // Handle audio interruptions (phone calls, Siri, etc.)
+    // Handle audio interruptions (phone calls, Siri, lock-screen quirks)
     const handlePause = () => {
       const audio = audioRef.current;
       if (!audio) return;
       const state = usePlayerStore.getState();
-      if (state.isPlaying && audio.paused) {
-        // Audio was paused externally (phone call, Siri, OS interruption)
-        // Try to resume regardless of visibility (lock screen case)
-        console.log("[interrupt] Audio paused externally — attempting resume");
+      if (!state.isPlaying || !audio.paused) return;
+
+      // If user intent is still "playing", try progressive auto-resume
+      // (important for iOS lock-screen/background interruptions)
+      const isRadio = state.currentSong?.duration === 0;
+      const retryDelays = [300, 1200, 2500];
+
+      retryDelays.forEach((delay, idx) => {
         setTimeout(() => {
-          if (audio.paused && usePlayerStore.getState().isPlaying) {
-            audio.volume = volume;
-            audio.muted = false;
-            audio.play().then(() => {
-              if (document.visibilityState === "visible") {
-                showResumeBanner("Lecture reprise ▶");
-              }
-            }).catch(() => {
-              console.warn("[interrupt] Resume failed — user gesture may be needed");
-            });
+          const a = audioRef.current;
+          const liveState = usePlayerStore.getState();
+          if (!a || !liveState.isPlaying || !a.paused) return;
+
+          if (isRadio && idx > 0 && a.src) {
+            // Radio gets stale more often: refresh stream on retries
+            const src = a.src;
+            a.src = "";
+            a.src = src;
+            a.load();
           }
-        }, 300);
-      }
+
+          a.volume = volume;
+          a.muted = false;
+          a.play().then(() => {
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+            if (document.visibilityState === "visible") showResumeBanner("Lecture reprise ▶");
+          }).catch(() => {
+            if (idx === retryDelays.length - 1) {
+              console.warn("[interrupt] Auto-resume failed after retries");
+            }
+          });
+        }, delay);
+      });
     };
 
     // Stall recovery — when audio buffer runs out mid-playback
