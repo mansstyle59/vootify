@@ -1067,6 +1067,17 @@ function SongsTab() {
               <><Sparkles className="w-3.5 h-3.5" /> Corriger métadonnées {isSelecting ? `(${selectedIds.size})` : "(tout)"}</>
             )}
           </button>
+          <button
+            onClick={handleEnrichCovers}
+            disabled={enriching}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent/60 text-accent-foreground hover:bg-accent/80 transition-colors"
+          >
+            {enriching ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Pochettes… {enrichProgress}</>
+            ) : (
+              <><ImageIcon className="w-3.5 h-3.5" /> Enrichir pochettes</>
+            )}
+          </button>
           {isSelecting && (
             <>
               <span className="text-xs text-muted-foreground">
