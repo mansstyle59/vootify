@@ -48,6 +48,7 @@ function PremiumSongRow({
   onSelect?: () => void;
   cached?: boolean;
 }) {
+  const coverUrl = useOfflineCoverUrl(song.id, song.coverUrl);
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const [swiped, setSwiped] = useState<"left" | "right" | null>(null);
@@ -121,8 +122,8 @@ function PremiumSongRow({
             : "0 2px 8px hsl(0 0% 0% / 0.08)",
         }}
       >
-        {song.coverUrl ? (
-          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
+        {coverUrl ? (
+          <img src={coverUrl} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.5))" }}>
             <Music className="w-4 h-4 text-muted-foreground/25" />
