@@ -126,6 +126,7 @@ export function AppSidebar() {
 
 export function MobileNav() {
   const { isAdmin } = useAdminAuth();
+  const { checkRoute } = useSubscriptionAccess();
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
   const handleTap = useCallback((to: string) => {
@@ -144,46 +145,54 @@ export function MobileNav() {
       }}
     >
       <div className="flex justify-around py-1.5">
-        {items.map((item) => (
-          <RouterNavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/"}
-            onTouchStart={() => handleTap(item.to)}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-2xl text-[10px] font-semibold transition-all duration-150 ${
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground/60"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <div className="relative">
-                  <item.icon
-                    className={`w-[22px] h-[22px] transition-all duration-200 ${
-                      isActive ? "scale-110" : ""
-                    }`}
-                    strokeWidth={isActive ? 2.5 : 1.8}
-                  />
-                  {/* iOS-style active dot indicator */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-dot"
-                      className="absolute -bottom-1.5 left-1/2 w-1 h-1 rounded-full bg-primary"
-                      style={{ marginLeft: -2 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </div>
-                <span className={`transition-opacity duration-150 ${isActive ? "opacity-100" : "opacity-70"}`}>
-                  {item.label}
-                </span>
-              </>
-            )}
-          </RouterNavLink>
-        ))}
+        {items.map((item) => {
+          const restricted = !checkRoute(item.to);
+          return (
+            <RouterNavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              onTouchStart={() => handleTap(item.to)}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-2xl text-[10px] font-semibold transition-all duration-150 ${
+                  restricted
+                    ? "text-muted-foreground/30"
+                    : isActive
+                    ? "text-primary"
+                    : "text-muted-foreground/60"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <div className="relative">
+                    {restricted ? (
+                      <Lock className="w-[22px] h-[22px]" strokeWidth={1.8} />
+                    ) : (
+                      <item.icon
+                        className={`w-[22px] h-[22px] transition-all duration-200 ${
+                          isActive ? "scale-110" : ""
+                        }`}
+                        strokeWidth={isActive ? 2.5 : 1.8}
+                      />
+                    )}
+                    {isActive && !restricted && (
+                      <motion.div
+                        layoutId="nav-dot"
+                        className="absolute -bottom-1.5 left-1/2 w-1 h-1 rounded-full bg-primary"
+                        style={{ marginLeft: -2 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                  </div>
+                  <span className={`transition-opacity duration-150 ${restricted ? "opacity-40" : isActive ? "opacity-100" : "opacity-70"}`}>
+                    {item.label}
+                  </span>
+                </>
+              )}
+            </RouterNavLink>
+          );
+        })}
       </div>
     </nav>
   );
