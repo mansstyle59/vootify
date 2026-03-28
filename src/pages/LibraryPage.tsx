@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
@@ -266,6 +267,7 @@ const LibraryPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { checkLibraryTab } = useSubscriptionAccess();
   const {
     likedSongs, playlists, recentlyPlayed, playlistSongs,
     createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
@@ -600,15 +602,21 @@ const LibraryPage = () => {
     }
     if (isGuest && !isOffline && tab !== "downloads") {
       setTab("downloads");
+      return;
+    }
+    // If current tab is restricted by plan, switch to first allowed
+    if (!checkLibraryTab(tab) && !isOffline && !isGuest) {
+      const firstAllowed = tabs.find((t) => checkLibraryTab(t.key));
+      if (firstAllowed) setTab(firstAllowed.key);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuest, isOffline, isAdmin]);
+  }, [isGuest, isOffline, isAdmin, tab]);
 
   const visibleTabs = isOffline
     ? tabs.filter((t) => t.key === "downloads")
     : isGuest
       ? tabs.filter((t) => t.key === "downloads")
-      : tabs;
+      : tabs.filter((t) => checkLibraryTab(t.key));
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative animate-fade-in">

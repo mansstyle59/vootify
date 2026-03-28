@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { offlineCache } from "@/lib/offlineCache";
 import { useSubscription } from "@/hooks/useSubscription";
+import { normalizePlan, getPlanConfig } from "@/lib/subscriptionPermissions";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
@@ -214,12 +215,21 @@ const ProfilePage = () => {
             <h2 className="mt-4 text-lg font-bold text-foreground">{displayName || "Utilisateur"}</h2>
             <p className="text-xs text-muted-foreground">{user.email}</p>
 
-            {isActive && subscription && (
-              <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/20">
-                <Crown className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-semibold text-primary capitalize">{subscription.plan}</span>
-              </div>
-            )}
+            {isActive && subscription && (() => {
+              const plan = normalizePlan(subscription.plan);
+              const badgeColors: Record<string, string> = {
+                premium: "bg-primary/15 border-primary/20 text-primary",
+                gold: "bg-yellow-500/15 border-yellow-500/20 text-yellow-500",
+                vip: "bg-red-500/15 border-red-500/20 text-red-500",
+              };
+              const cls = badgeColors[plan] || "bg-primary/15 border-primary/20 text-primary";
+              return (
+                <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${cls}`}>
+                  <Crown className="w-3.5 h-3.5" />
+                  <span className="text-xs font-semibold capitalize">{getPlanConfig(plan).label}</span>
+                </div>
+              );
+            })()}
           </div>
         </GlassCard>
 
