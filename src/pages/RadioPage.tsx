@@ -496,27 +496,41 @@ const RadioPage = () => {
             </motion.div>
           )}
 
-          {/* Action buttons */}
-          <div className="absolute top-2 right-2 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+          {/* Action buttons — always visible on mobile, hover on desktop */}
+          <div className={`absolute top-2 right-2 flex gap-1.5 transition-all duration-200 ${
+            isActivePlaying ? "opacity-100 scale-100" : "md:opacity-0 md:scale-90 md:group-hover:opacity-100 md:group-hover:scale-100"
+          }`}>
             {isCustomTab ? (
               <>
                 <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
-                  className="p-2 rounded-xl transition-colors"
-                  style={{ background: "hsl(0 0% 0% / 0.45)" }}
+                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                  style={{
+                    background: "hsl(0 0% 100% / 0.15)",
+                    backdropFilter: "blur(12px) saturate(1.5)",
+                    boxShadow: "0 2px 8px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
+                  }}
                 >
-                  <Pencil className="w-3.5 h-3.5 text-white" />
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
-                  className="p-2 rounded-xl transition-colors hover:bg-destructive/80"
-                  style={{ background: "hsl(0 0% 0% / 0.45)" }}
+                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                  style={{
+                    background: "hsl(var(--destructive) / 0.6)",
+                    backdropFilter: "blur(12px) saturate(1.5)",
+                    boxShadow: "0 2px 8px hsl(var(--destructive) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.1)",
+                  }}
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-white" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </>
             ) : (
               <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-                className="p-2 rounded-xl transition-colors"
-                style={{ background: "hsl(0 0% 0% / 0.45)" }}
+                className="p-2 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                style={{
+                  background: "hsl(0 0% 100% / 0.15)",
+                  backdropFilter: "blur(12px) saturate(1.5)",
+                  boxShadow: "0 2px 8px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
+                }}
               >
                 <Heart className={`w-3.5 h-3.5 transition-colors ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
               </button>

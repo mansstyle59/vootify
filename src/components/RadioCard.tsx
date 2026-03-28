@@ -139,8 +139,12 @@ export const RadioCard = memo(function RadioCard({
                   setShowActions(false);
                   onEdit(station);
                 }}
-                className="p-1.5 rounded-full text-white active:scale-90 transition-transform"
-                style={{ background: "hsl(0 0% 0% / 0.6)", backdropFilter: "blur(8px)" }}
+                className="p-1.5 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                style={{
+                  background: "hsl(0 0% 100% / 0.15)",
+                  backdropFilter: "blur(12px) saturate(1.5)",
+                  boxShadow: "0 2px 8px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
+                }}
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -152,8 +156,12 @@ export const RadioCard = memo(function RadioCard({
                   setShowActions(false);
                   onDelete(station.id);
                 }}
-                className="p-1.5 rounded-full text-white active:scale-90 transition-transform"
-                style={{ background: "hsl(var(--destructive) / 0.7)", backdropFilter: "blur(8px)" }}
+                className="p-1.5 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                style={{
+                  background: "hsl(var(--destructive) / 0.6)",
+                  backdropFilter: "blur(12px) saturate(1.5)",
+                  boxShadow: "0 2px 8px hsl(var(--destructive) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.1)",
+                }}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
