@@ -3,16 +3,31 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const letters = "VOOTIFY".split("");
 
-export function SplashScreen({ onFinish }: { onFinish: () => void }) {
+type Phase = "splash" | "done";
+
+interface Props {
+  onFinish: () => void;
+  /** If true, splash holds at logo and waits for onFinish to be called externally */
+  holdForCache?: boolean;
+}
+
+export function SplashScreen({ onFinish, holdForCache }: Props) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    if (holdForCache) return; // Don't auto-dismiss, cache loader will handle it
     const timer = setTimeout(() => {
       setVisible(false);
       setTimeout(onFinish, 400);
     }, 1400);
     return () => clearTimeout(timer);
-  }, [onFinish]);
+  }, [onFinish, holdForCache]);
+
+  // External dismiss
+  useEffect(() => {
+    if (!holdForCache) return;
+    // Will be dismissed via parent
+  }, [holdForCache]);
 
   return (
     <AnimatePresence>
