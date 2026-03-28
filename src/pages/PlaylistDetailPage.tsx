@@ -183,7 +183,7 @@ const PlaylistDetailPage = () => {
 
   if (!playlist) {
     return (
-      <div className="p-4 pb-40 flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="p-4 pb-20 flex flex-col items-center justify-center min-h-[60vh]">
         <p className="text-muted-foreground">Playlist introuvable</p>
         <button onClick={() => navigate("/library")} className="mt-4 text-primary text-sm">Retour</button>
       </div>
@@ -199,7 +199,7 @@ const PlaylistDetailPage = () => {
     : [];
 
   return (
-    <div className="pb-40 max-w-4xl mx-auto animate-fade-in">
+    <div className="pb-20 max-w-4xl mx-auto animate-fade-in">
       {/* ─── ULTRA PREMIUM HERO ─── */}
       <div ref={heroRef} className="relative overflow-hidden">
         {/* Parallax blurred background */}

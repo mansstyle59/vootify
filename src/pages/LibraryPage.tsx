@@ -603,7 +603,7 @@ const LibraryPage = () => {
       : tabs.filter((t) => checkLibraryTab(t.key));
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto relative">
+    <div className="pb-20 max-w-7xl mx-auto relative">
       {/* Header */}
       <div
         className="sticky top-0 z-20 transition-colors duration-500"

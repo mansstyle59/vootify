@@ -874,7 +874,7 @@ const AddContentPage = () => {
   const [tab, setTab] = useState<Tab>("song");
 
   return (
-    <div className="pb-40 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
+    <div className="pb-20 max-w-2xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
       {/* Header */}
       <div className="px-4 md:px-8 mb-6">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Ajouter</h1>

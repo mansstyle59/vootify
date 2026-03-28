@@ -24,7 +24,7 @@ const AudioSettingsPage = () => {
   } = usePlayerStore();
 
   return (
-    <div className="min-h-screen pb-40 animate-fade-in">
+    <div className="min-h-screen pb-20 animate-fade-in">
       {/* Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/15 via-primary/5 to-background" />
