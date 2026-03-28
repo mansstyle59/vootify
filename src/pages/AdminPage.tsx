@@ -820,6 +820,8 @@ function SongsTab() {
   const [deleting, setDeleting] = useState(false);
   const [smartFixing, setSmartFixing] = useState(false);
   const [smartFixProgress, setSmartFixProgress] = useState("");
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState("");
 
   const isSelecting = selectedIds.size > 0;
 
@@ -882,6 +884,46 @@ function SongsTab() {
     } finally {
       setSmartFixing(false);
       setSmartFixProgress("");
+    }
+  };
+
+  const handleEnrichCovers = async () => {
+    const missingCount = songs.filter((s) => !s.cover_url).length;
+    if (missingCount === 0) {
+      toast.info("Toutes les pochettes sont déjà présentes");
+      return;
+    }
+    if (!confirm(`Enrichir les pochettes manquantes (${missingCount} morceaux sans pochette) via Deezer ?`)) return;
+
+    setEnriching(true);
+    let totalUpdated = 0;
+    let offset = 0;
+
+    try {
+      while (true) {
+        setEnrichProgress(`${offset}+ traités…`);
+        const { data, error } = await supabase.functions.invoke("enrich-metadata", {
+          body: { mode: "songs", offset, only_missing: true },
+        });
+        if (error) throw error;
+        totalUpdated += data?.updated || 0;
+        if (data?.done) break;
+        offset = data?.nextOffset || offset + 50;
+      }
+
+      if (totalUpdated > 0) {
+        await loadSongs();
+      }
+      toast.success(
+        totalUpdated > 0
+          ? `${totalUpdated} pochette${totalUpdated > 1 ? "s" : ""} enrichie${totalUpdated > 1 ? "s" : ""}`
+          : "Aucune pochette trouvée sur Deezer"
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'enrichissement");
+    } finally {
+      setEnriching(false);
+      setEnrichProgress("");
     }
   };
 
@@ -1023,6 +1065,17 @@ function SongsTab() {
               <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Correction… {smartFixProgress}</>
             ) : (
               <><Sparkles className="w-3.5 h-3.5" /> Corriger métadonnées {isSelecting ? `(${selectedIds.size})` : "(tout)"}</>
+            )}
+          </button>
+          <button
+            onClick={handleEnrichCovers}
+            disabled={enriching}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent/60 text-accent-foreground hover:bg-accent/80 transition-colors"
+          >
+            {enriching ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Pochettes… {enrichProgress}</>
+            ) : (
+              <><ImageIcon className="w-3.5 h-3.5" /> Enrichir pochettes</>
             )}
           </button>
           {isSelecting && (
