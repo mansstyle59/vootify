@@ -26,7 +26,6 @@ const ProfilePage = () => {
   const { subscription, isActive } = useSubscription(user?.id ?? null);
   
   const navigate = useNavigate();
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState("");
