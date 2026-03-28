@@ -7,7 +7,7 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { myRadioApi, buildMyRadioLogoMap, findMyRadioLogo } from "@/lib/myRadioApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, X, Check, Waves, LayoutGrid, List, Volume2, Globe } from "lucide-react";
+import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, X, Check, Waves, LayoutGrid, List, Volume2, Globe, RefreshCw } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { Input } from "@/components/ui/input";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
@@ -564,10 +564,20 @@ const RadioPage = () => {
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Waves className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Radio</h1>
                 <p className="text-sm text-muted-foreground">Des milliers de stations en direct du monde entier</p>
               </div>
+              <button
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] });
+                  queryClient.invalidateQueries({ queryKey: ["radio-browser"] });
+                  toast.success("Stations actualisées");
+                }}
+                className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              >
+                <RefreshCw className="w-4.5 h-4.5" />
+              </button>
             </div>
           </div>
         </div>

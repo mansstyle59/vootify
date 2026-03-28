@@ -27,6 +27,7 @@ import {
   ListMusic,
   Plus,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,7 +114,7 @@ const SearchPage = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const { data: allSongs, isLoading } = useAllLocalSongs();
+  const { data: allSongs, isLoading, refetch: refetchSongs } = useAllLocalSongs();
 
   // Play a Friday release album — only full tracks, no 30s previews
   const playFridayRelease = useCallback(async (release: DeezerNewRelease) => {
@@ -484,7 +485,7 @@ const SearchPage = () => {
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <SearchIcon className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
                   Rechercher
                 </h1>
@@ -492,6 +493,12 @@ const SearchPage = () => {
                   Bibliothèque locale
                 </p>
               </div>
+              <button
+                onClick={() => { refetchSongs(); toast.success("Recherche actualisée"); }}
+                className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              >
+                <RefreshCw className="w-4.5 h-4.5" />
+              </button>
             </div>
           </div>
         </div>

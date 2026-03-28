@@ -637,12 +637,26 @@ const LibraryPage = () => {
             </div>
           )}
 
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
-            {isOffline ? "Mode Hors-ligne" : "Bibliothèque"}
-          </h1>
-          <p className="text-xs text-muted-foreground/70 mb-4">
-            {isOffline ? "Écoutez vos morceaux sans connexion" : "Vos morceaux, playlists et favoris"}
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
+                {isOffline ? "Mode Hors-ligne" : "Bibliothèque"}
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                {isOffline ? "Écoutez vos morceaux sans connexion" : "Vos morceaux, playlists et favoris"}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                queryClient.invalidateQueries();
+                if (userId) loadUserData(userId);
+                toast.success("Bibliothèque actualisée");
+              }}
+              className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+            >
+              <RefreshCw className="w-4.5 h-4.5" />
+            </button>
+          </div>
 
           {/* Tab pills */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
