@@ -292,6 +292,11 @@ export function MiniPlayer() {
 
   // ── Ended handler ──
   const handleEnded = useCallback(() => {
+    // Skip if crossfade already handled the transition
+    if (crossfadeTriggeredRef.current || isCrossfading()) {
+      crossfadeTriggeredRef.current = false;
+      return;
+    }
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
       audio.currentTime = 0;
