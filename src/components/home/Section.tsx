@@ -96,7 +96,7 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
   );
 }
 
-export function Section({ title, children, songs, onPlayAll, viewAllLink }: SectionProps) {
+export function Section({ title, children, songs, onPlayAll, viewAllLink, action }: SectionProps) {
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const navigate = useNavigate();
   const hasSongs = songs && songs.length > 0;
