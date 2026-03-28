@@ -780,118 +780,144 @@ export function MiniPlayer() {
   const miniDominantColor: string | null = null; // Skip expensive canvas op on mini player
 
   // ── Media Session API: lock screen controls ──
-  // Music → previoustrack + nexttrack (skip buttons)
-  // Radio (live) → play/pause only (no skip, no seek)
+  // Re-register when song, queue length, or live mode changes
+  const queueLen = usePlayerStore((s) => s.queue.length);
+
   useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
-    if (!currentSong) return;
+    if (!("mediaSession" in navigator) || !currentSong) return;
 
     const ms = navigator.mediaSession;
     const liveStream = currentSong.duration === 0;
+    const hasMultiple = queueLen > 1;
 
-    console.log(`[mediaSession] Registering handlers — mode: ${liveStream ? "RADIO" : "MUSIC"}`);
+    // ── Play handler — always resume from store + audio element ──
+    const safeSet = (action: MediaSessionAction, handler: MediaSessionActionHandler | null) => {
+      try { ms.setActionHandler(action, handler); } catch { /* unsupported */ }
+    };
 
-    // Common: play / pause / stop — with forced media session state sync
-    try {
-      ms.setActionHandler("play", () => {
-        const store = usePlayerStore.getState();
-        if (!store.isPlaying) store.togglePlay();
-        const audio = audioRef.current;
-        if (audio && audio.paused && audio.src) {
-          audio.volume = volume;
-          audio.muted = false;
-          audio.play().catch(console.error);
-        }
-        ms.playbackState = "playing";
-      });
-    } catch { /* unsupported */ }
+    safeSet("play", () => {
+      const store = usePlayerStore.getState();
+      if (!store.isPlaying) store.togglePlay();
+      const audio = audioRef.current;
+      if (audio?.paused && audio.src) {
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }
+      ms.playbackState = "playing";
+    });
 
-    try {
-      ms.setActionHandler("pause", () => {
-        const store = usePlayerStore.getState();
-        if (store.isPlaying) store.togglePlay();
-        ms.playbackState = "paused";
-      });
-    } catch { /* unsupported */ }
+    safeSet("pause", () => {
+      const store = usePlayerStore.getState();
+      if (store.isPlaying) store.togglePlay();
+      audioRef.current?.pause();
+      ms.playbackState = "paused";
+    });
 
-    try {
-      ms.setActionHandler("stop", () => {
-        usePlayerStore.getState().closePlayer();
-        ms.playbackState = "none";
-      });
-    } catch { /* unsupported */ }
+    safeSet("stop", () => {
+      usePlayerStore.getState().closePlayer();
+      ms.playbackState = "none";
+    });
 
     if (liveStream) {
-      // ── RADIO mode: skip stations if multiple in queue, otherwise no skip ──
-      const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
-      if (hasMultipleStations) {
-        try {
-          ms.setActionHandler("previoustrack", () => {
-            usePlayerStore.getState().previous();
-            ms.playbackState = "playing";
-          });
-        } catch { /* unsupported */ }
-        try {
-          ms.setActionHandler("nexttrack", () => {
-            usePlayerStore.getState().next();
-            ms.playbackState = "playing";
-          });
-        } catch { /* unsupported */ }
+      // ── RADIO: skip stations if multiple, otherwise no skip ──
+      if (hasMultiple) {
+        safeSet("previoustrack", () => {
+          usePlayerStore.getState().previous();
+          ms.playbackState = "playing";
+        });
+        safeSet("nexttrack", () => {
+          usePlayerStore.getState().next();
+          ms.playbackState = "playing";
+        });
       } else {
-        try { ms.setActionHandler("previoustrack", null); } catch { /* unsupported */ }
-        try { ms.setActionHandler("nexttrack", null); } catch { /* unsupported */ }
+        safeSet("previoustrack", null);
+        safeSet("nexttrack", null);
       }
-      try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
-      try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
-      try { ms.setActionHandler("seekto", null); } catch { /* unsupported */ }
+      safeSet("seekbackward", null);
+      safeSet("seekforward", null);
+      safeSet("seekto", null);
     } else {
-      // ── MUSIC mode: previoustrack + nexttrack buttons ──
-      try {
-        ms.setActionHandler("previoustrack", () => {
-          usePlayerStore.getState().previous();
-        });
-      } catch { /* unsupported */ }
+      // ── MUSIC: track skip + seek ──
+      safeSet("previoustrack", () => {
+        usePlayerStore.getState().previous();
+        ms.playbackState = "playing";
+      });
+      safeSet("nexttrack", () => {
+        usePlayerStore.getState().next();
+        ms.playbackState = "playing";
+      });
 
-      try {
-        ms.setActionHandler("nexttrack", () => {
-          usePlayerStore.getState().next();
-        });
-      } catch { /* unsupported */ }
+      // Seek ±10s (proper seek, not track skip — better UX on lock screen scrubber)
+      safeSet("seekbackward", (details) => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        const offset = details?.seekOffset ?? 10;
+        const newTime = Math.max(0, audio.currentTime - offset);
+        audio.currentTime = newTime;
+        usePlayerStore.getState().setProgress(newTime);
+        syncPositionState();
+      });
+      safeSet("seekforward", (details) => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        const offset = details?.seekOffset ?? 10;
+        const newTime = Math.min(audio.duration || Infinity, audio.currentTime + offset);
+        audio.currentTime = newTime;
+        usePlayerStore.getState().setProgress(newTime);
+        syncPositionState();
+      });
 
-      // Map ±10s seek to track skip — forces iOS to show ⏪⏩ instead of 10s buttons
-      try {
-        ms.setActionHandler("seekbackward", () => {
-          usePlayerStore.getState().previous();
-        });
-      } catch { /* unsupported */ }
-      try {
-        ms.setActionHandler("seekforward", () => {
-          usePlayerStore.getState().next();
-        });
-      } catch { /* unsupported */ }
-
-      // Allow scrubbing on lock screen
-      try {
-        ms.setActionHandler("seekto", (details) => {
-          if (details.seekTime != null && audioRef.current) {
-            audioRef.current.currentTime = details.seekTime;
-            usePlayerStore.getState().setProgress(details.seekTime);
-            if ("setPositionState" in ms && audioRef.current.duration > 0) {
-              try {
-                ms.setPositionState({
-                  duration: audioRef.current.duration,
-                  playbackRate: 1,
-                  position: details.seekTime,
-                });
-              } catch { /* ignore */ }
-            }
-          }
-        });
-      } catch { /* unsupported */ }
+      // Scrubber on lock screen
+      safeSet("seekto", (details) => {
+        if (details.seekTime != null && audioRef.current) {
+          audioRef.current.currentTime = details.seekTime;
+          usePlayerStore.getState().setProgress(details.seekTime);
+          syncPositionState();
+        }
+      });
     }
-  }, [currentSong?.id]);
 
-  // Update metadata whenever song/radio changes
+    // Cleanup when player closes or song changes
+    return () => {
+      // Don't null handlers — let next registration override
+    };
+  }, [currentSong?.id, queueLen, volume]);
+
+  // ── Sync position state to lock screen scrubber ──
+  const syncPositionState = useCallback(() => {
+    if (!("mediaSession" in navigator) || !currentSong || isLive) return;
+    const audio = audioRef.current;
+    const realDuration = audio && isFinite(audio.duration) && audio.duration > 0
+      ? audio.duration : currentSong.duration;
+    if (realDuration <= 0) return;
+    try {
+      const pos = Math.max(0, Math.min(audio?.currentTime ?? progress, realDuration));
+      navigator.mediaSession.setPositionState({
+        duration: realDuration,
+        playbackRate: 1,
+        position: pos,
+      });
+    } catch { /* ignore */ }
+  }, [currentSong, isLive, progress]);
+
+  // Periodic position sync — interval-based, not on every progress change
+  const positionSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (positionSyncRef.current) clearInterval(positionSyncRef.current);
+    if (!currentSong || isLive || !isPlaying) return;
+
+    // Sync immediately on play/song change
+    syncPositionState();
+
+    // Then every 2s (sufficient for lock screen accuracy)
+    positionSyncRef.current = setInterval(syncPositionState, 2000);
+    return () => {
+      if (positionSyncRef.current) clearInterval(positionSyncRef.current);
+    };
+  }, [currentSong?.id, isPlaying, isLive, syncPositionState]);
+
+  // Update metadata whenever song/radio meta changes (not on isPlaying changes)
   useEffect(() => {
     if (!currentSong || !("mediaSession" in navigator)) return;
 
@@ -899,12 +925,10 @@ export function MiniPlayer() {
     const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
     const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
 
-    console.log(`[mediaSession] Updating: "${title}" — ${artist}`);
-
     navigator.mediaSession.metadata = new MediaMetadata({
       title,
       artist,
-      album: currentSong.album || "",
+      album: currentSong.album || (isLive ? "Radio" : ""),
       artwork: artwork
         ? [
             { src: artwork, sizes: "96x96", type: "image/png" },
@@ -916,38 +940,23 @@ export function MiniPlayer() {
           ]
         : [],
     });
+  }, [currentSong?.id, currentSong?.title, isLive, radioMeta?.title, radioMeta?.artist, radioMeta?.coverUrl]);
 
-    // Keep playback state in sync
-    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
-  }, [currentSong, isLive, radioMeta, isPlaying]);
-
-  // Update position state for lock screen scrubber — use actual audio duration
-  const lastPositionSyncRef = useRef(0);
+  // Keep playback state in sync — separate from metadata to avoid churn
   useEffect(() => {
-    if (!("mediaSession" in navigator) || !currentSong || isLive) return;
-    const now = Date.now();
-    // Throttle: every 1s when visible, every 5s in background
-    const interval = document.visibilityState === "visible" ? 1000 : 5000;
-    if (now - lastPositionSyncRef.current < interval) return;
-    lastPositionSyncRef.current = now;
+    if (!("mediaSession" in navigator) || !currentSong) return;
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+  }, [isPlaying, currentSong]);
 
-    // Use the ACTUAL audio duration (not metadata which can be wrong)
-    const audio = audioRef.current;
-    const realDuration = audio && isFinite(audio.duration) && audio.duration > 0
-      ? audio.duration
-      : currentSong.duration;
-
-    if ("setPositionState" in navigator.mediaSession && realDuration > 0) {
-      try {
-        const pos = Math.max(0, Math.min(progress, realDuration));
-        navigator.mediaSession.setPositionState({
-          duration: realDuration,
-          playbackRate: 1,
-          position: pos,
-        });
-      } catch { /* ignore */ }
-    }
-  }, [progress, currentSong, isLive]);
+  // Clean up media session when player closes
+  useEffect(() => {
+    return () => {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "none";
+        navigator.mediaSession.metadata = null;
+      }
+    };
+  }, []);
 
   const handleEnded = useCallback(() => {
     // If preemptive crossfade already triggered next, don't double-skip
