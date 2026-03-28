@@ -486,11 +486,9 @@ const RadioPage = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg"
+              className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
               style={{
                 background: "hsl(var(--destructive) / 0.9)",
-                backdropFilter: "blur(12px)",
-                boxShadow: "0 2px 12px hsl(var(--destructive) / 0.4)",
               }}
             >
               <LiveEqualizer color="bg-white" />
