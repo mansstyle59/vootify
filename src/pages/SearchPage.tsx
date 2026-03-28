@@ -471,33 +471,30 @@ const SearchPage = () => {
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
           /* ══════════════ EXPLORE MODE ══════════════ */
-          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 md:px-8 space-y-7">
+          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-8">
 
             {/* Recent Searches */}
             {recentSearches.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground/60" />
-                    <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Recherches récentes</h2>
-                  </div>
-                  <button onClick={clearAllRecent} className="text-[11px] text-muted-foreground/50 hover:text-primary transition-colors font-medium">Tout effacer</button>
+                  <h2 className="text-[18px] font-bold text-foreground">Récentes</h2>
+                  <button onClick={clearAllRecent} className="text-[12px] text-primary font-medium active:opacity-70 transition-opacity">Tout effacer</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {recentSearches.map((term, i) => (
-                    <motion.div key={term} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }} className="group flex items-center">
+                  {recentSearches.map((term) => (
+                    <div key={term} className="group flex items-center">
                       <button
                         onClick={() => commitSearch(term)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm text-foreground transition-all"
-                        style={{ ...glassCard }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
+                        style={{ background: "hsl(var(--foreground) / 0.05)" }}
                       >
-                        <Clock className="w-3 h-3 text-muted-foreground/50" />
+                        <Clock className="w-3 h-3 text-muted-foreground/40" />
                         {term}
                       </button>
-                      <button onClick={() => handleRemoveRecent(term)} className="ml-0.5 p-1 rounded-full text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleRemoveRecent(term)} className="ml-0.5 p-1 rounded-full text-muted-foreground/30 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
                         <X className="w-3 h-3" />
                       </button>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -506,33 +503,28 @@ const SearchPage = () => {
             {/* Trending Artists */}
             {trendingArtists.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Artistes populaires</h2>
-                </div>
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {trendingArtists.map((artist, i) => (
-                    <motion.button
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes populaires</h2>
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                  {trendingArtists.map((artist) => (
+                    <button
                       key={artist.name}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.03, type: "spring", stiffness: 300, damping: 25 }}
                       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16 group"
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] group active:scale-95 transition-transform"
                     >
-                      <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/15 ring-offset-2 ring-offset-background transition-all group-hover:ring-primary/40 group-hover:shadow-lg"
-                        style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.1)" }}
+                      <div
+                        className="w-16 h-16 rounded-full overflow-hidden"
+                        style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
                       >
                         {(artistPhotos[artist.name] || artist.cover) ? (
-                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-secondary/60 flex items-center justify-center">
-                            <User className="w-5 h-5 text-muted-foreground/40" />
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                            <User className="w-5 h-5 text-muted-foreground/20" />
                           </div>
                         )}
                       </div>
-                      <span className="text-[10px] text-foreground font-semibold truncate w-full text-center leading-tight">{artist.name}</span>
-                    </motion.button>
+                      <span className="text-[11px] text-foreground font-semibold truncate w-full text-center leading-tight">{artist.name}</span>
+                    </button>
                   ))}
                 </div>
               </section>
