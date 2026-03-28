@@ -1043,6 +1043,14 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                                 <p className="text-[11px] text-white/35 truncate">{song.artist}</p>
                               </div>
                               <span className="text-[11px] text-white/25 tabular-nums">{formatDuration(song.duration)}</span>
+                              {preloadedIds.has(song.id) && (
+                                <motion.div
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 shadow-[0_0_6px_hsl(142_70%_55%/0.6)]"
+                                  title="Pré-chargé"
+                                />
+                              )}
                               <button onClick={(e) => { e.stopPropagation(); setQueue(queue.filter((s) => s.id !== song.id)); }} className="p-1 rounded-full opacity-0 group-hover:opacity-100 text-white/25 hover:text-destructive transition-all active:scale-90">
                                 <X className="w-3.5 h-3.5" />
                               </button>
