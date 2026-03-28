@@ -61,15 +61,14 @@ function PremiumSongRow({
     else if (diff > 80 && onSwipeRight) { setSwiped("right"); setTimeout(() => { onSwipeRight(); setSwiped(null); }, 300); }
   };
 
-  // Format artist with feat styling
   const formatArtist = (artist: string) => {
     const parts = artist.split(/\s*(feat\.?|ft\.?|featuring)\s*/i);
     if (parts.length <= 1) return <span>{artist}</span>;
     return (
       <>
         <span>{parts[0].trim()}</span>
-        <span className="text-muted-foreground/50 font-normal"> feat. </span>
-        <span className="text-muted-foreground/70">{parts.slice(2).join(", ").trim()}</span>
+        <span className="text-muted-foreground/40"> feat. </span>
+        <span className="text-muted-foreground/60">{parts.slice(2).join(", ").trim()}</span>
       </>
     );
   };
@@ -77,7 +76,7 @@ function PremiumSongRow({
   return (
     <motion.div
       ref={containerRef}
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 16 }}
       animate={{
         opacity: 1,
         x: swiped === "left" ? -80 : swiped === "right" ? 80 : 0,
@@ -86,15 +85,18 @@ function PremiumSongRow({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={selectable ? onSelect : onClick}
-      className={`group flex items-center gap-3.5 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
-        selected ? "bg-primary/12 ring-1 ring-primary/25" : isActive ? "bg-primary/8 ring-1 ring-primary/15" : "hover:bg-secondary/50"
+      className={`group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+        selected
+          ? "bg-primary/10 ring-1 ring-primary/20"
+          : isActive
+          ? "bg-primary/6 ring-1 ring-primary/10"
+          : "hover:bg-secondary/40"
       }`}
     >
-      {/* Selection checkbox or index */}
       {selectable ? (
-        <div className="w-7 flex-shrink-0 flex items-center justify-center">
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-            selected ? "bg-primary border-primary" : "border-muted-foreground/30"
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+          <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${
+            selected ? "bg-primary border-primary" : "border-muted-foreground/25"
           }`}>
             {selected && (
               <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -104,15 +106,15 @@ function PremiumSongRow({
           </div>
         </div>
       ) : showIndex ? (
-        <div className="w-7 flex-shrink-0 flex items-center justify-center">
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
           {isActive && isPlaying ? (
-            <div className="flex items-end gap-[2px] h-4">
-              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-1" />
-              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-2" />
-              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-3" />
+            <div className="flex items-end gap-[2px] h-3.5">
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-1" />
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-2" />
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-3" />
             </div>
           ) : (
-            <span className={`text-xs tabular-nums font-medium ${isActive ? "text-primary" : "text-muted-foreground/60"}`}>
+            <span className={`text-[11px] tabular-nums font-medium ${isActive ? "text-primary" : "text-muted-foreground/40"}`}>
               {index + 1}
             </span>
           )}
@@ -120,59 +122,56 @@ function PremiumSongRow({
       ) : null}
 
       {/* Cover */}
-      <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md transition-shadow ${
-        isActive ? "shadow-primary/20 ring-1 ring-primary/30" : "shadow-black/20"
+      <div className={`relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 transition-shadow ${
+        isActive ? "shadow-lg shadow-primary/15 ring-1 ring-primary/20" : "shadow-md shadow-black/10"
       }`}>
         {song.coverUrl ? (
           <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-secondary flex items-center justify-center">
-            <Music className="w-5 h-5 text-muted-foreground/40" />
+          <div className="w-full h-full bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center">
+            <Music className="w-4 h-4 text-muted-foreground/30" />
           </div>
         )}
         {!selectable && (
           <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-            isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
+            isActive ? "bg-black/20 opacity-100" : "bg-black/25 opacity-0 group-hover:opacity-100"
           }`}>
             {isActive && isPlaying ? (
-              <Pause className="w-4 h-4 text-white" />
+              <Pause className="w-3.5 h-3.5 text-white" />
             ) : (
-              <Play className="w-4 h-4 text-white ml-0.5" />
+              <Play className="w-3.5 h-3.5 text-white ml-0.5" />
             )}
           </div>
         )}
       </div>
 
-      {/* Title & Artist */}
+      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className={`text-[13px] font-semibold leading-tight truncate ${
+          <p className={`text-[12px] font-bold leading-tight truncate ${
             isActive ? "text-primary" : "text-foreground"
           }`}>
             {song.title}
           </p>
           {cached && (
-            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">
-              <Download className="w-2.5 h-2.5" />
+            <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded bg-primary/10 text-primary">
+              <Download className="w-2 h-2" />
             </span>
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <p className="text-[11px] text-muted-foreground/70 leading-tight truncate">
+          <p className="text-[10px] text-muted-foreground/55 leading-tight truncate font-medium">
             {formatArtist(song.artist)}
           </p>
           {song.genre && (
-            <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+            <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary/8 text-primary/70">
               {song.genre}
             </span>
-          )}
-          {song.year && (
-            <span className="shrink-0 text-[9px] text-muted-foreground/40">{song.year}</span>
           )}
         </div>
       </div>
 
-      <span className="text-[11px] text-muted-foreground/50 tabular-nums flex-shrink-0 font-medium">
+      <span className="text-[10px] text-muted-foreground/40 tabular-nums flex-shrink-0 font-medium">
         {formatDuration(song.duration)}
       </span>
     </motion.div>
@@ -187,23 +186,20 @@ function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
-        isActive ? "text-primary-foreground" : "text-secondary-foreground hover:bg-secondary/80"
+      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-[11px] font-bold whitespace-nowrap transition-colors flex-shrink-0 ${
+        isActive ? "text-primary-foreground" : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-secondary/40"
       }`}
     >
       {isActive && (
         <motion.div
           layoutId="libraryTab"
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))",
-            boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), 0 1px 3px hsl(var(--primary) / 0.2)",
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="absolute inset-0 rounded-2xl bg-primary"
+          style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
         />
       )}
       <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className={`w-3.5 h-3.5 ${isActive ? "drop-shadow-sm" : ""}`} />
+        <Icon className="w-3.5 h-3.5" />
         {label}
       </span>
     </button>
@@ -217,19 +213,25 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
   return (
     <div className="flex items-center gap-2 mb-4">
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.93 }}
         onClick={onPlayAll}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:brightness-110 transition-all"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground text-[12px] font-bold"
+        style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
       >
-        <Play className="w-4 h-4" />
+        <Play className="w-3.5 h-3.5 fill-current" />
         Tout lire
       </motion.button>
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.93 }}
         onClick={onShuffle}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full liquid-glass text-foreground text-sm font-medium transition-all"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[12px] font-semibold text-foreground"
+        style={{
+          background: "hsl(var(--secondary) / 0.5)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid hsl(var(--border) / 0.15)",
+        }}
       >
-        <Shuffle className="w-4 h-4" />
+        <Shuffle className="w-3.5 h-3.5" />
         Aléatoire
       </motion.button>
       {extra}
@@ -245,11 +247,18 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; 
       animate={{ opacity: 1, scale: 1 }}
       className="flex flex-col items-center justify-center py-20 text-center"
     >
-      <div className="p-5 rounded-3xl liquid-glass mb-4">
-        <Icon className="w-10 h-10 text-muted-foreground/40" />
+      <div
+        className="p-5 rounded-2xl mb-4"
+        style={{
+          background: "hsl(var(--card) / 0.5)",
+          backdropFilter: "blur(16px)",
+          border: "1px solid hsl(var(--border) / 0.1)",
+        }}
+      >
+        <Icon className="w-9 h-9 text-muted-foreground/30" />
       </div>
-      <p className="text-foreground font-semibold text-sm">{title}</p>
-      <p className="text-xs text-muted-foreground/60 mt-1 max-w-[220px]">{subtitle}</p>
+      <p className="text-foreground font-bold text-[13px]">{title}</p>
+      <p className="text-[11px] text-muted-foreground/50 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
     </motion.div>
   );
 }
