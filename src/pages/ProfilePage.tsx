@@ -412,18 +412,67 @@ const ProfilePage = () => {
             </div>
 
 
-            {/* SW & Offline cache indicators */}
-            <div className="space-y-3 pt-2 border-t border-border/50">
-              <div className="flex items-center gap-3 mb-1">
-                <Database className="w-5 h-5 text-primary" />
-                <h3 className="text-base font-semibold text-foreground">Stockage</h3>
-              </div>
+          </motion.div>
 
-              {/* Service Worker cache */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Cache navigateur (SW)</p>
-                  <p className="text-xs text-muted-foreground">
+          {/* Storage section - separate card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-4 p-5 rounded-2xl bg-secondary/50 border border-border space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Database className="w-4.5 h-4.5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Stockage</h3>
+                <p className="text-[11px] text-muted-foreground">Espace utilisé par l'application</p>
+              </div>
+            </div>
+
+            {/* Total usage bar */}
+            {(() => {
+              const totalUsed = (swCacheSize || 0) + (offlineCacheSize || 0);
+              const maxEstimate = Math.max(totalUsed * 2, 50 * 1024 * 1024); // estimate max
+              const swPercent = maxEstimate > 0 ? ((swCacheSize || 0) / maxEstimate) * 100 : 0;
+              const offlinePercent = maxEstimate > 0 ? ((offlineCacheSize || 0) / maxEstimate) * 100 : 0;
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">
+                      {totalUsed > 0 ? formatBytes(totalUsed) : "Calcul…"}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">utilisé</span>
+                  </div>
+                  <div className="h-3 rounded-full bg-muted/60 overflow-hidden flex">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${swPercent}%` }}
+                      transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                      className="h-full rounded-l-full"
+                      style={{ background: "hsl(var(--primary))" }}
+                    />
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${offlinePercent}%` }}
+                      transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+                      className="h-full"
+                      style={{ background: "hsl(var(--primary) / 0.5)" }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Breakdown items */}
+            <div className="space-y-3 pt-2">
+              {/* SW Cache */}
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: "hsl(var(--primary))" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Cache navigateur</p>
+                  <p className="text-[11px] text-muted-foreground">
                     {swCacheSize !== null ? formatBytes(swCacheSize) : "Calcul…"}
                   </p>
                 </div>
@@ -433,26 +482,42 @@ const ProfilePage = () => {
                     const names = await caches.keys();
                     await Promise.all(names.map((n) => caches.delete(n)));
                     setSwCacheSize(0);
-                    toast.success("Cache SW vidé !");
+                    toast.success("Cache navigateur vidé !");
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors active:scale-95"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3 h-3" />
                   Vider
                 </button>
               </div>
 
-              {/* Offline downloads cache */}
-              <div className="flex items-center justify-between">
-                <div>
+              {/* Offline songs */}
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: "hsl(var(--primary) / 0.5)" }} />
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Morceaux hors-ligne</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     {offlineCount} titre{offlineCount > 1 ? "s" : ""} · {offlineCacheSize !== null ? formatBytes(offlineCacheSize) : "Calcul…"}
                   </p>
                 </div>
-                <HardDrive className="w-4 h-4 text-muted-foreground" />
+                <HardDrive className="w-4 h-4 text-muted-foreground/50" />
               </div>
             </div>
+
+            {/* Clear all button */}
+            <button
+              onClick={async () => {
+                if (!("caches" in window)) return;
+                const names = await caches.keys();
+                await Promise.all(names.map((n) => caches.delete(n)));
+                setSwCacheSize(0);
+                toast.success("Tout le cache a été vidé !");
+              }}
+              className="w-full py-2.5 rounded-xl bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/15 transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Vider tout le cache
+            </button>
           </motion.div>
 
           <button
