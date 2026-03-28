@@ -399,6 +399,7 @@ export function MiniPlayer() {
           }
         }, FADE_STEP);
 
+        connectEQ(audio);
         audio.src = srcToUse;
         audio.volume = 0;
         audio.muted = false;
