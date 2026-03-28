@@ -5,7 +5,9 @@ import { SongCard } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
-import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link, Send, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -44,6 +46,63 @@ const PlaylistDetailPage = () => {
   const [resolveKey, setResolveKey] = useState(0);
   const [resolving, setResolving] = useState(false);
   const resolveAbortRef = useRef<AbortController | null>(null);
+
+  // Share to user state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareUsers, setShareUsers] = useState<Array<{ user_id: string; display_name: string | null }>>([]);
+  const [shareTargetId, setShareTargetId] = useState("");
+  const [shareSending, setShareSending] = useState(false);
+
+  const loadShareUsers = async () => {
+    const { data } = await supabase.from("profiles").select("user_id, display_name").order("display_name");
+    setShareUsers(data || []);
+  };
+
+  const handleShareToUser = async () => {
+    if (!shareTargetId || !id || !playlist) return;
+    setShareSending(true);
+    try {
+      const adminId = (await supabase.auth.getUser()).data.user?.id;
+      const coverUrl = playlist.cover_url || displaySongs.find(s => s.coverUrl)?.coverUrl || null;
+
+      const { data: shared, error: plErr } = await supabase
+        .from("shared_playlists")
+        .insert({
+          playlist_name: playlist.name,
+          cover_url: coverUrl,
+          shared_by: adminId,
+          shared_to: shareTargetId,
+        })
+        .select("id")
+        .single();
+      if (plErr) throw plErr;
+
+      if (displaySongs.length > 0) {
+        const songRows = displaySongs.map((s, i) => ({
+          shared_playlist_id: shared.id,
+          song_id: s.id,
+          title: s.title,
+          artist: s.artist,
+          album: s.album || null,
+          cover_url: s.coverUrl || null,
+          stream_url: s.streamUrl || null,
+          duration: s.duration,
+          position: i,
+        }));
+        const { error: songsErr } = await supabase.from("shared_playlist_songs").insert(songRows);
+        if (songsErr) throw songsErr;
+      }
+
+      const targetUser = shareUsers.find(u => u.user_id === shareTargetId);
+      toast.success(`Playlist envoyée à ${targetUser?.display_name || "l'utilisateur"}`);
+      setShowShareDialog(false);
+      setShareTargetId("");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setShareSending(false);
+    }
+  };
 
   useEffect(() => {
     if (songs.length === 0) return;
@@ -242,6 +301,13 @@ const PlaylistDetailPage = () => {
                       {isAdmin && (
                         <>
                           <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                          <button
+                            onClick={() => { loadShareUsers(); setShowShareDialog(true); setMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                          >
+                            <Send className="w-4 h-4 text-primary" />
+                            Envoyer à un utilisateur
+                          </button>
                           <button
                             onClick={() => { handleDeletePlaylist(); setMenuOpen(false); }}
                             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
@@ -456,6 +522,51 @@ const PlaylistDetailPage = () => {
           />
         )}
       </div>
+      {/* Share to user dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              Envoyer la playlist
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-xs text-muted-foreground">
+              Envoyer « {playlist?.name} » ({displaySongs.length} titre{displaySongs.length !== 1 ? "s" : ""}) à un utilisateur
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Destinataire</label>
+              <select
+                value={shareTargetId}
+                onChange={(e) => setShareTargetId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">Choisir un utilisateur...</option>
+                {shareUsers.map((u) => (
+                  <option key={u.user_id} value={u.user_id}>
+                    {u.display_name || u.user_id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleShareToUser}
+              disabled={shareSending || !shareTargetId}
+              className="gap-1.5"
+            >
+              {shareSending && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Send className="w-4 h-4" />
+              Envoyer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

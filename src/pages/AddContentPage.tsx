@@ -608,10 +608,80 @@ function PlaylistForm() {
       }
 
       entries.push({
-        file, title: meta.title || file.name.replace(/\.[^.]+$/, ""), artist: meta.artist || "", album: meta.album || "",
+        file, title: normalizeTitle(meta.title || file.name.replace(/\.[^.]+$/, "")),
+        artist: normalizeArtist(meta.artist || ""), album: meta.album ? normalizeText(meta.album) : "",
         duration, coverUrl: meta.coverUrl || "", streamUrl: "", uploading: false, uploaded: false, skipped: false, id3Filled,
+        genre: id3.genre, year: id3.year,
       });
     }
+
+    // Cross-reference batch: fill missing album/artist/cover from siblings
+    if (entries.length > 1) {
+      const id3Batch = entries.map((e) => ({
+        title: e.title, artist: e.artist, album: e.album,
+        coverUrl: e.coverUrl, year: e.year, genre: e.genre,
+        albumArtist: e.albumArtist,
+      }));
+      const enriched = crossReferenceBatch(id3Batch);
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        const en = enriched[i];
+        if (!e.album && en.album) { e.album = en.album; e.id3Filled.add("album"); }
+        if (!e.artist && en.artist) { e.artist = en.artist; e.id3Filled.add("artist"); }
+        if (!e.coverUrl && en.coverUrl) { e.coverUrl = en.coverUrl; e.id3Filled.add("coverUrl"); }
+        if (!e.year && en.year) { e.year = en.year; }
+        if (!e.genre && en.genre) { e.genre = en.genre; }
+      }
+    }
+
+    // Smart metadata: validate & correct via Deezer
+    if (entries.length > 0) {
+      try {
+        const tracks = entries.map((e) => ({
+          title: e.title, artist: e.artist, album: e.album, fileName: e.file.name,
+        }));
+        const { data: smartData, error: smartErr } = await supabase.functions.invoke("smart-metadata", {
+          body: { tracks },
+        });
+        if (!smartErr && smartData?.results) {
+          let corrected = 0;
+          for (let i = 0; i < entries.length && i < smartData.results.length; i++) {
+            const result = smartData.results[i];
+            if (!result.corrected) continue;
+            const e = entries[i];
+            if (result.normalizedArtist && result.normalizedArtist !== e.artist) { e.artist = result.normalizedArtist; e.id3Filled.add("artist"); }
+            if (result.normalizedTitle && result.normalizedTitle !== e.title) { e.title = result.normalizedTitle; e.id3Filled.add("title"); }
+            if (result.album && !e.album) { e.album = result.album; e.id3Filled.add("album"); }
+            corrected++;
+          }
+          if (corrected > 0) toast.success(`🧠 ${corrected} titre${corrected > 1 ? "s" : ""} corrigé${corrected > 1 ? "s" : ""}`);
+        }
+      } catch { /* silent */ }
+    }
+
+    // Auto-search Deezer for songs still missing covers
+    const needsOnline = entries.filter((e) => !e.coverUrl && e.artist);
+    if (needsOnline.length > 0) {
+      try {
+        const results = await batchSearchCovers(
+          entries.map((e) => ({ artist: e.artist, album: e.album, title: e.title, coverUrl: e.coverUrl, year: e.year })),
+        );
+        let found = 0;
+        for (const [idx, meta] of results.entries()) {
+          const e = entries[idx];
+          if (meta.coverUrl && !e.coverUrl) { e.coverUrl = meta.coverUrl; e.id3Filled.add("coverUrl"); found++; }
+          if (meta.album && !e.album) { e.album = meta.album; e.id3Filled.add("album"); }
+          if (meta.genre && !e.genre) { e.genre = meta.genre; }
+          if (meta.year && !e.year) { e.year = meta.year; }
+        }
+        if (found > 0) toast.success(`${found} pochette${found > 1 ? "s" : ""} trouvée${found > 1 ? "s" : ""} via Deezer`);
+      } catch { /* silent */ }
+    }
+
+    // Update first cover/album after enrichment
+    if (!firstCover) firstCover = entries.find((e) => e.coverUrl)?.coverUrl || "";
+    if (!firstAlbum) firstAlbum = entries.find((e) => e.album)?.album || "";
+
     setSongs((prev) => [...prev, ...entries]);
 
     // Auto-fill playlist name & cover from metadata if empty
