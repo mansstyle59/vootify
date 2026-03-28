@@ -6,7 +6,6 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Trash2, HardDrive, Database, Crown, Headphones, ChevronRight } from "lucide-react";
 
