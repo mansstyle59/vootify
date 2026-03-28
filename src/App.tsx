@@ -36,6 +36,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const AudioSettingsPage = lazy(() => import("./pages/AudioSettingsPage"));
 const RequestAccessPage = lazy(() => import("./pages/RequestAccessPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const GenrePage = lazy(() => import("./pages/GenrePage"));
@@ -71,6 +72,7 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/audio-settings" element={<AudioSettingsPage />} />
           <Route path="/request-access" element={<RequestAccessPage />} />
           <Route path="/genre/:name" element={<GenrePage />} />
           <Route path="*" element={<NotFound />} />

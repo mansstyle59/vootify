@@ -1387,7 +1387,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {currentSong.album || "Ma bibliothèque"}
           </p>
         </div>
-        <div className="w-[72px] flex items-center justify-end gap-2">
+        <div className="w-[72px] flex items-center justify-end gap-1.5">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => {
+              onClose();
+              setTimeout(() => navigate("/audio-settings"), 150);
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-white/80" />
+          </motion.button>
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={() => {
