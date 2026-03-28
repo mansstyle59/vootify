@@ -29,16 +29,16 @@ export const CoverCard = memo(function CoverCard({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileTap={{ scale: 0.96 }}
-      className="flex-shrink-0 w-[105px] md:w-[130px] cursor-pointer group snap-start"
+      className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group snap-start"
       onClick={onClick}
     >
-      <div className={`relative w-[105px] h-[105px] md:w-[130px] md:h-[130px] overflow-hidden mb-1.5 ${
-        rounded ? "rounded-full" : "rounded-xl"
+      <div className={`relative w-[120px] h-[120px] md:w-[140px] md:h-[140px] overflow-hidden mb-2 ${
+        rounded ? "rounded-full" : "rounded-2xl"
       } ${isActive ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
         style={{
           boxShadow: isActive
-            ? "0 6px 24px hsl(var(--primary) / 0.3)"
-            : "0 3px 12px hsl(0 0% 0% / 0.18), 0 1px 3px hsl(0 0% 0% / 0.1)",
+            ? "0 8px 30px hsl(var(--primary) / 0.35)"
+            : "0 4px 16px hsl(0 0% 0% / 0.2), 0 1px 4px hsl(0 0% 0% / 0.12)",
         }}
       >
         {imageUrl ? (
@@ -58,44 +58,37 @@ export const CoverCard = memo(function CoverCard({
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-            <Music className="w-9 h-9 text-primary/25" />
+            <Music className="w-10 h-10 text-primary/20" />
           </div>
         )}
 
-        {/* Play button — visible on hover/active only */}
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Play button — visible on hover/active */}
         {(showPlay || isActive) && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}>
             <motion.div
-              whileTap={{ scale: 0.9 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary shadow-lg"
-              style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.45)" }}
+              whileTap={{ scale: 0.85 }}
+              className="w-11 h-11 rounded-full flex items-center justify-center bg-primary/90 backdrop-blur-sm"
+              style={{ boxShadow: "0 4px 24px hsl(var(--primary) / 0.5)" }}
             >
               {isActive ? (
-                <Pause className="w-4.5 h-4.5 text-primary-foreground fill-current" />
+                <Pause className="w-5 h-5 text-primary-foreground fill-current" />
               ) : (
-                <Play className="w-4.5 h-4.5 text-primary-foreground fill-current ml-0.5" />
+                <Play className="w-5 h-5 text-primary-foreground fill-current ml-0.5" />
               )}
-            </motion.div>
-          </div>
-        )}
-
-        {/* Active indicator */}
-        {isActive && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/40 via-transparent to-transparent">
-            <motion.div
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary shadow-lg"
-              style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.45)" }}
-            >
-              <Pause className="w-4.5 h-4.5 text-primary-foreground fill-current" />
             </motion.div>
           </div>
         )}
       </div>
 
-      <h3 className={`text-[12px] md:text-[13px] font-semibold truncate leading-tight ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
+      <h3 className={`text-[12px] md:text-[13px] font-semibold leading-tight line-clamp-2 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
         {title}
       </h3>
-      <p className={`text-[10px] md:text-[11px] text-muted-foreground/70 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
+      <p className={`text-[10px] md:text-[11px] text-muted-foreground/60 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
         {subtitle}
       </p>
     </motion.div>
