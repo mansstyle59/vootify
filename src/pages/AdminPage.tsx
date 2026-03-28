@@ -2170,6 +2170,77 @@ function RequestsTab() {
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
 
   const pending = requests.filter(r => r.status === "pending");
+  const resolved = requests.filter(r => r.status !== "pending");
+  const [showHistory, setShowHistory] = useState(false);
+
+  const RequestCard = ({ r, showActions = true }: { r: any; showActions?: boolean }) => (
+    <motion.div
+      key={r.id}
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+    >
+      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+        {(r.display_name || "?").slice(0, 2).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+          <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+          {r.display_name || "Sans pseudo"}
+        </p>
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+          <Mail className="w-3 h-3 flex-shrink-0" />
+          {r.user_email}
+        </p>
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+          <Crown className="w-3 h-3 flex-shrink-0" />
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+            r.requested_plan === "vip" ? "bg-red-500/15 text-red-500" :
+            r.requested_plan === "gold" ? "bg-yellow-500/15 text-yellow-500" :
+            "bg-primary/15 text-primary"
+          }`}>
+            {r.requested_plan || "Premium"}
+          </span>
+        </p>
+        <p className="text-xs text-primary font-medium flex items-center gap-1.5 mt-0.5">
+          <Clock className="w-3 h-3 flex-shrink-0" />
+          {r.requested_duration === 0
+            ? "Illimité"
+            : `${r.requested_duration || 30} ${r.requested_duration_unit === "months" ? "mois" : "jours"}`}
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
+        {!showActions && (
+          <p className={`text-[10px] font-semibold mt-1 flex items-center gap-1 ${
+            r.status === "approved" ? "text-emerald-400" : "text-destructive"
+          }`}>
+            {r.status === "approved" ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+            {r.status === "approved" ? "Approuvée" : "Rejetée"}
+            {r.resolved_at && ` — ${new Date(r.resolved_at).toLocaleString("fr-FR")}`}
+          </p>
+        )}
+      </div>
+      {showActions && (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => handleAction(r.id, "approved", r)}
+            disabled={!!actionLoading}
+            className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+            title="Approuver"
+          >
+            {actionLoading === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => handleAction(r.id, "rejected")}
+            disabled={!!actionLoading}
+            className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+            title="Rejeter"
+          >
+            <XCircle className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </motion.div>
+  );
 
   return (
     <div className="space-y-4">
@@ -2187,63 +2258,30 @@ function RequestsTab() {
         <p className="text-center text-muted-foreground py-12">Aucune demande en attente</p>
       ) : (
         <div className="space-y-2">
-          {pending.map((r) => (
+          {pending.map((r) => <RequestCard key={r.id} r={r} showActions />)}
+        </div>
+      )}
+
+      {/* Historique des demandes traitées */}
+      {resolved.length > 0 && (
+        <div className="pt-2">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+          >
+            <ScrollText className="w-3.5 h-3.5" />
+            Historique ({resolved.length})
+            <span className="text-[10px]">{showHistory ? "▲" : "▼"}</span>
+          </button>
+          {showHistory && (
             <motion.div
-              key={r.id}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="space-y-2 mt-2"
             >
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
-                {(r.display_name || "?").slice(0, 2).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                  {r.display_name || "Sans pseudo"}
-                </p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                  <Mail className="w-3 h-3 flex-shrink-0" />
-                  {r.user_email}
-                </p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                  <Crown className="w-3 h-3 flex-shrink-0" />
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    r.requested_plan === "vip" ? "bg-red-500/15 text-red-500" :
-                    r.requested_plan === "gold" ? "bg-yellow-500/15 text-yellow-500" :
-                    "bg-primary/15 text-primary"
-                  }`}>
-                    {r.requested_plan || "Premium"}
-                  </span>
-                </p>
-                <p className="text-xs text-primary font-medium flex items-center gap-1.5 mt-0.5">
-                  <Clock className="w-3 h-3 flex-shrink-0" />
-                  {r.requested_duration === 0
-                    ? "Illimité"
-                    : `${r.requested_duration || 30} ${r.requested_duration_unit === "months" ? "mois" : "jours"}`}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(r.created_at).toLocaleString("fr-FR")}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleAction(r.id, "approved", r)}
-                  disabled={!!actionLoading}
-                  className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-                  title="Approuver"
-                >
-                  {actionLoading === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={() => handleAction(r.id, "rejected")}
-                  disabled={!!actionLoading}
-                  className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
-                  title="Rejeter"
-                >
-                  <XCircle className="w-4 h-4" />
-                </button>
-              </div>
+              {resolved.map((r) => <RequestCard key={r.id} r={r} showActions={false} />)}
             </motion.div>
-          ))}
+          )}
         </div>
       )}
     </div>
