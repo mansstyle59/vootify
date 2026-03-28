@@ -109,6 +109,10 @@ export function MiniPlayer() {
   const connectEQ = useCallback((audio: HTMLAudioElement) => {
     // If EQ previously failed (CORS issue), don't retry — play without EQ
     if (eqFailedRef.current) return;
+
+    // Skip EQ entirely if bass and treble are both 0 — avoids unnecessary CORS requirement
+    const { bassBoost: b, trebleBoost: t } = usePlayerStore.getState();
+    if (b === 0 && t === 0) return;
     
     if (connectedAudioRef.current === audio) {
       // Already connected — just make sure AudioContext is running
@@ -139,12 +143,12 @@ export function MiniPlayer() {
       const bass = ctx.createBiquadFilter();
       bass.type = "lowshelf";
       bass.frequency.value = 200;
-      bass.gain.value = usePlayerStore.getState().bassBoost;
+      bass.gain.value = b;
 
       const treble = ctx.createBiquadFilter();
       treble.type = "highshelf";
       treble.frequency.value = 3000;
-      treble.gain.value = usePlayerStore.getState().trebleBoost;
+      treble.gain.value = t;
 
       source.connect(bass);
       bass.connect(treble);
@@ -1061,10 +1065,13 @@ export function MiniPlayer() {
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           onError={handleAudioError}
+          onPlay={() => { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; }}
+          onPause={() => { if ("mediaSession" in navigator && !usePlayerStore.getState().isPlaying) navigator.mediaSession.playbackState = "paused"; }}
           preload="auto"
           playsInline
-          // @ts-ignore — webkit attribute for iOS background playback
+          // @ts-ignore — webkit attributes for iOS background playback & AirPlay
           webkit-playsinline=""
+          x-webkit-airplay="allow"
         />
         <audio ref={crossfadeRef} preload="metadata" playsInline />
         <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
@@ -1155,10 +1162,13 @@ export function MiniPlayer() {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onError={handleAudioError}
+        onPlay={() => { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; }}
+        onPause={() => { if ("mediaSession" in navigator && !usePlayerStore.getState().isPlaying) navigator.mediaSession.playbackState = "paused"; }}
         preload="auto"
         playsInline
-        // @ts-ignore — webkit attribute for iOS background playback
+        // @ts-ignore — webkit attributes for iOS background playback & AirPlay
         webkit-playsinline=""
+        x-webkit-airplay="allow"
       />
       <audio ref={crossfadeRef} preload="metadata" playsInline />
       <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
