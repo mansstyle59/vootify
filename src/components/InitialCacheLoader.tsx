@@ -7,10 +7,16 @@ interface Props {
   children: React.ReactNode;
 }
 
+/**
+ * Seamless flow: Splash → Cache download (if needed) → App
+ * On first open: splash morphs into cache loader with progress bar
+ * On subsequent opens: splash plays normally, app loads instantly
+ */
 export function InitialCacheLoader({ children }: Props) {
   const { user, loading: authLoading } = useAuth();
   const [cacheReady, setCacheReady] = useState(() => isCacheReady());
   const [progress, setProgress] = useState<CacheProgress | null>(null);
+  const [showLoader, setShowLoader] = useState(!cacheReady);
   const [fadeOut, setFadeOut] = useState(false);
 
   const handleProgress = useCallback((p: CacheProgress) => {
@@ -19,10 +25,14 @@ export function InitialCacheLoader({ children }: Props) {
 
   useEffect(() => {
     if (authLoading) return;
-    if (cacheReady) return;
+    if (cacheReady) {
+      setShowLoader(false);
+      return;
+    }
     if (!user?.id) {
       // No user — skip cache, let them see auth
       setCacheReady(true);
+      setShowLoader(false);
       return;
     }
 
@@ -30,98 +40,129 @@ export function InitialCacheLoader({ children }: Props) {
     performInitialCache(user.id, handleProgress).then(() => {
       if (cancelled) return;
       setFadeOut(true);
-      setTimeout(() => setCacheReady(true), 600);
+      setTimeout(() => {
+        setCacheReady(true);
+        setShowLoader(false);
+      }, 700);
     });
 
     return () => { cancelled = true; };
   }, [user, authLoading, cacheReady, handleProgress]);
 
-  if (cacheReady) return <>{children}</>;
+  if (cacheReady && !showLoader) return <>{children}</>;
 
   return (
-    <AnimatePresence>
-      {!fadeOut ? (
-        <motion.div
-          key="cache-loader"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="fixed inset-0 z-[250] flex flex-col items-center justify-center bg-background overflow-hidden"
-        >
-          {/* Ambient glow */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 0.12, scale: 1.5 }}
-            transition={{ duration: 2, ease: "easeOut" }}
-            className="absolute w-[500px] h-[500px] rounded-full"
-            style={{
-              background: "radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 60%)",
-            }}
-          />
+    <>
+      {/* Render children underneath so they start mounting */}
+      <div style={{ visibility: cacheReady ? "visible" : "hidden", position: cacheReady ? "relative" : "fixed", inset: 0 }}>
+        {children}
+      </div>
 
-          {/* Logo */}
+      {/* Cache loader overlay — seamless transition from splash */}
+      <AnimatePresence>
+        {showLoader && !fadeOut && (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="relative mb-8"
+            key="cache-loader"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 1.06 }}
+            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed inset-0 z-[190] flex flex-col items-center justify-center bg-background overflow-hidden"
           >
-            <div className="rounded-[28px] overflow-hidden shadow-2xl" style={{
-              boxShadow: "0 0 60px hsl(var(--primary) / 0.3), 0 20px 40px hsl(0 0% 0% / 0.4)",
-            }}>
-              <img
-                src="/pwa-icon-192.png"
-                alt="Vootify"
-                width={88}
-                height={88}
-                className="w-[88px] h-[88px] rounded-[28px]"
+            {/* Ambient glow — matches splash screen */}
+            <motion.div
+              animate={{ opacity: [0.08, 0.15, 0.08], scale: [1.3, 1.6, 1.3] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute w-[500px] h-[500px] rounded-full"
+              style={{
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 60%)",
+              }}
+            />
+
+            {/* Logo — already visible from splash, smooth layout transition */}
+            <motion.div
+              initial={{ scale: 1, opacity: 1 }}
+              animate={{ scale: 0.85, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+              className="relative mb-6"
+            >
+              <div className="rounded-[28px] overflow-hidden shadow-2xl" style={{
+                boxShadow: "0 0 50px hsl(var(--primary) / 0.25), 0 16px 32px hsl(0 0% 0% / 0.35)",
+              }}>
+                <img
+                  src="/pwa-icon-192.png"
+                  alt="Vootify"
+                  width={80}
+                  height={80}
+                  className="w-[80px] h-[80px] rounded-[28px]"
+                />
+              </div>
+            </motion.div>
+
+            {/* Status text with smooth step transitions */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-center gap-2.5 mb-6 px-8"
+            >
+              <p className="text-sm font-semibold text-foreground">
+                Préparation de votre bibliothèque…
+              </p>
+              <AnimatePresence mode="wait">
+                {progress && (
+                  <motion.p
+                    key={progress.step}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 0.55, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-muted-foreground text-center"
+                  >
+                    {progress.step}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Progress bar — smooth fill */}
+            <div className="w-52 h-1.5 rounded-full bg-muted/20 overflow-hidden backdrop-blur-sm"
+              style={{ border: "1px solid hsl(var(--border) / 0.15)" }}
+            >
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 100%)",
+                  boxShadow: "0 0 12px hsl(var(--primary) / 0.4)",
+                }}
+                initial={{ width: "0%" }}
+                animate={{ width: `${progress?.percent ?? 0}%` }}
+                transition={{ duration: 0.4, ease: [0.25, 0.8, 0.25, 1] }}
               />
             </div>
-          </motion.div>
 
-          {/* Status text */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-col items-center gap-3 mb-8 px-8"
-          >
-            <p className="text-sm font-semibold text-foreground">
-              Préparation de votre bibliothèque…
-            </p>
             {progress && (
               <motion.p
-                key={progress.step}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 0.6, y: 0 }}
-                className="text-xs text-muted-foreground text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.35 }}
+                className="mt-2.5 text-[10px] font-mono tracking-wider text-muted-foreground"
               >
-                {progress.step}
+                {progress.percent}%
               </motion.p>
             )}
-          </motion.div>
 
-          {/* Progress bar */}
-          <div className="w-48 h-1 rounded-full bg-muted/30 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-primary"
-              initial={{ width: "0%" }}
-              animate={{ width: `${progress?.percent ?? 0}%` }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            />
-          </div>
-
-          {progress && (
+            {/* Bottom subtle branding */}
             <motion.p
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              className="mt-2 text-[10px] font-mono text-muted-foreground"
+              animate={{ opacity: 0.15 }}
+              transition={{ delay: 1 }}
+              className="absolute bottom-8 text-[9px] tracking-[0.3em] uppercase text-muted-foreground font-medium"
             >
-              {progress.percent}%
+              Première installation
             </motion.p>
-          )}
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
