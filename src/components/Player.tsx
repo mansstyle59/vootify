@@ -1081,8 +1081,16 @@ export function MiniPlayer() {
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           onError={handleAudioError}
-          onPlay={() => { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; }}
-          onPause={() => { if ("mediaSession" in navigator && !usePlayerStore.getState().isPlaying) navigator.mediaSession.playbackState = "paused"; }}
+          onPlay={() => {
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+            // Sync store if audio started externally (e.g. Bluetooth resume)
+            if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
+          }}
+          onPause={() => {
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+            // Sync store if paused externally (phone call, Siri, headphone unplug)
+            if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
+          }}
           preload="auto"
           playsInline
           // @ts-ignore — webkit attributes for iOS background playback & AirPlay
@@ -1178,8 +1186,14 @@ export function MiniPlayer() {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onError={handleAudioError}
-        onPlay={() => { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; }}
-        onPause={() => { if ("mediaSession" in navigator && !usePlayerStore.getState().isPlaying) navigator.mediaSession.playbackState = "paused"; }}
+        onPlay={() => {
+          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+          if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
+        }}
+        onPause={() => {
+          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+          if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
+        }}
         preload="auto"
         playsInline
         // @ts-ignore — webkit attributes for iOS background playback & AirPlay
