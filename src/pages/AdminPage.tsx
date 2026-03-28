@@ -1236,12 +1236,37 @@ function RadioCardAdmin({ station, isSelected, onEdit, onDelete, onSelect }: {
   onDelete: () => void;
   onSelect: () => void;
 }) {
+  const [showActions, setShowActions] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const revealActions = useCallback(() => {
+    clearTimeout(hideTimer.current);
+    setShowActions(true);
+    hideTimer.current = setTimeout(() => setShowActions(false), 3000);
+  }, []);
+
+  const handleClick = useCallback(() => {
+    if (showActions) {
+      // Second tap → select
+      setShowActions(false);
+      onSelect();
+    } else if ("ontouchstart" in window) {
+      // First tap on mobile → reveal actions
+      revealActions();
+    } else {
+      // Desktop click → select directly
+      onSelect();
+    }
+  }, [showActions, onSelect, revealActions]);
+
+  const actionsVisible = showActions || isSelected;
+
   return (
     <div
-      className={`group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+      className={`group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-all duration-200 hover:shadow-lg active:scale-[0.97] ${
         isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
       }`}
-      onClick={onSelect}
+      onClick={handleClick}
     >
       <div className="relative aspect-square rounded-xl overflow-hidden ring-[1.5px] ring-border/20">
         {station.cover_url ? (
@@ -1252,19 +1277,23 @@ function RadioCardAdmin({ station, isSelected, onEdit, onDelete, onSelect }: {
           </div>
         )}
 
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        {/* Overlay */}
+        <div className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`} />
 
         {/* Action buttons */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+        <div className={`absolute top-2 right-2 flex gap-2 transition-all duration-200 ${
+          actionsVisible ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
+        }`}>
           <button
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            onClick={(e) => { e.stopPropagation(); setShowActions(false); onEdit(); }}
             className="bg-black/70 hover:bg-black text-white p-2 rounded-full transition-colors"
           >
             <Pencil size={16} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => { e.stopPropagation(); setShowActions(false); onDelete(); }}
             className="bg-black/70 hover:bg-destructive text-white p-2 rounded-full transition-colors"
           >
             <Trash2 size={16} />
