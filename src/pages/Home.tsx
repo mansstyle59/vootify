@@ -236,21 +236,22 @@ const HomePage = () => {
           if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
           return (
             <Section key={section.id} title={section.title}>
-              <div className="px-5 md:px-8">
+              <div className="px-5 md:px-9 overflow-visible">
                 {loadingTopArtists ? (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
-                        <div className="w-16 h-16 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
-                        <div className="w-12 h-2.5 rounded animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 overflow-visible">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2.5 flex-shrink-0">
+                        <div className="w-[72px] h-[72px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+                        <div className="w-14 h-2.5 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 overflow-visible">
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
+                    <div className="w-1 flex-shrink-0" />
                   </div>
                 )}
               </div>
@@ -415,53 +416,73 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
   });
 
   const imageUrl = customImage || deezerImage || artist.cover;
-  const size = index < 3 ? 72 : 62;
-  const rankColors: Record<number, string> = {
-    0: "hsl(var(--primary))",
-    1: "hsl(var(--primary) / 0.6)",
-    2: "hsl(var(--primary) / 0.35)",
+  const isPodium = index < 3;
+  const size = isPodium ? 76 : 64;
+
+  const podiumGradients: Record<number, string> = {
+    0: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.6))",
+    1: "linear-gradient(135deg, hsl(var(--primary) / 0.7), hsl(var(--primary) / 0.3))",
+    2: "linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--primary) / 0.2))",
+  };
+
+  const podiumGlow: Record<number, string> = {
+    0: "0 0 16px hsl(var(--primary) / 0.4), 0 4px 12px hsl(0 0% 0% / 0.15)",
+    1: "0 0 12px hsl(var(--primary) / 0.25), 0 4px 10px hsl(0 0% 0% / 0.12)",
+    2: "0 0 8px hsl(var(--primary) / 0.15), 0 4px 8px hsl(0 0% 0% / 0.1)",
   };
 
   return (
-    <button
+    <motion.button
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.35, ease: "easeOut" }}
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-      className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-95 transition-transform"
+      className="flex flex-col items-center gap-2 flex-shrink-0 group active:scale-[0.93] transition-transform duration-200"
     >
       <div className="relative">
+        {/* Ring glow for podium */}
+        {isPodium && (
+          <div
+            className="absolute -inset-[3px] rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
+            style={{ background: podiumGradients[index] }}
+          />
+        )}
         <div
-          className="rounded-full overflow-hidden"
+          className="rounded-full overflow-hidden relative"
           style={{
             width: size,
             height: size,
-            boxShadow: index < 3
-              ? `0 0 0 2.5px ${rankColors[index]}, 0 4px 12px hsl(0 0% 0% / 0.1)`
-              : "0 2px 8px hsl(0 0% 0% / 0.08)",
+            boxShadow: isPodium ? podiumGlow[index] : "0 2px 8px hsl(0 0% 0% / 0.1)",
+            border: isPodium ? "none" : "2px solid hsl(var(--foreground) / 0.06)",
           }}
         >
           {imageUrl ? (
             <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
-              <User className="w-1/3 h-1/3 text-muted-foreground/20" />
+            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+              <User className="w-1/3 h-1/3 text-muted-foreground/30" />
             </div>
           )}
         </div>
-        {/* Rank */}
+        {/* Rank badge */}
         <div
-          className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black"
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-lg"
           style={{
-            background: index < 3 ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.08)",
-            color: index < 3 ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground) / 0.6)",
+            background: isPodium ? podiumGradients[index] : "hsl(var(--foreground) / 0.08)",
+            color: isPodium ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground) / 0.5)",
+            boxShadow: isPodium
+              ? "0 2px 8px hsl(var(--primary) / 0.3)"
+              : "0 1px 4px hsl(0 0% 0% / 0.08)",
           }}
         >
           {index + 1}
         </div>
       </div>
-      <div className="text-center" style={{ maxWidth: size + 8 }}>
+      <div className="text-center mt-0.5" style={{ maxWidth: size + 12 }}>
         <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[9px] text-muted-foreground/40">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+        <p className="text-[9px] text-muted-foreground/50 mt-0.5">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
-    </button>
+    </motion.button>
   );
 }
 
