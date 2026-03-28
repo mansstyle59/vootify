@@ -387,7 +387,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+4rem)] pb-6 flex flex-col gpu-layer"
       >
         {/* Badge + sound wave */}
-        <div className="flex items-center gap-3 mb-4 mt-auto">
+        <div className="flex items-center gap-3 mb-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
