@@ -927,6 +927,7 @@ function SongsTab() {
     }
   };
 
+  const loadSongs = async () => {
     setLoading(true);
     let allSongs: any[] = [];
     let from = 0;
