@@ -113,6 +113,7 @@ export function MiniPlayer() {
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const errorRetryCountRef = useRef(0);
+  const crossfadeTriggeredRef = useRef(false);
 
   const audio = audioManager.audio;
 
