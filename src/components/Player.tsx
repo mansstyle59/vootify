@@ -173,6 +173,29 @@ export function MiniPlayer() {
     return () => { released = true; };
   }, [isPlaying, currentSong?.id]);
 
+  // ── Silent keepalive — prevents iOS from killing the audio session in background ──
+  const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!isPlaying || !currentSong) {
+      if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
+      return;
+    }
+    // Periodically touch the AudioContext to keep it alive
+    keepaliveRef.current = setInterval(() => {
+      const ctx = audioCtxRef.current;
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      // Touch media session to prevent OS from reclaiming audio focus
+      if ("mediaSession" in navigator && navigator.mediaSession.playbackState !== "playing") {
+        navigator.mediaSession.playbackState = "playing";
+      }
+    }, 8000);
+    return () => {
+      if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
+    };
+  }, [isPlaying, currentSong?.id]);
+
   // ── Visibility change — resume playback + re-sync media session ──
   // Handles: returning from background, phone call interruption, app switching
   useEffect(() => {
