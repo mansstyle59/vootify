@@ -1,7 +1,6 @@
-import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { Play, ListPlus, ListMusic, Plus, ChevronRight } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -49,15 +48,15 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
       exit={{ opacity: 0, scale: 0.95, y: 4 }}
       className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl overflow-hidden"
       style={{
-        background: "hsl(var(--card) / 0.85)",
+        background: "hsl(var(--card) / 0.92)",
         backdropFilter: "blur(40px) saturate(1.8)",
         WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-        border: "1px solid hsl(var(--border) / 0.15)",
-        boxShadow: "0 8px 32px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100% / 0.04)",
+        border: "1px solid hsl(var(--border) / 0.12)",
+        boxShadow: "0 12px 40px hsl(0 0% 0% / 0.3)",
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="p-2 border-b border-border/10">
+      <div className="p-2 border-b" style={{ borderColor: "hsl(var(--border) / 0.08)" }}>
         <p className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.08em] px-2 py-1">
           Ajouter {songs.length} titres à
         </p>
@@ -70,7 +69,10 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
             <button
               key={p.id}
               onClick={() => handleAdd(p.id, p.name)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-xl hover:bg-accent/40 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-xl transition-colors active:scale-[0.98]"
+              style={{ background: "transparent" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(var(--foreground) / 0.04)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <ListMusic className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
               <span className="flex-1 truncate text-foreground text-[12px]">{p.name}</span>
@@ -78,7 +80,7 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
           ))
         )}
       </div>
-      <div className="p-1 border-t border-border/10">
+      <div className="p-1" style={{ borderTop: "1px solid hsl(var(--border) / 0.08)" }}>
         {showCreate ? (
           <div className="flex gap-1 p-1">
             <input
@@ -86,15 +88,16 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               placeholder="Nom..."
-              className="flex-1 px-2.5 py-1.5 rounded-xl bg-secondary/40 text-foreground placeholder:text-muted-foreground/30 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30"
+              className="flex-1 px-2.5 py-1.5 rounded-xl text-foreground placeholder:text-muted-foreground/30 text-xs focus:outline-none"
+              style={{ background: "hsl(var(--foreground) / 0.04)" }}
               autoFocus
             />
-            <button onClick={handleCreate} className="px-2.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold">OK</button>
+            <button onClick={handleCreate} className="px-2.5 py-1.5 rounded-xl text-xs font-bold" style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}>OK</button>
           </div>
         ) : (
           <button
             onClick={() => setShowCreate(true)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] rounded-xl hover:bg-accent/40 transition-colors text-foreground"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] rounded-xl transition-colors text-foreground active:scale-[0.98]"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nouvelle playlist</span>
@@ -111,56 +114,41 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
   const hasSongs = songs && songs.length > 0;
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 6 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-12px" }}
-      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-7 md:mb-8"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between pl-5 pr-4 md:pl-9 md:pr-8 mb-3.5">
-        <div className="flex items-center gap-2 mr-2 min-w-0">
-          <h2 className="text-[15px] md:text-[17px] font-extrabold text-foreground leading-tight line-clamp-2 break-words tracking-tight">
+    <section className="mb-8 md:mb-10">
+      {/* Apple Music style header — bold title, minimal actions */}
+      <div className="flex items-end justify-between px-5 md:px-8 mb-3">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h2 className="text-[20px] md:text-[22px] font-bold text-foreground leading-tight tracking-tight line-clamp-2 break-words">
             {title}
           </h2>
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}
-              className="flex items-center px-1.5 py-0.5 rounded-full text-xs text-primary/60 hover:text-primary transition-colors flex-shrink-0"
+              className="text-[13px] font-medium text-primary flex-shrink-0 active:opacity-70 transition-opacity"
             >
-              <ChevronRight className="w-3.5 h-3.5" />
+              Tout voir
             </button>
           )}
         </div>
-        <div className="flex items-center gap-1.5 relative flex-shrink-0">
+        <div className="flex items-center gap-1.5 relative flex-shrink-0 ml-2">
           {action}
           {hasSongs && onPlayAll && (
-            <motion.button
-              whileTap={{ scale: 0.92 }}
+            <button
               onClick={onPlayAll}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-bold transition-colors"
-              style={{
-                background: "hsl(var(--primary) / 0.1)",
-                color: "hsl(var(--primary))",
-              }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform"
+              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
             >
               <Play className="w-2.5 h-2.5 fill-current" />
-              <span className="hidden sm:inline">Tout lire</span>
-            </motion.button>
+            </button>
           )}
           {hasSongs && (
             <>
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                className="flex items-center px-1.5 py-1.5 rounded-xl text-muted-foreground/50 text-[10px] transition-colors"
-                style={{
-                  background: "hsl(var(--secondary) / 0.25)",
-                }}
+                className="flex items-center px-1.5 py-1.5 rounded-full text-muted-foreground/40 active:scale-95 transition-transform"
               >
-                <ListPlus className="w-3.5 h-3.5" />
-              </motion.button>
+                <ListPlus className="w-4 h-4" />
+              </button>
               <AnimatePresence>
                 {showPlaylistPicker && songs && (
                   <AddAllToPlaylistMenu songs={songs} onClose={() => setShowPlaylistPicker(false)} />
@@ -170,7 +158,11 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           )}
         </div>
       </div>
+
+      {/* Subtle separator */}
+      <div className="mx-5 md:mx-8 mb-3" style={{ height: 1, background: "hsl(var(--foreground) / 0.04)" }} />
+
       {children}
-    </motion.section>
+    </section>
   );
 }
