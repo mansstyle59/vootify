@@ -11,6 +11,8 @@ function isInStandaloneMode(): boolean {
 }
 
 const DISMISSED_KEY = "pwa-install-dismissed";
+const VISIT_COUNT_KEY = "pwa-visit-count";
+const MIN_VISITS = 3;
 
 export default function IosPwaInstallBanner() {
   const [visible, setVisible] = useState(false);
