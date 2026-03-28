@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
-  HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Sparkles, Fingerprint
+  HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
+  Clock, Music, Heart, BarChart3
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -53,6 +54,12 @@ const ProfilePage = () => {
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
 
+  // Listening stats
+  const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
+  const [tracksPlayed, setTracksPlayed] = useState(0);
+  const [likedCount, setLikedCount] = useState(0);
+  const [playlistCount, setPlaylistCount] = useState(0);
+
   useEffect(() => {
     if ("caches" in window) {
       (async () => {
@@ -79,6 +86,24 @@ const ProfilePage = () => {
     offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
     offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
   }, []);
+
+  // Load listening stats
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      supabase.from("usage_sessions").select("duration_seconds").eq("user_id", user.id),
+      supabase.from("recently_played").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("liked_songs").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("playlists").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    ]).then(([sessions, recent, liked, playlists]) => {
+      if (sessions.data) {
+        setTotalListeningSeconds(sessions.data.reduce((sum, s) => sum + (s.duration_seconds || 0), 0));
+      }
+      setTracksPlayed(recent.count ?? 0);
+      setLikedCount(liked.count ?? 0);
+      setPlaylistCount(playlists.count ?? 0);
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
@@ -195,6 +220,40 @@ const ProfilePage = () => {
                 <span className="text-xs font-semibold text-primary capitalize">{subscription.plan}</span>
               </div>
             )}
+          </div>
+        </GlassCard>
+
+        {/* Listening stats */}
+        <GlassCard className="p-5" delay={0.04}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Statistiques d'écoute</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                icon: Clock,
+                value: totalListeningSeconds >= 3600
+                  ? `${Math.floor(totalListeningSeconds / 3600)}h ${Math.floor((totalListeningSeconds % 3600) / 60)}m`
+                  : `${Math.floor(totalListeningSeconds / 60)}m`,
+                label: "Temps d'écoute",
+              },
+              { icon: Music, value: tracksPlayed.toString(), label: "Morceaux joués" },
+              { icon: Heart, value: likedCount.toString(), label: "Favoris" },
+              { icon: Headphones, value: playlistCount.toString(), label: "Playlists" },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + i * 0.05 }}
+                className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-center"
+              >
+                <stat.icon className="w-4 h-4 text-primary mx-auto mb-1.5" />
+                <p className="text-lg font-bold text-foreground leading-none">{stat.value}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{stat.label}</p>
+              </motion.div>
+            ))}
           </div>
         </GlassCard>
 
