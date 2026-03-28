@@ -609,21 +609,13 @@ const LibraryPage = () => {
         className="sticky top-0 z-20 transition-colors duration-500"
         style={{
           background: headerColor
-            ? `linear-gradient(180deg, ${headerColor}18 0%, hsl(var(--background) / 0.92) 100%)`
-            : "hsl(var(--background) / 0.82)",
-          backdropFilter: "blur(48px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(48px) saturate(1.8)",
-          borderBottom: "1px solid hsl(var(--border) / 0.06)",
+            ? `linear-gradient(180deg, ${headerColor}12 0%, hsl(var(--background)) 100%)`
+            : "hsl(var(--background) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+          borderBottom: "1px solid hsl(var(--border) / 0.05)",
         }}
       >
-        {/* Decorative orbs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full opacity-[0.04]"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-          <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full opacity-[0.03]"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-        </div>
-
         <div className="relative px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
           {isOffline && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
@@ -637,34 +629,25 @@ const LibraryPage = () => {
 
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
-              <h1 className="text-[22px] md:text-[28px] font-black text-foreground leading-tight tracking-tight">
+              <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">
                 {isOffline ? "Hors-ligne" : "Bibliothèque"}
               </h1>
-              <p className="text-[11px] text-muted-foreground/45 mt-0.5 font-medium">
-                {isOffline ? "Écoutez sans connexion" : "Morceaux, playlists & favoris"}
-              </p>
             </div>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={() => {
                 queryClient.invalidateQueries();
                 if (userId) loadUserData(userId);
                 toast.success("Bibliothèque actualisée");
               }}
-              className="p-2.5 rounded-2xl text-muted-foreground/50 hover:text-foreground transition-all"
-              style={{
-                background: "hsl(var(--card) / 0.45)",
-                backdropFilter: "blur(16px)",
-                border: "1px solid hsl(var(--border) / 0.08)",
-                boxShadow: "0 2px 12px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
-              }}
+              className="p-2.5 rounded-full text-muted-foreground/50 active:scale-90 transition-all"
+              style={{ background: "hsl(var(--foreground) / 0.05)" }}
             >
               <RefreshCw className="w-4 h-4" />
-            </motion.button>
+            </button>
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
             {visibleTabs.map(({ key, label, icon }) => (
               <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
             ))}
