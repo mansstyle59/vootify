@@ -5,21 +5,29 @@ import { useLocation } from "react-router-dom";
 const tabOrder = ["/", "/search", "/library", "/radio", "/add", "/admin"];
 
 /**
- * iOS-style page transition: directional slide based on tab order,
- * with a subtle fade and scale for depth. Non-blocking.
+ * Premium page transition: directional slide for tabs,
+ * vertical slide + scale for detail pages.
+ * Uses native CSS transitions for 60fps performance.
  */
 export function PageFade({ children }: { children: ReactNode }) {
   const location = useLocation();
   const ref = useRef<HTMLDivElement>(null);
   const prevPath = useRef(location.pathname);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    // Skip animation on first mount
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevPath.current = location.pathname;
+      return;
+    }
+
     if (location.pathname === prevPath.current) return;
 
     const prevIndex = tabOrder.indexOf(prevPath.current);
     const nextIndex = tabOrder.indexOf(location.pathname);
     const isTabNav = prevIndex !== -1 && nextIndex !== -1;
-    // Direction: positive = slide from right, negative = slide from left
     const goingForward = isTabNav ? nextIndex > prevIndex : true;
 
     prevPath.current = location.pathname;
@@ -32,31 +40,37 @@ export function PageFade({ children }: { children: ReactNode }) {
     const el = ref.current;
     if (!el) return;
 
+    // Disable transition for instant "exit" state
+    el.style.transition = "none";
+
     if (isTabNav) {
-      // Directional slide for tab navigation
-      const offsetX = goingForward ? 40 : -40;
+      const offsetX = goingForward ? 32 : -32;
       el.style.opacity = "0";
-      el.style.transform = `translateX(${offsetX}px) scale(0.97)`;
+      el.style.transform = `translateX(${offsetX}px)`;
+      el.style.filter = "blur(4px)";
     } else {
-      // Vertical slide for detail pages
       el.style.opacity = "0";
-      el.style.transform = "translateY(12px) scale(0.985)";
+      el.style.transform = "translateY(16px) scale(0.98)";
+      el.style.filter = "blur(2px)";
     }
 
     // Force reflow then animate in
     void el.offsetHeight;
+
+    // Re-enable transition for smooth "enter"
+    el.style.transition = isTabNav
+      ? "opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 260ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease-out"
+      : "opacity 280ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 250ms ease-out";
+
     el.style.opacity = "1";
     el.style.transform = "translateX(0) translateY(0) scale(1)";
+    el.style.filter = "blur(0px)";
   }, [location.pathname]);
 
   return (
     <div
       ref={ref}
-      className="min-h-screen will-change-[opacity,transform]"
-      style={{
-        transition:
-          "opacity 180ms cubic-bezier(0.25, 0.1, 0.25, 1), transform 220ms cubic-bezier(0.25, 0.1, 0.25, 1)",
-      }}
+      className="min-h-screen will-change-[opacity,transform,filter]"
     >
       {children}
     </div>
