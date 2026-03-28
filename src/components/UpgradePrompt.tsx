@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Crown, Lock, ArrowLeft, Check, X, Home, Search, Library, Radio, Heart, ListMusic, Star, Gem, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
+import { supabase } from "@/integrations/supabase/client";
 import type { PlanType } from "@/lib/subscriptionPermissions";
 
 interface UpgradePromptProps {
@@ -76,11 +78,13 @@ function PlanCard({
   index,
   isCurrent,
   onUpgrade,
+  priceData,
 }: {
   plan: (typeof plans)[0];
   index: number;
   isCurrent: boolean;
   onUpgrade: () => void;
+  priceData?: { price: string; period: string };
 }) {
   const Icon = plan.icon;
   return (
@@ -101,7 +105,15 @@ function PlanCard({
         <Icon className="w-5 h-5" />
       </div>
       <h3 className="text-sm font-bold text-foreground">{plan.label}</h3>
-      <p className="text-[10px] text-muted-foreground mt-0.5 mb-3">{plan.desc}</p>
+      {priceData ? (
+        <div className="mt-0.5 mb-1">
+          <span className="text-lg font-extrabold text-foreground">{priceData.price}</span>
+          <span className="text-[10px] text-muted-foreground">{priceData.period}</span>
+        </div>
+      ) : (
+        <p className="text-[10px] text-muted-foreground mt-0.5 mb-1">{plan.desc}</p>
+      )}
+      <p className="text-[9px] text-muted-foreground/70 mb-2">{plan.desc}</p>
 
       {/* Feature list */}
       <div className="w-full space-y-2 mb-3">
@@ -136,6 +148,17 @@ function PlanCard({
 export function UpgradePrompt({ feature = "Cette fonctionnalité", inline = false }: UpgradePromptProps) {
   const navigate = useNavigate();
   const { plan, config } = useSubscriptionAccess();
+  const [prices, setPrices] = useState<Record<string, { price: string; period: string }>>({});
+
+  useEffect(() => {
+    supabase.from("plan_prices").select("*").then(({ data }) => {
+      if (data) {
+        const map: Record<string, { price: string; period: string }> = {};
+        for (const row of data) map[row.plan] = { price: row.price, period: row.period };
+        setPrices(map);
+      }
+    });
+  }, []);
 
   const nextPlan = plan === "premium" ? "Gold" : plan === "gold" ? "VIP" : "un abonnement supérieur";
 
@@ -163,6 +186,7 @@ export function UpgradePrompt({ feature = "Cette fonctionnalité", inline = fals
               index={i}
               isCurrent={plan === p.key}
               onUpgrade={() => navigate("/request-access")}
+              priceData={prices[p.key]}
             />
           ))}
         </div>
@@ -243,6 +267,7 @@ export function UpgradePrompt({ feature = "Cette fonctionnalité", inline = fals
               index={i}
               isCurrent={plan === p.key}
               onUpgrade={() => navigate("/request-access")}
+              priceData={prices[p.key]}
             />
           ))}
         </div>
