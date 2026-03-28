@@ -107,11 +107,13 @@ export function useRecommended(limit = 20) {
   return useQuery({
     queryKey: ["local-recommended", userId, likedSongs.length, limit],
     queryFn: async () => {
-      // Get all available custom songs
+      // Fetch a reasonable sample instead of ALL songs
+      const sampleSize = Math.min(limit * 5, 200);
       const { data: allSongs, error } = await supabase
         .from("custom_songs")
         .select("*")
-        .not("stream_url", "is", null);
+        .not("stream_url", "is", null)
+        .limit(sampleSize);
       if (error) throw error;
       if (!allSongs || allSongs.length === 0) return [];
 
@@ -124,10 +126,9 @@ export function useRecommended(limit = 20) {
         );
         const likedIds = new Set(likedSongs.map((s) => s.id));
 
-        // Score: artist match + some randomness
         const day = new Date().getDate();
         const scored = mapped
-          .filter((s) => !likedIds.has(s.id)) // exclude already liked
+          .filter((s) => !likedIds.has(s.id))
           .map((s) => {
             const artists = s.artist.toLowerCase().split(",").map((a) => a.trim());
             const artistMatch = artists.some((a) => likedArtists.has(a));

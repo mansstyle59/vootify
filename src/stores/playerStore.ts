@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
+import { toast } from "sonner";
 
 
 
@@ -19,14 +20,12 @@ interface PlayerState {
   playlistSongs: Record<string, Song[]>;
   userId: string | null;
   crossfadeEnabled: boolean;
-  crossfadeDuration: number; // in seconds
+  crossfadeDuration: number;
   _seekTime: number | null;
-  bassBoost: number; // -12 to +12 dB
-  trebleBoost: number; // -12 to +12 dB
-  
+  bassBoost: number;
+  trebleBoost: number;
   nextPreloaded: boolean;
-  audioDuration: number; // real audio element duration (overrides metadata)
-  
+  audioDuration: number;
 
   setUserId: (id: string | null) => void;
   setCrossfadeEnabled: (enabled: boolean) => void;
@@ -56,6 +55,16 @@ interface PlayerState {
   clearRecentlyPlayed: () => Promise<void>;
 }
 
+// Safe localStorage getter with fallback
+function safeLocalGet<T>(key: string, fallback: T): T {
+  try {
+    const val = localStorage.getItem(key);
+    return val !== null ? JSON.parse(val) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentSong: null,
   queue: [],
@@ -70,22 +79,31 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   recentlyPlayed: [],
   playlistSongs: {},
   userId: null,
-  crossfadeEnabled: JSON.parse(localStorage.getItem("crossfadeEnabled") ?? "true"),
-  crossfadeDuration: JSON.parse(localStorage.getItem("crossfadeDuration") ?? "2"),
+  crossfadeEnabled: safeLocalGet("crossfadeEnabled", true),
+  crossfadeDuration: safeLocalGet("crossfadeDuration", 2),
   _seekTime: null,
-  bassBoost: JSON.parse(localStorage.getItem("bassBoost") ?? "0"),
-  trebleBoost: JSON.parse(localStorage.getItem("trebleBoost") ?? "0"),
-  
+  bassBoost: safeLocalGet("bassBoost", 0),
+  trebleBoost: safeLocalGet("trebleBoost", 0),
   nextPreloaded: false,
   audioDuration: 0,
 
   setUserId: (id) => set({ userId: id }),
-  setCrossfadeEnabled: (enabled) => { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); set({ crossfadeEnabled: enabled }); },
-  setCrossfadeDuration: (duration) => { localStorage.setItem("crossfadeDuration", JSON.stringify(duration)); set({ crossfadeDuration: duration }); },
-  setBassBoost: (db) => { localStorage.setItem("bassBoost", JSON.stringify(db)); set({ bassBoost: db }); },
-  setTrebleBoost: (db) => { localStorage.setItem("trebleBoost", JSON.stringify(db)); set({ trebleBoost: db }); },
-
-
+  setCrossfadeEnabled: (enabled) => {
+    try { localStorage.setItem("crossfadeEnabled", JSON.stringify(enabled)); } catch {}
+    set({ crossfadeEnabled: enabled });
+  },
+  setCrossfadeDuration: (duration) => {
+    try { localStorage.setItem("crossfadeDuration", JSON.stringify(duration)); } catch {}
+    set({ crossfadeDuration: duration });
+  },
+  setBassBoost: (db) => {
+    try { localStorage.setItem("bassBoost", JSON.stringify(db)); } catch {}
+    set({ bassBoost: db });
+  },
+  setTrebleBoost: (db) => {
+    try { localStorage.setItem("trebleBoost", JSON.stringify(db)); } catch {}
+    set({ trebleBoost: db });
+  },
 
   loadUserData: async (userId) => {
     try {
@@ -97,46 +115,74 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ likedSongs: liked, playlists, recentlyPlayed: recent, userId });
     } catch (e) {
       console.error("Failed to load user data:", e);
+      toast.error("Erreur lors du chargement de vos données");
     }
   },
 
   play: (song) => {
     const { userId, currentSong } = get();
-    // Skip if already playing the same song (prevents re-trigger)
+    // Skip if already playing the same song
     if (currentSong?.id === song.id && get().isPlaying) return;
+    // Validate song has a playable source
+    if (!song.streamUrl && !song.id) {
+      console.warn("[play] Song has no stream URL:", song.title);
+      toast.error("Ce morceau n'est pas disponible");
+      return;
+    }
     set((state) => ({
       currentSong: song,
       isPlaying: true,
       progress: 0,
+      audioDuration: 0,
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     }));
     if (userId) {
-      musicDb.addRecentlyPlayed(userId, song).catch(console.error);
+      musicDb.addRecentlyPlayed(userId, song).catch((e) => {
+        console.error("Failed to save recently played:", e);
+      });
     }
   },
 
   togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
   next: () => {
-    const { queue, currentSong, shuffle } = get();
+    const { queue, currentSong, shuffle, repeat } = get();
     if (!currentSong || queue.length === 0) return;
     const idx = queue.findIndex((s) => s.id === currentSong.id);
+
+    // If repeat one, restart current
+    if (repeat === "one") {
+      set({ progress: 0, _seekTime: 0 });
+      return;
+    }
+
     let nextIdx: number;
     if (shuffle) {
-      // Pick random but never the same track (unless queue has only 1)
       if (queue.length <= 1) { nextIdx = 0; }
       else {
         do { nextIdx = Math.floor(Math.random() * queue.length); } while (nextIdx === idx);
       }
     } else {
       nextIdx = (idx + 1) % queue.length;
+      // If repeat is off and we've wrapped around, stop
+      if (repeat === "off" && nextIdx === 0 && idx === queue.length - 1) {
+        set({ isPlaying: false });
+        return;
+      }
     }
     get().play(queue[nextIdx]);
   },
 
   previous: () => {
-    const { queue, currentSong, shuffle } = get();
+    const { queue, currentSong, shuffle, progress } = get();
     if (!currentSong || queue.length === 0) return;
+
+    // If we're more than 3 seconds into the track, restart it instead
+    if (progress > 3) {
+      set({ progress: 0, _seekTime: 0 });
+      return;
+    }
+
     const idx = queue.findIndex((s) => s.id === currentSong.id);
     let prevIdx: number;
     if (shuffle) {
@@ -159,24 +205,34 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       repeat: s.repeat === "off" ? "all" : s.repeat === "all" ? "one" : "off",
     })),
   toggleFullScreen: () => set((s) => ({ fullScreen: !s.fullScreen })),
-  closePlayer: () => set({ currentSong: null, isPlaying: false, progress: 0, fullScreen: false, queue: [] }),
+  closePlayer: () => set({ currentSong: null, isPlaying: false, progress: 0, fullScreen: false, queue: [], audioDuration: 0 }),
 
   toggleLike: (song) => {
     const { userId } = get();
     const exists = get().likedSongs.some((ls) => ls.id === song.id);
 
+    // Optimistic update
     set((s) => ({
       likedSongs: exists
         ? s.likedSongs.filter((ls) => ls.id !== song.id)
-        : [...s.likedSongs, song],
+        : [...s.likedSongs, { ...song, liked: true }],
     }));
 
     if (userId) {
-      if (exists) {
-        musicDb.unlikeSong(userId, song.id).catch(console.error);
-      } else {
-        musicDb.likeSong(userId, song).catch(console.error);
-      }
+      const operation = exists
+        ? musicDb.unlikeSong(userId, song.id)
+        : musicDb.likeSong(userId, song);
+
+      operation.catch((e) => {
+        console.error("Like operation failed:", e);
+        // Rollback on failure
+        set((s) => ({
+          likedSongs: exists
+            ? [...s.likedSongs, { ...song, liked: true }]
+            : s.likedSongs.filter((ls) => ls.id !== song.id),
+        }));
+        toast.error(exists ? "Erreur lors de la suppression du favori" : "Erreur lors de l'ajout aux favoris");
+      });
     }
   },
 
@@ -186,53 +242,76 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   createPlaylist: async (name) => {
     const { userId } = get();
-    if (!userId) return;
+    if (!userId) {
+      toast.error("Connectez-vous pour créer une playlist");
+      return;
+    }
     try {
       const pl = await musicDb.createPlaylist(userId, name);
       set((s) => ({ playlists: [pl, ...s.playlists] }));
+      toast.success(`Playlist "${name}" créée`);
     } catch (e) {
       console.error("Failed to create playlist:", e);
+      toast.error("Erreur lors de la création de la playlist");
     }
   },
 
   deletePlaylist: async (id) => {
+    const { playlists } = get();
+    const playlist = playlists.find((p) => p.id === id);
     try {
       await musicDb.deletePlaylist(id);
       set((s) => {
         const { [id]: _, ...rest } = s.playlistSongs;
         return { playlists: s.playlists.filter((p) => p.id !== id), playlistSongs: rest };
       });
+      toast.success(playlist ? `Playlist "${playlist.name}" supprimée` : "Playlist supprimée");
     } catch (e) {
       console.error("Failed to delete playlist:", e);
+      toast.error("Erreur lors de la suppression de la playlist");
     }
   },
 
   addSongToPlaylist: async (playlistId, song) => {
     const current = get().playlistSongs[playlistId] || [];
+    // Prevent duplicates
+    if (current.some((s) => s.id === song.id)) {
+      toast("Ce morceau est déjà dans la playlist");
+      return;
+    }
     try {
       await musicDb.addSongToPlaylist(playlistId, song, current.length);
       set((s) => ({
         playlistSongs: {
           ...s.playlistSongs,
-          [playlistId]: [...current.filter((x) => x.id !== song.id), song],
+          [playlistId]: [...current, song],
         },
       }));
+      toast.success("Morceau ajouté à la playlist");
     } catch (e) {
       console.error("Failed to add song to playlist:", e);
+      toast.error("Erreur lors de l'ajout du morceau");
     }
   },
 
   removeSongFromPlaylist: async (playlistId, songId) => {
+    const current = get().playlistSongs[playlistId] || [];
+    // Optimistic update
+    set((s) => ({
+      playlistSongs: {
+        ...s.playlistSongs,
+        [playlistId]: current.filter((x) => x.id !== songId),
+      },
+    }));
     try {
       await musicDb.removeSongFromPlaylist(playlistId, songId);
-      set((s) => ({
-        playlistSongs: {
-          ...s.playlistSongs,
-          [playlistId]: (s.playlistSongs[playlistId] || []).filter((x) => x.id !== songId),
-        },
-      }));
     } catch (e) {
       console.error("Failed to remove song from playlist:", e);
+      // Rollback
+      set((s) => ({
+        playlistSongs: { ...s.playlistSongs, [playlistId]: current },
+      }));
+      toast.error("Erreur lors de la suppression du morceau");
     }
   },
 
@@ -251,6 +330,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const userId = get().userId;
     if (!userId) return;
     set({ recentlyPlayed: [] });
-    await musicDb.clearRecentlyPlayed(userId);
+    try {
+      await musicDb.clearRecentlyPlayed(userId);
+      toast.success("Historique effacé");
+    } catch (e) {
+      console.error("Failed to clear recently played:", e);
+      toast.error("Erreur lors de la suppression de l'historique");
+    }
   },
 }));

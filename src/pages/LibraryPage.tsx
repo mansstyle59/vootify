@@ -334,9 +334,10 @@ const LibraryPage = () => {
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        queryClient.invalidateQueries();
-        if (userId) loadUserData(userId);
+      if (document.visibilityState === "visible" && userId) {
+        // Only refresh user-specific data, not all queries
+        loadUserData(userId);
+        queryClient.invalidateQueries({ queryKey: ["shared-playlists"] });
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -593,8 +594,13 @@ const LibraryPage = () => {
       setTab(isOffline ? "downloads" : "recent");
       return;
     }
-    if (isGuest && !isOffline && tab !== "downloads") setTab("downloads");
-    if (isOffline && tab !== "downloads") setTab("downloads");
+    if (isOffline && tab !== "downloads") {
+      setTab("downloads");
+      return;
+    }
+    if (isGuest && !isOffline && tab !== "downloads") {
+      setTab("downloads");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGuest, isOffline, isAdmin]);
 
