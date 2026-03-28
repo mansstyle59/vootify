@@ -1228,6 +1228,58 @@ function SongsTab() {
   );
 }
 
+/* ── Radio Card for Admin ── */
+function RadioCardAdmin({ station, isSelected, onEdit, onDelete, onSelect }: {
+  station: any;
+  isSelected: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      className={`group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+        isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
+      }`}
+      onClick={onSelect}
+    >
+      <div className="relative aspect-square rounded-xl overflow-hidden ring-[1.5px] ring-border/20">
+        {station.cover_url ? (
+          <img src={station.cover_url} alt={station.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+            <Radio className="w-8 h-8 text-primary/25" />
+          </div>
+        )}
+
+        {/* Overlay on hover */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+        {/* Action buttons */}
+        <div className="absolute top-2 right-2 flex gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="bg-black/70 hover:bg-black text-white p-2 rounded-full transition-colors"
+          >
+            <Pencil size={16} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="bg-black/70 hover:bg-destructive text-white p-2 rounded-full transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <h3 className="font-semibold text-sm truncate text-foreground">{station.name}</h3>
+        <p className="text-muted-foreground text-xs truncate mt-0.5">{station.genre || "Radio"}</p>
+      </div>
+    </div>
+  );
+}
+
 function RadiosTab() {
   const [radios, setRadios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
