@@ -114,7 +114,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-        className="flex items-center justify-between px-4 md:px-8 mb-2"
+        className="flex items-center justify-between pl-5 pr-4 md:pl-9 md:pr-8 mb-2"
       >
         <div className="flex items-center gap-2 mr-2 min-w-0">
           <h2 className="text-[15px] md:text-lg font-display font-bold text-foreground leading-tight line-clamp-2 break-words">{title}</h2>
