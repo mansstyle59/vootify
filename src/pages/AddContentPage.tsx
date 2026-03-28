@@ -198,6 +198,50 @@ function SongForm() {
       }
     }
 
+    // Smart metadata: validate & correct via Deezer (artist↔title swap, normalization, duplicates)
+    if (entries.length > 0) {
+      try {
+        const tracks = entries.map((e) => ({
+          title: e.title,
+          artist: e.artist,
+          album: e.album,
+          fileName: e.file.name,
+        }));
+        const { data: smartData, error: smartErr } = await supabase.functions.invoke("smart-metadata", {
+          body: { tracks },
+        });
+        if (!smartErr && smartData?.results) {
+          let corrected = 0;
+          for (let i = 0; i < entries.length && i < smartData.results.length; i++) {
+            const result = smartData.results[i];
+            if (!result.corrected) continue;
+            const e = entries[i];
+            if (result.normalizedArtist && result.normalizedArtist !== e.artist) {
+              e.artist = result.normalizedArtist;
+              e.id3Filled.add("artist");
+            }
+            if (result.normalizedTitle && result.normalizedTitle !== e.title) {
+              e.title = result.normalizedTitle;
+              e.id3Filled.add("title");
+            }
+            if (result.album && !e.album) {
+              e.album = result.album;
+              e.id3Filled.add("album");
+            }
+            if (result.duplicateOf) {
+              // Mark as potential duplicate but don't skip — let overwrite handle it
+            }
+            corrected++;
+          }
+          if (corrected > 0) {
+            toast.success(`🧠 ${corrected} titre${corrected > 1 ? "s" : ""} corrigé${corrected > 1 ? "s" : ""} intelligemment`);
+          }
+        }
+      } catch {
+        // Smart metadata failed silently — continue with existing data
+      }
+    }
+
     // Auto-search Deezer for songs still missing covers after ID3 + cross-ref
     const needsOnline = entries.filter((e) => !e.coverUrl && e.artist);
     if (needsOnline.length > 0) {
