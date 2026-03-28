@@ -2104,6 +2104,7 @@ function RequestsTab() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const loadRequests = async () => {
     const { data } = await supabase
