@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,7 @@ function PremiumSongRow({
   onSelect?: () => void;
   cached?: boolean;
 }) {
+  const coverUrl = useOfflineCoverUrl(song.id, song.coverUrl);
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const [swiped, setSwiped] = useState<"left" | "right" | null>(null);
@@ -120,8 +122,8 @@ function PremiumSongRow({
             : "0 2px 8px hsl(0 0% 0% / 0.08)",
         }}
       >
-        {song.coverUrl ? (
-          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
+        {coverUrl ? (
+          <img src={coverUrl} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.5))" }}>
             <Music className="w-4 h-4 text-muted-foreground/25" />
@@ -508,6 +510,68 @@ const LibraryPage = () => {
   const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
   const [enriching, setEnriching] = useState(false);
   const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
+  const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadAllProgress, setDownloadAllProgress] = useState({ current: 0, total: 0 });
+
+  const handleDownloadAllLibrary = useCallback(async () => {
+    if (downloadingAll) return;
+    setDownloadingAll(true);
+    try {
+      // Fetch all songs from database
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("id, title, artist, album, cover_url, stream_url, duration, genre, year")
+        .not("stream_url", "is", null);
+      if (error) throw error;
+      const allSongs: Song[] = (data || []).map((s: any) => ({
+        id: s.id, title: s.title, artist: s.artist, album: s.album || "",
+        coverUrl: s.cover_url || "", streamUrl: s.stream_url || "",
+        duration: s.duration || 0, liked: false, genre: s.genre, year: s.year,
+      }));
+
+      // Filter already cached
+      const toDownload: Song[] = [];
+      for (const s of allSongs) {
+        const cached = await offlineCache.isCached(s.id);
+        if (!cached) toDownload.push(s);
+      }
+
+      setDownloadAllProgress({ current: 0, total: toDownload.length });
+      if (toDownload.length === 0) {
+        toast.success("Tout est déjà téléchargé !");
+        setDownloadingAll(false);
+        return;
+      }
+
+      let done = 0;
+      // Download 3 at a time
+      const queue = [...toDownload];
+      const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
+        while (queue.length > 0) {
+          const song = queue.shift()!;
+          try {
+            await offlineCache.cacheSong(song);
+          } catch (e) {
+            console.error(`[dl-all] Failed: ${song.title}`, e);
+          }
+          done++;
+          setDownloadAllProgress({ current: done, total: toDownload.length });
+        }
+      });
+      await Promise.all(workers);
+
+      // Refresh cached songs list
+      const [songs, size] = await Promise.all([offlineCache.getAllCached(), offlineCache.getCacheSize()]);
+      setCachedSongs(songs);
+      setCacheSize(size);
+      toast.success(`${done} morceaux téléchargés !`);
+    } catch (e) {
+      console.error("[dl-all]", e);
+      toast.error("Erreur lors du téléchargement");
+    } finally {
+      setDownloadingAll(false);
+    }
+  }, [downloadingAll]);
 
   useEffect(() => {
     if (tab !== "downloads" && !isOffline) return;
@@ -1452,7 +1516,20 @@ const LibraryPage = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {!isOffline && (
+                          <button
+                            disabled={downloadingAll}
+                            onClick={handleDownloadAllLibrary}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium disabled:opacity-50"
+                          >
+                            {downloadingAll ? (
+                              <><Loader2 className="w-3 h-3 animate-spin" />{downloadAllProgress.current}/{downloadAllProgress.total}</>
+                            ) : (
+                              <><Download className="w-3 h-3" />Tout</>
+                            )}
+                          </button>
+                        )}
                         <button
                           disabled={isRedownloading}
                           onClick={async () => {
@@ -1501,7 +1578,29 @@ const LibraryPage = () => {
                 )}
 
                 {cachedSongs.length === 0 ? (
-                  <EmptyState icon={Download} title="Aucun morceau téléchargé" subtitle="Téléchargez des morceaux pour les écouter hors-ligne" />
+                  <div className="flex flex-col items-center gap-4 py-12">
+                    <div className="p-4 rounded-full" style={{ background: "hsl(var(--primary) / 0.1)" }}>
+                      <Download className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-foreground">Aucun morceau téléchargé</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">Téléchargez des morceaux pour les écouter hors-ligne</p>
+                    </div>
+                    {!isOffline && !isGuest && (
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleDownloadAllLibrary}
+                        disabled={downloadingAll}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/30 disabled:opacity-50"
+                      >
+                        {downloadingAll ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" />{downloadAllProgress.current}/{downloadAllProgress.total}</>
+                        ) : (
+                          <><Download className="w-4 h-4" />Tout télécharger</>
+                        )}
+                      </motion.button>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <ActionButtons

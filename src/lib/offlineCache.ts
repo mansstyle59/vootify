@@ -29,9 +29,14 @@ function openDb(): Promise<IDBDatabase> {
 /** Fetch an image URL and return it as a Blob */
 async function fetchCoverBlob(url: string): Promise<Blob | null> {
   try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return await res.blob();
+    // Try with CORS first, fall back to no-cors
+    let res = await fetch(url);
+    if (!res.ok) {
+      res = await fetch(url, { mode: "no-cors" });
+    }
+    const blob = await res.blob();
+    // Ensure we got a real image (no-cors gives opaque responses with size 0)
+    return blob.size > 0 ? blob : null;
   } catch {
     return null;
   }

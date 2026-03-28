@@ -1,10 +1,12 @@
 import { memo, useState } from "react";
 import { Play, Pause, Music } from "lucide-react";
+import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
 
 interface CoverCardProps {
   title: string;
   subtitle: string;
   imageUrl: string;
+  songId?: string;
   index?: number;
   isActive?: boolean;
   onClick?: () => void;
@@ -14,9 +16,10 @@ interface CoverCardProps {
 }
 
 export const CoverCard = memo(function CoverCard({
-  title, subtitle, imageUrl, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false, showPlay = false,
+  title, subtitle, imageUrl, songId, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false, showPlay = false,
 }: CoverCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
+  const resolvedUrl = useOfflineCoverUrl(songId, imageUrl);
 
   return (
     <div
@@ -33,7 +36,7 @@ export const CoverCard = memo(function CoverCard({
             : "0 2px 8px hsl(0 0% 0% / 0.08)",
         }}
       >
-        {imageUrl ? (
+        {resolvedUrl ? (
           <>
             {!imgLoaded && (
               <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
@@ -41,7 +44,7 @@ export const CoverCard = memo(function CoverCard({
               </div>
             )}
             <img
-              src={imageUrl}
+              src={resolvedUrl}
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
