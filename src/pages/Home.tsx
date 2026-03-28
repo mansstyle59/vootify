@@ -372,6 +372,7 @@ const HomePage = () => {
 };
 
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
     queryFn: async () => {
@@ -387,15 +388,55 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
     enabled: !customImage,
   });
 
+  const imageUrl = customImage || deezerImage || artist.cover;
+
   return (
-    <CoverCard
-      title={artist.name}
-      subtitle=""
-      imageUrl={customImage || deezerImage || artist.cover}
-      index={index}
-      rounded
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
+      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-    />
+    >
+      <div
+        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl overflow-hidden mb-2"
+        style={{
+          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), 0 1px 4px hsl(0 0% 0% / 0.08)",
+        }}
+      >
+        {imageUrl ? (
+          <>
+            {!imgLoaded && (
+              <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
+              </div>
+            )}
+            <img
+              src={imageUrl}
+              alt={artist.name}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+            />
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+            <User className="w-10 h-10 text-muted-foreground/20" />
+          </div>
+        )}
+        {/* Bottom gradient overlay with name */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[55%] flex items-end p-3"
+          style={{
+            background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, hsl(0 0% 0% / 0.25) 60%, transparent 100%)",
+          }}
+        >
+          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
+            {artist.name}
+          </p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
