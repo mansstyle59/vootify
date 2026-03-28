@@ -42,6 +42,8 @@ export function MiniPlayer() {
     _seekTime, crossfadeEnabled, crossfadeDuration
   } = usePlayerStore();
 
+  const bassBoost = usePlayerStore((s) => s.bassBoost);
+  const trebleBoost = usePlayerStore((s) => s.trebleBoost);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const crossfadeRef = useRef<HTMLAudioElement | null>(null);
   const preloadRef = useRef<HTMLAudioElement | null>(null);
@@ -49,12 +51,61 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
+
+  // Web Audio API EQ nodes
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const bassFilterRef = useRef<BiquadFilterNode | null>(null);
+  const trebleFilterRef = useRef<BiquadFilterNode | null>(null);
+  const connectedAudioRef = useRef<HTMLAudioElement | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
 
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
+
+  // ── EQ: connect Web Audio API pipeline ──
+  const connectEQ = useCallback((audio: HTMLAudioElement) => {
+    if (connectedAudioRef.current === audio) return; // already connected
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") ctx.resume();
+
+      const source = ctx.createMediaElementSource(audio);
+      const bass = ctx.createBiquadFilter();
+      bass.type = "lowshelf";
+      bass.frequency.value = 200;
+      bass.gain.value = bassBoost;
+
+      const treble = ctx.createBiquadFilter();
+      treble.type = "highshelf";
+      treble.frequency.value = 3000;
+      treble.gain.value = trebleBoost;
+
+      source.connect(bass);
+      bass.connect(treble);
+      treble.connect(ctx.destination);
+
+      sourceNodeRef.current = source;
+      bassFilterRef.current = bass;
+      trebleFilterRef.current = treble;
+      connectedAudioRef.current = audio;
+    } catch (e) {
+      console.warn("[EQ] Web Audio API init failed:", e);
+    }
+  }, []); // stable ref — reads from refs, not deps
+
+  // Update EQ gains reactively
+  useEffect(() => {
+    if (bassFilterRef.current) bassFilterRef.current.gain.value = bassBoost;
+  }, [bassBoost]);
+  useEffect(() => {
+    if (trebleFilterRef.current) trebleFilterRef.current.gain.value = trebleBoost;
+  }, [trebleBoost]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -348,6 +399,7 @@ export function MiniPlayer() {
           }
         }, FADE_STEP);
 
+        connectEQ(audio);
         audio.src = srcToUse;
         audio.volume = 0;
         audio.muted = false;
@@ -359,6 +411,7 @@ export function MiniPlayer() {
         });
       } else {
         // Direct load — instant play
+        connectEQ(audio);
         audio.src = srcToUse;
         audio.volume = volume;
         audio.muted = false;
@@ -1460,16 +1513,16 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     <img src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" />
                   </div>
                 )}
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="popLayout">
                   {currentSong.coverUrl ? (
                     <motion.img
                       key={currentSong.id}
                       src={currentSong.coverUrl}
                       alt={currentSong.title}
-                      initial={{ opacity: 0, scale: 0.88, rotateX: 8 }}
-                      animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                      exit={{ opacity: 0, scale: 0.92 }}
-                      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      initial={{ opacity: 0, scale: 0.82, filter: "blur(12px)", y: 20 }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }}
+                      exit={{ opacity: 0, scale: 0.88, filter: "blur(8px)", y: -15 }}
+                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                       className="relative w-full aspect-square rounded-3xl object-cover"
                       style={{
                         boxShadow: `
@@ -1482,10 +1535,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   ) : (
                     <motion.div
                       key={currentSong.id + "-ph"}
-                      initial={{ opacity: 0, scale: 0.88 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.92 }}
-                      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      initial={{ opacity: 0, scale: 0.82, filter: "blur(12px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 0.88, filter: "blur(8px)" }}
+                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                       className="relative w-full aspect-square rounded-3xl flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5"
                       style={{ boxShadow: "0 30px 80px -20px rgba(0,0,0,0.6)" }}
                     >
@@ -1497,13 +1550,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Title + Artist + Like */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentSong.id + "-info"}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+                transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
                 className="flex items-start justify-between gap-4 mb-7"
               >
                 <div className="min-w-0 flex-1">

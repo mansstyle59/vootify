@@ -26,7 +26,7 @@ const ProfilePage = () => {
   const { isAdmin } = useAdminAuth();
   const { subscription, isActive } = useSubscription(user?.id ?? null);
   
-  const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration } = usePlayerStore();
+  const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration, bassBoost, trebleBoost, setBassBoost, setTrebleBoost } = usePlayerStore();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -335,6 +335,60 @@ const ProfilePage = () => {
               </div>
             )}
 
+
+            {/* Equalizer */}
+            <div className="space-y-4 pt-3 border-t border-border/50">
+              <p className="text-sm font-semibold text-foreground">Égaliseur</p>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-foreground">Basses</p>
+                  <span className="text-sm font-mono text-primary">{bassBoost > 0 ? "+" : ""}{bassBoost} dB</span>
+                </div>
+                <Slider
+                  value={[bassBoost]}
+                  onValueChange={([val]) => setBassBoost(val)}
+                  min={-12}
+                  max={12}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                  <span>−12</span>
+                  <span>0</span>
+                  <span>+12</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-foreground">Aigus</p>
+                  <span className="text-sm font-mono text-primary">{trebleBoost > 0 ? "+" : ""}{trebleBoost} dB</span>
+                </div>
+                <Slider
+                  value={[trebleBoost]}
+                  onValueChange={([val]) => setTrebleBoost(val)}
+                  min={-12}
+                  max={12}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                  <span>−12</span>
+                  <span>0</span>
+                  <span>+12</span>
+                </div>
+              </div>
+
+              {(bassBoost !== 0 || trebleBoost !== 0) && (
+                <button
+                  onClick={() => { setBassBoost(0); setTrebleBoost(0); }}
+                  className="text-xs text-primary font-medium hover:underline"
+                >
+                  Réinitialiser l'égaliseur
+                </button>
+              )}
+            </div>
 
             {/* SW & Offline cache indicators */}
             <div className="space-y-3 pt-2 border-t border-border/50">
