@@ -584,31 +584,33 @@ export function MiniPlayer() {
                       <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
                         <span>{radioArtist}</span>
-                    <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
+                        <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {hasMultipleStations && (
+                      <button onClick={previous} className="p-2 active:scale-90 transition-transform">
+                        <SkipBack className="w-4 h-4 text-foreground fill-current" />
+                      </button>
+                    )}
+                    <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
+                      {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
+                    </button>
+                    {hasMultipleStations && (
+                      <button onClick={next} className="p-2 active:scale-90 transition-transform">
+                        <SkipForward className="w-4 h-4 text-foreground fill-current" />
+                      </button>
+                    )}
+                    <button onClick={handleClose} className="p-2 text-muted-foreground active:scale-90 transition-transform">
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-0.5">
-                {hasMultipleStations && (
-                  <button onClick={previous} className="p-2 active:scale-90 transition-transform">
-                    <SkipBack className="w-4 h-4 text-foreground fill-current" />
-                  </button>
-                )}
-                <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
-                  {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
-                </button>
-                {hasMultipleStations && (
-                  <button onClick={next} className="p-2 active:scale-90 transition-transform">
-                    <SkipForward className="w-4 h-4 text-foreground fill-current" />
-                  </button>
-                )}
-                <button onClick={closePlayer} className="p-2 text-muted-foreground active:scale-90 transition-transform">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <ResumeBanner message={resumeBanner} />
       </>
     );
