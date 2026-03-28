@@ -511,7 +511,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             transition={{ delay: 0.6 }}
             className="flex flex-wrap gap-2.5 mt-5"
           >
-            {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.6} />}
+            {stats.radios > 0 && stats.songs === 0 && null}
             {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.75} />}
             {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.9} />}
           </motion.div>
