@@ -117,13 +117,14 @@ const AdminPage = () => {
       <div className="px-4 md:px-8 max-w-4xl mx-auto">
         {tab === "stats" && <StatsTab />}
         {tab === "home" && <HomeTab />}
+        {tab === "theme" && <ThemeTab />}
+        {tab === "shared" && <SharedPlaylistsTab />}
         {tab === "users" && <UsersTab />}
         {tab === "subscriptions" && <SubscriptionsTab />}
         {tab === "requests" && <RequestsTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
-        
       </div>
     </div>
   );
