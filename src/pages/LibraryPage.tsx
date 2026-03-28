@@ -625,24 +625,27 @@ const LibraryPage = () => {
         className="sticky top-0 z-20 transition-colors duration-700"
         style={{
           background: headerColor
-            ? `linear-gradient(180deg, ${headerColor}40 0%, hsl(240 10% 6%) 100%)`
+            ? `linear-gradient(180deg, ${headerColor}30 0%, hsl(var(--background)) 100%)`
             : undefined,
         }}
       >
-        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3" style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3" style={{ backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)" }}>
           {isOffline && (
-            <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
+              background: "hsl(45 100% 50% / 0.08)",
+              border: "1px solid hsl(45 100% 50% / 0.15)",
+            }}>
               <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0" />
               <p className="text-xs text-amber-400 font-medium">Mode hors-ligne — seuls les morceaux téléchargés sont disponibles</p>
             </div>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
               <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
                 {isOffline ? "Mode Hors-ligne" : "Bibliothèque"}
               </h1>
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-[12px] text-muted-foreground/60">
                 {isOffline ? "Écoutez vos morceaux sans connexion" : "Vos morceaux, playlists et favoris"}
               </p>
             </div>
@@ -652,14 +655,18 @@ const LibraryPage = () => {
                 if (userId) loadUserData(userId);
                 toast.success("Bibliothèque actualisée");
               }}
-              className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              style={{
+                background: "hsl(var(--secondary) / 0.6)",
+                border: "1px solid hsl(var(--border) / 0.2)",
+              }}
             >
               <RefreshCw className="w-4.5 h-4.5" />
             </button>
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 mt-1">
             {visibleTabs.map(({ key, label, icon }) => (
               <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
             ))}

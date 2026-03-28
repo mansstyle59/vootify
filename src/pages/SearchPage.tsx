@@ -479,23 +479,33 @@ const SearchPage = () => {
     <div className="pb-40 max-w-7xl mx-auto animate-fade-in">
       <ScrollBlurHeader>
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-accent/5 pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 80% 100% at 20% 0%, hsl(var(--primary) / 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 90% 30%, hsl(var(--accent) / 0.05) 0%, transparent 50%)",
+          }} />
           <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.08))",
+                border: "1px solid hsl(var(--primary) / 0.15)",
+                boxShadow: "0 4px 16px hsl(var(--primary) / 0.15)",
+              }}>
                 <SearchIcon className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
                   Rechercher
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Bibliothèque locale
+                <p className="text-[12px] text-muted-foreground/70">
+                  Explorez votre bibliothèque
                 </p>
               </div>
               <button
                 onClick={() => { refetchSongs(); toast.success("Recherche actualisée"); }}
-                className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
+                style={{
+                  background: "hsl(var(--secondary) / 0.6)",
+                  border: "1px solid hsl(var(--border) / 0.2)",
+                }}
               >
                 <RefreshCw className="w-4.5 h-4.5" />
               </button>
@@ -506,7 +516,7 @@ const SearchPage = () => {
 
       <div className="px-4 md:px-8 mb-4" ref={searchRef}>
         <div className="relative">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60 z-10" />
           <input
             ref={inputRef}
             type="text"
@@ -518,7 +528,12 @@ const SearchPage = () => {
               if (e.key === "Escape") setShowSuggestions(false);
             }}
             placeholder="Titres, artistes, albums..."
-            className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all"
+            className="w-full pl-12 pr-10 py-3.5 rounded-2xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none text-sm transition-all"
+            style={{
+              background: "hsl(var(--secondary) / 0.6)",
+              border: "1px solid hsl(var(--border) / 0.3)",
+              boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.02)",
+            }}
           />
           {query && (
             <button
