@@ -216,24 +216,54 @@ export function MiniPlayer() {
     return () => { released = true; };
   }, [isPlaying, currentSong?.id]);
 
-  // ── Silent keepalive — prevents iOS from killing the audio session in background ──
+  // ── Silent audio keepalive — prevents iOS from killing audio in background ──
+  // A real looping silent audio element keeps the page alive (not just setInterval)
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     if (!isPlaying || !currentSong) {
+      // Stop keepalive
+      if (silentAudioRef.current) {
+        silentAudioRef.current.pause();
+        silentAudioRef.current.src = "";
+      }
       if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
       return;
     }
-    // Periodically touch the AudioContext to keep it alive
+
+    // Create a tiny silent WAV data URI (44 bytes of silence, 1 sample)
+    // This is the smallest valid WAV file — plays silence in a loop
+    const silentWav = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+
+    if (!silentAudioRef.current) {
+      silentAudioRef.current = new Audio();
+      silentAudioRef.current.loop = true;
+      silentAudioRef.current.volume = 0.01; // Near-silent but NOT muted (muted = OS can kill it)
+      // @ts-ignore
+      silentAudioRef.current.playsInline = true;
+    }
+    const silent = silentAudioRef.current;
+    if (!silent.src || silent.paused) {
+      silent.src = silentWav;
+      silent.play().catch(() => {}); // May need user gesture first time
+    }
+
+    // Also periodically touch AudioContext + media session
     keepaliveRef.current = setInterval(() => {
       const ctx = audioCtxRef.current;
       if (ctx && ctx.state === "suspended") {
         ctx.resume().catch(() => {});
       }
-      // Touch media session to prevent OS from reclaiming audio focus
       if ("mediaSession" in navigator && navigator.mediaSession.playbackState !== "playing") {
         navigator.mediaSession.playbackState = "playing";
       }
-    }, 8000);
+      // Ensure silent audio stays playing
+      if (silent.paused && isPlaying) {
+        silent.play().catch(() => {});
+      }
+    }, 5000);
+
     return () => {
       if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
     };
