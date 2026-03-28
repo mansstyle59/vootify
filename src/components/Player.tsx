@@ -51,6 +51,14 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
+  const [resumeBanner, setResumeBanner] = useState<string | null>(null);
+  const resumeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showResumeBanner = useCallback((msg: string) => {
+    if (resumeBannerTimer.current) clearTimeout(resumeBannerTimer.current);
+    setResumeBanner(msg);
+    resumeBannerTimer.current = setTimeout(() => setResumeBanner(null), 2500);
+  }, []);
 
   // Web Audio API EQ nodes
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -249,6 +257,7 @@ export function MiniPlayer() {
           a.play().then(() => {
             if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
             console.log("[bg-resume] Resumed successfully");
+            showResumeBanner("Lecture reprise ▶");
           }).catch((e) => {
             console.warn(`[bg-resume] Attempt ${attempt} failed:`, e);
             if (attempt < 3) {
@@ -278,7 +287,9 @@ export function MiniPlayer() {
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
             audio.muted = false;
-            audio.play().catch(() => {
+            audio.play().then(() => {
+              showResumeBanner("Lecture reprise ▶");
+            }).catch(() => {
               console.warn("[interrupt] Resume failed — user gesture may be needed");
             });
           }
