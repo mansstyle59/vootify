@@ -769,10 +769,25 @@ export function MiniPlayer() {
     } catch { /* unsupported */ }
 
     if (liveStream) {
-      // ── RADIO mode: remove all skip/seek actions ──
-      // This gives iOS a clean play/pause-only lock screen
-      try { ms.setActionHandler("previoustrack", null); } catch { /* unsupported */ }
-      try { ms.setActionHandler("nexttrack", null); } catch { /* unsupported */ }
+      // ── RADIO mode: skip stations if multiple in queue, otherwise no skip ──
+      const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
+      if (hasMultipleStations) {
+        try {
+          ms.setActionHandler("previoustrack", () => {
+            usePlayerStore.getState().previous();
+            ms.playbackState = "playing";
+          });
+        } catch { /* unsupported */ }
+        try {
+          ms.setActionHandler("nexttrack", () => {
+            usePlayerStore.getState().next();
+            ms.playbackState = "playing";
+          });
+        } catch { /* unsupported */ }
+      } else {
+        try { ms.setActionHandler("previoustrack", null); } catch { /* unsupported */ }
+        try { ms.setActionHandler("nexttrack", null); } catch { /* unsupported */ }
+      }
       try { ms.setActionHandler("seekbackward", null); } catch { /* unsupported */ }
       try { ms.setActionHandler("seekforward", null); } catch { /* unsupported */ }
       try { ms.setActionHandler("seekto", null); } catch { /* unsupported */ }
