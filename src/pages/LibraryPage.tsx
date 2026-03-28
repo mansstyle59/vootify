@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
@@ -266,6 +267,7 @@ const LibraryPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { checkLibraryTab } = useSubscriptionAccess();
   const {
     likedSongs, playlists, recentlyPlayed, playlistSongs,
     createPlaylist, deletePlaylist, play, setQueue, loadPlaylistSongs,
