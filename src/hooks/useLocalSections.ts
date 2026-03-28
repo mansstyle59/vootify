@@ -48,6 +48,7 @@ export function useRecentlyListened(limit = 20) {
         .from("recently_played")
         .select("*")
         .eq("user_id", userId)
+        .neq("album", "Radio en direct")
         .order("played_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
@@ -70,6 +71,7 @@ export function useMostPlayed(limit = 20) {
         .from("recently_played")
         .select("*")
         .eq("user_id", userId)
+        .neq("album", "Radio en direct")
         .order("played_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
