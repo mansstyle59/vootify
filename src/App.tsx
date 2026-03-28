@@ -88,6 +88,7 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
 
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
+  const currentSong = usePlayerStore((s) => s.currentSong);
   const loadUserData = usePlayerStore((s) => s.loadUserData);
   const setUserId = usePlayerStore((s) => s.setUserId);
   const { user, loading } = useAuth();
