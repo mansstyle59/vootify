@@ -1378,15 +1378,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Top bar — minimal, elegant */}
-      <div className="relative z-10 flex items-center justify-between px-6 pb-3">
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={onClose}
-          className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
-        >
-          <ChevronDown className="w-5 h-5 text-white/80" />
-        </motion.button>
-        <div className="flex-1 text-center px-6">
+      <div className="relative z-10 flex items-center px-6 pb-3">
+        <div className="w-[72px] flex items-center justify-start">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors"
+          >
+            <ChevronDown className="w-5 h-5 text-white/80" />
+          </motion.button>
+        </div>
+        <div className="flex-1 text-center">
           <p className="text-[10px] font-semibold text-white/40 tracking-[0.15em] uppercase">
             En lecture
           </p>
@@ -1394,7 +1396,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
             {currentSong.album || "Ma bibliothèque"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="w-[72px] flex items-center justify-end gap-2">
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={() => {
