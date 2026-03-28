@@ -11,6 +11,8 @@ function isInStandaloneMode(): boolean {
 }
 
 const DISMISSED_KEY = "pwa-install-dismissed";
+const VISIT_COUNT_KEY = "pwa-visit-count";
+const MIN_VISITS = 3;
 
 export default function IosPwaInstallBanner() {
   const [visible, setVisible] = useState(false);
@@ -19,6 +21,9 @@ export default function IosPwaInstallBanner() {
     if (!isIos()) return;
     if (isInStandaloneMode()) return;
     if (localStorage.getItem(DISMISSED_KEY)) return;
+    const visits = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || "0", 10) + 1;
+    localStorage.setItem(VISIT_COUNT_KEY, String(visits));
+    if (visits < MIN_VISITS) return;
     const timer = setTimeout(() => setVisible(true), 3000);
     return () => clearTimeout(timer);
   }, []);
