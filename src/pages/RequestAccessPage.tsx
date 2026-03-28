@@ -1,18 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Crown, Send, CheckCircle, Loader2, Mail, LogIn, User, Star, Gem, Sparkles, Clock,
+  Crown, Send, CheckCircle, Loader2, Mail, LogIn, User, Star, Gem, Sparkles,
 } from "lucide-react";
 
 const durationOptions = [
-  { label: "7 jours", value: 7, unit: "days" as const },
   { label: "1 mois", value: 1, unit: "months" as const },
-  { label: "6 mois", value: 6, unit: "months" as const },
   { label: "1 an", value: 12, unit: "months" as const },
-  { label: "Illimité", value: 0, unit: "months" as const },
 ];
 
 const planOptions = [
@@ -32,11 +29,24 @@ const RequestAccessPage = () => {
   const [contactEmail, setContactEmail] = useState(user?.email || "");
   const [pseudo, setPseudo] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(initialPlan);
-  const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
+  const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 1, unit: "months" });
   const [shakeFields, setShakeFields] = useState(false);
+  const [prices, setPrices] = useState<Record<string, string>>({});
 
   const selectedPlanInfo = planOptions.find((p) => p.key === selectedPlan) || planOptions[0];
   const isFormValid = contactEmail.trim().length > 0 && pseudo.trim().length > 0;
+
+  // Fetch prices from plan_prices table
+  useEffect(() => {
+    supabase.from("plan_prices").select("plan, price, period").then(({ data }) => {
+      if (!data) return;
+      const map: Record<string, string> = {};
+      for (const row of data) {
+        map[row.plan] = row.price;
+      }
+      setPrices(map);
+    });
+  }, []);
 
   const handleRequest = async () => {
     if (!isFormValid) {
@@ -152,6 +162,11 @@ const RequestAccessPage = () => {
                         >
                           <Icon className="w-4 h-4" />
                           <span>{opt.label}</span>
+                          {prices[opt.key] && (
+                            <span className={`text-[10px] font-medium ${isSelected ? "text-white/80" : "text-muted-foreground"}`}>
+                              {prices[opt.key]}/mois
+                            </span>
+                          )}
                           {isSelected && (
                             <motion.div
                               layoutId="plan-dot"
@@ -207,12 +222,11 @@ const RequestAccessPage = () => {
                   </div>
                 </motion.div>
 
-                {/* Duration */}
                 <div className="text-left">
-                  <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <Clock className="w-3 h-3" /> Durée souhaitée
+                  <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2 block">
+                    Durée souhaitée
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {durationOptions.map((opt) => {
                       const isSelected = selectedDuration.value === opt.value && selectedDuration.unit === opt.unit;
                       return (
@@ -221,7 +235,7 @@ const RequestAccessPage = () => {
                           key={opt.label}
                           type="button"
                           onClick={() => setSelectedDuration({ value: opt.value, unit: opt.unit })}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                          className={`py-3 rounded-xl text-sm font-medium transition-all border ${
                             isSelected
                               ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
                               : "bg-background/50 text-foreground border-border/60 hover:bg-muted/70"
