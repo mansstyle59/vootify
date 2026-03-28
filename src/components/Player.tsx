@@ -965,6 +965,74 @@ export function MiniPlayer() {
     };
   }, []);
 
+  // ── iOS background keepalive & auto-resume ──
+  // iOS suspends JS timers when screen is locked. We use an AudioContext
+  // oscillator trick + visibilitychange to detect and recover from pauses.
+  const keepAliveCtxRef = useRef<AudioContext | null>(null);
+  const resumeBannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [resumeMessage, setResumeMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentSong || !isPlaying) return;
+
+    // Create a silent AudioContext to keep the audio thread alive on iOS
+    if (!keepAliveCtxRef.current) {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        keepAliveCtxRef.current = ctx;
+      } catch { /* ignore */ }
+    }
+
+    // Periodically ping the AudioContext to prevent iOS from suspending it
+    const keepAliveInterval = setInterval(() => {
+      const ctx = keepAliveCtxRef.current;
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+    }, 8000);
+
+    return () => clearInterval(keepAliveInterval);
+  }, [currentSong?.id, isPlaying]);
+
+  // Auto-resume after visibility change (lock/unlock, tab switch)
+  useEffect(() => {
+    if (!currentSong) return;
+
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const audio = audioRef.current;
+      const store = usePlayerStore.getState();
+      if (!audio || !store.isPlaying) return;
+
+      // If store says playing but audio is paused → resume
+      if (audio.paused) {
+        const isRadio = store.currentSong?.duration === 0;
+        console.log("[player] Resuming after visibility change", isRadio ? "(radio)" : "(track)");
+
+        // For radio, reload the stream to get fresh data
+        if (isRadio && audio.src) {
+          const src = audio.src;
+          audio.src = "";
+          audio.src = src;
+          audio.load();
+        }
+
+        audio.play().then(() => {
+          setResumeMessage("Lecture reprise ▶");
+          if (resumeBannerTimerRef.current) clearTimeout(resumeBannerTimerRef.current);
+          resumeBannerTimerRef.current = setTimeout(() => setResumeMessage(null), 2500);
+        }).catch((e) => {
+          console.warn("[player] Auto-resume failed:", e);
+          // Mark as paused since we can't resume without user gesture
+          usePlayerStore.setState({ isPlaying: false });
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [currentSong?.id]);
+
   const handleEnded = useCallback(() => {
     // If preemptive crossfade already triggered next, don't double-skip
     if (preemptiveTriggeredRef.current) return;
