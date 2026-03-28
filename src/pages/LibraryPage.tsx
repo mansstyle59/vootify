@@ -772,16 +772,16 @@ const LibraryPage = () => {
             {/* ── PLAYLISTS ── */}
             {tab === "playlists" && (
               <div>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
+                <button
                   onClick={() => setShowCreate(!showCreate)}
-                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-sm font-medium transition-all w-full"
+                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-xl w-full text-foreground text-sm font-medium active:scale-[0.98] transition-all"
+                  style={{ background: "hsl(var(--foreground) / 0.04)" }}
                 >
-                  <div className="p-1.5 rounded-xl bg-primary/15">
+                  <div className="p-1.5 rounded-lg bg-primary/10">
                     <Plus className="w-4 h-4 text-primary" />
                   </div>
                   Nouvelle Playlist
-                </motion.button>
+                </button>
 
                 <AnimatePresence>
                   {showCreate && (
