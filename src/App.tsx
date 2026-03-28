@@ -18,6 +18,8 @@ import { PageFade } from "@/components/PageFade";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
+import { InitialCacheLoader } from "@/components/InitialCacheLoader";
+import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
@@ -94,7 +96,10 @@ function AppContent() {
     setUserId(userId);
     if (userId) {
       loadUserData(userId);
-      // Warm up caches in background for instant navigation
+      // If cache already exists → silent background refresh; otherwise warmup handled by InitialCacheLoader
+      if (isCacheReady()) {
+        silentCacheRefresh(userId);
+      }
       startCacheWarmup(userId);
     }
   }, [user, loading, loadUserData, setUserId]);
@@ -132,9 +137,11 @@ const App = () => {
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
-                  <SubscriptionGate>
-                    <AppContent />
-                  </SubscriptionGate>
+                  <InitialCacheLoader>
+                    <SubscriptionGate>
+                      <AppContent />
+                    </SubscriptionGate>
+                  </InitialCacheLoader>
                 </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
