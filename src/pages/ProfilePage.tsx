@@ -264,6 +264,37 @@ const ProfilePage = () => {
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
             </button>
           )}
+
+          {/* Biometric toggle */}
+          {biometricSupported && (
+            <div className="w-full p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <Fingerprint className="w-4.5 h-4.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-semibold text-foreground">Face ID / Touch ID</p>
+                <p className="text-[11px] text-muted-foreground">Connexion biométrique rapide</p>
+              </div>
+              <button
+                onClick={() => {
+                  if (biometricOn) {
+                    disableBiometric();
+                    setBiometricOn(false);
+                    toast.success("Authentification biométrique désactivée");
+                  } else {
+                    toast("Connectez-vous avec votre mot de passe pour activer Face ID");
+                  }
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${biometricOn ? "bg-primary" : "bg-muted"}`}
+              >
+                <motion.div
+                  animate={{ x: biometricOn ? 20 : 2 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                />
+              </button>
+            </div>
+          )}
         </GlassCard>
 
         {/* Storage */}
