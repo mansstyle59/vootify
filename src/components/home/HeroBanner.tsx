@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import { useRef, useMemo, useState } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, Settings, User, Sparkles } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
