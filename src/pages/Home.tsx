@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
-import { HorizontalScroll, CoverSkeleton } from "@/components/home/HorizontalScroll";
+import { ContentStrip, StripSkeleton } from "@/components/home/ContentStrip";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import {
   useRecentlyAdded,
