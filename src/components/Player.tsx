@@ -75,7 +75,7 @@ export function MiniPlayer() {
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const errorRetryCountRef = useRef(0);
 
-  const audio = getGlobalAudio();
+  const audio = audioManager.audio;
 
   const showResumeBanner = useCallback((msg: string) => {
     if (resumeBannerTimer.current) clearTimeout(resumeBannerTimer.current);
@@ -401,20 +401,19 @@ export function MiniPlayer() {
     }
   }, [currentSong?.id, queueLen]);
 
-  // ── Media Session metadata ──
+  // ── Media Session metadata — use AudioManager ──
   useEffect(() => {
-    if (!currentSong || !("mediaSession" in navigator)) return;
+    if (!currentSong) return;
     const title = isLive && radioMeta?.title ? radioMeta.title : currentSong.title;
     const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
     const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
 
-    navigator.mediaSession.metadata = new MediaMetadata({
+    audioManager.updateMetadata({
       title,
       artist,
-      album: currentSong.album || (isLive ? "Radio" : ""),
-      artwork: artwork
-        ? [{ src: artwork, sizes: "512x512", type: "image/png" }]
-        : [],
+      cover: artwork,
+      album: currentSong.album || (isLive ? "Radio" : undefined),
+      isLive,
     });
   }, [currentSong?.id, currentSong?.title, isLive, radioMeta?.title, radioMeta?.artist, radioMeta?.coverUrl]);
 
