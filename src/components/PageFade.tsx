@@ -17,7 +17,8 @@ export function PageFade({ children }: { children: ReactNode }) {
 
     // Scroll to top on every navigation — native app feel
     window.scrollTo({ top: 0, left: 0 });
-    ref.current?.parentElement?.scrollTo?.({ top: 0, left: 0 });
+    const scrollContainer = document.getElementById("main-scroll");
+    if (scrollContainer) scrollContainer.scrollTop = 0;
 
     const el = ref.current;
     if (!el) return;

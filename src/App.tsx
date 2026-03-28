@@ -139,7 +139,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <div className="flex-1 scrollbar-hide overflow-y-auto">
+      <div id="main-scroll" className="flex-1 scrollbar-hide overflow-y-auto">
         <AnimatedRoutes />
       </div>
       {/* NotificationBell moved into HeroBanner */}
