@@ -340,6 +340,36 @@ const ProfilePage = () => {
             <div className="space-y-4 pt-3 border-t border-border/50">
               <p className="text-sm font-semibold text-foreground">Égaliseur</p>
 
+              {/* Presets */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "Normal", emoji: "🎵", bass: 0, treble: 0 },
+                  { label: "Bass Boost", emoji: "🔊", bass: 10, treble: -2 },
+                  { label: "Pop", emoji: "🎤", bass: 2, treble: 4 },
+                  { label: "Rock", emoji: "🎸", bass: 5, treble: 3 },
+                  { label: "Jazz", emoji: "🎷", bass: 4, treble: -3 },
+                  { label: "Classique", emoji: "🎻", bass: -2, treble: 6 },
+                  { label: "Voix", emoji: "🎙️", bass: -4, treble: 5 },
+                  { label: "Électro", emoji: "🎧", bass: 8, treble: 5 },
+                ].map((preset) => {
+                  const isActive = bassBoost === preset.bass && trebleBoost === preset.treble;
+                  return (
+                    <button
+                      key={preset.label}
+                      onClick={() => { setBassBoost(preset.bass); setTrebleBoost(preset.treble); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 border ${
+                        isActive
+                          ? "bg-primary/20 text-primary border-primary/30"
+                          : "bg-secondary/60 text-muted-foreground border-border/50 hover:bg-secondary"
+                      }`}
+                    >
+                      <span>{preset.emoji}</span>
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium text-foreground">Basses</p>
@@ -379,15 +409,6 @@ const ProfilePage = () => {
                   <span>+12</span>
                 </div>
               </div>
-
-              {(bassBoost !== 0 || trebleBoost !== 0) && (
-                <button
-                  onClick={() => { setBassBoost(0); setTrebleBoost(0); }}
-                  className="text-xs text-primary font-medium hover:underline"
-                >
-                  Réinitialiser l'égaliseur
-                </button>
-              )}
             </div>
 
             {/* SW & Offline cache indicators */}
