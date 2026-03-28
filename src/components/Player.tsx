@@ -1756,7 +1756,50 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               </motion.button>
             </div>
 
-            {/* EQ Panel */}
+            {/* Bottom actions — minimal row */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => { if (isCached) remove(currentSong.id); else if (!isDownloading) download(currentSong); }}
+                className={`relative p-2 active:scale-90 transition-transform ${isCached ? "text-primary" : isDownloading ? "text-primary/60" : "text-white/30"}`}
+              >
+                {isDownloading ? (
+                  <div className="relative">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary tabular-nums">{dlProgress}%</span>
+                  </div>
+                ) : isCached ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  <Download className="w-5 h-5" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowEQ(!showEQ)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase transition-all active:scale-95 ${
+                  showEQ || activePreset !== "Normal"
+                    ? "bg-primary/20 text-primary border border-primary/30"
+                    : "text-white/30 border border-white/10"
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                EQ
+              </button>
+
+              <button
+                onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase transition-all active:scale-95 ${
+                  crossfadeEnabled
+                    ? "bg-primary/20 text-primary border border-primary/30"
+                    : "text-white/30 border border-white/10"
+                }`}
+              >
+                <Disc3 className={`w-3.5 h-3.5 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
+                Auto mix
+              </button>
+            </div>
+
+            {/* EQ Panel — expands below actions */}
             <AnimatePresence>
               {showEQ && (
                 <motion.div
@@ -1764,7 +1807,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden mb-4"
+                  className="overflow-hidden mt-3"
                 >
                   <div className="rounded-2xl p-4" style={{ background: "hsl(0 0% 100% / 0.06)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-3">Égaliseur</p>
@@ -1819,49 +1862,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Bottom actions — minimal row */}
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => { if (isCached) remove(currentSong.id); else if (!isDownloading) download(currentSong); }}
-                className={`relative p-2 active:scale-90 transition-transform ${isCached ? "text-primary" : isDownloading ? "text-primary/60" : "text-white/30"}`}
-              >
-                {isDownloading ? (
-                  <div className="relative">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary tabular-nums">{dlProgress}%</span>
-                  </div>
-                ) : isCached ? (
-                  <Check className="w-5 h-5" />
-                ) : (
-                  <Download className="w-5 h-5" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setShowEQ(!showEQ)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase transition-all active:scale-95 ${
-                  showEQ || activePreset !== "Normal"
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "text-white/30 border border-white/10"
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                EQ
-              </button>
-
-              <button
-                onClick={() => setCrossfadeEnabled(!crossfadeEnabled)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase transition-all active:scale-95 ${
-                  crossfadeEnabled
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "text-white/30 border border-white/10"
-                }`}
-              >
-                <Disc3 className={`w-3.5 h-3.5 ${crossfadeEnabled ? "animate-spin" : ""}`} style={crossfadeEnabled ? { animationDuration: "3s" } : {}} />
-                Auto mix
-              </button>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
