@@ -161,13 +161,7 @@ const HomePage = () => {
   }, [homeConfig]);
 
   const {
-    editMode,
-    setEditMode,
     sections: userSections,
-    toggleVisibility,
-    reorder,
-    resetLayout,
-    hasCustomLayout,
   } = useUserHomeLayout(adminSections);
 
   const visibleSections = useMemo(() => {
