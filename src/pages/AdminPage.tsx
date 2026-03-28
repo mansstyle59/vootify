@@ -2105,6 +2105,7 @@ function RequestsTab() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [planOverrides, setPlanOverrides] = useState<Record<string, string>>({});
 
   const loadRequests = async () => {
     const { data } = await supabase
@@ -2120,6 +2121,7 @@ function RequestsTab() {
   const handleAction = async (id: string, status: "approved" | "rejected", request?: any) => {
     setActionLoading(id);
     try {
+      const finalPlan = planOverrides[id] || request?.requested_plan || "premium";
       await supabase
         .from("access_requests")
         .update({ status, resolved_at: new Date().toISOString() })
@@ -2145,12 +2147,12 @@ function RequestsTab() {
         if (existingSub) {
           await supabase
             .from("subscriptions")
-            .update({ plan: request.requested_plan || "premium", status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
+            .update({ plan: finalPlan, status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
             .eq("user_id", request.user_id);
         } else {
           await supabase.from("subscriptions").insert({
             user_id: request.user_id,
-            plan: request.requested_plan || "premium",
+            plan: finalPlan,
             status: "active",
             starts_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),
