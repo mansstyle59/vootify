@@ -216,7 +216,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-4" style={{ minHeight: "clamp(320px, 55vh, 480px)" }}>
+    <div ref={ref} className="relative overflow-hidden mb-4">
       {/* Parallax background layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
         {bgImage ? (
@@ -383,11 +383,11 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
 
       {/* Main content */}
       <motion.div
-        style={{ opacity, y: contentY, minHeight: "clamp(320px, 55vh, 480px)" }}
-        className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-8 flex flex-col justify-end gpu-layer"
+        style={{ opacity, y: contentY }}
+        className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+4rem)] pb-6 flex flex-col gpu-layer"
       >
         {/* Badge + sound wave */}
-        <div className="flex items-center gap-3 mb-4 mt-auto">
+        <div className="flex items-center gap-3 mb-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
