@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, animate } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValueEvent, animate } from "framer-motion";
 import { useRef, useEffect, useState, useMemo } from "react";
 import { LogIn, LogOut, Headphones, Music, Radio, ListMusic, Shuffle, Heart, Search } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -209,6 +209,8 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 50]);
   const orbY = useTransform(scrollYProgress, [0, 1], [0, -40]);
   const blur = useTransform(scrollYProgress, [0, 0.6], [0, 12]);
+  const [blurPx, setBlurPx] = useState(0);
+  useMotionValueEvent(blur, "change", (v) => setBlurPx(v));
 
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
@@ -298,13 +300,15 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
       </motion.div>
 
       {/* Progressive blur overlay on scroll */}
-      <motion.div
-        className="absolute inset-0 z-[1] pointer-events-none gpu-layer"
-        style={{
-          backdropFilter: useTransform(blur, (v) => `blur(${v}px)`),
-          WebkitBackdropFilter: useTransform(blur, (v) => `blur(${v}px)`),
-        }}
-      />
+      {blurPx > 0.1 && (
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none gpu-layer"
+          style={{
+            backdropFilter: `blur(${blurPx}px)`,
+            WebkitBackdropFilter: `blur(${blurPx}px)`,
+          }}
+        />
+      )}
 
       {/* Bottom gradient fade */}
       <div
