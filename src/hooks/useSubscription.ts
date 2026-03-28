@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Subscription {
@@ -14,6 +14,27 @@ export function useSubscription(userId: string | null) {
   const [loading, setLoading] = useState(true);
   const [isActive, setIsActive] = useState(false);
 
+  const fetchSub = useCallback(async (uid: string) => {
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", uid)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setSubscription(data);
+      const active = !data.expires_at || new Date(data.expires_at) > new Date();
+      setIsActive(active);
+    } else {
+      setSubscription(null);
+      setIsActive(false);
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     if (!userId) {
       setSubscription(null);
@@ -24,32 +45,8 @@ export function useSubscription(userId: string | null) {
 
     let mounted = true;
 
-    const fetch = async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!mounted) return;
-
-      if (data) {
-        setSubscription(data);
-        // Active if no expiry or expiry in the future
-        const active = !data.expires_at || new Date(data.expires_at) > new Date();
-        setIsActive(active);
-      } else {
-        setSubscription(null);
-        setIsActive(false);
-      }
-      setLoading(false);
-    };
-
-    fetch();
+    setLoading(true);
+    fetchSub(userId).then(() => { if (!mounted) return; });
 
     // Listen for realtime changes
     const channel = supabase
@@ -59,14 +56,23 @@ export function useSubscription(userId: string | null) {
         schema: "public",
         table: "subscriptions",
         filter: `user_id=eq.${userId}`,
-      }, () => { fetch(); })
+      }, () => { if (mounted) fetchSub(userId); })
       .subscribe();
+
+    // Also re-check on visibility change (PWA reopen)
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && mounted) {
+        fetchSub(userId);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       mounted = false;
+      document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, fetchSub]);
 
   return { subscription, loading, isActive };
 }
