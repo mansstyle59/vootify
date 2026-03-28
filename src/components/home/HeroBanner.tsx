@@ -95,30 +95,40 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
 
         {/* Profile */}
         {user ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="outline-none active:scale-95 transition-transform">
-                  <Avatar className="w-8 h-8 ring-2 ring-primary/20">
+                <button
+                  className="relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full outline-none active:scale-95 transition-all duration-150"
+                  style={{
+                    background: "hsl(var(--foreground) / 0.06)",
+                    backdropFilter: "blur(16px)",
+                  }}
+                >
+                  <Avatar className="w-7 h-7 ring-[1.5px] ring-primary/25">
                     <AvatarImage src={avatarUrl} alt={displayName || "User"} />
                     <AvatarFallback
-                      className="text-[11px] font-bold"
+                      className="text-[10px] font-bold"
                       style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
                     >
                       {(displayName || "U").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
+                  <span className="text-[11px] font-semibold text-foreground truncate max-w-[72px]">
+                    {displayName}
+                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-52 rounded-2xl p-1.5 border-border/40"
+                className="w-52 rounded-2xl p-1.5"
                 sideOffset={8}
                 style={{
                   background: "hsl(var(--card) / 0.92)",
                   backdropFilter: "blur(40px) saturate(1.8)",
                   WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                  border: "1px solid hsl(var(--border) / 0.1)",
                   boxShadow: "0 20px 60px hsl(0 0% 0% / 0.5)",
                 }}
               >
@@ -134,16 +144,16 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                     <p className="text-[10px] text-muted-foreground/60 truncate">{user.email}</p>
                   </div>
                 </div>
-                <DropdownMenuSeparator className="bg-border/20 my-1" />
+                <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.08)" }} />
                 <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-xl gap-2.5 py-2 px-2.5 cursor-pointer">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.1)" }}><User className="w-3 h-3 text-primary" /></div>
                   <span className="font-medium text-[12px]">Mon profil</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-2.5 py-2 px-2.5 cursor-pointer">
-                  <div className="w-6 h-6 rounded-lg bg-secondary flex items-center justify-center"><Settings className="w-3 h-3 text-muted-foreground" /></div>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}><Settings className="w-3 h-3 text-muted-foreground" /></div>
                   <span className="font-medium text-[12px]">Paramètres audio</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border/20 my-1" />
+                <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.08)" }} />
                 <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-2.5 py-2 px-2.5 cursor-pointer text-destructive focus:text-destructive">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--destructive) / 0.1)" }}><LogOut className="w-3 h-3" /></div>
                   <span className="font-medium text-[12px]">Déconnexion</span>
