@@ -62,24 +62,31 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {items.map((item) => (
-          <RouterNavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/"}
-            onMouseEnter={() => prefetchRoute(item.to)}
-            onTouchStart={() => prefetchRoute(item.to)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              }`
-            }
-          >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
-          </RouterNavLink>
+        {items.map((item) => {
+          const restricted = !checkRoute(item.to);
+          return (
+            <RouterNavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              onMouseEnter={() => prefetchRoute(item.to)}
+              onTouchStart={() => prefetchRoute(item.to)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  restricted
+                    ? "text-muted-foreground/40 hover:text-muted-foreground/50"
+                    : isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                }`
+              }
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="flex-1">{item.label}</span>
+              {restricted && <Lock className="w-3.5 h-3.5 text-muted-foreground/30" />}
+            </RouterNavLink>
+          );
+        })}
         ))}
       </nav>
 
