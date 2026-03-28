@@ -277,7 +277,7 @@ const HomePage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 pt-2 px-1">
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
