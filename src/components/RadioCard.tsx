@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useCallback } from "react";
-import { Pencil, Trash2, Play, Pause } from "lucide-react";
+import { Pencil, Trash2, Play, Pause, Radio } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 
 interface RadioCardStation {
@@ -39,11 +39,9 @@ export const RadioCard = memo(function RadioCard({
 
   const handleClick = useCallback(() => {
     if (showActions) {
-      // Second tap while actions visible → play
       setShowActions(false);
       onPlay?.(station);
     } else {
-      // First tap → reveal actions (on mobile); desktop click → play directly
       if ("ontouchstart" in window) {
         revealActions();
       } else {
@@ -56,56 +54,79 @@ export const RadioCard = memo(function RadioCard({
 
   return (
     <div
-      className="group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-shadow duration-200 hover:shadow-lg active:scale-[0.97] transition-transform"
+      className="group relative cursor-pointer active:scale-[0.97] transition-transform duration-150"
       onClick={handleClick}
     >
-      {/* Image / Logo */}
+      {/* Image */}
       <div
-        className={`relative aspect-square rounded-xl overflow-hidden ring-[1.5px] transition-all duration-300 ${
-          isActive
-            ? "ring-primary shadow-md shadow-primary/20"
-            : "ring-border/20"
-        }`}
+        className="relative aspect-square rounded-xl overflow-hidden mb-2"
+        style={{
+          boxShadow: isActive
+            ? "0 4px 24px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.35)"
+            : "0 2px 8px hsl(0 0% 0% / 0.08)",
+        }}
       >
-        <LazyImage
-          src={station.image}
-          alt={station.name}
-          className="w-full h-full object-cover"
-          fallback
-          wrapperClassName="w-full h-full"
-        />
+        {station.image ? (
+          <LazyImage
+            src={station.image}
+            alt={station.name}
+            className="w-full h-full object-cover"
+            fallback
+            wrapperClassName="w-full h-full"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+            <Radio className="w-8 h-8 text-muted-foreground/15" />
+          </div>
+        )}
 
-        {/* Overlay on hover / tap */}
+        {/* Overlay */}
         <div
-          className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          className={`absolute inset-0 transition-opacity duration-200 ${
             actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
+          style={{ background: "hsl(0 0% 0% / 0.35)" }}
         />
 
-        {/* Play/Pause center button */}
+        {/* Play button — Apple Music style bottom-right */}
         <div
-          className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ${
-            actionsVisible
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
+          className={`absolute inset-0 flex items-end justify-end p-2 transition-opacity duration-200 ${
+            actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
         >
           <div
-            className="w-11 h-11 rounded-full bg-primary flex items-center justify-center shadow-xl"
-            style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.45)" }}
+            className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            style={{
+              background: "hsl(var(--primary))",
+              boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)",
+            }}
           >
             {isActive && isPlaying ? (
-              <Pause className="w-5 h-5 text-primary-foreground fill-current" />
+              <Pause className="w-3.5 h-3.5 text-primary-foreground fill-current" />
             ) : (
-              <Play className="w-5 h-5 text-primary-foreground fill-current ml-0.5" />
+              <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
             )}
           </div>
         </div>
 
+        {/* Live indicator */}
+        {isActive && isPlaying && (
+          <div
+            className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{
+              background: "hsl(var(--primary) / 0.85)",
+              boxShadow: "0 2px 8px hsl(var(--primary) / 0.3)",
+            }}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse" />
+            <span className="text-[9px] font-bold text-primary-foreground uppercase tracking-wider">Live</span>
+          </div>
+        )}
+
         {/* Action buttons (edit + delete) */}
         {(onEdit || onDelete) && (
           <div
-            className={`absolute top-2 right-2 flex gap-2 transition-all duration-200 ${
+            className={`absolute top-2 right-2 flex gap-1.5 transition-all duration-200 ${
               actionsVisible
                 ? "opacity-100 scale-100"
                 : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
@@ -118,9 +139,10 @@ export const RadioCard = memo(function RadioCard({
                   setShowActions(false);
                   onEdit(station);
                 }}
-                className="bg-black/70 hover:bg-black text-white p-2 rounded-full transition-colors"
+                className="p-1.5 rounded-full text-white active:scale-90 transition-transform"
+                style={{ background: "hsl(0 0% 0% / 0.6)", backdropFilter: "blur(8px)" }}
               >
-                <Pencil size={16} />
+                <Pencil className="w-3.5 h-3.5" />
               </button>
             )}
             {onDelete && (
@@ -130,9 +152,10 @@ export const RadioCard = memo(function RadioCard({
                   setShowActions(false);
                   onDelete(station.id);
                 }}
-                className="bg-black/70 hover:bg-destructive text-white p-2 rounded-full transition-colors"
+                className="p-1.5 rounded-full text-white active:scale-90 transition-transform"
+                style={{ background: "hsl(var(--destructive) / 0.7)", backdropFilter: "blur(8px)" }}
               >
-                <Trash2 size={16} />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -140,18 +163,12 @@ export const RadioCard = memo(function RadioCard({
       </div>
 
       {/* Info */}
-      <div className="mt-3">
-        <h3
-          className={`font-semibold text-sm truncate ${
-            isActive ? "text-primary" : "text-foreground"
-          }`}
-        >
-          {station.name}
-        </h3>
-        <p className="text-muted-foreground text-xs truncate mt-0.5">
-          {station.genre || "Radio"}
-        </p>
-      </div>
+      <h3 className={`text-[13px] font-semibold leading-tight line-clamp-1 ${isActive ? "text-primary" : "text-foreground"}`}>
+        {station.name}
+      </h3>
+      <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">
+        {station.genre || "Radio"}
+      </p>
     </div>
   );
 });
