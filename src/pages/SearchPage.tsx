@@ -27,6 +27,7 @@ import {
   ListMusic,
   Plus,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -492,6 +493,12 @@ const SearchPage = () => {
                   Bibliothèque locale
                 </p>
               </div>
+              <button
+                onClick={() => { refetchSongs(); toast.success("Recherche actualisée"); }}
+                className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              >
+                <RefreshCw className="w-4.5 h-4.5" />
+              </button>
             </div>
           </div>
         </div>
