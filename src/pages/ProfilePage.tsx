@@ -289,128 +289,23 @@ const ProfilePage = () => {
           </button>
 
 
-          {/* Audio Settings */}
-          <motion.div
+          {/* Audio Settings link */}
+          <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-4 p-5 rounded-2xl bg-secondary/50 border border-border space-y-5"
+            onClick={() => navigate("/audio-settings")}
+            className="mt-4 w-full p-4 rounded-2xl bg-secondary/50 border border-border flex items-center gap-3 hover:bg-secondary/70 transition-colors active:scale-[0.98]"
           >
-            <div className="flex items-center gap-3 mb-1">
-              <Music className="w-5 h-5 text-primary" />
-              <h3 className="text-base font-semibold text-foreground">Lecture audio</h3>
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <Headphones className="w-5 h-5 text-primary" />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">Crossfade</p>
-                <p className="text-xs text-muted-foreground">Transition fluide entre les pistes</p>
-              </div>
-              <Switch
-                checked={crossfadeEnabled}
-                onCheckedChange={setCrossfadeEnabled}
-              />
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-semibold text-foreground">Paramètres audio</p>
+              <p className="text-[11px] text-muted-foreground">Égaliseur, crossfade, presets</p>
             </div>
-
-            {crossfadeEnabled && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">Durée du crossfade</p>
-                  <span className="text-sm font-mono text-primary">{crossfadeDuration}s</span>
-                </div>
-                <Slider
-                  value={[crossfadeDuration]}
-                  onValueChange={([val]) => setCrossfadeDuration(val)}
-                  min={1}
-                  max={12}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-                  <span>1s</span>
-                  <span>12s</span>
-                </div>
-              </div>
-            )}
-
-
-            {/* Equalizer */}
-            <div className="space-y-4 pt-3 border-t border-border/50">
-              <p className="text-sm font-semibold text-foreground">Égaliseur</p>
-
-              {/* Presets */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "Normal", emoji: "🎵", bass: 0, treble: 0 },
-                  { label: "Bass Boost", emoji: "🔊", bass: 10, treble: -2 },
-                  { label: "Pop", emoji: "🎤", bass: 2, treble: 4 },
-                  { label: "Rock", emoji: "🎸", bass: 5, treble: 3 },
-                  { label: "Jazz", emoji: "🎷", bass: 4, treble: -3 },
-                  { label: "Classique", emoji: "🎻", bass: -2, treble: 6 },
-                  { label: "Voix", emoji: "🎙️", bass: -4, treble: 5 },
-                  { label: "Électro", emoji: "🎧", bass: 8, treble: 5 },
-                ].map((preset) => {
-                  const active = bassBoost === preset.bass && trebleBoost === preset.treble;
-                  return (
-                    <button
-                      key={preset.label}
-                      onClick={() => { setBassBoost(preset.bass); setTrebleBoost(preset.treble); }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 border ${
-                        active
-                          ? "bg-primary/20 text-primary border-primary/30"
-                          : "bg-secondary/60 text-muted-foreground border-border/50 hover:bg-secondary"
-                      }`}
-                    >
-                      <span>{preset.emoji}</span>
-                      {preset.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">Basses</p>
-                  <span className="text-sm font-mono text-primary">{bassBoost > 0 ? "+" : ""}{bassBoost} dB</span>
-                </div>
-                <Slider
-                  value={[bassBoost]}
-                  onValueChange={([val]) => setBassBoost(val)}
-                  min={-12}
-                  max={12}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-                  <span>−12</span>
-                  <span>0</span>
-                  <span>+12</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-foreground">Aigus</p>
-                  <span className="text-sm font-mono text-primary">{trebleBoost > 0 ? "+" : ""}{trebleBoost} dB</span>
-                </div>
-                <Slider
-                  value={[trebleBoost]}
-                  onValueChange={([val]) => setTrebleBoost(val)}
-                  min={-12}
-                  max={12}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-                  <span>−12</span>
-                  <span>0</span>
-                  <span>+12</span>
-                </div>
-              </div>
-            </div>
-
-
-          </motion.div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
+          </motion.button>
 
           {/* Storage section - separate card */}
           <motion.div
