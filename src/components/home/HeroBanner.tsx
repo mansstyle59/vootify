@@ -306,42 +306,46 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
       >
          {user ? (
           <div className="flex items-center gap-2">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/profile")}
-              className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all duration-200"
-              style={{
-                background: "hsl(var(--card) / 0.6)",
-                backdropFilter: "blur(20px) saturate(1.8)",
-                WebkitBackdropFilter: "blur(20px) saturate(1.8)",
-                border: "1px solid hsl(var(--border) / 0.4)",
-                boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
-              }}
-            >
-              <Avatar className="w-7 h-7 ring-2 ring-primary/25">
-                <AvatarImage src={avatarUrl} alt={displayName || "User"} />
-                <AvatarFallback className="text-[10px] font-bold bg-primary/15 text-primary">
-                  {(displayName || "U").slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-bold text-foreground truncate max-w-[80px]">
-                {displayName}
-              </span>
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => signOut()}
-              className="flex items-center justify-center w-8 h-8 rounded-full transition-all"
-              style={{
-                background: "hsl(var(--card) / 0.6)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                border: "1px solid hsl(var(--border) / 0.4)",
-              }}
-              title="Déconnexion"
-            >
-              <LogOut className="w-3.5 h-3.5 text-muted-foreground" />
-            </motion.button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all duration-200 outline-none"
+                  style={{
+                    background: "hsl(var(--card) / 0.6)",
+                    backdropFilter: "blur(20px) saturate(1.8)",
+                    WebkitBackdropFilter: "blur(20px) saturate(1.8)",
+                    border: "1px solid hsl(var(--border) / 0.4)",
+                    boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
+                  }}
+                >
+                  <Avatar className="w-7 h-7 ring-2 ring-primary/25">
+                    <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+                    <AvatarFallback className="text-[10px] font-bold bg-primary/15 text-primary">
+                      {(displayName || "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-bold text-foreground truncate max-w-[80px]">
+                    {displayName}
+                  </span>
+                </motion.button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5" sideOffset={8}>
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg gap-2.5 py-2.5 cursor-pointer">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="font-medium">Mon profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg gap-2.5 py-2.5 cursor-pointer">
+                  <Settings className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Paramètres audio</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()} className="rounded-lg gap-2.5 py-2.5 cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="w-4 h-4" />
+                  <span className="font-medium">Déconnexion</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <NotificationBell />
           </div>
         ) : (
