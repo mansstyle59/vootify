@@ -218,7 +218,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pb-32 md:pb-40 max-w-7xl mx-auto">
+    <div className="pb-20 max-w-7xl mx-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {/* QuickAccess playlists removed */}

@@ -180,7 +180,7 @@ const ArtistPage = () => {
   };
 
   return (
-    <div className="pb-40 animate-fade-in">
+    <div className="pb-20 animate-fade-in">
       {/* Fixed header */}
       <motion.div
         style={{ opacity: headerOpacity }}

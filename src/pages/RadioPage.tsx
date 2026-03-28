@@ -583,7 +583,7 @@ const RadioPage = () => {
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto animate-fade-in">
+    <div className="pb-20 max-w-7xl mx-auto animate-fade-in">
       {/* ── Header ── */}
       <div
         className="sticky top-0 z-20"

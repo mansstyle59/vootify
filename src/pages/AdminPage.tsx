@@ -54,7 +54,7 @@ const AdminPage = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-40 animate-fade-in">
+    <div className="min-h-screen pb-20 animate-fade-in">
       <div className="relative overflow-hidden">
         {/* Decorative gradient orbs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">

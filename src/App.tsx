@@ -88,6 +88,7 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
 
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
+  const currentSong = usePlayerStore((s) => s.currentSong);
   const loadUserData = usePlayerStore((s) => s.loadUserData);
   const setUserId = usePlayerStore((s) => s.setUserId);
   const { user, loading } = useAuth();
@@ -140,7 +141,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <div id="main-scroll" className="flex-1 scrollbar-hide overflow-y-auto">
+      <div id="main-scroll" className="flex-1 scrollbar-hide overflow-y-auto" style={{ paddingBottom: currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
         <AnimatedRoutes />
       </div>
       {/* NotificationBell moved into HeroBanner */}

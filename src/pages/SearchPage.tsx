@@ -385,7 +385,7 @@ const SearchPage = () => {
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto">
+    <div className="pb-20 max-w-7xl mx-auto">
       {/* ── Header ── */}
       <div className="px-5 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center justify-between mb-4">

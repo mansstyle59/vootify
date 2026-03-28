@@ -240,7 +240,7 @@ const ProfilePage = () => {
   const badge = planBadge[plan];
 
   return (
-    <div className="min-h-screen pb-40">
+    <div className="min-h-screen pb-20">
       {/* Ambient background */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div
