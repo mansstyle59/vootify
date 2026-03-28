@@ -192,12 +192,25 @@ const HomePage = () => {
     top_artists: { songs: undefined, loading: false },
   }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
-  const visibleSections = useMemo(() => {
+  // User-level layout customization (localStorage)
+  const adminSections = useMemo(() => {
     if (!homeConfig) return [];
-    return [...homeConfig.sections]
-      .filter((s) => s.visible)
-      .sort((a, b) => a.order - b.order);
+    return [...homeConfig.sections].sort((a, b) => a.order - b.order);
   }, [homeConfig]);
+
+  const {
+    editMode,
+    setEditMode,
+    sections: userSections,
+    toggleVisibility,
+    reorder,
+    resetLayout,
+    hasCustomLayout,
+  } = useUserHomeLayout(adminSections);
+
+  const visibleSections = useMemo(() => {
+    return userSections.filter((s) => s.visible);
+  }, [userSections]);
 
   const getCustomSectionSongs = useCallback((sectionId: string): Song[] => {
     if (!homeConfig?.customSections || !customSongsData) return [];
