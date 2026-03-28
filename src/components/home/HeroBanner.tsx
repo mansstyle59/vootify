@@ -489,6 +489,40 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.9} />}
           </motion.div>
         )}
+
+        {/* Personalized shortcuts */}
+        {shortcuts && shortcuts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.4 }}
+            className="grid grid-cols-2 gap-1.5 mt-2.5"
+          >
+            {shortcuts.slice(0, 4).map((s) => (
+              <motion.button
+                key={`${s.type}-${s.id}`}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => navigate(s.route)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left overflow-hidden"
+                style={{
+                  background: "hsl(var(--card) / 0.5)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid hsl(var(--border) / 0.25)",
+                }}
+              >
+                {s.cover ? (
+                  <img src={s.cover} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                    {s.type === "playlist" ? <ListMusic className="w-3.5 h-3.5 text-primary" /> : s.type === "album" ? <Music className="w-3.5 h-3.5 text-primary" /> : <Headphones className="w-3.5 h-3.5 text-primary" />}
+                  </div>
+                )}
+                <span className="text-[10px] font-semibold text-foreground truncate">{s.label}</span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );
