@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { PageFade } from "@/components/PageFade";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import IosPwaInstallBanner from "@/components/IosPwaInstallBanner";
 import { AuthGate } from "@/components/AuthGate";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { RouteGuard } from "@/components/RouteGuard";
