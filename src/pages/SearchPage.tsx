@@ -840,12 +840,13 @@ const SearchPage = () => {
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-semibold">{artistFilter}</span></>}
                     </p>
-                    <VirtualSongList
-                      songs={filteredResults}
-                      onClickSong={(song) => handlePlayTrack(song, filteredResults)}
-                      className="rounded-2xl overflow-hidden"
-                      style={{ ...glassCard }}
-                    />
+                    <div className="rounded-2xl overflow-hidden" style={{ ...glassCard }}>
+                      <VirtualSongList
+                        songs={filteredResults}
+                        onClickSong={(song) => handlePlayTrack(song, filteredResults)}
+                        className=""
+                      />
+                    </div>
                   </>
                 ) : (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16">
