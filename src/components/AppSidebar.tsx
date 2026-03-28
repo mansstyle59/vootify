@@ -1,10 +1,11 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Search, Library, Radio, PlusCircle, LogOut, Shield } from "lucide-react";
+import { Home, Search, Library, Radio, PlusCircle, LogOut, Shield, Lock } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Badge } from "@/components/ui/badge";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useCallback } from "react";
 
@@ -44,6 +45,7 @@ function prefetchRoute(to: string) {
 export function AppSidebar() {
   const { isAdmin } = useAdminAuth();
   const { user, signOut } = useAuth();
+  const { checkRoute } = useSubscriptionAccess();
   const navigate = useNavigate();
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
