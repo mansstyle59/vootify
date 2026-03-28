@@ -312,7 +312,7 @@ export function MiniPlayer() {
             audio.src = "";
             audio.src = src;
             audio.load();
-            audio.play().catch(console.error);
+            audio.play().then(() => showResumeBanner("Reconnexion réussie ▶")).catch(console.error);
           }
         }, 3000);
       }
@@ -1104,6 +1104,7 @@ export function MiniPlayer() {
             </div>
           </div>
         </motion.div>
+        <ResumeBanner message={resumeBanner} />
       </>
     );
   }
