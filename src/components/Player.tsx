@@ -1206,12 +1206,12 @@ export function MiniPlayer() {
           if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
         }}
         onPause={() => {
-          const audio = radioAudioRef.current;
+          const a = audioRef.current;
           setTimeout(() => {
-            if (audio?.paused && usePlayerStore.getState().isPlaying) {
+            if (a?.paused && usePlayerStore.getState().isPlaying) {
               usePlayerStore.setState({ isPlaying: false });
             }
-            if ("mediaSession" in navigator && audio?.paused) {
+            if ("mediaSession" in navigator && a?.paused) {
               navigator.mediaSession.playbackState = "paused";
             }
           }, 150);
