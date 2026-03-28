@@ -78,11 +78,13 @@ function PlanCard({
   index,
   isCurrent,
   onUpgrade,
+  priceData,
 }: {
   plan: (typeof plans)[0];
   index: number;
   isCurrent: boolean;
   onUpgrade: () => void;
+  priceData?: { price: string; period: string };
 }) {
   const Icon = plan.icon;
   return (
