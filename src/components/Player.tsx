@@ -1206,8 +1206,15 @@ export function MiniPlayer() {
           if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
         }}
         onPause={() => {
-          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
-          if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
+          const audio = radioAudioRef.current;
+          setTimeout(() => {
+            if (audio?.paused && usePlayerStore.getState().isPlaying) {
+              usePlayerStore.setState({ isPlaying: false });
+            }
+            if ("mediaSession" in navigator && audio?.paused) {
+              navigator.mediaSession.playbackState = "paused";
+            }
+          }, 150);
         }}
         preload="auto"
         playsInline
