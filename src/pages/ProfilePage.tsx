@@ -8,10 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
-  HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Sparkles
+  HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Sparkles, Fingerprint
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  disableBiometric,
+} from "@/lib/biometricAuth";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
