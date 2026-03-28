@@ -8,9 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Music, Trash2, HardDrive, Database, Crown } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, Check, LogOut, Shield, Trash2, HardDrive, Database, Crown, Headphones, ChevronRight } from "lucide-react";
+
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
