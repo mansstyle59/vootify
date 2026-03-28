@@ -757,7 +757,7 @@ const LibraryPage = () => {
                         value={likedSearch}
                         onChange={(e) => setLikedSearch(e.target.value)}
                         placeholder="Rechercher dans mes titres..."
-                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {likedSearch && (
                         <button onClick={() => setLikedSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -994,7 +994,7 @@ const LibraryPage = () => {
                         value={albumSearch}
                         onChange={(e) => setAlbumSearch(e.target.value)}
                         placeholder="Rechercher par artiste..."
-                        className="w-full px-3 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full px-3 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {albumSearch && (
                         <button onClick={() => setAlbumSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1116,7 +1116,7 @@ const LibraryPage = () => {
                         value={artistSearch}
                         onChange={(e) => setArtistSearch(e.target.value)}
                         placeholder="Rechercher un artiste..."
-                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {artistSearch && (
                         <button onClick={() => setArtistSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1208,7 +1208,7 @@ const LibraryPage = () => {
                         value={customSearch}
                         onChange={(e) => setCustomSearch(e.target.value)}
                         placeholder="Rechercher un morceau..."
-                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {customSearch && (
                         <button onClick={() => setCustomSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
