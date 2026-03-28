@@ -16,7 +16,7 @@ import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
-import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool } from "@/lib/queuePreloader";
+import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
 
 /* ── Shared glass styles — enhanced glassmorphism ── */
 const glassStyle = {
