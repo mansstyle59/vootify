@@ -50,6 +50,8 @@ const ProfilePage = () => {
   const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
   const [offlineCacheSize, setOfflineCacheSize] = useState<number | null>(null);
   const [offlineCount, setOfflineCount] = useState(0);
+  const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
+  const biometricSupported = isBiometricAvailable();
 
   useEffect(() => {
     if ("caches" in window) {
