@@ -345,20 +345,23 @@ export function MiniPlayer() {
       const audio = audioRef.current;
       if (!audio) return;
       const state = usePlayerStore.getState();
-      if (state.isPlaying && audio.paused && document.visibilityState === "visible") {
-        // Interrupted while visible (phone call, Siri) — try immediate resume
+      if (state.isPlaying && audio.paused) {
+        // Audio was paused externally (phone call, Siri, OS interruption)
+        // Try to resume regardless of visibility (lock screen case)
         console.log("[interrupt] Audio paused externally — attempting resume");
         setTimeout(() => {
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
             audio.muted = false;
             audio.play().then(() => {
-              showResumeBanner("Lecture reprise ▶");
+              if (document.visibilityState === "visible") {
+                showResumeBanner("Lecture reprise ▶");
+              }
             }).catch(() => {
               console.warn("[interrupt] Resume failed — user gesture may be needed");
             });
           }
-        }, 500);
+        }, 300);
       }
     };
 
