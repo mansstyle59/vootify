@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { offlineCache } from "@/lib/offlineCache";
 import { useSubscription } from "@/hooks/useSubscription";
+import { normalizePlan, getPlanConfig } from "@/lib/subscriptionPermissions";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
