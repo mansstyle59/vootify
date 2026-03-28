@@ -31,6 +31,37 @@ const glassButtonStyle = {
   border: "1px solid hsl(var(--border) / 0.3)",
 };
 
+/* ── Resume Banner — appears briefly when playback resumes after interruption ── */
+function ResumeBanner({ message }: { message: string | null }) {
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
+          style={{ bottom: "calc(8.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg"
+            style={{
+              background: "hsl(var(--primary) / 0.15)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid hsl(var(--primary) / 0.3)",
+            }}
+          >
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-primary whitespace-nowrap">{message}</span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /* ─────────────────────────────────────────────
    Mini Player — Liquid Glass
    ───────────────────────────────────────────── */
@@ -51,6 +82,14 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
+  const [resumeBanner, setResumeBanner] = useState<string | null>(null);
+  const resumeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showResumeBanner = useCallback((msg: string) => {
+    if (resumeBannerTimer.current) clearTimeout(resumeBannerTimer.current);
+    setResumeBanner(msg);
+    resumeBannerTimer.current = setTimeout(() => setResumeBanner(null), 2500);
+  }, []);
 
   // Web Audio API EQ nodes
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -249,6 +288,7 @@ export function MiniPlayer() {
           a.play().then(() => {
             if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
             console.log("[bg-resume] Resumed successfully");
+            showResumeBanner("Lecture reprise ▶");
           }).catch((e) => {
             console.warn(`[bg-resume] Attempt ${attempt} failed:`, e);
             if (attempt < 3) {
@@ -278,7 +318,9 @@ export function MiniPlayer() {
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
             audio.muted = false;
-            audio.play().catch(() => {
+            audio.play().then(() => {
+              showResumeBanner("Lecture reprise ▶");
+            }).catch(() => {
               console.warn("[interrupt] Resume failed — user gesture may be needed");
             });
           }
@@ -301,7 +343,7 @@ export function MiniPlayer() {
             audio.src = "";
             audio.src = src;
             audio.load();
-            audio.play().catch(console.error);
+            audio.play().then(() => showResumeBanner("Reconnexion réussie ▶")).catch(console.error);
           }
         }, 3000);
       }
@@ -1093,6 +1135,7 @@ export function MiniPlayer() {
             </div>
           </div>
         </motion.div>
+        <ResumeBanner message={resumeBanner} />
       </>
     );
   }
@@ -1205,6 +1248,7 @@ export function MiniPlayer() {
           </div>
         </div>
       </motion.div>
+      <ResumeBanner message={resumeBanner} />
     </>
   );
 }
