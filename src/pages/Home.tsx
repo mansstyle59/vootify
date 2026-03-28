@@ -316,14 +316,7 @@ const HomePage = () => {
                   <StripSkeleton count={6} />
                 ) : (
                   albums?.map((album, i) => (
-                    <CoverCard
-                      key={album.id}
-                      title={album.title}
-                      subtitle={album.artist}
-                      imageUrl={album.cover_url || ""}
-                      index={i}
-                      onClick={() => navigate(`/album/${album.id}`)}
-                    />
+                    <AlbumOverlayCard key={album.id} album={album} index={i} navigate={navigate} />
                   ))
                 )}
               </ContentStrip>
@@ -524,6 +517,63 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
         <p className="text-[9px] text-muted-foreground/50 mt-0.5">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
     </motion.button>
+  );
+}
+
+function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; title: string; artist: string; cover_url: string | null }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imageUrl = album.cover_url || "";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
+      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
+      onClick={() => navigate(`/album/${album.id}`)}
+    >
+      <div
+        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl overflow-hidden mb-2"
+        style={{
+          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), 0 1px 4px hsl(0 0% 0% / 0.08)",
+        }}
+      >
+        {imageUrl ? (
+          <>
+            {!imgLoaded && (
+              <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
+              </div>
+            )}
+            <img
+              src={imageUrl}
+              alt={album.title}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+            />
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+            <Music className="w-10 h-10 text-muted-foreground/20" />
+          </div>
+        )}
+        {/* Bottom gradient overlay with title & artist */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[60%] flex flex-col justify-end p-3"
+          style={{
+            background: "linear-gradient(to top, hsl(0 0% 0% / 0.7) 0%, hsl(0 0% 0% / 0.3) 55%, transparent 100%)",
+          }}
+        >
+          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
+            {album.title}
+          </p>
+          <p className="text-[11px] text-white/60 truncate mt-0.5 drop-shadow-sm">
+            {album.artist}
+          </p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
