@@ -166,6 +166,7 @@ const App = () => {
             <AdminAuthProvider>
               <Sonner />
               <NetworkStatus />
+              <IosPwaInstallBanner />
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
