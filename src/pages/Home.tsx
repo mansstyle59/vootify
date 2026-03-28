@@ -316,14 +316,7 @@ const HomePage = () => {
                   <StripSkeleton count={6} />
                 ) : (
                   albums?.map((album, i) => (
-                    <CoverCard
-                      key={album.id}
-                      title={album.title}
-                      subtitle={album.artist}
-                      imageUrl={album.cover_url || ""}
-                      index={i}
-                      onClick={() => navigate(`/album/${album.id}`)}
-                    />
+                    <AlbumOverlayCard key={album.id} album={album} index={i} navigate={navigate} />
                   ))
                 )}
               </ContentStrip>
