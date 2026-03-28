@@ -33,6 +33,7 @@ export const RadioCard = memo(function RadioCard({
   const revealActions = useCallback(() => {
     clearTimeout(hideTimer.current);
     setShowActions(true);
+    if (navigator.vibrate) navigator.vibrate(10);
     hideTimer.current = setTimeout(() => setShowActions(false), 3000);
   }, []);
 
