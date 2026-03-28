@@ -16,6 +16,7 @@ import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
+import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool } from "@/lib/queuePreloader";
 
 /* ── Shared glass styles — enhanced glassmorphism ── */
 const glassStyle = {
@@ -337,6 +338,11 @@ export function MiniPlayer() {
 
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
+
+      // 1. Check queue preloader for an already-buffered URL
+      const preloadedUrl = getPreloadedUrl(songToPlay.id);
+
+      // 2. Check offline cache
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
 
       if (cachedUrl) {
@@ -345,16 +351,20 @@ export function MiniPlayer() {
           songToPlay = { ...songToPlay, coverUrl: cachedCover };
           usePlayerStore.setState({ currentSong: songToPlay });
         }
-      } else if (!songToPlay.streamUrl) {
+      } else if (!songToPlay.streamUrl && !preloadedUrl) {
         const { toast } = await import("sonner");
         toast.error(`"${songToPlay.title}" n'est pas disponible`);
         setTimeout(() => usePlayerStore.getState().next(), 300);
         return;
       }
 
+      // Priority: cached > preloaded > stream
+      const srcToUse = cachedUrl || preloadedUrl || songToPlay.streamUrl;
       setPlayingFromCache(!!cachedUrl);
-      const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
+
+      // Consume the preloaded buffer (main player takes over)
+      if (preloadedUrl) consumePreloaded(songToPlay.id);
 
       // Use AudioManager to play — syncs media session automatically
       const isLiveTrack = songToPlay.duration === 0;
@@ -381,25 +391,18 @@ export function MiniPlayer() {
     }
   }, [_seekTime]);
 
-  // ── Preload next track for instant transition ──
+   // ── Deep queue preloading for DJ-like transitions ──
   useEffect(() => {
     if (!currentSong || !isPlaying) return;
     const { queue, shuffle } = usePlayerStore.getState();
     if (queue.length <= 1) return;
 
-    const idx = queue.findIndex((s) => s.id === currentSong.id);
-    if (idx === -1) return;
+    // Start deep preloading after 3 seconds of stable playback
+    const timer = setTimeout(() => {
+      updateQueuePreload(currentSong.id, queue, shuffle);
+    }, 3000);
 
-    // Determine next track (non-shuffle only, shuffle is random)
-    if (!shuffle) {
-      const nextIdx = (idx + 1) % queue.length;
-      const nextSong = queue[nextIdx];
-      if (nextSong) {
-        // Preload after 5 seconds of playback
-        const timer = setTimeout(() => preloadNextTrack(nextSong), 5000);
-        return () => clearTimeout(timer);
-      }
-    }
+    return () => clearTimeout(timer);
   }, [currentSong?.id, isPlaying]);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;

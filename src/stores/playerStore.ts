@@ -244,6 +244,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   toggleFullScreen: () => set((s) => ({ fullScreen: !s.fullScreen })),
   closePlayer: () => {
     import("@/lib/audioManager").then(({ audioManager }) => audioManager.stop());
+    import("@/lib/queuePreloader").then(({ clearPreloadPool }) => clearPreloadPool());
     set({ currentSong: null, isPlaying: false, progress: 0, fullScreen: false, queue: [], audioDuration: 0 });
   },
 
