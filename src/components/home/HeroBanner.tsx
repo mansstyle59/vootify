@@ -440,24 +440,6 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         style={{ opacity, y: contentY }}
         className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+4rem)] pb-6 flex flex-col gpu-layer"
       >
-        {/* Greeting */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="text-[26px] md:text-[36px] font-black text-foreground mb-2 leading-[1.1] tracking-tight"
-        >
-          {getGreeting(user ? displayName : null)}{" "}
-          <motion.span
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 12 }}
-            className="inline-block"
-          >
-            {getGreetingEmoji()}
-          </motion.span>
-        </motion.h1>
-
         {/* Daily quote */}
         <motion.p
           initial={{ opacity: 0, y: 12 }}
