@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { genreGroups, genreDefs, defaultGenreColor, buildTagToGroupMap } from "@/lib/genreGroups";
-import { ScrollBlurHeader } from "@/components/ScrollBlurHeader";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
@@ -35,17 +34,15 @@ import type { Song } from "@/data/mockData";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { LazyImage } from "@/components/LazyImage";
 
-/* ── Glass style helpers ── */
+/* ── Minimal style helpers ── */
 const glassCard = {
-  background: "hsl(var(--card) / 0.5)",
-  backdropFilter: "blur(20px) saturate(1.6)",
-  border: "1px solid hsl(var(--border) / 0.12)",
+  background: "hsl(var(--foreground) / 0.03)",
 } as const;
 
 const glassCardStrong = {
-  background: "hsl(var(--card) / 0.7)",
-  backdropFilter: "blur(40px) saturate(1.8)",
-  border: "1px solid hsl(var(--border) / 0.15)",
+  background: "hsl(var(--card) / 0.8)",
+  backdropFilter: "blur(24px)",
+  border: "1px solid hsl(var(--border) / 0.1)",
 } as const;
 
 const SearchPage = () => {
@@ -388,50 +385,25 @@ const SearchPage = () => {
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto animate-fade-in">
+    <div className="pb-40 max-w-7xl mx-auto">
       {/* ── Header ── */}
-      <ScrollBlurHeader>
-        <div className="relative overflow-hidden">
-          {/* Decorative gradient orbs */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute -top-20 -left-20 w-60 h-60 rounded-full opacity-[0.07]"
-              style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full opacity-[0.05]"
-              style={{ background: "radial-gradient(circle, hsl(var(--accent)), transparent 70%)" }} />
-          </div>
-
-          <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05))",
-                  border: "1px solid hsl(var(--primary) / 0.15)",
-                  boxShadow: "0 4px 24px hsl(var(--primary) / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
-                  backdropFilter: "blur(20px)",
-                }}
-              >
-                <SearchIcon className="w-5.5 h-5.5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground tracking-tight">Rechercher</h1>
-                <p className="text-[11px] text-muted-foreground/60 font-medium">Explorez votre bibliothèque</p>
-              </div>
-              <button
-                onClick={() => { refetchSongs(); if (navigator.vibrate) navigator.vibrate(5); toast.success("Recherche actualisée"); }}
-                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
-                style={{ ...glassCard }}
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+      <div className="px-5 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-2">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-[28px] md:text-[32px] font-black text-foreground tracking-tight">Rechercher</h1>
+          <button
+            onClick={() => { refetchSongs(); if (navigator.vibrate) navigator.vibrate(5); toast.success("Recherche actualisée"); }}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-all active:scale-90"
+            style={{ background: "hsl(var(--foreground) / 0.04)" }}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
-      </ScrollBlurHeader>
+      </div>
 
       {/* ── Search Bar ── */}
-      <div className="px-4 md:px-8 mb-5" ref={searchRef}>
+      <div className="px-5 md:px-8 mb-5" ref={searchRef}>
         <div className="relative">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/50 z-10" />
+          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 z-10" />
           <input
             ref={inputRef}
             type="text"
@@ -443,16 +415,15 @@ const SearchPage = () => {
               if (e.key === "Escape") setShowSuggestions(false);
             }}
             placeholder="Titres, artistes, albums..."
-            className="w-full pl-12 pr-10 py-3.5 rounded-2xl text-foreground placeholder:text-muted-foreground/40 focus:outline-none text-sm transition-all border-0"
+            className="w-full pl-10 pr-10 py-3 rounded-xl text-foreground placeholder:text-muted-foreground/35 focus:outline-none text-[14px] transition-all"
             style={{
-              ...glassCard,
-              boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.04), 0 2px 12px hsl(0 0% 0% / 0.06)",
+              background: "hsl(var(--foreground) / 0.05)",
             }}
           />
           {query && (
             <button
               onClick={() => { setQuery(""); setDebouncedQuery(""); setArtistFilter(null); setShowSuggestions(false); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -499,33 +470,30 @@ const SearchPage = () => {
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
           /* ══════════════ EXPLORE MODE ══════════════ */
-          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 md:px-8 space-y-7">
+          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-8">
 
             {/* Recent Searches */}
             {recentSearches.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground/60" />
-                    <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Recherches récentes</h2>
-                  </div>
-                  <button onClick={clearAllRecent} className="text-[11px] text-muted-foreground/50 hover:text-primary transition-colors font-medium">Tout effacer</button>
+                  <h2 className="text-[18px] font-bold text-foreground">Récentes</h2>
+                  <button onClick={clearAllRecent} className="text-[12px] text-primary font-medium active:opacity-70 transition-opacity">Tout effacer</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {recentSearches.map((term, i) => (
-                    <motion.div key={term} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }} className="group flex items-center">
+                  {recentSearches.map((term) => (
+                    <div key={term} className="group flex items-center">
                       <button
                         onClick={() => commitSearch(term)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm text-foreground transition-all"
-                        style={{ ...glassCard }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
+                        style={{ background: "hsl(var(--foreground) / 0.05)" }}
                       >
-                        <Clock className="w-3 h-3 text-muted-foreground/50" />
+                        <Clock className="w-3 h-3 text-muted-foreground/40" />
                         {term}
                       </button>
-                      <button onClick={() => handleRemoveRecent(term)} className="ml-0.5 p-1 rounded-full text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleRemoveRecent(term)} className="ml-0.5 p-1 rounded-full text-muted-foreground/30 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
                         <X className="w-3 h-3" />
                       </button>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -534,33 +502,28 @@ const SearchPage = () => {
             {/* Trending Artists */}
             {trendingArtists.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Artistes populaires</h2>
-                </div>
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {trendingArtists.map((artist, i) => (
-                    <motion.button
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes populaires</h2>
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                  {trendingArtists.map((artist) => (
+                    <button
                       key={artist.name}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.03, type: "spring", stiffness: 300, damping: 25 }}
                       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16 group"
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] group active:scale-95 transition-transform"
                     >
-                      <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/15 ring-offset-2 ring-offset-background transition-all group-hover:ring-primary/40 group-hover:shadow-lg"
-                        style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.1)" }}
+                      <div
+                        className="w-16 h-16 rounded-full overflow-hidden"
+                        style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
                       >
                         {(artistPhotos[artist.name] || artist.cover) ? (
-                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-secondary/60 flex items-center justify-center">
-                            <User className="w-5 h-5 text-muted-foreground/40" />
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                            <User className="w-5 h-5 text-muted-foreground/20" />
                           </div>
                         )}
                       </div>
-                      <span className="text-[10px] text-foreground font-semibold truncate w-full text-center leading-tight">{artist.name}</span>
-                    </motion.button>
+                      <span className="text-[11px] text-foreground font-semibold truncate w-full text-center leading-tight">{artist.name}</span>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -569,57 +532,54 @@ const SearchPage = () => {
             {/* Friday Releases */}
             {newReleases.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Nouveautés du vendredi 🇫🇷</h2>
-                </div>
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {newReleases.map((release, i) => (
-                    <div key={release.id} className="flex-shrink-0 w-[120px] snap-start">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.03, type: "spring", stiffness: 300, damping: 25 }}
-                        className="group"
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Nouveautés du vendredi 🇫🇷</h2>
+                <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
+                  {newReleases.map((release) => (
+                    <div key={release.id} className="flex-shrink-0 w-[140px] snap-start group">
+                      <div
+                        className="relative w-[140px] h-[140px] rounded-xl overflow-hidden mb-2"
+                        style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
                       >
-                        <div className="relative w-[120px] h-[120px] rounded-2xl overflow-hidden mb-2 transition-all"
-                          style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)" }}
-                        >
-                          <button onClick={() => playFridayRelease(release)} className="w-full h-full">
-                            {release.coverUrl ? (
-                              <LazyImage src={release.coverUrl} alt={release.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" fallback wrapperClassName="w-full h-full" />
-                            ) : (
-                              <div className="w-full h-full bg-secondary/50 flex items-center justify-center"><Music className="w-6 h-6 text-muted-foreground/40" /></div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                              <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{ background: "hsl(var(--primary) / 0.9)", backdropFilter: "blur(12px)", boxShadow: "0 4px 20px hsl(var(--primary) / 0.4)" }}
-                              >
-                                <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
-                              </div>
-                            </div>
-                          </button>
-                          {availableReleases.has(release.albumId) && (
-                            <div className="absolute bottom-2 left-2 flex items-center gap-0.5 px-2 py-0.5 rounded-full shadow-md"
-                              style={{ background: "hsl(142 71% 45% / 0.9)", backdropFilter: "blur(8px)" }}
-                            >
-                              <Check className="w-2.5 h-2.5 text-white" />
-                              <span className="text-[8px] font-bold text-white leading-none">DISPO</span>
+                        <button onClick={() => playFridayRelease(release)} className="w-full h-full">
+                          {release.coverUrl ? (
+                            <LazyImage src={release.coverUrl} alt={release.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" fallback wrapperClassName="w-full h-full" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                              <Music className="w-6 h-6 text-muted-foreground/15" />
                             </div>
                           )}
+                        </button>
+                        {/* Play button */}
+                        <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
-                            onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
-                            className="absolute top-2 right-2 w-7 h-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all active:scale-90"
-                            style={{ background: "hsl(0 0% 0% / 0.5)", backdropFilter: "blur(12px)" }}
+                            onClick={() => playFridayRelease(release)}
+                            className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                            style={{ background: "hsl(var(--primary))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)" }}
                           >
-                            <PlusCircle className="w-4 h-4 text-white" />
+                            <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
                           </button>
                         </div>
-                        <button onClick={() => playFridayRelease(release)} className="text-left w-full">
-                          <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{release.title}</p>
-                          <p className="text-[10px] text-muted-foreground/50 truncate">{release.artist}</p>
+                        {availableReleases.has(release.albumId) && (
+                          <div
+                            className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
+                            style={{ background: "hsl(var(--primary) / 0.85)" }}
+                          >
+                            <Check className="w-2 h-2 text-primary-foreground" />
+                            <span className="text-[8px] font-bold text-primary-foreground">DISPO</span>
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all active:scale-90"
+                          style={{ background: "hsl(0 0% 0% / 0.5)" }}
+                        >
+                          <PlusCircle className="w-3.5 h-3.5 text-white" />
                         </button>
-                      </motion.div>
+                      </div>
+                      <button onClick={() => playFridayRelease(release)} className="text-left w-full">
+                        <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{release.title}</p>
+                        <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{release.artist}</p>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -629,54 +589,35 @@ const SearchPage = () => {
             {/* Genre Cards */}
             {genreCards.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.1))", border: "1px solid hsl(var(--primary) / 0.1)" }}
-                  >
-                    <Disc3 className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Parcourir par genre</h2>
-                </div>
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Parcourir par genre</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {genreCards.map((g, i) => {
+                  {genreCards.map((g) => {
                     const def = genreDefs[g.genre] || defaultGenreColor;
                     return (
-                      <motion.button
+                      <button
                         key={g.genre}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-                        whileTap={{ scale: 0.96 }}
-                        whileHover={{ y: -2 }}
                         onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
-                        className="relative h-[110px] rounded-2xl overflow-hidden text-left group"
+                        className="relative h-[100px] rounded-xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
                         style={{
                           background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
-                          boxShadow: `0 8px 28px ${def.from}25, 0 2px 8px ${def.to}15`,
+                          boxShadow: `0 4px 16px ${def.from}20`,
                         }}
                       >
                         {g.coverUrl ? (
-                          <img src={g.coverUrl} alt="" className="absolute -right-2 -bottom-2 w-[76px] h-[76px] rounded-xl object-cover rotate-[25deg] opacity-35 group-hover:opacity-55 group-hover:scale-110 transition-all duration-500 shadow-2xl" />
+                          <img src={g.coverUrl} alt="" className="absolute -right-2 -bottom-2 w-[70px] h-[70px] rounded-lg object-cover rotate-[20deg] opacity-30 transition-opacity duration-300 group-hover:opacity-45" />
                         ) : (
-                          <span className="absolute -right-1 -bottom-1 text-[56px] rotate-[20deg] opacity-15 select-none group-hover:opacity-25 transition-opacity">{def.emoji}</span>
+                          <span className="absolute -right-1 -bottom-1 text-[48px] rotate-[18deg] opacity-15 select-none">{def.emoji}</span>
                         )}
-                        {/* Noise texture */}
-                        <div className="absolute inset-0 opacity-[0.05]" style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                        }} />
-                        <div className="relative z-10 p-3.5 h-full flex flex-col justify-between">
+                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-lg drop-shadow-md">{def.emoji}</span>
-                            <h3 className="text-[15px] font-bold text-white drop-shadow-md leading-tight">{g.genre}</h3>
+                            <span className="text-base">{def.emoji}</span>
+                            <h3 className="text-[14px] font-bold text-white leading-tight">{g.genre}</h3>
                           </div>
                           {g.count > 0 && (
-                            <p className="text-[10px] text-white/60 font-semibold self-start px-2 py-0.5 rounded-full"
-                              style={{ background: "hsl(0 0% 0% / 0.15)", backdropFilter: "blur(8px)" }}
-                            >{g.count} titres</p>
+                            <p className="text-[10px] text-white/55 font-medium">{g.count} titres</p>
                           )}
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </motion.button>
+                      </button>
                     );
                   })}
                 </div>
@@ -685,38 +626,24 @@ const SearchPage = () => {
 
             {/* Library Stats */}
             {allSongs && allSongs.length > 0 && (
-              <section className="pt-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ ...glassCard }}>
-                    <Music className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                  <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Votre bibliothèque</h2>
-                </div>
+              <section>
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Votre bibliothèque</h2>
                 <div className="flex justify-around">
                   {[
-                    { icon: <Music className="w-4.5 h-4.5" />, value: allSongs.length, label: "Morceaux" },
-                    { icon: <User className="w-4.5 h-4.5" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes" },
-                    { icon: <Disc3 className="w-4.5 h-4.5" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums" },
-                  ].map((stat, i) => (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.08, type: "spring", stiffness: 250, damping: 20 }}
-                      className="flex flex-col items-center gap-1.5"
-                    >
-                      <div className="w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center text-primary"
-                        style={{
-                          background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
-                          border: "2px solid hsl(var(--primary) / 0.15)",
-                          boxShadow: "0 4px 20px hsl(var(--primary) / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
-                        }}
+                    { icon: <Music className="w-4 h-4" />, value: allSongs.length, label: "Morceaux" },
+                    { icon: <User className="w-4 h-4" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes" },
+                    { icon: <Disc3 className="w-4 h-4" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary"
+                        style={{ background: "hsl(var(--primary) / 0.08)" }}
                       >
                         {stat.icon}
-                        <span className="text-base font-black leading-tight mt-0.5 tabular-nums">{stat.value}</span>
+                        <span className="text-base font-black leading-tight mt-1 tabular-nums">{stat.value}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground/60 font-semibold tracking-wide">{stat.label}</span>
-                    </motion.div>
+                      <span className="text-[10px] text-muted-foreground/50 font-semibold">{stat.label}</span>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -724,9 +651,9 @@ const SearchPage = () => {
           </motion.div>
         ) : (
           /* ══════════════ RESULTS MODE ══════════════ */
-          <motion.div key="results" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="px-4 md:px-8">
+          <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8">
             {isLoading ? (
-              <div className="rounded-2xl overflow-hidden" style={{ ...glassCard }}>
+              <div className="rounded-xl overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.02)" }}>
                 {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
             ) : (
@@ -770,34 +697,60 @@ const SearchPage = () => {
                 {/* Album Results */}
                 {albumCards.length > 0 && (
                   <section className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Music className="w-4 h-4 text-primary" />
-                      <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Albums</h2>
-                    </div>
-                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                      {albumCards.map((album, i) => (
-                        <motion.button
-                          key={album.title}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-                          onClick={() => handleAlbumClick(album.title)}
-                          className="flex-shrink-0 w-[120px] group text-left"
+                    <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes</h2>
+                    <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                      {artistCards.map((artist) => (
+                        <button
+                          key={artist.name}
+                          onClick={() => handleArtistClick(artist.name)}
+                          className="flex-shrink-0 w-[80px] group text-center active:scale-95 transition-transform"
                         >
-                          <div className="w-[120px] h-[120px] rounded-2xl overflow-hidden mb-2 ring-1 ring-border/10 group-hover:ring-border/30 transition-all"
-                            style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1)" }}
+                          <div
+                            className="w-[80px] h-[80px] rounded-full overflow-hidden mb-2 mx-auto"
+                            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
                           >
-                            {album.coverUrl ? (
-                              <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            {artist.coverUrl ? (
+                              <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05))" }}>
-                                <Music className="w-8 h-8 text-primary/25" />
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                                <User className="w-6 h-6 text-muted-foreground/20" />
                               </div>
                             )}
                           </div>
-                          <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
-                          <p className="text-[10px] text-muted-foreground/50 truncate">{album.artist}</p>
-                        </motion.button>
+                          <p className="text-[12px] font-semibold text-foreground truncate">{artist.name}</p>
+                          <p className="text-[10px] text-muted-foreground/45">{artist.songCount} titre{artist.songCount > 1 ? "s" : ""}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Album Results */}
+                {albumCards.length > 0 && (
+                  <section className="mb-6">
+                    <h2 className="text-[18px] font-bold text-foreground mb-3">Albums</h2>
+                    <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
+                      {albumCards.map((album) => (
+                        <button
+                          key={album.title}
+                          onClick={() => handleAlbumClick(album.title)}
+                          className="flex-shrink-0 w-[140px] group text-left active:scale-[0.97] transition-transform"
+                        >
+                          <div
+                            className="w-[140px] h-[140px] rounded-xl overflow-hidden mb-2"
+                            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
+                          >
+                            {album.coverUrl ? (
+                              <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                                <Music className="w-7 h-7 text-muted-foreground/15" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[13px] font-semibold text-foreground truncate">{album.title}</p>
+                          <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{album.artist}</p>
+                        </button>
                       ))}
                     </div>
                   </section>
@@ -806,29 +759,23 @@ const SearchPage = () => {
                 {/* Artist Filter Pills */}
                 {uniqueArtists.length > 1 && (
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="w-3.5 h-3.5 text-muted-foreground/50" />
-                      <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Filtrer par artiste</span>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                      {[null, ...uniqueArtists].map((artist) => (
-                        <button
-                          key={artist || "all"}
-                          onClick={() => setArtistFilter(artist === artistFilter ? null : artist)}
-                          className="relative flex-shrink-0 px-3.5 py-1.5 rounded-2xl text-xs font-semibold transition-colors"
-                          style={{
-                            color: (artist === null ? !artistFilter : artistFilter === artist) ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                          }}
-                        >
-                          {(artist === null ? !artistFilter : artistFilter === artist) && (
-                            <motion.div layoutId="searchArtistPill" className="absolute inset-0 rounded-2xl bg-primary"
-                              style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.35)" }}
-                              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                            />
-                          )}
-                          <span className="relative z-10">{artist || "Tous"}</span>
-                        </button>
-                      ))}
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                      {[null, ...uniqueArtists].map((artist) => {
+                        const isActive = artist === null ? !artistFilter : artistFilter === artist;
+                        return (
+                          <button
+                            key={artist || "all"}
+                            onClick={() => setArtistFilter(artist === artistFilter ? null : artist)}
+                            className="relative flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                            style={{
+                              background: isActive ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.05)",
+                              color: isActive ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                            }}
+                          >
+                            {artist || "Tous"}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -836,11 +783,11 @@ const SearchPage = () => {
                 {/* Song Results */}
                 {filteredResults.length > 0 ? (
                   <>
-                    <p className="text-[11px] text-muted-foreground/50 font-medium mb-3">
+                    <p className="text-[12px] text-muted-foreground/50 font-medium mb-3">
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-semibold">{artistFilter}</span></>}
                     </p>
-                    <div className="rounded-2xl overflow-hidden" style={{ ...glassCard }}>
+                    <div className="rounded-xl overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.02)" }}>
                       <VirtualSongList
                         songs={filteredResults}
                         onClickSong={(song) => handlePlayTrack(song, filteredResults)}
@@ -849,22 +796,23 @@ const SearchPage = () => {
                     </div>
                   </>
                 ) : (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16">
-                    <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5"
-                      style={{ ...glassCard, boxShadow: "0 4px 24px hsl(0 0% 0% / 0.06)" }}
+                  <div className="text-center py-20">
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                      style={{ background: "hsl(var(--foreground) / 0.04)" }}
                     >
-                      <Music className="w-9 h-9 text-muted-foreground/30" />
+                      <Music className="w-7 h-7 text-muted-foreground/20" />
                     </div>
                     <p className="text-foreground font-semibold mb-1">Aucun résultat pour « <span className="text-primary">{debouncedQuery}</span> »</p>
-                    <p className="text-sm text-muted-foreground/50 mb-4">Essayez un autre terme de recherche</p>
+                    <p className="text-[13px] text-muted-foreground/50 mb-4">Essayez un autre terme de recherche</p>
                     {alternativeSuggestions.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-[11px] text-muted-foreground/50 mb-2 font-medium">Artistes suggérés :</p>
+                        <p className="text-[11px] text-muted-foreground/40 mb-2 font-medium">Artistes suggérés :</p>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {alternativeSuggestions.map((artist) => (
                             <button key={artist} onClick={() => commitSearch(artist)}
-                              className="px-3.5 py-1.5 rounded-2xl text-primary text-xs font-semibold transition-colors"
-                              style={{ background: "hsl(var(--primary) / 0.1)", border: "1px solid hsl(var(--primary) / 0.15)" }}
+                              className="px-3.5 py-1.5 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
                             >
                               {artist}
                             </button>
@@ -872,7 +820,7 @@ const SearchPage = () => {
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
               </>
             )}
