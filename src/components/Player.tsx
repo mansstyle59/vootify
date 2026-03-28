@@ -379,6 +379,8 @@ export function MiniPlayer() {
         // Transfer event listeners by swapping refs
         preloadRef.current = oldMain;
         audioRef.current = preloaded;
+        // Connect EQ to new main audio element
+        connectEQ(preloaded);
         // Set up events on new main
         preloaded.onended = handleEnded;
         preloaded.onerror = handleAudioError;
