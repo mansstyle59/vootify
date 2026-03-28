@@ -504,13 +504,13 @@ const RadioPage = () => {
               <>
                 <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
                   className="p-2 rounded-xl transition-colors"
-                  style={{ background: "hsl(0 0% 0% / 0.5)", backdropFilter: "blur(12px)" }}
+                  style={{ background: "hsl(0 0% 0% / 0.45)" }}
                 >
                   <Pencil className="w-3.5 h-3.5 text-white" />
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
                   className="p-2 rounded-xl transition-colors hover:bg-destructive/80"
-                  style={{ background: "hsl(0 0% 0% / 0.5)", backdropFilter: "blur(12px)" }}
+                  style={{ background: "hsl(0 0% 0% / 0.45)" }}
                 >
                   <Trash2 className="w-3.5 h-3.5 text-white" />
                 </button>
@@ -518,7 +518,7 @@ const RadioPage = () => {
             ) : (
               <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
                 className="p-2 rounded-xl transition-colors"
-                style={{ background: "hsl(0 0% 0% / 0.5)", backdropFilter: "blur(12px)" }}
+                style={{ background: "hsl(0 0% 0% / 0.45)" }}
               >
                 <Heart className={`w-3.5 h-3.5 transition-colors ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
               </button>
@@ -529,13 +529,13 @@ const RadioPage = () => {
           <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
             {station.countryCode && (
               <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium text-white/90 uppercase"
-                style={{ background: "hsl(0 0% 0% / 0.4)", backdropFilter: "blur(8px)" }}>
+                style={{ background: "hsl(0 0% 0% / 0.35)" }}>
                 {station.countryCode}
               </span>
             )}
             {station.bitrate > 0 && (
               <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold text-white/90 ml-auto"
-                style={{ background: "hsl(0 0% 0% / 0.4)", backdropFilter: "blur(8px)" }}>
+                style={{ background: "hsl(0 0% 0% / 0.35)" }}>
                 {station.bitrate}kbps
               </span>
             )}
