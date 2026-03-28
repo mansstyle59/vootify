@@ -149,6 +149,31 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: shortcuts } = useQuery({
+    queryKey: ["hero-shortcuts", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [playlists, albums, recentlyPlayed] = await Promise.all([
+        supabase.from("playlists").select("id, name, cover_url").order("updated_at", { ascending: false }).limit(3),
+        supabase.from("custom_albums").select("id, title, cover_url, artist").order("created_at", { ascending: false }).limit(3),
+        supabase.from("recently_played").select("song_id, title, artist, cover_url").order("played_at", { ascending: false }).limit(3),
+      ]);
+      const items: { id: string; label: string; cover?: string | null; type: "playlist" | "album" | "recent"; route: string }[] = [];
+      playlists.data?.forEach((p) => items.push({ id: p.id, label: p.name, cover: p.cover_url, type: "playlist", route: `/playlist/${p.id}` }));
+      albums.data?.forEach((a) => items.push({ id: a.id, label: `${a.title} — ${a.artist}`, cover: a.cover_url, type: "album", route: `/album/${a.id}` }));
+      // Deduplicate recently played by song_id
+      const seen = new Set<string>();
+      recentlyPlayed.data?.forEach((r) => {
+        if (!seen.has(r.song_id)) {
+          seen.add(r.song_id);
+          items.push({ id: r.song_id, label: `${r.title} — ${r.artist}`, cover: r.cover_url, type: "recent", route: "/library" });
+        }
+      });
+      return items.slice(0, 6);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
   const handleShuffle = async () => {
     const { data } = await supabase
       .from("custom_songs")
