@@ -510,6 +510,68 @@ const LibraryPage = () => {
   const [redownloadProgress, setRedownloadProgress] = useState({ current: 0, total: 0 });
   const [enriching, setEnriching] = useState(false);
   const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
+  const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadAllProgress, setDownloadAllProgress] = useState({ current: 0, total: 0 });
+
+  const handleDownloadAllLibrary = useCallback(async () => {
+    if (downloadingAll) return;
+    setDownloadingAll(true);
+    try {
+      // Fetch all songs from database
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("id, title, artist, album, cover_url, stream_url, duration, genre, year")
+        .not("stream_url", "is", null);
+      if (error) throw error;
+      const allSongs: Song[] = (data || []).map((s: any) => ({
+        id: s.id, title: s.title, artist: s.artist, album: s.album || "",
+        coverUrl: s.cover_url || "", streamUrl: s.stream_url || "",
+        duration: s.duration || 0, liked: false, genre: s.genre, year: s.year,
+      }));
+
+      // Filter already cached
+      const toDownload: Song[] = [];
+      for (const s of allSongs) {
+        const cached = await offlineCache.isCached(s.id);
+        if (!cached) toDownload.push(s);
+      }
+
+      setDownloadAllProgress({ current: 0, total: toDownload.length });
+      if (toDownload.length === 0) {
+        toast.success("Tout est déjà téléchargé !");
+        setDownloadingAll(false);
+        return;
+      }
+
+      let done = 0;
+      // Download 3 at a time
+      const queue = [...toDownload];
+      const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
+        while (queue.length > 0) {
+          const song = queue.shift()!;
+          try {
+            await offlineCache.cacheSong(song);
+          } catch (e) {
+            console.error(`[dl-all] Failed: ${song.title}`, e);
+          }
+          done++;
+          setDownloadAllProgress({ current: done, total: toDownload.length });
+        }
+      });
+      await Promise.all(workers);
+
+      // Refresh cached songs list
+      const [songs, size] = await Promise.all([offlineCache.getAllCached(), offlineCache.getCacheSize()]);
+      setCachedSongs(songs);
+      setCacheSize(size);
+      toast.success(`${done} morceaux téléchargés !`);
+    } catch (e) {
+      console.error("[dl-all]", e);
+      toast.error("Erreur lors du téléchargement");
+    } finally {
+      setDownloadingAll(false);
+    }
+  }, [downloadingAll]);
 
   useEffect(() => {
     if (tab !== "downloads" && !isOffline) return;
