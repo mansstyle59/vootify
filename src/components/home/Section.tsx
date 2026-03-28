@@ -116,7 +116,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
   return (
     <section className="mb-8 md:mb-10">
       {/* Apple Music style header — bold title, minimal actions */}
-      <div className="flex items-end justify-between px-5 md:px-8 mb-3">
+      <div className="flex items-end justify-between px-5 md:px-9 mb-3">
         <div className="flex items-baseline gap-2 min-w-0">
           <h2 className="text-[20px] md:text-[22px] font-bold text-foreground leading-tight tracking-tight line-clamp-2 break-words">
             {title}
@@ -160,7 +160,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
       </div>
 
       {/* Subtle separator */}
-      <div className="mx-5 md:mx-8 mb-3" style={{ height: 1, background: "hsl(var(--foreground) / 0.04)" }} />
+      <div className="mx-5 md:mx-9 mb-3" style={{ height: 1, background: "hsl(var(--foreground) / 0.04)" }} />
 
       {children}
     </section>
