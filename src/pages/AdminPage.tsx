@@ -2106,6 +2106,8 @@ function RequestsTab() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [planOverrides, setPlanOverrides] = useState<Record<string, string>>({});
+  const [filterStatus, setFilterStatus] = useState<"all" | "approved" | "rejected">("all");
+  const [filterPlan, setFilterPlan] = useState<"all" | "premium" | "gold" | "vip">("all");
 
   const loadRequests = async () => {
     const { data } = await supabase
