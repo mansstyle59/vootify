@@ -1,6 +1,6 @@
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
-import { useRef, useMemo, useState } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Sparkles } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useMemo, useEffect, useState } from "react";
+import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,17 +15,57 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 
+const QUOTES = [
+  "La musique est le langage des émotions.",
+  "Chaque jour mérite sa playlist.",
+  "Laisse la musique guider tes pas.",
+  "Un bon morceau change toute la journée.",
+  "Écoute. Ressens. Vibre.",
+  "La vie a besoin d'une bande-son.",
+  "Musique : le remède universel.",
+];
+
 function getGreeting(name?: string | null) {
   const h = new Date().getHours();
   const base = h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
   return name ? `${base}, ${name}` : base;
 }
 
+function getDailyQuote() {
+  const day = Math.floor(Date.now() / 86400000);
+  return QUOTES[day % QUOTES.length];
+}
+
+/* ── Animated sound wave bars ── */
+function SoundWaveVisualizer() {
+  return (
+    <div className="flex items-end gap-[3px] h-8 opacity-40">
+      {Array.from({ length: 20 }).map((_, i) => (
+        <motion.div
+          key={i}
+          className="w-[2px] rounded-full"
+          style={{ background: "hsl(var(--primary))" }}
+          animate={{
+            height: [4, 12 + Math.random() * 18, 6, 16 + Math.random() * 14, 4],
+          }}
+          transition={{
+            duration: 1.8 + Math.random() * 0.8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.07,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?: () => void; customSubtitle?: string; bgColor?: string; bgImage?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { play, setQueue } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying } = usePlayerStore();
+  const quote = useMemo(() => getDailyQuote(), []);
 
   const handleShuffle = async () => {
     const { data } = await supabase
@@ -52,18 +92,19 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 40]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
 
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
     <div ref={ref} className="relative overflow-hidden">
-      {/* BG */}
-      <div className="absolute inset-0 -z-10">
+      {/* ─── BG with parallax ─── */}
+      <motion.div className="absolute inset-0 -z-10" style={{ scale: bgScale }}>
         {bgImage ? (
           <>
             <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.3) 0%, hsl(var(--background)) 100%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.2) 0%, hsl(var(--background)) 100%)" }} />
           </>
         ) : bgColor ? (
           <>
@@ -71,15 +112,38 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
             <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 40%, hsl(var(--background)) 100%)" }} />
           </>
         ) : (
-          <div className="absolute inset-0" style={{
-            background: `
-              radial-gradient(ellipse 90% 60% at 30% 0%, hsl(var(--primary) / 0.1) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 50% at 90% 20%, hsl(var(--primary) / 0.05) 0%, transparent 50%),
-              hsl(var(--background))
-            `,
-          }} />
+          <>
+            {/* Mesh gradient background */}
+            <div className="absolute inset-0" style={{
+              background: `
+                radial-gradient(ellipse 80% 50% at 20% 10%, hsl(var(--primary) / 0.15) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 80% 30%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 60% at 50% 80%, hsl(var(--primary) / 0.04) 0%, transparent 60%),
+                hsl(var(--background))
+              `,
+            }} />
+            {/* Animated glow orb */}
+            <motion.div
+              className="absolute w-[200px] h-[200px] rounded-full"
+              style={{
+                top: "10%",
+                left: "15%",
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
+                filter: "blur(40px)",
+              }}
+              animate={{
+                x: [0, 30, -10, 20, 0],
+                y: [0, -15, 10, -5, 0],
+              }}
+              transition={{
+                duration: 12,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          </>
         )}
-      </div>
+      </motion.div>
 
       {/* ─── Top bar ─── */}
       <div
@@ -88,9 +152,20 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.625rem)",
         }}
       >
-        {/* Brand */}
-        <div className="flex items-center gap-2">
+        {/* Brand + SoundWave indicator */}
+        <div className="flex items-center gap-2.5">
           <span className="text-[13px] font-black text-primary tracking-wide uppercase">Vootify</span>
+          {currentSong && isPlaying && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+              style={{ background: "hsl(var(--primary) / 0.1)" }}
+            >
+              <Music2 className="w-2.5 h-2.5 text-primary" />
+              <span className="text-[9px] font-bold text-primary tracking-wider uppercase">SoundWave</span>
+            </motion.div>
+          )}
         </div>
 
         {/* Profile */}
@@ -109,7 +184,6 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                     boxShadow: "0 2px 12px hsl(var(--primary) / 0.08), inset 0 1px 0 hsl(var(--primary) / 0.06)",
                   }}
                 >
-                  {/* Glow ring on hover */}
                   <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ boxShadow: "0 0 20px hsl(var(--primary) / 0.2), inset 0 0 8px hsl(var(--primary) / 0.05)" }} />
                   <Avatar className="w-7 h-7 ring-[1.5px] ring-primary/30 group-hover:ring-primary/50 transition-all duration-200">
                     <AvatarImage src={avatarUrl} alt={displayName || "User"} className="group-hover:brightness-110 transition-all duration-200" />
@@ -123,7 +197,6 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   <span className="text-[11px] font-semibold text-foreground truncate max-w-[72px] relative z-10">
                     {displayName}
                   </span>
-                  {/* Online indicator dot */}
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 6px hsl(var(--primary) / 0.5)" }} />
                 </button>
               </DropdownMenuTrigger>
@@ -139,7 +212,6 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   boxShadow: "0 24px 80px hsl(0 0% 0% / 0.55), 0 0 0 1px hsl(var(--primary) / 0.04), inset 0 1px 0 hsl(var(--primary) / 0.06)",
                 }}
               >
-                {/* Profile header card */}
                 <div
                   className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl"
                   style={{ background: "hsl(var(--primary) / 0.06)" }}
@@ -208,43 +280,52 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
       {/* ─── Main content ─── */}
       <motion.div
         style={{ opacity, y: contentY }}
-        className="relative z-10 px-5 md:px-8 pt-4 pb-6"
+        className="relative z-10 px-5 md:px-8 pt-3 pb-7"
       >
-        {/* Large greeting — Apple Music editorial style */}
+        {/* Sound wave visualizer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mb-4"
+        >
+          <SoundWaveVisualizer />
+        </motion.div>
+
+        {/* Large greeting */}
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="text-[32px] md:text-[38px] font-black text-foreground leading-[1.05] tracking-tight"
+          className="text-[34px] md:text-[40px] font-black text-foreground leading-[1.02] tracking-tight"
         >
           {getGreeting(displayName)}
         </motion.h1>
 
-        {customSubtitle && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-sm text-muted-foreground/60 mt-1 font-medium"
-          >
-            {customSubtitle}
-          </motion.p>
-        )}
+        {/* Daily quote */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="text-[13px] text-muted-foreground/50 mt-1.5 font-medium italic"
+        >
+          « {customSubtitle || quote} »
+        </motion.p>
 
         {/* Action pills */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.35 }}
+          transition={{ delay: 0.3, duration: 0.35 }}
           className="flex gap-2.5 mt-5"
         >
           <button
             onClick={handleShuffle}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold active:scale-95 transition-transform"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold active:scale-95 transition-all duration-200 hover:brightness-110"
             style={{
               background: "hsl(var(--primary))",
               color: "hsl(var(--primary-foreground))",
-              boxShadow: "0 4px 24px hsl(var(--primary) / 0.3)",
+              boxShadow: "0 4px 24px hsl(var(--primary) / 0.35), 0 1px 3px hsl(var(--primary) / 0.2)",
             }}
           >
             <Shuffle className="w-3.5 h-3.5" />
@@ -252,9 +333,10 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           </button>
           <button
             onClick={() => navigate("/library")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-95 transition-transform"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-95 transition-all duration-200"
             style={{
               background: "hsl(var(--foreground) / 0.06)",
+              backdropFilter: "blur(8px)",
             }}
           >
             <Heart className="w-3 h-3 text-pink-400" />
@@ -262,9 +344,10 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           </button>
           <button
             onClick={() => navigate("/search")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-95 transition-transform"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-95 transition-all duration-200"
             style={{
               background: "hsl(var(--foreground) / 0.06)",
+              backdropFilter: "blur(8px)",
             }}
           >
             <Search className="w-3 h-3" />
