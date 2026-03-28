@@ -632,54 +632,57 @@ const LibraryPage = () => {
       : tabs.filter((t) => checkLibraryTab(t.key));
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto relative animate-fade-in">
-      {/* Dynamic gradient header */}
+    <div className="pb-40 max-w-7xl mx-auto relative">
+      {/* Header */}
       <div
-        className="sticky top-0 z-20 transition-colors duration-700"
+        className="sticky top-0 z-20 transition-colors duration-500"
         style={{
           background: headerColor
-            ? `linear-gradient(180deg, ${headerColor}30 0%, hsl(var(--background)) 100%)`
-            : undefined,
+            ? `linear-gradient(180deg, ${headerColor}20 0%, hsl(var(--background) / 0.95) 100%)`
+            : "hsl(var(--background) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
-        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3" style={{ backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)" }}>
+        <div className="px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
           {isOffline && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
-              background: "hsl(45 100% 50% / 0.08)",
-              border: "1px solid hsl(45 100% 50% / 0.15)",
+              background: "hsl(45 100% 50% / 0.06)",
+              border: "1px solid hsl(45 100% 50% / 0.12)",
             }}>
-              <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <p className="text-xs text-amber-400 font-medium">Mode hors-ligne — seuls les morceaux téléchargés sont disponibles</p>
+              <WifiOff className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+              <p className="text-[11px] text-amber-400 font-medium">Mode hors-ligne</p>
             </div>
           )}
 
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
-                {isOffline ? "Mode Hors-ligne" : "Bibliothèque"}
+              <h1 className="text-[22px] md:text-[26px] font-black text-foreground leading-tight tracking-tight">
+                {isOffline ? "Hors-ligne" : "Bibliothèque"}
               </h1>
-              <p className="text-[12px] text-muted-foreground/60">
-                {isOffline ? "Écoutez vos morceaux sans connexion" : "Vos morceaux, playlists et favoris"}
+              <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-medium">
+                {isOffline ? "Écoutez sans connexion" : "Morceaux, playlists & favoris"}
               </p>
             </div>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={() => {
                 queryClient.invalidateQueries();
                 if (userId) loadUserData(userId);
                 toast.success("Bibliothèque actualisée");
               }}
-              className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              className="p-2.5 rounded-xl text-muted-foreground/60 hover:text-foreground transition-all"
               style={{
-                background: "hsl(var(--secondary) / 0.6)",
-                border: "1px solid hsl(var(--border) / 0.2)",
+                background: "hsl(var(--card) / 0.5)",
+                border: "1px solid hsl(var(--border) / 0.1)",
               }}
             >
-              <RefreshCw className="w-4.5 h-4.5" />
-            </button>
+              <RefreshCw className="w-4 h-4" />
+            </motion.button>
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 mt-1">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1">
             {visibleTabs.map(({ key, label, icon }) => (
               <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
             ))}
@@ -688,14 +691,14 @@ const LibraryPage = () => {
       </div>
 
       {/* Content */}
-      <div className="px-4 md:px-8">
+      <div className="px-5 md:px-9 mt-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             {/* ── RECENT ── */}
             {tab === "recent" && (
