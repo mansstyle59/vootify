@@ -252,6 +252,8 @@ const HomePage = () => {
     <div className="pb-32 md:pb-40 max-w-7xl mx-auto relative overflow-y-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
+      <QuickAccess />
+
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
         if (isCustom) {
