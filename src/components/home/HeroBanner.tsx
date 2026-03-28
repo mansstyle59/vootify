@@ -158,7 +158,9 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         supabase.from("custom_albums").select("id, title, cover_url, artist").order("created_at", { ascending: false }).limit(3),
         supabase.from("recently_played").select("song_id, title, artist, cover_url").order("played_at", { ascending: false }).limit(3),
       ]);
-      const items: { id: string; label: string; cover?: string | null; type: "playlist" | "album" | "recent"; route: string }[] = [];
+      const items: { id: string; label: string; cover?: string | null; type: "playlist" | "album" | "recent" | "radio"; route: string }[] = [];
+      // Always add Radio shortcut first
+      items.push({ id: "radio-shortcut", label: "📻 Radios", cover: null, type: "radio", route: "/radio" });
       playlists.data?.forEach((p) => items.push({ id: p.id, label: p.name, cover: p.cover_url, type: "playlist", route: `/playlist/${p.id}` }));
       albums.data?.forEach((a) => items.push({ id: a.id, label: `${a.title} — ${a.artist}`, cover: a.cover_url, type: "album", route: `/album/${a.id}` }));
       // Deduplicate recently played by song_id
