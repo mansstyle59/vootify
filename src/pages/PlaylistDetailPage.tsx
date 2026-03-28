@@ -47,7 +47,62 @@ const PlaylistDetailPage = () => {
   const [resolving, setResolving] = useState(false);
   const resolveAbortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
+  // Share to user state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareUsers, setShareUsers] = useState<Array<{ user_id: string; display_name: string | null }>>([]);
+  const [shareTargetId, setShareTargetId] = useState("");
+  const [shareSending, setShareSending] = useState(false);
+
+  const loadShareUsers = async () => {
+    const { data } = await supabase.from("profiles").select("user_id, display_name").order("display_name");
+    setShareUsers(data || []);
+  };
+
+  const handleShareToUser = async () => {
+    if (!shareTargetId || !id || !playlist) return;
+    setShareSending(true);
+    try {
+      const adminId = (await supabase.auth.getUser()).data.user?.id;
+      const coverUrl = playlist.cover_url || displaySongs.find(s => s.coverUrl)?.coverUrl || null;
+
+      const { data: shared, error: plErr } = await supabase
+        .from("shared_playlists")
+        .insert({
+          playlist_name: playlist.name,
+          cover_url: coverUrl,
+          shared_by: adminId,
+          shared_to: shareTargetId,
+        })
+        .select("id")
+        .single();
+      if (plErr) throw plErr;
+
+      if (displaySongs.length > 0) {
+        const songRows = displaySongs.map((s, i) => ({
+          shared_playlist_id: shared.id,
+          song_id: s.id,
+          title: s.title,
+          artist: s.artist,
+          album: s.album || null,
+          cover_url: s.coverUrl || null,
+          stream_url: s.streamUrl || null,
+          duration: s.duration,
+          position: i,
+        }));
+        const { error: songsErr } = await supabase.from("shared_playlist_songs").insert(songRows);
+        if (songsErr) throw songsErr;
+      }
+
+      const targetUser = shareUsers.find(u => u.user_id === shareTargetId);
+      toast.success(`Playlist envoyée à ${targetUser?.display_name || "l'utilisateur"}`);
+      setShowShareDialog(false);
+      setShareTargetId("");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setShareSending(false);
+    }
+  };
     if (songs.length === 0) return;
     Promise.all(songs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))).then(
       (ids) => setCachedIds(new Set(ids.filter(Boolean) as string[]))
