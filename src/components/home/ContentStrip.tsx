@@ -41,7 +41,7 @@ export function ContentStrip({ children }: ContentStripProps) {
 
   return (
     <div
-      className="relative"
+      className="relative -mx-2 px-2"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
