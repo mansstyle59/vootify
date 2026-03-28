@@ -1608,24 +1608,24 @@ function ArtistLibraryCard({ artist, index, navigate }: {
 
   return (
     <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
-      whileTap={{ scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.025, duration: 0.3 }}
+      whileTap={{ scale: 0.94 }}
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
       className="flex flex-col items-center text-center group"
     >
-      <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary shadow-lg mb-2 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+      <div className="w-[76px] h-[76px] rounded-full overflow-hidden bg-secondary mb-2 ring-[1.5px] ring-border/20 group-hover:ring-primary/30 transition-all" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.12)" }}>
         {imageUrl ? (
-          <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+          <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-300" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            <User className="w-8 h-8 text-primary/30" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+            <User className="w-6 h-6 text-primary/20" />
           </div>
         )}
       </div>
-      <p className="text-xs font-bold text-foreground truncate max-w-[96px]">{artist.name}</p>
-      <p className="text-[10px] text-muted-foreground">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+      <p className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{artist.name}</p>
+      <p className="text-[9px] text-muted-foreground/45 font-medium">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
     </motion.button>
   );
 }
