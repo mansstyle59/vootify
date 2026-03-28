@@ -58,18 +58,23 @@ export function QuickAccess() {
   const displayed = items.slice(0, 6);
 
   return (
-    <div className="px-4 md:px-8 pb-1 pt-1">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="px-4 md:px-8 pb-2 pt-2">
+      <div className="grid grid-cols-2 gap-2.5">
         {displayed.map((item, i) => (
           <motion.button
             key={item.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04, duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ delay: i * 0.05, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             onClick={item.action}
-            className="flex items-center gap-3 rounded-xl bg-secondary/50 hover:bg-secondary/80 active:scale-[0.97] transition-all duration-150 overflow-hidden h-[52px]"
+            className="flex items-center gap-3 rounded-xl active:scale-[0.97] transition-all duration-150 overflow-hidden h-[56px]"
+            style={{
+              background: "hsl(var(--secondary) / 0.5)",
+              border: "1px solid hsl(var(--border) / 0.15)",
+              boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1)",
+            }}
           >
-            <div className="w-[52px] h-[52px] flex-shrink-0 bg-secondary/80 overflow-hidden rounded-l-xl">
+            <div className="w-[56px] h-[56px] flex-shrink-0 overflow-hidden rounded-l-xl" style={{ background: "hsl(var(--secondary) / 0.8)" }}>
               {item.imageUrl ? (
                 <LazyImage
                   src={item.imageUrl}
