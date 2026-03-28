@@ -1094,9 +1094,17 @@ export function MiniPlayer() {
             if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
           }}
           onPause={() => {
-            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
-            // Sync store if paused externally (phone call, Siri, headphone unplug)
-            if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
+            // Debounce: only sync to store if STILL paused after 150ms
+            // This prevents brief pauses (crossfade, route change, buffering) from killing playback
+            const audio = audioRef.current;
+            setTimeout(() => {
+              if (audio?.paused && usePlayerStore.getState().isPlaying) {
+                usePlayerStore.setState({ isPlaying: false });
+              }
+              if ("mediaSession" in navigator && audio?.paused) {
+                navigator.mediaSession.playbackState = "paused";
+              }
+            }, 150);
           }}
           preload="auto"
           playsInline
