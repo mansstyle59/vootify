@@ -120,7 +120,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
               toast.success(`"${song.title}" ajouté à la file`);
               if (navigator.vibrate) navigator.vibrate(8);
             }}
-            className="p-1.5 rounded-full transition-colors active:scale-90 hidden md:block md:opacity-0 md:group-hover:opacity-100"
+            className="p-1.5 rounded-full transition-colors active:scale-90"
             title="Ajouter à la file d'attente"
           >
             <ListEnd className="w-4 h-4 text-muted-foreground/40 hover:text-primary transition-colors" />
