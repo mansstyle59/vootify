@@ -1,6 +1,13 @@
 import { motion, useScroll, useTransform, useMotionValueEvent, animate } from "framer-motion";
 import { useRef, useEffect, useState, useMemo } from "react";
-import { LogIn, LogOut, Headphones, Music, Radio, ListMusic, Shuffle, Heart, Search } from "lucide-react";
+import { LogIn, LogOut, Headphones, Music, Radio, ListMusic, Shuffle, Heart, Search, Settings, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
