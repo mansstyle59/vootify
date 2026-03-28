@@ -35,17 +35,17 @@ export const CoverCard = memo(function CoverCard({
       <div
         className={`relative w-[120px] h-[120px] md:w-[140px] md:h-[140px] overflow-hidden mb-2 ${
           rounded ? "rounded-full" : "rounded-2xl"
-        } ${isActive ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+        }`}
         style={{
           boxShadow: isActive
-            ? "0 8px 28px hsl(var(--primary) / 0.35)"
-            : "0 4px 20px hsl(0 0% 0% / 0.15)",
+            ? "0 8px 28px hsl(var(--primary) / 0.35), 0 0 0 2px hsl(var(--primary) / 0.4)"
+            : "0 4px 16px hsl(0 0% 0% / 0.12)",
         }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-secondary/60 overflow-hidden">
+              <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
                 <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
               </div>
             )}
@@ -54,29 +54,35 @@ export const CoverCard = memo(function CoverCard({
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-all duration-300 ease-out group-hover:scale-[1.06] ${
+              className={`w-full h-full transition-all duration-500 ease-out group-hover:scale-[1.08] ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
               } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/8 to-accent/5">
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.08), hsl(var(--accent) / 0.05))" }}>
             <Music className="w-8 h-8 text-primary/15" />
           </div>
         )}
 
-        {/* Hover gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        {/* Bottom gradient overlay */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.5), transparent)" }}
+        />
 
         {/* Play button */}
         {(showPlay || isActive) && (
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-250 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}>
             <motion.div
               whileTap={{ scale: 0.85 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary"
-              style={{ boxShadow: "0 4px 24px hsl(var(--primary) / 0.45)" }}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{
+                background: "hsl(var(--primary))",
+                boxShadow: "0 4px 20px hsl(var(--primary) / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
+              }}
             >
               {isActive ? (
                 <Pause className="w-4 h-4 text-primary-foreground fill-current" />
@@ -92,7 +98,7 @@ export const CoverCard = memo(function CoverCard({
         {title}
       </h3>
       {subtitle && (
-        <p className={`text-[10px] text-muted-foreground/45 truncate mt-0.5 font-medium ${rounded ? "text-center" : ""}`}>
+        <p className={`text-[10px] text-muted-foreground/40 truncate mt-0.5 font-medium ${rounded ? "text-center" : ""}`}>
           {subtitle}
         </p>
       )}
