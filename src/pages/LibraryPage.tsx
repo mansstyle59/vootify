@@ -688,7 +688,7 @@ const LibraryPage = () => {
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
                     </p>
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {recentMusic.map((s, i) => (
                         <PremiumSongRow
                           key={`${s.id}-${i}`}
@@ -747,7 +747,7 @@ const LibraryPage = () => {
                           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                             {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
                           </p>
-                          <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                          <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                             {filtered.map((s, i) => (
                               <PremiumSongRow
                                 key={s.id}
@@ -829,7 +829,7 @@ const LibraryPage = () => {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/playlist/${p.id}`)}
                             className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
-                            style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}
+                            style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -905,7 +905,7 @@ const LibraryPage = () => {
                                 }
                               }}
                               className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
-                              style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}
+                              style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -1406,7 +1406,7 @@ const LibraryPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {sortedCustomSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1438,7 +1438,7 @@ const LibraryPage = () => {
             {tab === "downloads" && (
               <div>
                 {cacheSize > 0 && (
-                  <div className="rounded-2xl p-4 mb-4" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                  <div className="rounded-2xl p-4 mb-4" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-primary/10">
@@ -1509,7 +1509,7 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
                       onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.35)", backdropFilter: "blur(24px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.08)", boxShadow: "0 2px 16px hsl(0 0% 0% / 0.05), inset 0 1px 0 hsl(0 0% 100% / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {cachedSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
