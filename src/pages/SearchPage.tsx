@@ -484,7 +484,7 @@ const SearchPage = () => {
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <SearchIcon className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
                   Rechercher
                 </h1>
