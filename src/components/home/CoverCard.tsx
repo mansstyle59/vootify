@@ -1,5 +1,4 @@
 import { memo, useState } from "react";
-import { motion } from "framer-motion";
 import { Play, Pause, Music } from "lucide-react";
 
 interface CoverCardProps {
@@ -20,33 +19,25 @@ export const CoverCard = memo(function CoverCard({
   const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{
-        delay: Math.min(index * 0.03, 0.2),
-        duration: 0.3,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      }}
-      whileTap={{ scale: 0.96 }}
-      className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group snap-start"
+    <div
+      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.97] transition-transform duration-150"
       onClick={onClick}
     >
       <div
-        className={`relative w-[120px] h-[120px] md:w-[140px] md:h-[140px] overflow-hidden mb-2 ${
-          rounded ? "rounded-full" : "rounded-2xl"
+        className={`relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] overflow-hidden mb-2 ${
+          rounded ? "rounded-full" : "rounded-xl"
         }`}
         style={{
           boxShadow: isActive
-            ? "0 8px 28px hsl(var(--primary) / 0.35), 0 0 0 2px hsl(var(--primary) / 0.4)"
-            : "0 4px 16px hsl(0 0% 0% / 0.12)",
+            ? "0 4px 24px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.35)"
+            : "0 2px 8px hsl(0 0% 0% / 0.08)",
         }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
-                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+              <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
               </div>
             )}
             <img
@@ -54,54 +45,47 @@ export const CoverCard = memo(function CoverCard({
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-all duration-500 ease-out group-hover:scale-[1.08] ${
+              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-105 ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
               } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.08), hsl(var(--accent) / 0.05))" }}>
-            <Music className="w-8 h-8 text-primary/15" />
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+            <Music className="w-8 h-8 text-muted-foreground/15" />
           </div>
         )}
 
-        {/* Bottom gradient overlay */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.5), transparent)" }}
-        />
-
         {/* Play button */}
         {(showPlay || isActive) && (
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-250 ${
+          <div className={`absolute inset-0 flex items-end justify-end p-2 transition-opacity duration-200 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}>
-            <motion.div
-              whileTap={{ scale: 0.85 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center"
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{
                 background: "hsl(var(--primary))",
-                boxShadow: "0 4px 20px hsl(var(--primary) / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
+                boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)",
               }}
             >
               {isActive ? (
-                <Pause className="w-4 h-4 text-primary-foreground fill-current" />
+                <Pause className="w-3.5 h-3.5 text-primary-foreground fill-current" />
               ) : (
-                <Play className="w-4 h-4 text-primary-foreground fill-current ml-0.5" />
+                <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
               )}
-            </motion.div>
+            </div>
           </div>
         )}
       </div>
 
-      <h3 className={`text-[11px] md:text-[12px] font-bold leading-tight line-clamp-1 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
+      <h3 className={`text-[13px] font-semibold leading-tight line-clamp-1 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
         {title}
       </h3>
       {subtitle && (
-        <p className={`text-[10px] text-muted-foreground/40 truncate mt-0.5 font-medium ${rounded ? "text-center" : ""}`}>
+        <p className={`text-[11px] text-muted-foreground/50 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
           {subtitle}
         </p>
       )}
-    </motion.div>
+    </div>
   );
 });

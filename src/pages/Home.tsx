@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
@@ -16,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, Disc3, RefreshCw, Loader2, TrendingUp, User } from "lucide-react";
+import { Music, RefreshCw, Loader2, User } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
@@ -26,38 +25,6 @@ import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
 import { EditModeToggle, EditModePanel } from "@/components/home/EditModeToolbar";
 
-/** Fetch songs by their custom_songs UUIDs */
-function useCustomSectionSongs(songIds: string[]) {
-  return useQuery({
-    queryKey: ["custom-section-songs", songIds],
-    queryFn: async (): Promise<Song[]> => {
-      if (songIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("*")
-        .in("id", songIds);
-      if (error) throw error;
-      // Preserve the order from songIds
-      const map = new Map((data || []).map((r) => [r.id, r]));
-      return songIds
-        .map((id) => map.get(id))
-        .filter(Boolean)
-        .map((r: any) => ({
-          id: `custom-${r.id}`,
-          title: r.title,
-          artist: r.artist,
-          album: r.album || "",
-          duration: r.duration || 0,
-          coverUrl: r.cover_url || "",
-          streamUrl: r.stream_url || "",
-          liked: false,
-        }));
-    },
-    enabled: songIds.length > 0,
-    staleTime: 2 * 60 * 1000,
-  });
-}
-
 const HomePage = () => {
   const navigate = useNavigate();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
@@ -66,7 +33,6 @@ const HomePage = () => {
   const queryClient = useQueryClient();
   const [refreshingArtists, setRefreshingArtists] = useState(false);
 
-  // Fetch unique artists with cover images
   const { data: artists, isLoading: loadingArtists } = useQuery({
     queryKey: ["home-artists"],
     queryFn: async () => {
@@ -76,7 +42,6 @@ const HomePage = () => {
         .not("stream_url", "is", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      // Keep order by most recent song per artist
       const artistMap = new Map<string, { cover: string; latestAt: string }>();
       for (const row of data || []) {
         if (!artistMap.has(row.artist)) {
@@ -90,7 +55,6 @@ const HomePage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch albums
   const { data: albums, isLoading: loadingAlbums } = useQuery({
     queryKey: ["home-albums"],
     queryFn: async () => {
@@ -110,7 +74,6 @@ const HomePage = () => {
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
 
-  // Top artists by play count
   const userId = usePlayerStore((s) => s.userId);
   const { data: topArtists, isLoading: loadingTopArtists } = useQuery({
     queryKey: ["top-artists", userId],
@@ -137,7 +100,6 @@ const HomePage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Gather all custom section song IDs for batch fetching
   const allCustomSongIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
     return [...new Set(homeConfig.customSections.flatMap((c) => c.songIds))];
@@ -193,7 +155,6 @@ const HomePage = () => {
     top_artists: { songs: undefined, loading: false },
   }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
-  // User-level layout customization (localStorage)
   const adminSections = useMemo(() => {
     if (!homeConfig) return [];
     return [...homeConfig.sections].sort((a, b) => a.order - b.order);
@@ -222,23 +183,15 @@ const HomePage = () => {
       .filter(Boolean) as Song[];
   }, [homeConfig?.customSections, customSongsData]);
 
-  const renderSection = (
-    title: string,
-    songs: Song[] | undefined,
-    loading: boolean
-  ) => {
+  const renderSection = (title: string, songs: Song[] | undefined, loading: boolean) => {
     if (!loading && (!songs || songs.length === 0)) return null;
-
     return (
       <Section
         title={title}
         songs={songs}
         onPlayAll={
           songs && songs.length > 0
-            ? () => {
-                setQueue(songs);
-                play(songs[0]);
-              }
+            ? () => { setQueue(songs); play(songs[0]); }
             : undefined
         }
       >
@@ -265,41 +218,36 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pb-32 md:pb-40 max-w-7xl mx-auto relative overflow-y-auto">
+    <div className="pb-32 md:pb-40 max-w-7xl mx-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       <QuickAccess />
 
-      <div className="mt-4" />
+      <div className="mt-5" />
 
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
         if (isCustom) {
           const songs = getCustomSectionSongs(section.id);
-          return (
-            <div key={section.id}>
-              {renderSection(section.title, songs, loadingCustomSongs)}
-            </div>
-          );
+          return <div key={section.id}>{renderSection(section.title, songs, loadingCustomSongs)}</div>;
         }
 
-        // Top Artists bubbles section
         if (section.id === "top_artists") {
           if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
           return (
             <Section key={section.id} title={section.title}>
-              <div className="px-4 md:px-8">
+              <div className="px-5 md:px-8">
                 {loadingTopArtists ? (
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 pt-1">
+                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
-                        <div className="w-[66px] h-[66px] rounded-full animate-pulse" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
-                        <div className="w-10 h-2.5 rounded animate-pulse" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
+                        <div className="w-16 h-16 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                        <div className="w-12 h-2.5 rounded animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-3 pt-1" style={{ overflow: "visible" }}>
+                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
@@ -310,7 +258,6 @@ const HomePage = () => {
           );
         }
 
-        // Artists section
         if (section.id === "artists") {
           if (!loadingArtists && (!artists || artists.length === 0)) return null;
           return (
@@ -330,18 +277,19 @@ const HomePage = () => {
                       queryClient.invalidateQueries({ queryKey: ["custom-artist-image"] });
                       queryClient.invalidateQueries({ queryKey: ["artist-image"] });
                       queryClient.invalidateQueries({ queryKey: ["home-artists"] });
-                      toast.success(`${data.updated} photo${data.updated > 1 ? "s" : ""} artiste${data.updated > 1 ? "s" : ""} mise${data.updated > 1 ? "s" : ""} à jour`);
-                    } catch (e) {
+                      toast.success(`${data.updated} photo${data.updated > 1 ? "s" : ""} mise${data.updated > 1 ? "s" : ""} à jour`);
+                    } catch {
                       toast.error("Erreur lors du rafraîchissement");
                     } finally {
                       setRefreshingArtists(false);
                     }
                   }}
                   disabled={refreshingArtists}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform disabled:opacity-50"
+                  style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
                 >
                   {refreshingArtists ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  {refreshingArtists ? "Refresh…" : "Refresh photos"}
+                  {refreshingArtists ? "Refresh…" : "Refresh"}
                 </button>
               ) : undefined}
             >
@@ -358,7 +306,6 @@ const HomePage = () => {
           );
         }
 
-        // Albums section
         if (section.id === "albums") {
           if (!loadingAlbums && (!albums || albums.length === 0)) return null;
           return (
@@ -385,36 +332,26 @@ const HomePage = () => {
 
         const data = builtinDataMap[section.id];
         if (!data) return null;
-        return (
-          <div key={section.id}>
-            {renderSection(section.title, data.songs, data.loading)}
-          </div>
-        );
+        return <div key={section.id}>{renderSection(section.title, data.songs, data.loading)}</div>;
       })}
+
+      {/* Empty state */}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="px-4 md:px-8 py-20 text-center"
-        >
+        <div className="px-5 md:px-8 py-24 text-center">
           <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{
-              background: "hsl(var(--card) / 0.5)",
-              backdropFilter: "blur(20px) saturate(1.6)",
-              border: "1px solid hsl(var(--border) / 0.12)",
-              boxShadow: "0 4px 24px hsl(0 0% 0% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.04)",
-            }}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: "hsl(var(--foreground) / 0.04)" }}
           >
-            <Music className="w-9 h-9 text-muted-foreground/25" />
+            <Music className="w-7 h-7 text-muted-foreground/20" />
           </div>
-          <h2 className="text-lg font-bold text-foreground mb-1.5 tracking-tight">Aucune musique pour le moment</h2>
-          <p className="text-[12px] text-muted-foreground/50 max-w-xs mx-auto leading-relaxed">
+          <h2 className="text-lg font-bold text-foreground mb-1">Aucune musique pour le moment</h2>
+          <p className="text-[13px] text-muted-foreground/50 max-w-xs mx-auto">
             L'administrateur n'a pas encore ajouté de morceaux. Revenez bientôt !
           </p>
-        </motion.div>
+        </div>
       )}
-      {/* Edit mode UI */}
+
+      {/* Edit mode */}
       <EditModeToggle editMode={editMode} onToggle={() => setEditMode(!editMode)} />
       <AnimatePresence>
         {editMode && (
@@ -432,6 +369,7 @@ const HomePage = () => {
     </div>
   );
 };
+
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
@@ -460,7 +398,6 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
   );
 }
 
-/** Top artist bubble with rank badge, play count, and artist photo */
 function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; count: number; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
@@ -478,59 +415,53 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
   });
 
   const imageUrl = customImage || deezerImage || artist.cover;
-  const isTop3 = index < 3;
-  const size = isTop3 ? 70 : 60;
-  const ringColors: Record<number, string> = {
-    0: "hsl(48 96% 53% / 0.5)",
-    1: "hsl(0 0% 78% / 0.5)",
-    2: "hsl(30 72% 38% / 0.45)",
+  const size = index < 3 ? 72 : 62;
+  const rankColors: Record<number, string> = {
+    0: "hsl(var(--primary))",
+    1: "hsl(var(--primary) / 0.6)",
+    2: "hsl(var(--primary) / 0.35)",
   };
-  const ringColor = ringColors[index] || "hsl(var(--border) / 0.3)";
 
   return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.05, type: "spring", stiffness: 220, damping: 20 }}
-      whileTap={{ scale: 0.93 }}
+    <button
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-      className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-95 transition-transform"
     >
       <div className="relative">
         <div
-          className="rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105 group-active:scale-95"
+          className="rounded-full overflow-hidden"
           style={{
             width: size,
             height: size,
-            boxShadow: `0 0 0 2px ${ringColor}, 0 4px 16px hsl(0 0% 0% / 0.12)`,
+            boxShadow: index < 3
+              ? `0 0 0 2.5px ${rankColors[index]}, 0 4px 12px hsl(0 0% 0% / 0.1)`
+              : "0 2px 8px hsl(0 0% 0% / 0.08)",
           }}
         >
           {imageUrl ? (
             <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05))" }}>
-              <User className="w-1/3 h-1/3 text-primary/35" />
+            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+              <User className="w-1/3 h-1/3 text-muted-foreground/20" />
             </div>
           )}
         </div>
-        {/* Rank badge */}
+        {/* Rank */}
         <div
           className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black"
           style={{
-            background: index === 0 ? "hsl(48 96% 53%)" : index === 1 ? "hsl(0 0% 88%)" : index === 2 ? "hsl(30 72% 38%)" : "hsl(var(--secondary))",
-            color: index === 0 ? "hsl(48 96% 10%)" : index === 1 ? "hsl(0 0% 30%)" : index === 2 ? "hsl(30 72% 95%)" : "hsl(var(--secondary-foreground))",
-            border: index >= 3 ? "1px solid hsl(var(--border) / 0.4)" : "none",
-            boxShadow: "0 2px 6px hsl(0 0% 0% / 0.15)",
+            background: index < 3 ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.08)",
+            color: index < 3 ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground) / 0.6)",
           }}
         >
           {index + 1}
         </div>
       </div>
-      <div className="text-center" style={{ maxWidth: size + 4 }}>
-        <p className="text-[10px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[8px] text-muted-foreground/50 font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+      <div className="text-center" style={{ maxWidth: size + 8 }}>
+        <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{artist.name}</p>
+        <p className="text-[9px] text-muted-foreground/40">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
-    </motion.button>
+    </button>
   );
 }
 
