@@ -19,9 +19,11 @@ import { Music, Disc3, RefreshCw, Loader2, TrendingUp, User } from "lucide-react
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
+import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
+import { EditModeToggle, EditModePanel } from "@/components/home/EditModeToolbar";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
@@ -190,12 +192,25 @@ const HomePage = () => {
     top_artists: { songs: undefined, loading: false },
   }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
-  const visibleSections = useMemo(() => {
+  // User-level layout customization (localStorage)
+  const adminSections = useMemo(() => {
     if (!homeConfig) return [];
-    return [...homeConfig.sections]
-      .filter((s) => s.visible)
-      .sort((a, b) => a.order - b.order);
+    return [...homeConfig.sections].sort((a, b) => a.order - b.order);
   }, [homeConfig]);
+
+  const {
+    editMode,
+    setEditMode,
+    sections: userSections,
+    toggleVisibility,
+    reorder,
+    resetLayout,
+    hasCustomLayout,
+  } = useUserHomeLayout(adminSections);
+
+  const visibleSections = useMemo(() => {
+    return userSections.filter((s) => s.visible);
+  }, [userSections]);
 
   const getCustomSectionSongs = useCallback((sectionId: string): Song[] => {
     if (!homeConfig?.customSections || !customSongsData) return [];
@@ -255,8 +270,6 @@ const HomePage = () => {
       <QuickAccess />
 
       <div className="mt-2" />
-
-      <QuickAccess />
 
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
@@ -388,11 +401,24 @@ const HomePage = () => {
           </p>
         </div>
       )}
+      {/* Edit mode UI */}
+      <EditModeToggle editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+      <AnimatePresence>
+        {editMode && (
+          <EditModePanel
+            sections={userSections}
+            onToggleVisibility={toggleVisibility}
+            onMoveUp={(i) => i > 0 && reorder(i, i - 1)}
+            onMoveDown={(i) => i < userSections.length - 1 && reorder(i, i + 1)}
+            onReset={resetLayout}
+            hasCustomLayout={hasCustomLayout}
+            onClose={() => setEditMode(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
-
-/** Artist card that fetches real Deezer photo, with custom image priority */
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
