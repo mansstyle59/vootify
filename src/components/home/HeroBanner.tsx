@@ -25,10 +25,9 @@ const QUOTES = [
   "Musique : le remède universel.",
 ];
 
-function getGreeting(name?: string | null) {
+function getGreeting() {
   const h = new Date().getHours();
-  const base = h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
-  return name ? `${base}, ${name}` : base;
+  return h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
 }
 
 function getDailyQuote() {
