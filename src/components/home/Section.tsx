@@ -116,7 +116,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink }: Sect
         className="flex items-center justify-between px-4 md:px-8 mb-2"
       >
         <div className="flex items-center gap-2 mr-2 min-w-0">
-          <h2 className="text-base md:text-lg font-display font-bold text-foreground leading-tight line-clamp-2 break-words">{title}</h2>
+          <h2 className="text-[15px] md:text-lg font-display font-bold text-foreground leading-tight line-clamp-2 break-words">{title}</h2>
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}

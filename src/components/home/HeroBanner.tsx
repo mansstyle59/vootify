@@ -27,7 +27,7 @@ function AnimatedCounter({ value, label, icon: Icon, delay }: { value: number; l
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay + 0.1, type: "spring", stiffness: 200, damping: 20 }}
-      className="flex items-center gap-2 px-3 py-2 rounded-xl"
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
       style={{
         background: "hsl(var(--card) / 0.4)",
         backdropFilter: "blur(12px)",
@@ -35,9 +35,9 @@ function AnimatedCounter({ value, label, icon: Icon, delay }: { value: number; l
         border: "1px solid hsl(var(--border) / 0.3)",
       }}
     >
-      <Icon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-      <span className="text-base font-black text-foreground tabular-nums">{display}</span>
-      <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+      <Icon className="w-3 h-3 text-primary flex-shrink-0" />
+      <span className="text-sm font-black text-foreground tabular-nums">{display}</span>
+      <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
     </motion.div>
   );
 }
@@ -97,7 +97,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-2" style={{ minHeight: "190px" }}>
+    <div ref={ref} className="relative overflow-hidden mb-1" style={{ minHeight: "175px" }}>
       {/* Parallax background layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
         {bgImage ? (
@@ -228,14 +228,14 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
       {/* Main content */}
       <motion.div
         style={{ opacity }}
-        className="relative z-10 px-4 md:px-8 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 flex flex-col justify-end gpu-layer"
+        className="relative z-10 px-4 md:px-8 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-2 flex flex-col justify-end gpu-layer"
       >
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1, type: "spring", stiffness: 200 }}
-          className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full w-fit mb-2 mt-1"
+          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit mb-1.5 mt-0.5"
           style={{
             background: "hsl(var(--primary) / 0.1)",
             border: "1px solid hsl(var(--primary) / 0.15)",
@@ -250,7 +250,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             style={{ background: "var(--gradient-primary)", boxShadow: "0 0 8px hsl(var(--primary) / 0.5)" }}
           />
           <Headphones className="w-3 h-3 text-primary" />
-          <span className="text-[11px] font-extrabold text-primary tracking-[0.15em] uppercase">Vootify</span>
+          <span className="text-[10px] font-extrabold text-primary tracking-[0.15em] uppercase">Vootify</span>
         </motion.div>
 
         {/* Greeting */}
@@ -258,7 +258,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="text-[22px] md:text-[32px] font-black text-foreground mb-0.5 leading-[1.1] tracking-tight"
+          className="text-[20px] md:text-[28px] font-black text-foreground mb-0.5 leading-[1.15] tracking-tight"
         >
           {getGreeting(user ? displayName : null)}{" "}
           <motion.span
