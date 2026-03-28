@@ -417,6 +417,13 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
             <User className="w-10 h-10 text-muted-foreground/20" />
           </div>
         )}
+        {/* Shine / glare effect on hover */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          style={{
+            background: "linear-gradient(105deg, transparent 30%, hsl(0 0% 100% / 0.12) 45%, hsl(0 0% 100% / 0.03) 55%, transparent 70%)",
+          }}
+        />
         {/* Bottom gradient overlay with name */}
         <div
           className="absolute inset-x-0 bottom-0 h-[55%] flex items-end p-3"
