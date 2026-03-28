@@ -23,7 +23,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
-import { EditModeToggle, EditModePanel } from "@/components/home/EditModeToolbar";
+
 
 const HomePage = () => {
   const navigate = useNavigate();
