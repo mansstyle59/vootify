@@ -208,6 +208,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 50]);
   const orbY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+  const blur = useTransform(scrollYProgress, [0, 0.6], [0, 12]);
 
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
@@ -295,6 +296,15 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           </>
         )}
       </motion.div>
+
+      {/* Progressive blur overlay on scroll */}
+      <motion.div
+        className="absolute inset-0 z-[1] pointer-events-none gpu-layer"
+        style={{
+          backdropFilter: useTransform(blur, (v) => `blur(${v}px)`),
+          WebkitBackdropFilter: useTransform(blur, (v) => `blur(${v}px)`),
+        }}
+      />
 
       {/* Bottom gradient fade */}
       <div
