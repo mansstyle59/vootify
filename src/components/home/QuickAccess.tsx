@@ -11,7 +11,7 @@ interface QuickItem {
   label: string;
   sublabel: string;
   imageUrl: string;
-  type: "radio" | "playlist" | "album";
+  type: "playlist" | "album";
   action: () => void;
 }
 
