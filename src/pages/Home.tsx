@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
@@ -15,8 +15,10 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, Disc3 } from "lucide-react";
+import { Music, Disc3, RefreshCw, Loader2 } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { toast } from "sonner";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
@@ -54,6 +56,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
+  const { isAdmin } = useAdminAuth();
+  const queryClient = useQueryClient();
+  const [refreshingArtists, setRefreshingArtists] = useState(false);
 
   // Fetch unique artists with cover images
   const { data: artists, isLoading: loadingArtists } = useQuery({
@@ -231,7 +236,37 @@ const HomePage = () => {
         if (section.id === "artists") {
           if (!loadingArtists && (!artists || artists.length === 0)) return null;
           return (
-            <Section key={section.id} title={section.title}>
+            <Section
+              key={section.id}
+              title={section.title}
+              action={isAdmin ? (
+                <button
+                  onClick={async () => {
+                    if (refreshingArtists) return;
+                    setRefreshingArtists(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("refresh-artist-images", {
+                        body: { only_missing: false, force_refresh: true },
+                      });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["custom-artist-image"] });
+                      queryClient.invalidateQueries({ queryKey: ["artist-image"] });
+                      queryClient.invalidateQueries({ queryKey: ["home-artists"] });
+                      toast.success(`${data.updated} photo${data.updated > 1 ? "s" : ""} artiste${data.updated > 1 ? "s" : ""} mise${data.updated > 1 ? "s" : ""} à jour`);
+                    } catch (e) {
+                      toast.error("Erreur lors du rafraîchissement");
+                    } finally {
+                      setRefreshingArtists(false);
+                    }
+                  }}
+                  disabled={refreshingArtists}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50"
+                >
+                  {refreshingArtists ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  {refreshingArtists ? "Refresh…" : "Refresh photos"}
+                </button>
+              ) : undefined}
+            >
               <HorizontalScroll>
                 {loadingArtists ? (
                   <CoverSkeleton count={6} />

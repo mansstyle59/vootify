@@ -7,12 +7,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 
-interface SectionProps {
+export interface SectionProps {
   title: string;
   children: ReactNode;
   songs?: Song[];
   onPlayAll?: () => void;
   viewAllLink?: string;
+  action?: ReactNode;
 }
 
 function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () => void }) {
@@ -95,7 +96,7 @@ function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () =
   );
 }
 
-export function Section({ title, children, songs, onPlayAll, viewAllLink }: SectionProps) {
+export function Section({ title, children, songs, onPlayAll, viewAllLink, action }: SectionProps) {
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const navigate = useNavigate();
   const hasSongs = songs && songs.length > 0;
@@ -126,33 +127,36 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink }: Sect
             </button>
           )}
         </div>
-        {hasSongs && (
-          <div className="flex items-center gap-1.5 relative flex-shrink-0">
-            {onPlayAll && (
-              <button
-                onClick={onPlayAll}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
-              >
-                <Play className="w-3 h-3" />
-                <span className="hidden sm:inline">Tout lire</span>
-              </button>
-            )}
+        <div className="flex items-center gap-1.5 relative flex-shrink-0">
+          {action}
+          {hasSongs && onPlayAll && (
             <button
-              onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-medium transition-colors"
+              onClick={onPlayAll}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
             >
-              <ListPlus className="w-3 h-3" />
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline">Tout lire</span>
             </button>
-            <AnimatePresence>
-              {showPlaylistPicker && songs && (
-                <AddAllToPlaylistMenu
-                  songs={songs}
-                  onClose={() => setShowPlaylistPicker(false)}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+          )}
+          {hasSongs && (
+            <>
+              <button
+                onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-medium transition-colors"
+              >
+                <ListPlus className="w-3 h-3" />
+              </button>
+              <AnimatePresence>
+                {showPlaylistPicker && songs && (
+                  <AddAllToPlaylistMenu
+                    songs={songs}
+                    onClose={() => setShowPlaylistPicker(false)}
+                  />
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </div>
       </motion.div>
       <motion.div
         initial={{ opacity: 0 }}
