@@ -216,7 +216,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-4">
+    <div ref={ref} className="relative overflow-hidden mb-2">
       {/* Parallax background layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
         {bgImage ? (
