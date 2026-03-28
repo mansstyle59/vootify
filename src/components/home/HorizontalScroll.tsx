@@ -46,7 +46,7 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
 
       <div
         ref={scrollRef}
-        className="flex gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide px-4 md:px-8 pb-3"
+        className="flex gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide pl-5 pr-4 md:pl-9 md:pr-8 pb-3"
         style={{
           scrollSnapType: "x proximity",
           WebkitOverflowScrolling: "touch",
