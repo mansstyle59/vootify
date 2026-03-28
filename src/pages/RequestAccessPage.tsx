@@ -164,9 +164,9 @@ const RequestAccessPage = () => {
                         >
                           <Icon className="w-4 h-4" />
                           <span>{opt.label}</span>
-                          {prices[opt.key] && (
+                          {prices[opt.key]?.[currentPeriod] && (
                             <span className={`text-[10px] font-medium ${isSelected ? "text-white/80" : "text-muted-foreground"}`}>
-                              {prices[opt.key]}/mois
+                              {prices[opt.key][currentPeriod]}{currentPeriod}
                             </span>
                           )}
                           {isSelected && (
