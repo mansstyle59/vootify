@@ -238,7 +238,7 @@ const HomePage = () => {
             <Section key={section.id} title={section.title}>
               <div className="px-5 md:px-9">
                 {loadingTopArtists ? (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 pt-1">
+                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <div key={i} className="flex flex-col items-center gap-2.5 flex-shrink-0">
                         <div className="w-[76px] h-[76px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
@@ -247,7 +247,7 @@ const HomePage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 pt-1">
+                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
