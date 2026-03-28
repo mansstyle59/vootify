@@ -67,24 +67,38 @@ export function MiniPlayer() {
 
   // ── EQ: connect Web Audio API pipeline ──
   const connectEQ = useCallback((audio: HTMLAudioElement) => {
-    if (connectedAudioRef.current === audio) return; // already connected
+    if (connectedAudioRef.current === audio) {
+      // Already connected — just make sure AudioContext is running
+      const ctx = audioCtxRef.current;
+      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+      return;
+    }
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioCtxRef.current;
-      if (ctx.state === "suspended") ctx.resume();
+
+      // CRITICAL: Resume AudioContext (especially on iOS/mobile where it starts suspended)
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+
+      // Listen for future suspensions and auto-resume
+      ctx.onstatechange = () => {
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      };
 
       const source = ctx.createMediaElementSource(audio);
       const bass = ctx.createBiquadFilter();
       bass.type = "lowshelf";
       bass.frequency.value = 200;
-      bass.gain.value = bassBoost;
+      bass.gain.value = usePlayerStore.getState().bassBoost;
 
       const treble = ctx.createBiquadFilter();
       treble.type = "highshelf";
       treble.frequency.value = 3000;
-      treble.gain.value = trebleBoost;
+      treble.gain.value = usePlayerStore.getState().trebleBoost;
 
       source.connect(bass);
       bass.connect(treble);
@@ -94,10 +108,30 @@ export function MiniPlayer() {
       bassFilterRef.current = bass;
       trebleFilterRef.current = treble;
       connectedAudioRef.current = audio;
+      console.log("[EQ] Web Audio pipeline connected successfully");
     } catch (e) {
-      console.warn("[EQ] Web Audio API init failed:", e);
+      console.warn("[EQ] Web Audio API init failed, audio will play without EQ:", e);
+      // Fallback: ensure audio still plays through default output
+      // If createMediaElementSource failed, audio plays normally without EQ
+      connectedAudioRef.current = null;
     }
   }, []); // stable ref — reads from refs, not deps
+
+  // ── Resume AudioContext on ANY user interaction (mobile requirement) ──
+  useEffect(() => {
+    const resumeCtx = () => {
+      const ctx = audioCtxRef.current;
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume().then(() => console.log("[EQ] AudioContext resumed via user gesture")).catch(() => {});
+      }
+    };
+    document.addEventListener("touchstart", resumeCtx, { once: false, passive: true });
+    document.addEventListener("click", resumeCtx, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", resumeCtx);
+      document.removeEventListener("click", resumeCtx);
+    };
+  }, []);
 
   // Update EQ gains reactively
   useEffect(() => {
@@ -345,6 +379,8 @@ export function MiniPlayer() {
         // Transfer event listeners by swapping refs
         preloadRef.current = oldMain;
         audioRef.current = preloaded;
+        // Connect EQ to new main audio element
+        connectEQ(preloaded);
         // Set up events on new main
         preloaded.onended = handleEnded;
         preloaded.onerror = handleAudioError;
