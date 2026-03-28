@@ -17,14 +17,45 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
 
-/* ── Shared glass styles ── */
+/* ── Shared glass styles — enhanced glassmorphism ── */
 const glassStyle = {
-  background: "hsl(var(--card) / 0.92)",
-  backdropFilter: "blur(60px) saturate(1.8)",
-  WebkitBackdropFilter: "blur(60px) saturate(1.8)",
-  border: "1px solid hsl(var(--border) / 0.4)",
-  boxShadow: "0 -2px 20px hsl(0 0% 0% / 0.15), 0 8px 32px hsl(0 0% 0% / 0.25)",
+  background: "hsl(var(--card) / 0.72)",
+  backdropFilter: "blur(80px) saturate(2.0) brightness(1.05)",
+  WebkitBackdropFilter: "blur(80px) saturate(2.0) brightness(1.05)",
+  border: "1px solid hsl(var(--foreground) / 0.08)",
+  boxShadow:
+    "0 -4px 30px hsl(0 0% 0% / 0.3), 0 12px 40px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.06)",
 };
+
+/* ── Animated progress bar with glow ── */
+function MiniPlayerProgress({ percent, isLive }: { percent: number; isLive: boolean }) {
+  if (isLive) {
+    return (
+      <div className="h-[3px] w-full bg-primary/20 overflow-hidden">
+        <motion.div
+          className="h-full bg-primary"
+          animate={{ x: ["-100%", "100%"] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          style={{ width: "40%" }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="h-[3px] w-full" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+      <motion.div
+        className="h-full relative"
+        style={{
+          width: `${percent}%`,
+          background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))",
+          boxShadow: "0 0 8px hsl(var(--primary) / 0.5), 0 0 2px hsl(var(--primary) / 0.8)",
+        }}
+        layout
+        transition={{ duration: 0.3, ease: "linear" }}
+      />
+    </div>
+  );
+}
 
 /* ── Resume Banner ── */
 function ResumeBanner({ message }: { message: string | null }) {
