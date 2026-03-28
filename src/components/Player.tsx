@@ -319,24 +319,18 @@ export function MiniPlayer() {
       const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
 
-      // Simple: set src and play
-      if (audio.src !== srcToUse) {
-        audio.src = srcToUse;
-      }
+      // Use AudioManager to play — syncs media session automatically
+      const isLiveTrack = songToPlay.duration === 0;
+      audioManager.play({
+        url: srcToUse,
+        title: songToPlay.title,
+        artist: songToPlay.artist,
+        cover: songToPlay.coverUrl,
+        album: songToPlay.album || undefined,
+        isLive: isLiveTrack,
+      });
       audio.volume = volume;
       audio.muted = false;
-      audio.play().then(() => {
-        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-      }).catch((e) => {
-        console.warn("[player] Play failed, waiting canplay:", e);
-        const onCanPlay = () => {
-          audio.removeEventListener("canplay", onCanPlay);
-          audio.play().then(() => {
-            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-          }).catch(console.error);
-        };
-        audio.addEventListener("canplay", onCanPlay, { once: true });
-      });
     };
 
     loadAndPlay();
