@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Radio, ListMusic, Music } from "lucide-react";
+import { ListMusic } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 
 interface QuickItem {
