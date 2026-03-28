@@ -516,13 +516,15 @@ export function MiniPlayer() {
     };
   }, []);
 
-  if (!currentSong || closing) {
+  // Handle close animation completion
+  const onExitComplete = useCallback(() => {
     if (closing) {
-      // Allow exit animation to play, then reset
-      setTimeout(() => { closePlayer(); setClosing(false); }, 0);
+      closePlayer();
+      setClosing(false);
     }
-    return null;
-  }
+  }, [closing, closePlayer]);
+
+  if (!currentSong) return null;
 
   const effectiveDuration = audioDuration > 0 ? audioDuration : currentSong.duration;
   const progressPct = !isLive && effectiveDuration > 0 ? (progress / effectiveDuration) * 100 : 0;
