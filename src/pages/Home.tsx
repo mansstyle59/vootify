@@ -339,21 +339,6 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Edit mode */}
-      <EditModeToggle editMode={editMode} onToggle={() => setEditMode(!editMode)} />
-      <AnimatePresence>
-        {editMode && (
-          <EditModePanel
-            sections={userSections}
-            onToggleVisibility={toggleVisibility}
-            onMoveUp={(i) => i > 0 && reorder(i, i - 1)}
-            onMoveDown={(i) => i < userSections.length - 1 && reorder(i, i + 1)}
-            onReset={resetLayout}
-            hasCustomLayout={hasCustomLayout}
-            onClose={() => setEditMode(false)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
