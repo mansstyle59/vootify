@@ -424,12 +424,15 @@ export function MiniPlayer() {
     const audioEl = audioRef.current;
     audioEl?.addEventListener("pause", handlePause);
     audioEl?.addEventListener("stalled", handleStalled);
+    audioEl?.addEventListener("waiting", handleWaiting);
 
     return () => {
       if (resumeTimer) clearTimeout(resumeTimer);
+      if (stallTimer) clearTimeout(stallTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
       audioEl?.removeEventListener("pause", handlePause);
       audioEl?.removeEventListener("stalled", handleStalled);
+      audioEl?.removeEventListener("waiting", handleWaiting);
     };
   }, [volume]);
 
