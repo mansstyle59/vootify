@@ -449,9 +449,16 @@ export function MiniPlayer() {
     if (!audio || !currentSong || !audio.src) return;
     if (lastSongIdRef.current === currentSong.id) {
       if (isPlaying) {
-        audio.play().catch(console.error);
+        if (audio.paused) {
+          audio.volume = volume;
+          audio.muted = false;
+          audio.play().then(() => {
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+          }).catch(console.error);
+        }
       } else {
-        audio.pause();
+        if (!audio.paused) audio.pause();
+        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
       }
     }
   }, [isPlaying]);
