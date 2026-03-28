@@ -19,9 +19,11 @@ import { Music, Disc3, RefreshCw, Loader2, TrendingUp, User } from "lucide-react
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
+import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
+import { EditModeToggle, EditModePanel } from "@/components/home/EditModeToolbar";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
