@@ -68,6 +68,9 @@ export function MiniPlayer() {
 
   // ── EQ: connect Web Audio API pipeline ──
   const connectEQ = useCallback((audio: HTMLAudioElement) => {
+    // If EQ previously failed (CORS issue), don't retry — play without EQ
+    if (eqFailedRef.current) return;
+    
     if (connectedAudioRef.current === audio) {
       // Already connected — just make sure AudioContext is running
       const ctx = audioCtxRef.current;
@@ -75,17 +78,20 @@ export function MiniPlayer() {
       return;
     }
     try {
+      // Ensure crossOrigin is set before connecting to Web Audio API
+      if (!audio.crossOrigin) {
+        audio.crossOrigin = "anonymous";
+      }
+      
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioCtxRef.current;
 
-      // CRITICAL: Resume AudioContext (especially on iOS/mobile where it starts suspended)
       if (ctx.state === "suspended") {
         ctx.resume().catch(() => {});
       }
 
-      // Listen for future suspensions and auto-resume
       ctx.onstatechange = () => {
         if (ctx.state === "suspended") ctx.resume().catch(() => {});
       };
@@ -111,12 +117,13 @@ export function MiniPlayer() {
       connectedAudioRef.current = audio;
       console.log("[EQ] Web Audio pipeline connected successfully");
     } catch (e) {
-      console.warn("[EQ] Web Audio API init failed, audio will play without EQ:", e);
-      // Fallback: ensure audio still plays through default output
-      // If createMediaElementSource failed, audio plays normally without EQ
+      console.warn("[EQ] Web Audio API init failed, disabling EQ for this session:", e);
+      eqFailedRef.current = true;
+      // Remove crossOrigin so audio can play without CORS restrictions
+      audio.crossOrigin = null as any;
       connectedAudioRef.current = null;
     }
-  }, []); // stable ref — reads from refs, not deps
+  }, []);
 
   // ── Resume AudioContext on ANY user interaction (mobile requirement) ──
   useEffect(() => {
