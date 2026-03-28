@@ -474,8 +474,7 @@ const RadioPage = () => {
               }`}
               style={{
                 background: "hsl(var(--primary) / 0.9)",
-                backdropFilter: "blur(16px) saturate(1.8)",
-                boxShadow: "0 4px 24px hsl(var(--primary) / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
+                boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)",
               }}
             >
               {isActivePlaying ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
