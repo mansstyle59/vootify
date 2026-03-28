@@ -292,14 +292,14 @@ const HomePage = () => {
                 {loadingTopArtists ? (
                   <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 pt-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                        <div className="w-[64px] h-[64px] rounded-full bg-secondary/40 animate-pulse" />
-                        <div className="w-10 h-2.5 rounded bg-secondary/40 animate-pulse" />
+                      <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                        <div className="w-[66px] h-[66px] rounded-full animate-pulse" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
+                        <div className="w-10 h-2.5 rounded animate-pulse" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 pt-1">
+                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-3 pt-1" style={{ overflow: "visible" }}>
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
@@ -395,13 +395,21 @@ const HomePage = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="px-4 md:px-8 py-16 text-center"
+          className="px-4 md:px-8 py-20 text-center"
         >
-          <div className="w-20 h-20 rounded-2xl bg-secondary/40 flex items-center justify-center mx-auto mb-4">
-            <Music className="w-9 h-9 text-muted-foreground/30" />
+          <div
+            className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{
+              background: "hsl(var(--card) / 0.5)",
+              backdropFilter: "blur(20px) saturate(1.6)",
+              border: "1px solid hsl(var(--border) / 0.12)",
+              boxShadow: "0 4px 24px hsl(0 0% 0% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.04)",
+            }}
+          >
+            <Music className="w-9 h-9 text-muted-foreground/25" />
           </div>
-          <h2 className="text-lg font-bold text-foreground mb-1.5">Aucune musique pour le moment</h2>
-          <p className="text-[12px] text-muted-foreground/60 max-w-xs mx-auto leading-relaxed">
+          <h2 className="text-lg font-bold text-foreground mb-1.5 tracking-tight">Aucune musique pour le moment</h2>
+          <p className="text-[12px] text-muted-foreground/50 max-w-xs mx-auto leading-relaxed">
             L'administrateur n'a pas encore ajouté de morceaux. Revenez bientôt !
           </p>
         </motion.div>
@@ -471,51 +479,56 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
 
   const imageUrl = customImage || deezerImage || artist.cover;
   const isTop3 = index < 3;
-  const size = isTop3 ? "w-[68px] h-[68px]" : "w-[58px] h-[58px]";
-  const ringColor = index === 0
-    ? "ring-yellow-400/60"
-    : index === 1
-    ? "ring-gray-300/60"
-    : index === 2
-    ? "ring-amber-600/50"
-    : "ring-border/40";
+  const size = isTop3 ? 70 : 60;
+  const ringColors: Record<number, string> = {
+    0: "hsl(48 96% 53% / 0.5)",
+    1: "hsl(0 0% 78% / 0.5)",
+    2: "hsl(30 72% 38% / 0.45)",
+  };
+  const ringColor = ringColors[index] || "hsl(var(--border) / 0.3)";
 
   return (
     <motion.button
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: index * 0.05, type: "spring", stiffness: 220, damping: 20 }}
+      whileTap={{ scale: 0.93 }}
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-      className="flex flex-col items-center gap-1 flex-shrink-0 group"
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
     >
       <div className="relative">
-        <div className={`${size} rounded-full overflow-hidden ring-[1.5px] ${ringColor} transition-transform group-hover:scale-105 group-active:scale-95`}>
+        <div
+          className="rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105 group-active:scale-95"
+          style={{
+            width: size,
+            height: size,
+            boxShadow: `0 0 0 2px ${ringColor}, 0 4px 16px hsl(0 0% 0% / 0.12)`,
+          }}
+        >
           {imageUrl ? (
             <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05))" }}>
               <User className="w-1/3 h-1/3 text-primary/35" />
             </div>
           )}
         </div>
         {/* Rank badge */}
         <div
-          className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black ${
-            index === 0
-              ? "bg-yellow-400 text-yellow-950"
-              : index === 1
-              ? "bg-gray-200 text-gray-700"
-              : index === 2
-              ? "bg-amber-600 text-amber-50"
-              : "bg-secondary text-secondary-foreground border border-border/50"
-          }`}
+          className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black"
+          style={{
+            background: index === 0 ? "hsl(48 96% 53%)" : index === 1 ? "hsl(0 0% 88%)" : index === 2 ? "hsl(30 72% 38%)" : "hsl(var(--secondary))",
+            color: index === 0 ? "hsl(48 96% 10%)" : index === 1 ? "hsl(0 0% 30%)" : index === 2 ? "hsl(30 72% 95%)" : "hsl(var(--secondary-foreground))",
+            border: index >= 3 ? "1px solid hsl(var(--border) / 0.4)" : "none",
+            boxShadow: "0 2px 6px hsl(0 0% 0% / 0.15)",
+          }}
         >
           {index + 1}
         </div>
       </div>
-      <div className="text-center max-w-[68px]">
+      <div className="text-center" style={{ maxWidth: size + 4 }}>
         <p className="text-[10px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[8px] text-muted-foreground/60 font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+        <p className="text-[8px] text-muted-foreground/50 font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
     </motion.button>
   );

@@ -4,15 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface ContentStripProps {
   children: ReactNode;
-  /** Number of items visible per page on mobile / desktop */
   itemsPerPageMobile?: number;
   itemsPerPageDesktop?: number;
 }
 
 export function ContentStrip({
   children,
-  itemsPerPageMobile = 3,
-  itemsPerPageDesktop = 5,
 }: ContentStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -34,7 +31,6 @@ export function ContentStrip({
     setCanScrollLeft(scrollLeft > 4);
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
 
-    // Calculate current page based on scroll position
     if (clientWidth > 0 && scrollWidth > clientWidth) {
       const pages = Math.ceil(scrollWidth / clientWidth);
       setTotalPages(pages);
@@ -80,23 +76,23 @@ export function ContentStrip({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Fade edges */}
+      {/* Fade edges with gradient */}
       <div
-        className="absolute left-0 top-0 bottom-8 w-8 z-10 pointer-events-none transition-opacity duration-300"
+        className="absolute left-0 top-0 bottom-8 w-10 z-10 pointer-events-none transition-opacity duration-300"
         style={{
           opacity: canScrollLeft ? 1 : 0,
-          background: "linear-gradient(to right, hsl(var(--background)), transparent)",
+          background: "linear-gradient(to right, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
         }}
       />
       <div
-        className="absolute right-0 top-0 bottom-8 w-8 z-10 pointer-events-none transition-opacity duration-300"
+        className="absolute right-0 top-0 bottom-8 w-10 z-10 pointer-events-none transition-opacity duration-300"
         style={{
           opacity: canScrollRight ? 1 : 0,
-          background: "linear-gradient(to left, hsl(var(--background)), transparent)",
+          background: "linear-gradient(to left, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
         }}
       />
 
-      {/* Desktop navigation arrows */}
+      {/* Desktop glass navigation arrows */}
       <AnimatePresence>
         {isHovered && canScrollLeft && (
           <motion.button
@@ -105,7 +101,13 @@ export function ContentStrip({
             exit={{ opacity: 0, x: 8 }}
             transition={{ duration: 0.2 }}
             onClick={() => scrollBy(-1)}
-            className="hidden md:flex absolute left-1 top-1/2 -translate-y-[60%] z-20 w-9 h-9 rounded-full items-center justify-center bg-card/90 backdrop-blur-md border border-border/50 text-foreground shadow-lg hover:bg-card transition-colors"
+            className="hidden md:flex absolute left-2 top-1/2 -translate-y-[60%] z-20 w-10 h-10 rounded-full items-center justify-center text-foreground transition-colors"
+            style={{
+              background: "hsl(var(--card) / 0.7)",
+              backdropFilter: "blur(20px) saturate(1.6)",
+              border: "1px solid hsl(var(--border) / 0.15)",
+              boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.04)",
+            }}
           >
             <ChevronLeft className="w-4 h-4" />
           </motion.button>
@@ -119,7 +121,13 @@ export function ContentStrip({
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.2 }}
             onClick={() => scrollBy(1)}
-            className="hidden md:flex absolute right-1 top-1/2 -translate-y-[60%] z-20 w-9 h-9 rounded-full items-center justify-center bg-card/90 backdrop-blur-md border border-border/50 text-foreground shadow-lg hover:bg-card transition-colors"
+            className="hidden md:flex absolute right-2 top-1/2 -translate-y-[60%] z-20 w-10 h-10 rounded-full items-center justify-center text-foreground transition-colors"
+            style={{
+              background: "hsl(var(--card) / 0.7)",
+              backdropFilter: "blur(20px) saturate(1.6)",
+              border: "1px solid hsl(var(--border) / 0.15)",
+              boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.04)",
+            }}
           >
             <ChevronRight className="w-4 h-4" />
           </motion.button>
@@ -129,7 +137,7 @@ export function ContentStrip({
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-2.5 md:gap-3 overflow-x-auto pl-5 pr-4 md:pl-9 md:pr-8 pb-1"
+        className="flex gap-3 md:gap-3.5 overflow-x-auto pl-5 pr-4 md:pl-9 md:pr-8 pb-1"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
@@ -150,12 +158,13 @@ export function ContentStrip({
               onClick={() => scrollToPage(i)}
               className="transition-all duration-300 rounded-full"
               style={{
-                width: currentPage === i ? 16 : 5,
+                width: currentPage === i ? 18 : 5,
                 height: 5,
                 background:
                   currentPage === i
                     ? "hsl(var(--primary))"
-                    : "hsl(var(--muted-foreground) / 0.2)",
+                    : "hsl(var(--muted-foreground) / 0.15)",
+                boxShadow: currentPage === i ? "0 0 8px hsl(var(--primary) / 0.3)" : "none",
               }}
             />
           ))}
@@ -170,13 +179,13 @@ export function StripSkeleton({ count = 6 }: { count?: number }) {
     <>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="flex-shrink-0 w-[120px] md:w-[140px] snap-start">
-          <div className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-xl bg-secondary/40 mb-2 overflow-hidden relative">
+          <div className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-2xl mb-2 overflow-hidden relative" style={{ background: "hsl(var(--secondary) / 0.3)" }}>
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
           </div>
-          <div className="h-2.5 w-16 md:w-20 bg-secondary/40 rounded mb-1 overflow-hidden relative">
+          <div className="h-2.5 w-16 md:w-20 rounded mb-1 overflow-hidden relative" style={{ background: "hsl(var(--secondary) / 0.3)" }}>
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
           </div>
-          <div className="h-2 w-10 md:w-12 bg-secondary/25 rounded overflow-hidden relative">
+          <div className="h-2 w-10 md:w-12 rounded overflow-hidden relative" style={{ background: "hsl(var(--secondary) / 0.2)" }}>
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
           </div>
         </div>
