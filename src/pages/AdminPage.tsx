@@ -820,6 +820,8 @@ function SongsTab() {
   const [deleting, setDeleting] = useState(false);
   const [smartFixing, setSmartFixing] = useState(false);
   const [smartFixProgress, setSmartFixProgress] = useState("");
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState("");
 
   const isSelecting = selectedIds.size > 0;
 
