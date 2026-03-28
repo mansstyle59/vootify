@@ -7,12 +7,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 
-interface SectionProps {
+export interface SectionProps {
   title: string;
   children: ReactNode;
   songs?: Song[];
   onPlayAll?: () => void;
   viewAllLink?: string;
+  action?: ReactNode;
 }
 
 function AddAllToPlaylistMenu({ songs, onClose }: { songs: Song[]; onClose: () => void }) {
