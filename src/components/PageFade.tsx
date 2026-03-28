@@ -2,8 +2,8 @@ import { useRef, useEffect, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
- * Pure-CSS page fade: triggers a 80ms opacity transition on route change.
- * Non-blocking — the new page renders immediately and fades in.
+ * iOS-style page transition: subtle fade + slide for native feel.
+ * Non-blocking — the new page renders immediately and animates in.
  */
 export function PageFade({ children }: { children: ReactNode }) {
   const location = useLocation();
@@ -15,17 +15,22 @@ export function PageFade({ children }: { children: ReactNode }) {
     prevPath.current = location.pathname;
     const el = ref.current;
     if (!el) return;
+    // Start: invisible + slightly shifted
     el.style.opacity = "0";
-    // Force reflow then fade in
+    el.style.transform = "translateY(6px)";
+    // Force reflow then animate in
     void el.offsetHeight;
     el.style.opacity = "1";
+    el.style.transform = "translateY(0)";
   }, [location.pathname]);
 
   return (
     <div
       ref={ref}
-      className="min-h-screen"
-      style={{ transition: "opacity 60ms ease-out" }}
+      className="min-h-screen will-change-[opacity,transform]"
+      style={{
+        transition: "opacity 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      }}
     >
       {children}
     </div>

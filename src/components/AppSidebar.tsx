@@ -120,27 +120,33 @@ export function MobileNav() {
   const { isAdmin } = useAdminAuth();
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
+  const handleTap = useCallback((to: string) => {
+    prefetchRoute(to);
+    if (navigator.vibrate) navigator.vibrate(5);
+  }, []);
+
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/30 px-1"
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/20 px-1"
       style={{
         paddingBottom: "env(safe-area-inset-bottom)",
-        background: "hsl(var(--card) / 0.75)",
-        backdropFilter: "blur(40px) saturate(1.8)",
-        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+        background: "hsl(var(--card) / 0.82)",
+        backdropFilter: "blur(50px) saturate(1.8)",
+        WebkitBackdropFilter: "blur(50px) saturate(1.8)",
+        boxShadow: "0 -1px 20px hsl(0 0% 0% / 0.12)",
       }}
     >
-      <div className="flex justify-around py-1">
+      <div className="flex justify-around py-1.5">
         {items.map((item) => (
           <RouterNavLink
             key={item.to}
             to={item.to}
             end={item.to === "/"}
-            onTouchStart={() => prefetchRoute(item.to)}
+            onTouchStart={() => handleTap(item.to)}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl text-[10px] font-semibold transition-all duration-200 native-press-sm ${
+              `flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-2xl text-[10px] font-semibold transition-all duration-150 ${
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground/70"
+                  : "text-muted-foreground/60"
               }`
             }
           >
@@ -148,13 +154,24 @@ export function MobileNav() {
               <>
                 <div className="relative">
                   <item.icon
-                    className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                    className={`w-[22px] h-[22px] transition-all duration-200 ${
                       isActive ? "scale-110" : ""
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.8}
                   />
+                  {/* iOS-style active dot indicator */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-dot"
+                      className="absolute -bottom-1.5 left-1/2 w-1 h-1 rounded-full bg-primary"
+                      style={{ marginLeft: -2 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
                 </div>
-                <span>{item.label}</span>
+                <span className={`transition-opacity duration-150 ${isActive ? "opacity-100" : "opacity-70"}`}>
+                  {item.label}
+                </span>
               </>
             )}
           </RouterNavLink>
