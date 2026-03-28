@@ -302,6 +302,13 @@ const PlaylistDetailPage = () => {
                         <>
                           <div className="h-px bg-white/[0.06] mx-2 my-1" />
                           <button
+                            onClick={() => { loadShareUsers(); setShowShareDialog(true); setMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-foreground hover:bg-white/[0.08] transition-colors"
+                          >
+                            <Send className="w-4 h-4 text-primary" />
+                            Envoyer à un utilisateur
+                          </button>
+                          <button
                             onClick={() => { handleDeletePlaylist(); setMenuOpen(false); }}
                             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
                           >
