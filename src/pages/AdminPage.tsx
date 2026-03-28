@@ -2240,6 +2240,72 @@ function RequestsTab() {
   );
 }
 
+function PriceEditor() {
+  const [prices, setPrices] = useState<Record<string, { price: string; period: string }>>({});
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    supabase.from("plan_prices").select("*").then(({ data }) => {
+      if (data) {
+        const map: Record<string, { price: string; period: string }> = {};
+        for (const row of data) map[row.plan] = { price: row.price, period: row.period };
+        setPrices(map);
+      }
+      setLoaded(true);
+    });
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const [plan, { price, period }] of Object.entries(prices)) {
+        await supabase.from("plan_prices").upsert({ plan, price, period, updated_at: new Date().toISOString() });
+      }
+      toast.success("Prix mis à jour");
+    } catch { toast.error("Erreur"); }
+    setSaving(false);
+  };
+
+  if (!loaded) return null;
+
+  const planColors: Record<string, string> = { premium: "text-primary", gold: "text-yellow-500", vip: "text-red-500" };
+
+  return (
+    <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Prix des plans</h3>
+        </div>
+        <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 text-xs gap-1.5">
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          Sauvegarder
+        </Button>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {["premium", "gold", "vip"].map(plan => (
+          <div key={plan} className="space-y-1.5">
+            <p className={`text-xs font-bold uppercase ${planColors[plan] || "text-foreground"}`}>{plan}</p>
+            <Input
+              value={prices[plan]?.price || ""}
+              onChange={e => setPrices(p => ({ ...p, [plan]: { ...p[plan], price: e.target.value, period: p[plan]?.period || "/mois" } }))}
+              placeholder="9.99€"
+              className="h-8 text-xs"
+            />
+            <Input
+              value={prices[plan]?.period || ""}
+              onChange={e => setPrices(p => ({ ...p, [plan]: { ...p[plan], period: e.target.value, price: p[plan]?.price || "" } }))}
+              placeholder="/mois"
+              className="h-7 text-[10px] text-muted-foreground"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SubscriptionsTab() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [subs, setSubs] = useState<Subscription[]>([]);
