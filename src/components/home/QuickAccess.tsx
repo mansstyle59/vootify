@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Radio, ListMusic, Music } from "lucide-react";
+import { ListMusic } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 
 interface QuickItem {
@@ -11,7 +11,7 @@ interface QuickItem {
   label: string;
   sublabel: string;
   imageUrl: string;
-  type: "radio" | "playlist" | "album";
+  type: "playlist" | "album";
   action: () => void;
 }
 
@@ -19,23 +19,6 @@ export function QuickAccess() {
   const navigate = useNavigate();
   const userId = usePlayerStore((s) => s.userId);
   const { play, setQueue } = usePlayerStore();
-
-  // User's custom radio stations
-  const { data: recentRadios } = useQuery({
-    queryKey: ["quick-radios", userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from("custom_radio_stations")
-        .select("id, name, cover_url, genre")
-        .order("created_at", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId,
-    staleTime: 60_000,
-  });
 
   // User playlists
   const { data: playlists } = useQuery({
@@ -56,18 +39,6 @@ export function QuickAccess() {
   });
 
   const items: QuickItem[] = [];
-
-  // Add recent radios
-  for (const r of recentRadios || []) {
-    items.push({
-      id: `radio-${r.id}`,
-      label: r.name,
-      sublabel: r.genre || "Radio",
-      imageUrl: r.cover_url || "",
-      type: "radio",
-      action: () => navigate("/radio"),
-    });
-  }
 
   // Add playlists
   for (const p of playlists || []) {
@@ -107,11 +78,7 @@ export function QuickAccess() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                  {item.type === "radio" ? (
-                    <Radio className="w-5 h-5 text-primary/40" />
-                  ) : (
                     <ListMusic className="w-5 h-5 text-primary/40" />
-                  )}
                 </div>
               )}
             </div>
