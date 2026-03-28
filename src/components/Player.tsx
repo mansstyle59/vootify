@@ -1211,10 +1211,24 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
     togglePlay, next, previous, seekTo: storeSeekTo,
     toggleShuffle, cycleRepeat, toggleLike, isLiked, play, setQueue,
     crossfadeEnabled, setCrossfadeEnabled, crossfadeDuration, setCrossfadeDuration,
+    bassBoost, trebleBoost, setBassBoost, setTrebleBoost,
   } = usePlayerStore();
 
   const navigate = useNavigate();
   const [showQueue, setShowQueue] = useState(false);
+  const [showEQ, setShowEQ] = useState(false);
+
+  const eqPresets = [
+    { label: "Normal", emoji: "🎵", bass: 0, treble: 0 },
+    { label: "Bass Boost", emoji: "🔊", bass: 10, treble: -2 },
+    { label: "Pop", emoji: "🎤", bass: 2, treble: 4 },
+    { label: "Rock", emoji: "🎸", bass: 5, treble: 3 },
+    { label: "Jazz", emoji: "🎷", bass: 3, treble: -1 },
+    { label: "Classique", emoji: "🎻", bass: -2, treble: 4 },
+    { label: "Voix", emoji: "🎙️", bass: -3, treble: 5 },
+    { label: "Électro", emoji: "⚡", bass: 8, treble: 5 },
+  ];
+  const activePreset = eqPresets.find(p => p.bass === bassBoost && p.treble === trebleBoost)?.label || null;
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
