@@ -795,7 +795,24 @@ export function MiniPlayer() {
 
     console.error("[player] Audio error for:", currentSong.title,
       "readyState:", audio.readyState, "networkState:", audio.networkState,
-      isRadio ? "(radio)" : "(track)");
+      "crossOrigin:", audio.crossOrigin, isRadio ? "(radio)" : "(track)");
+
+    // CORS fallback: if crossOrigin is set and audio failed, try without it (disables EQ)
+    if (audio.crossOrigin && !eqFailedRef.current) {
+      console.warn("[player] CORS error suspected — retrying without crossOrigin (EQ disabled)");
+      eqFailedRef.current = true;
+      audio.crossOrigin = null as any;
+      connectedAudioRef.current = null;
+      const src = currentSong.streamUrl;
+      if (src) {
+        audio.src = src;
+        audio.load();
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().catch(console.error);
+      }
+      return;
+    }
 
     // Radio streams: progressive retry with backoff (don't skip)
     if (isRadio) {
