@@ -476,7 +476,7 @@ export function MiniPlayer() {
           audio.addEventListener("canplay", onCanPlay, { once: true });
         });
 
-        // Safety timeout
+        // Safety timeout — reduced for snappier PWA feel
         setTimeout(() => {
           if (audio.paused && usePlayerStore.getState().isPlaying) {
             audio.volume = volume;
@@ -485,7 +485,7 @@ export function MiniPlayer() {
               if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
             }).catch(console.error);
           }
-        }, 300);
+        }, 100);
       }
     };
 
@@ -550,10 +550,18 @@ export function MiniPlayer() {
       }
     };
 
-    const timer = setTimeout(resolveUpcoming, 150);
+    // Use requestIdleCallback for non-blocking preload, fallback to minimal timeout
+    const schedule = typeof requestIdleCallback === "function"
+      ? (cb: () => void) => requestIdleCallback(cb, { timeout: 500 })
+      : (cb: () => void) => setTimeout(cb, 50);
+    const timer = schedule(resolveUpcoming) as any;
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      if (typeof cancelIdleCallback === "function") {
+        try { cancelIdleCallback(timer); } catch { clearTimeout(timer); }
+      } else {
+        clearTimeout(timer);
+      }
     };
   }, [currentSong?.id]);
 
