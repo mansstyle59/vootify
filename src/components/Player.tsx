@@ -31,6 +31,37 @@ const glassButtonStyle = {
   border: "1px solid hsl(var(--border) / 0.3)",
 };
 
+/* ── Resume Banner — appears briefly when playback resumes after interruption ── */
+function ResumeBanner({ message }: { message: string | null }) {
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
+          style={{ bottom: "calc(8.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg"
+            style={{
+              background: "hsl(var(--primary) / 0.15)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid hsl(var(--primary) / 0.3)",
+            }}
+          >
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-primary whitespace-nowrap">{message}</span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /* ─────────────────────────────────────────────
    Mini Player — Liquid Glass
    ───────────────────────────────────────────── */
@@ -1217,6 +1248,7 @@ export function MiniPlayer() {
           </div>
         </div>
       </motion.div>
+      <ResumeBanner message={resumeBanner} />
     </>
   );
 }
