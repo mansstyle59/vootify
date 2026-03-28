@@ -37,7 +37,7 @@ const ArtistPage = () => {
         .from("custom_songs")
         .select("*")
         .not("stream_url", "is", null)
-        .ilike("artist", `%${artistName}%`)
+        .eq("artist", artistName)
         .order("album", { ascending: true });
       if (error) throw error;
       return (data || []).map((s: any): Song => ({
@@ -66,7 +66,7 @@ const ArtistPage = () => {
         .from("recently_played")
         .select("*")
         .eq("user_id", userId)
-        .ilike("artist", `%${artistName}%`)
+        .eq("artist", artistName)
         .order("played_at", { ascending: false });
       if (error) throw error;
       if (!data || data.length === 0) return null;
