@@ -241,9 +241,9 @@ const HomePage = () => {
             : undefined
         }
       >
-        <HorizontalScroll>
+        <ContentStrip>
           {loading ? (
-            <CoverSkeleton count={6} />
+            <StripSkeleton count={6} />
           ) : (
             songs?.map((song, i) => (
               <CoverCard
@@ -258,7 +258,7 @@ const HomePage = () => {
               />
             ))
           )}
-        </HorizontalScroll>
+        </ContentStrip>
       </Section>
     );
   };
@@ -344,15 +344,15 @@ const HomePage = () => {
                 </button>
               ) : undefined}
             >
-              <HorizontalScroll>
+              <ContentStrip>
                 {loadingArtists ? (
-                  <CoverSkeleton count={6} />
+                  <StripSkeleton count={6} />
                 ) : (
                   artists?.map((artist, i) => (
                     <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
                   ))
                 )}
-              </HorizontalScroll>
+              </ContentStrip>
             </Section>
           );
         }
@@ -362,9 +362,9 @@ const HomePage = () => {
           if (!loadingAlbums && (!albums || albums.length === 0)) return null;
           return (
             <Section key={section.id} title={section.title}>
-              <HorizontalScroll>
+              <ContentStrip>
                 {loadingAlbums ? (
-                  <CoverSkeleton count={6} />
+                  <StripSkeleton count={6} />
                 ) : (
                   albums?.map((album, i) => (
                     <CoverCard
@@ -377,7 +377,7 @@ const HomePage = () => {
                     />
                   ))
                 )}
-              </HorizontalScroll>
+              </ContentStrip>
             </Section>
           );
         }
