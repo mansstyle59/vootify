@@ -3,17 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, type CustomSection } from "@/hooks/useHomeConfig";
+import { useSaveAppSetting } from "@/hooks/useAppSettings";
 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared";
 
 interface UserProfile {
   user_id: string;
@@ -43,10 +44,12 @@ const AdminPage = () => {
   if (!isAdmin) return null;
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "stats", label: "Statistiques", icon: Shield },
+    { key: "stats", label: "Stats", icon: Shield },
     { key: "home", label: "Accueil", icon: LayoutDashboard },
+    { key: "theme", label: "Thème", icon: Palette },
+    { key: "shared", label: "Partages", icon: Share2 },
     { key: "users", label: "Utilisateurs", icon: Users },
-    { key: "subscriptions", label: "Abonnements", icon: CreditCard },
+    { key: "subscriptions", label: "Abos", icon: CreditCard },
     { key: "requests", label: "Demandes", icon: Inbox },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
@@ -115,13 +118,14 @@ const AdminPage = () => {
       <div className="px-4 md:px-8 max-w-4xl mx-auto">
         {tab === "stats" && <StatsTab />}
         {tab === "home" && <HomeTab />}
+        {tab === "theme" && <ThemeTab />}
+        {tab === "shared" && <SharedPlaylistsTab />}
         {tab === "users" && <UsersTab />}
         {tab === "subscriptions" && <SubscriptionsTab />}
         {tab === "requests" && <RequestsTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
-        
       </div>
     </div>
   );
@@ -2868,6 +2872,292 @@ function SubscriptionsTab() {
           </motion.div>
         );
       })}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Theme Tab — customize primary/accent/bg colors
+   ───────────────────────────────────────────── */
+function ThemeTab() {
+  const { user } = useAdminAuth();
+  const saveMutation = useSaveAppSetting();
+
+  const [primaryHue, setPrimaryHue] = useState(152);
+  const [primarySat, setPrimarySat] = useState(82);
+  const [primaryLight, setPrimaryLight] = useState(34);
+  const [accentHue, setAccentHue] = useState(152);
+  const [accentSat, setAccentSat] = useState(55);
+  const [accentLight, setAccentLight] = useState(22);
+  const [bgHue, setBgHue] = useState(220);
+  const [bgSat, setBgSat] = useState(16);
+  const [bgLight, setBgLight] = useState(5);
+  const [fontFamily, setFontFamily] = useState("Nunito");
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "theme")
+        .maybeSingle();
+      if (data?.value) {
+        const t = data.value as any;
+        if (t.primaryHue !== undefined) setPrimaryHue(t.primaryHue);
+        if (t.primarySaturation !== undefined) setPrimarySat(t.primarySaturation);
+        if (t.primaryLightness !== undefined) setPrimaryLight(t.primaryLightness);
+        if (t.accentHue !== undefined) setAccentHue(t.accentHue);
+        if (t.accentSaturation !== undefined) setAccentSat(t.accentSaturation);
+        if (t.accentLightness !== undefined) setAccentLight(t.accentLightness);
+        if (t.backgroundHue !== undefined) setBgHue(t.backgroundHue);
+        if (t.backgroundSaturation !== undefined) setBgSat(t.backgroundSaturation);
+        if (t.backgroundLightness !== undefined) setBgLight(t.backgroundLightness);
+        if (t.fontFamily) setFontFamily(t.fontFamily);
+      }
+      setLoaded(true);
+    })();
+  }, []);
+
+  const handleSave = () => {
+    if (!user) return;
+    saveMutation.mutate(
+      {
+        key: "theme",
+        value: {
+          primaryHue, primarySaturation: primarySat, primaryLightness: primaryLight,
+          accentHue, accentSaturation: accentSat, accentLightness: accentLight,
+          backgroundHue: bgHue, backgroundSaturation: bgSat, backgroundLightness: bgLight,
+          fontFamily,
+        },
+        userId: user.id,
+      },
+      {
+        onSuccess: () => toast.success("Thème sauvegardé ✨"),
+        onError: () => toast.error("Erreur lors de la sauvegarde"),
+      }
+    );
+  };
+
+  const handleReset = () => {
+    setPrimaryHue(152); setPrimarySat(82); setPrimaryLight(34);
+    setAccentHue(152); setAccentSat(55); setAccentLight(22);
+    setBgHue(220); setBgSat(16); setBgLight(5);
+    setFontFamily("Nunito");
+  };
+
+  const FONTS = ["Nunito", "Inter", "Poppins", "Montserrat", "Outfit", "Space Grotesk", "DM Sans", "Sora"];
+
+  if (!loaded) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  const SliderRow = ({ label, value, onChange, max = 360, color }: { label: string; value: number; onChange: (v: number) => void; max?: number; color?: string }) => (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-xs font-mono text-foreground tabular-nums">{value}</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary"
+        style={color ? { accentColor: color } : undefined}
+      />
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Primary color */}
+      <div className="rounded-2xl p-4 space-y-4" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl" style={{ background: `hsl(${primaryHue}, ${primarySat}%, ${primaryLight}%)` }} />
+          <h3 className="text-sm font-bold text-foreground">Couleur principale</h3>
+        </div>
+        <SliderRow label="Teinte" value={primaryHue} onChange={setPrimaryHue} max={360} />
+        <SliderRow label="Saturation" value={primarySat} onChange={setPrimarySat} max={100} />
+        <SliderRow label="Luminosité" value={primaryLight} onChange={setPrimaryLight} max={100} />
+      </div>
+
+      {/* Accent color */}
+      <div className="rounded-2xl p-4 space-y-4" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl" style={{ background: `hsl(${accentHue}, ${accentSat}%, ${accentLight}%)` }} />
+          <h3 className="text-sm font-bold text-foreground">Couleur d'accent</h3>
+        </div>
+        <SliderRow label="Teinte" value={accentHue} onChange={setAccentHue} max={360} />
+        <SliderRow label="Saturation" value={accentSat} onChange={setAccentSat} max={100} />
+        <SliderRow label="Luminosité" value={accentLight} onChange={setAccentLight} max={100} />
+      </div>
+
+      {/* Background color */}
+      <div className="rounded-2xl p-4 space-y-4" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl border border-border" style={{ background: `hsl(${bgHue}, ${bgSat}%, ${bgLight}%)` }} />
+          <h3 className="text-sm font-bold text-foreground">Arrière-plan</h3>
+        </div>
+        <SliderRow label="Teinte" value={bgHue} onChange={setBgHue} max={360} />
+        <SliderRow label="Saturation" value={bgSat} onChange={setBgSat} max={100} />
+        <SliderRow label="Luminosité" value={bgLight} onChange={setBgLight} max={15} />
+      </div>
+
+      {/* Font family */}
+      <div className="rounded-2xl p-4 space-y-3" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
+        <h3 className="text-sm font-bold text-foreground">Police</h3>
+        <div className="flex flex-wrap gap-1.5">
+          {FONTS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFontFamily(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${fontFamily === f ? "bg-primary text-primary-foreground" : "bg-secondary/60 text-foreground hover:bg-secondary"}`}
+              style={{ fontFamily: `'${f}', sans-serif` }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Preview */}
+      <div className="rounded-2xl p-4 space-y-3" style={{ background: `hsl(${bgHue}, ${bgSat}%, ${bgLight}%)`, border: "1px solid hsl(var(--border) / 0.12)" }}>
+        <p className="text-xs text-muted-foreground mb-2">Aperçu</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `hsl(${primaryHue}, ${primarySat}%, ${primaryLight}%)` }}>
+            <Music className="w-5 h-5" style={{ color: `hsl(${bgHue}, ${bgSat}%, ${bgLight}%)` }} />
+          </div>
+          <div style={{ fontFamily: `'${fontFamily}', sans-serif` }}>
+            <p className="text-sm font-bold text-foreground">Titre du morceau</p>
+            <p className="text-xs" style={{ color: `hsl(${primaryHue}, ${primarySat}%, ${primaryLight}%)` }}>Artiste</p>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-2">
+          <div className="h-8 rounded-lg px-4 flex items-center text-xs font-semibold" style={{ background: `hsl(${primaryHue}, ${primarySat}%, ${primaryLight}%)`, color: `hsl(${bgHue}, ${bgSat}%, ${bgLight}%)` }}>
+            Bouton principal
+          </div>
+          <div className="h-8 rounded-lg px-4 flex items-center text-xs font-semibold" style={{ background: `hsl(${accentHue}, ${accentSat}%, ${accentLight}%)`, color: `hsl(${accentHue}, ${accentSat}%, 72%)` }}>
+            Accent
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button onClick={handleReset} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-secondary text-foreground font-semibold text-sm">
+          Réinitialiser
+        </button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={handleSave}
+          disabled={saveMutation.isPending}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm transition-all disabled:opacity-50"
+        >
+          {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Sauvegarder
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Shared Playlists Tab — manage shared playlists
+   ───────────────────────────────────────────── */
+function SharedPlaylistsTab() {
+  const [shared, setShared] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("shared_playlists")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setShared(data || []);
+
+    // Load profile names
+    const userIds = new Set<string>();
+    (data || []).forEach((p: any) => { userIds.add(p.shared_by); userIds.add(p.shared_to); });
+    if (userIds.size > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", Array.from(userIds));
+      const map: Record<string, string> = {};
+      (profs || []).forEach((p: any) => { map[p.user_id] = p.display_name || "Utilisateur"; });
+      setProfiles(map);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (id: string) => {
+    setActionLoading(id);
+    // Delete songs first, then playlist
+    await supabase.from("shared_playlist_songs").delete().eq("shared_playlist_id", id);
+    await supabase.from("shared_playlists").delete().eq("id", id);
+    setShared((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Playlist partagée supprimée");
+    setActionLoading(null);
+  };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-foreground">Playlists partagées ({shared.length})</h3>
+      </div>
+
+      {shared.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground text-sm">
+          Aucune playlist partagée
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {shared.map((p) => (
+            <motion.div
+              key={p.id}
+              layout
+              className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
+            >
+              {p.cover_url ? (
+                <img src={p.cover_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <ListMusic className="w-5 h-5 text-primary/40" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{p.playlist_name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  De <span className="text-foreground/80">{profiles[p.shared_by] || "?"}</span>
+                  {" → "}
+                  <span className="text-foreground/80">{profiles[p.shared_to] || "?"}</span>
+                </p>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                p.status === "accepted" ? "bg-primary/20 text-primary" :
+                p.status === "rejected" ? "bg-destructive/20 text-destructive" :
+                "bg-muted text-muted-foreground"
+              }`}>
+                {p.status === "accepted" ? "Accepté" : p.status === "rejected" ? "Rejeté" : "En attente"}
+              </span>
+              <button
+                onClick={() => handleDelete(p.id)}
+                disabled={actionLoading === p.id}
+                className="p-1.5 rounded-lg text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                {actionLoading === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
