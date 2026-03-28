@@ -43,10 +43,12 @@ const AdminPage = () => {
   if (!isAdmin) return null;
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "stats", label: "Statistiques", icon: Shield },
+    { key: "stats", label: "Stats", icon: Shield },
     { key: "home", label: "Accueil", icon: LayoutDashboard },
+    { key: "theme", label: "Thème", icon: Palette },
+    { key: "shared", label: "Partages", icon: Share2 },
     { key: "users", label: "Utilisateurs", icon: Users },
-    { key: "subscriptions", label: "Abonnements", icon: CreditCard },
+    { key: "subscriptions", label: "Abos", icon: CreditCard },
     { key: "requests", label: "Demandes", icon: Inbox },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
