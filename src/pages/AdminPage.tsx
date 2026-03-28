@@ -1635,7 +1635,7 @@ function LogsTab() {
                 background: "hsl(var(--card) / 0.5)",
                 backdropFilter: "blur(20px) saturate(1.6)",
                 border: "1px solid hsl(var(--border) / 0.12)",
-              }
+              }}
             >
               <ScrollText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -2230,7 +2230,7 @@ function RequestsTab() {
         background: "hsl(var(--card) / 0.5)",
         backdropFilter: "blur(20px) saturate(1.6)",
         border: "1px solid hsl(var(--border) / 0.12)",
-      }
+      }}
     >
       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
         {(r.display_name || "?").slice(0, 2).toUpperCase()}
