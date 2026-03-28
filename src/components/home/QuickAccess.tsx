@@ -20,23 +20,6 @@ export function QuickAccess() {
   const userId = usePlayerStore((s) => s.userId);
   const { play, setQueue } = usePlayerStore();
 
-  // User's custom radio stations
-  const { data: recentRadios } = useQuery({
-    queryKey: ["quick-radios", userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from("custom_radio_stations")
-        .select("id, name, cover_url, genre")
-        .order("created_at", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId,
-    staleTime: 60_000,
-  });
-
   // User playlists
   const { data: playlists } = useQuery({
     queryKey: ["quick-playlists", userId],
