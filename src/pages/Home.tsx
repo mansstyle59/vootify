@@ -254,6 +254,10 @@ const HomePage = () => {
 
       <QuickAccess />
 
+      <div className="mt-2" />
+
+      <QuickAccess />
+
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
         if (isCustom) {

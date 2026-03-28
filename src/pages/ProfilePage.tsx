@@ -32,7 +32,14 @@ const GlassCard = ({ children, className = "", delay = 0 }: { children: React.Re
     initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-    className={`rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl ${className}`}
+    className={`rounded-2xl ${className}`}
+    style={{
+      background: "hsl(0 0% 100% / 0.03)",
+      backdropFilter: "blur(40px) saturate(1.5)",
+      WebkitBackdropFilter: "blur(40px) saturate(1.5)",
+      border: "1px solid hsl(0 0% 100% / 0.06)",
+      boxShadow: "0 4px 24px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
+    }}
   >
     {children}
   </motion.div>
@@ -257,7 +264,12 @@ const ProfilePage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + i * 0.05 }}
-                className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-center"
+                className="p-3.5 rounded-xl text-center"
+                style={{
+                  background: "hsl(0 0% 100% / 0.03)",
+                  border: "1px solid hsl(0 0% 100% / 0.05)",
+                  boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.02)",
+                }}
               >
                 <stat.icon className="w-4 h-4 text-primary mx-auto mb-1.5" />
                 <p className="text-lg font-bold text-foreground leading-none">{stat.value}</p>

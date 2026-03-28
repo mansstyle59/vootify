@@ -29,51 +29,57 @@ export const CoverCard = memo(function CoverCard({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileTap={{ scale: 0.96 }}
-      className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group snap-start"
+      className="flex-shrink-0 w-[128px] md:w-[148px] cursor-pointer group snap-start"
       onClick={onClick}
     >
-      <div className={`relative w-[120px] h-[120px] md:w-[140px] md:h-[140px] overflow-hidden mb-2 ${
+      <div className={`relative w-[128px] h-[128px] md:w-[148px] md:h-[148px] overflow-hidden mb-2.5 ${
         rounded ? "rounded-full" : "rounded-2xl"
       } ${isActive ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
         style={{
           boxShadow: isActive
-            ? "0 8px 30px hsl(var(--primary) / 0.35)"
-            : "0 4px 16px hsl(0 0% 0% / 0.2), 0 1px 4px hsl(0 0% 0% / 0.12)",
+            ? "0 8px 30px hsl(var(--primary) / 0.35), 0 0 0 1px hsl(var(--primary) / 0.15)"
+            : "0 6px 24px hsl(0 0% 0% / 0.25), 0 2px 8px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
         }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-secondary animate-pulse" />
+              <div className="absolute inset-0 bg-secondary overflow-hidden">
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+              </div>
             )}
             <img
               src={imageUrl}
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-transform duration-500 ease-out will-change-transform group-hover:scale-[1.08] group-active:scale-[1.03] ${
+              className={`w-full h-full transition-all duration-500 ease-out will-change-transform group-hover:scale-[1.08] group-active:scale-[1.03] ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
               } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-            <Music className="w-10 h-10 text-primary/20" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 via-primary/8 to-accent/10">
+            <Music className="w-10 h-10 text-primary/25" />
           </div>
         )}
 
-        {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient overlay for hover depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Play button — visible on hover/active */}
         {(showPlay || isActive) && (
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}>
             <motion.div
               whileTap={{ scale: 0.85 }}
-              className="w-11 h-11 rounded-full flex items-center justify-center bg-primary/90 backdrop-blur-sm"
-              style={{ boxShadow: "0 4px 24px hsl(var(--primary) / 0.5)" }}
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{
+                background: "hsl(var(--primary) / 0.9)",
+                backdropFilter: "blur(8px)",
+                boxShadow: "0 4px 24px hsl(var(--primary) / 0.5), 0 0 40px hsl(var(--primary) / 0.2)",
+              }}
             >
               {isActive ? (
                 <Pause className="w-5 h-5 text-primary-foreground fill-current" />

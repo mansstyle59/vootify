@@ -558,15 +558,21 @@ const RadioPage = () => {
       {/* Hero header with scroll blur */}
       <ScrollBlurHeader>
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-accent/5 pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 70% 100% at 80% 0%, hsl(var(--primary) / 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 10% 50%, hsl(var(--accent) / 0.05) 0%, transparent 50%)",
+          }} />
           <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.08))",
+                border: "1px solid hsl(var(--primary) / 0.15)",
+                boxShadow: "0 4px 16px hsl(var(--primary) / 0.15)",
+              }}>
                 <Waves className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Radio</h1>
-                <p className="text-sm text-muted-foreground">Des milliers de stations en direct du monde entier</p>
+                <p className="text-[12px] text-muted-foreground/70">Des milliers de stations en direct</p>
               </div>
               <button
                 onClick={() => {
@@ -574,7 +580,11 @@ const RadioPage = () => {
                   queryClient.invalidateQueries({ queryKey: ["radio-browser"] });
                   toast.success("Stations actualisées");
                 }}
-                className="p-2.5 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all active:scale-90"
+                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
+                style={{
+                  background: "hsl(var(--secondary) / 0.6)",
+                  border: "1px solid hsl(var(--border) / 0.2)",
+                }}
               >
                 <RefreshCw className="w-4.5 h-4.5" />
               </button>
@@ -597,26 +607,33 @@ const RadioPage = () => {
         {/* Search + View toggle */}
         <div className="flex items-center gap-2 mb-5">
           <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
             <Input
               placeholder="Rechercher une station..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 rounded-xl bg-secondary/60 border-border/50 focus:bg-secondary text-sm"
+              className="pl-10 h-11 rounded-xl text-sm"
+              style={{
+                background: "hsl(var(--secondary) / 0.6)",
+                border: "1px solid hsl(var(--border) / 0.3)",
+              }}
             />
           </div>
 
           {/* View mode toggle */}
-          <div className="flex items-center rounded-lg bg-secondary/60 p-0.5 flex-shrink-0">
+          <div className="flex items-center rounded-xl p-0.5 flex-shrink-0" style={{
+            background: "hsl(var(--secondary) / 0.6)",
+            border: "1px solid hsl(var(--border) / 0.2)",
+          }}>
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
+              className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground"}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
+              className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground"}`}
             >
               <List className="w-4 h-4" />
             </button>

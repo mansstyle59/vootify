@@ -66,10 +66,16 @@ export function CoverSkeleton({ count = 8 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-[105px] md:w-[130px] snap-start">
-          <div className="w-[105px] h-[105px] md:w-[130px] md:h-[130px] rounded-xl bg-secondary/60 mb-1.5 animate-pulse" />
-          <div className="h-3 w-20 md:w-24 bg-secondary/60 rounded-md mb-1 animate-pulse" />
-          <div className="h-2.5 w-14 md:w-16 bg-secondary/40 rounded-md animate-pulse" />
+        <div key={i} className="flex-shrink-0 w-[128px] md:w-[148px] snap-start">
+          <div className="w-[128px] h-[128px] md:w-[148px] md:h-[148px] rounded-2xl bg-secondary/50 mb-2.5 overflow-hidden relative">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          </div>
+          <div className="h-3 w-20 md:w-24 bg-secondary/50 rounded-md mb-1.5 overflow-hidden relative">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          </div>
+          <div className="h-2.5 w-14 md:w-16 bg-secondary/30 rounded-md overflow-hidden relative">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          </div>
         </div>
       ))}
     </>

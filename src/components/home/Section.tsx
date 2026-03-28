@@ -106,19 +106,22 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
-      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-2 md:mb-3 pt-2"
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="mb-3 md:mb-4 pt-3"
     >
-      {/* Subtle top separator */}
-      <div className="mx-5 md:mx-9 mb-3 h-px bg-border/20" />
+      {/* Subtle gradient separator */}
+      <div className="mx-5 md:mx-9 mb-4 h-px" style={{
+        background: "linear-gradient(90deg, transparent, hsl(var(--border) / 0.3) 30%, hsl(var(--border) / 0.3) 70%, transparent)",
+      }} />
       <motion.div
         initial={{ opacity: 0, x: -16 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-        className="flex items-center justify-between pl-5 pr-4 md:pl-9 md:pr-8 mb-2"
+        className="flex items-center justify-between pl-5 pr-4 md:pl-9 md:pr-8 mb-3"
       >
-        <div className="flex items-center gap-2 mr-2 min-w-0">
+        <div className="flex items-center gap-2.5 mr-2 min-w-0">
+          <div className="w-1 h-5 rounded-full bg-primary/60" />
           <h2 className="text-[15px] md:text-lg font-display font-bold text-foreground leading-tight line-clamp-2 break-words">{title}</h2>
           {viewAllLink && (
             <button
@@ -134,7 +137,12 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           {hasSongs && onPlayAll && (
             <button
               onClick={onPlayAll}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
+              style={{
+                background: "hsl(var(--primary) / 0.12)",
+                color: "hsl(var(--primary))",
+                border: "1px solid hsl(var(--primary) / 0.15)",
+              }}
             >
               <Play className="w-3 h-3" />
               <span className="hidden sm:inline">Tout lire</span>
@@ -144,7 +152,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
             <>
               <button
                 onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-medium transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-secondary/60 hover:bg-secondary/80 text-secondary-foreground text-xs font-medium transition-colors border border-border/20"
               >
                 <ListPlus className="w-3 h-3" />
               </button>

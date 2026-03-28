@@ -111,6 +111,13 @@ export default {
           "25%": { height: "0.375rem" },
           "75%": { height: "1rem" },
         },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+        "float-up": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -123,6 +130,7 @@ export default {
         "equalizer-2": "equalizer-2 0.6s ease-in-out infinite",
         "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
         "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
+        "float-up": "float-up 0.4s ease-out",
       },
     },
   },
