@@ -287,18 +287,18 @@ const HomePage = () => {
           if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
           return (
             <Section key={section.id} title={section.title}>
-              <div className="px-4 md:px-8 overflow-visible">
+              <div className="px-4 md:px-8">
                 {loadingTopArtists ? (
-                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2">
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 pt-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
-                        <div className="w-[72px] h-[72px] rounded-full bg-muted animate-pulse" />
-                        <div className="w-12 h-3 rounded bg-muted animate-pulse" />
+                      <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-[64px] h-[64px] rounded-full bg-secondary/40 animate-pulse" />
+                        <div className="w-10 h-2.5 rounded bg-secondary/40 animate-pulse" />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-3 -mx-1 px-1">
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 pt-1">
                     {topArtists?.map((artist, i) => (
                       <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                     ))}
