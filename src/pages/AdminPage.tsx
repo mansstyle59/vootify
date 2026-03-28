@@ -2144,7 +2144,7 @@ function RequestsTab() {
         if (existingSub) {
           await supabase
             .from("subscriptions")
-            .update({ status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
+            .update({ plan: request.requested_plan || "premium", status: "active", starts_at: now.toISOString(), expires_at: expiresAt.toISOString() })
             .eq("user_id", request.user_id);
         } else {
           await supabase.from("subscriptions").insert({
