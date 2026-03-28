@@ -1516,7 +1516,20 @@ const LibraryPage = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {!isOffline && (
+                          <button
+                            disabled={downloadingAll}
+                            onClick={handleDownloadAllLibrary}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium disabled:opacity-50"
+                          >
+                            {downloadingAll ? (
+                              <><Loader2 className="w-3 h-3 animate-spin" />{downloadAllProgress.current}/{downloadAllProgress.total}</>
+                            ) : (
+                              <><Download className="w-3 h-3" />Tout</>
+                            )}
+                          </button>
+                        )}
                         <button
                           disabled={isRedownloading}
                           onClick={async () => {
