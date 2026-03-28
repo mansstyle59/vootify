@@ -18,6 +18,7 @@ import { PageFade } from "@/components/PageFade";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { AuthGate } from "@/components/AuthGate";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
+import { RouteGuard } from "@/components/RouteGuard";
 import { InitialCacheLoader } from "@/components/InitialCacheLoader";
 import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
