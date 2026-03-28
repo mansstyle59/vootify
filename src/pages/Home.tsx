@@ -392,15 +392,15 @@ const HomePage = () => {
       })}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="px-4 md:px-8 py-20 text-center"
+          className="px-4 md:px-8 py-16 text-center"
         >
-          <div className="w-24 h-24 rounded-3xl liquid-glass flex items-center justify-center mx-auto mb-5 glow-primary">
-            <Music className="w-11 h-11 text-primary/50" />
+          <div className="w-20 h-20 rounded-2xl bg-secondary/40 flex items-center justify-center mx-auto mb-4">
+            <Music className="w-9 h-9 text-muted-foreground/30" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Aucune musique pour le moment</h2>
-          <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto leading-relaxed">
+          <h2 className="text-lg font-bold text-foreground mb-1.5">Aucune musique pour le moment</h2>
+          <p className="text-[12px] text-muted-foreground/60 max-w-xs mx-auto leading-relaxed">
             L'administrateur n'a pas encore ajouté de morceaux. Revenez bientôt !
           </p>
         </motion.div>
