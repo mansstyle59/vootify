@@ -135,16 +135,17 @@ export function MobileNav() {
   }, []);
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-2"
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40"
       style={{
         paddingBottom: "env(safe-area-inset-bottom)",
-        background: "hsl(var(--background) / 0.65)",
-        backdropFilter: "blur(60px) saturate(2)",
-        WebkitBackdropFilter: "blur(60px) saturate(2)",
-        boxShadow: "0 -4px 30px hsl(0 0% 0% / 0.25), inset 0 1px 0 hsl(var(--border) / 0.15)",
+        background: "hsl(var(--background) / 0.75)",
+        backdropFilter: "blur(48px) saturate(1.8)",
+        WebkitBackdropFilter: "blur(48px) saturate(1.8)",
+        borderTop: "1px solid hsl(var(--border) / 0.06)",
       }}
     >
-      <div className="flex justify-around py-2">
+      <div className="flex justify-around items-end px-1 pt-1.5 pb-1">
         {items.map((item) => {
           const restricted = !checkRoute(item.to);
           return (
@@ -154,59 +155,46 @@ export function MobileNav() {
               end={item.to === "/"}
               onTouchStart={() => handleTap(item.to)}
               className={({ isActive }) =>
-                `relative flex flex-col items-center justify-center gap-1 min-w-[52px] min-h-[48px] px-3 rounded-2xl text-[10px] font-semibold transition-all duration-200 ${
+                `relative flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[44px] px-2 text-[10px] font-medium transition-colors duration-150 ${
                   restricted
-                    ? "text-muted-foreground/25"
+                    ? "text-muted-foreground/20"
                     : isActive
                     ? "text-primary"
-                    : "text-muted-foreground/50 active:text-muted-foreground/80"
+                    : "text-muted-foreground/45 active:text-muted-foreground/70"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* Active pill background */}
-                  {isActive && !restricted && (
-                    <motion.div
-                      layoutId="nav-pill"
-                      className="absolute inset-0 rounded-2xl"
-                      style={{
-                        background: "hsl(var(--primary) / 0.12)",
-                        border: "1px solid hsl(var(--primary) / 0.15)",
-                      }}
-                      transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                    />
-                  )}
                   <div className="relative z-10">
                     {restricted ? (
-                      <Lock className="w-[20px] h-[20px]" strokeWidth={1.6} />
+                      <Lock className="w-[20px] h-[20px]" strokeWidth={1.5} />
                     ) : (
                       <motion.div
-                        animate={isActive ? { scale: 1.15, y: -1 } : { scale: 1, y: 0 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                        animate={isActive ? { y: -2 } : { y: 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 28 }}
                       >
                         <item.icon
-                          className="w-[22px] h-[22px]"
-                          strokeWidth={isActive ? 2.4 : 1.6}
+                          className="w-[21px] h-[21px]"
+                          strokeWidth={isActive ? 2.2 : 1.5}
                         />
                       </motion.div>
                     )}
                   </div>
-                  <span className={`relative z-10 transition-all duration-200 ${
-                    restricted ? "opacity-30" : isActive ? "opacity-100 text-[10.5px]" : "opacity-60"
+                  <span className={`relative z-10 leading-tight ${
+                    restricted ? "opacity-25" : isActive ? "opacity-100 font-semibold" : "opacity-50"
                   }`}>
                     {item.label}
                   </span>
-                  {/* Active glow dot */}
+                  {/* Active indicator bar */}
                   {isActive && !restricted && (
                     <motion.div
-                      layoutId="nav-glow"
-                      className="absolute -bottom-0.5 left-1/2 w-1.5 h-1.5 rounded-full bg-primary"
+                      layoutId="nav-indicator"
+                      className="absolute -top-1.5 left-1/2 h-[2.5px] w-5 rounded-full bg-primary"
                       style={{
-                        marginLeft: -3,
-                        boxShadow: "0 0 8px hsl(var(--primary) / 0.6), 0 0 20px hsl(var(--primary) / 0.3)",
+                        marginLeft: -10,
                       }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 32 }}
                     />
                   )}
                 </>
