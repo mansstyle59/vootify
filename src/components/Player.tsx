@@ -965,6 +965,30 @@ export function MiniPlayer() {
     };
   }, []);
 
+  // ── iOS background keepalive — prevents audio thread suspension ──
+  const keepAliveCtxRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    if (!currentSong || !isPlaying) return;
+
+    // Create/resume a silent AudioContext to keep audio thread alive
+    if (!keepAliveCtxRef.current) {
+      try {
+        keepAliveCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      } catch { /* ignore */ }
+    }
+
+    const ctx = keepAliveCtxRef.current;
+    if (ctx?.state === "suspended") ctx.resume().catch(() => {});
+
+    // Ping every 8s to prevent iOS from suspending
+    const keepAliveInterval = setInterval(() => {
+      if (ctx?.state === "suspended") ctx.resume().catch(() => {});
+    }, 8000);
+
+    return () => clearInterval(keepAliveInterval);
+  }, [currentSong?.id, isPlaying]);
+
   const handleEnded = useCallback(() => {
     // If preemptive crossfade already triggered next, don't double-skip
     if (preemptiveTriggeredRef.current) return;
@@ -1094,8 +1118,8 @@ export function MiniPlayer() {
             if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
           }}
           onPause={() => {
-            // Debounce: only sync to store if STILL paused after 150ms
-            // This prevents brief pauses (crossfade, route change, buffering) from killing playback
+            // Debounce: only sync to store if STILL paused after 800ms
+            // Longer delay prevents iOS lock-screen pauses from killing playback
             const audio = audioRef.current;
             setTimeout(() => {
               if (audio?.paused && usePlayerStore.getState().isPlaying) {
@@ -1104,7 +1128,7 @@ export function MiniPlayer() {
               if ("mediaSession" in navigator && audio?.paused) {
                 navigator.mediaSession.playbackState = "paused";
               }
-            }, 150);
+            }, 800);
           }}
           preload="auto"
           playsInline
@@ -1214,7 +1238,7 @@ export function MiniPlayer() {
             if ("mediaSession" in navigator && a?.paused) {
               navigator.mediaSession.playbackState = "paused";
             }
-          }, 150);
+          }, 800);
         }}
         preload="auto"
         playsInline
