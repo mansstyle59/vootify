@@ -440,38 +440,6 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         style={{ opacity, y: contentY }}
         className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+4rem)] pb-6 flex flex-col gpu-layer"
       >
-        {/* Badge + sound wave */}
-        <div className="flex items-center gap-3 mb-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full"
-            style={{
-              background: "hsl(var(--primary) / 0.1)",
-              border: "1px solid hsl(var(--primary) / 0.15)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }}
-          >
-            <motion.div
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-2 h-2 rounded-full"
-              style={{ background: "var(--gradient-primary)", boxShadow: "0 0 8px hsl(var(--primary) / 0.5)" }}
-            />
-            <Headphones className="w-3 h-3 text-primary" />
-            <span className="text-[10px] font-extrabold text-primary tracking-[0.15em] uppercase">Vootify</span>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            <SoundWave />
-          </motion.div>
-        </div>
-
         {/* Greeting */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
