@@ -404,6 +404,8 @@ export function MiniPlayer() {
     const isNewTrack = lastSongIdRef.current !== currentSong.id;
     if (!isNewTrack) return;
     lastSongIdRef.current = currentSong.id;
+    crossfadeTriggeredRef.current = false;
+    cleanupCrossfade();
     usePlayerStore.setState({ nextPreloaded: false, audioDuration: 0 });
     errorRetryCountRef.current = 0;
 
