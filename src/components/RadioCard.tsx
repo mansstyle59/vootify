@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState, useRef, useCallback } from "react";
 import { Pencil, Trash2, Play, Pause } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 
@@ -27,10 +27,36 @@ export const RadioCard = memo(function RadioCard({
   onEdit,
   onDelete,
 }: RadioCardProps) {
+  const [showActions, setShowActions] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const revealActions = useCallback(() => {
+    clearTimeout(hideTimer.current);
+    setShowActions(true);
+    hideTimer.current = setTimeout(() => setShowActions(false), 3000);
+  }, []);
+
+  const handleClick = useCallback(() => {
+    if (showActions) {
+      // Second tap while actions visible → play
+      setShowActions(false);
+      onPlay?.(station);
+    } else {
+      // First tap → reveal actions (on mobile); desktop click → play directly
+      if ("ontouchstart" in window) {
+        revealActions();
+      } else {
+        onPlay?.(station);
+      }
+    }
+  }, [showActions, onPlay, station, revealActions]);
+
+  const actionsVisible = showActions || isActive;
+
   return (
     <div
-      className="group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-shadow duration-200 hover:shadow-lg"
-      onClick={() => onPlay?.(station)}
+      className="group relative rounded-2xl overflow-hidden bg-secondary p-3 cursor-pointer transition-shadow duration-200 hover:shadow-lg active:scale-[0.97] transition-transform"
+      onClick={handleClick}
     >
       {/* Image / Logo */}
       <div
@@ -48,15 +74,19 @@ export const RadioCard = memo(function RadioCard({
           wrapperClassName="w-full h-full"
         />
 
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        {/* Overlay on hover / tap */}
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+            actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        />
 
         {/* Play/Pause center button */}
         <div
           className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ${
-            isActive
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-100"
+            actionsVisible
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
           }`}
         >
           <div
@@ -73,11 +103,18 @@ export const RadioCard = memo(function RadioCard({
 
         {/* Action buttons (edit + delete) */}
         {(onEdit || onDelete) && (
-          <div className="absolute top-2 right-2 flex gap-2 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
+          <div
+            className={`absolute top-2 right-2 flex gap-2 transition-all duration-200 ${
+              actionsVisible
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
+            }`}
+          >
             {onEdit && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  setShowActions(false);
                   onEdit(station);
                 }}
                 className="bg-black/70 hover:bg-black text-white p-2 rounded-full transition-colors"
@@ -89,6 +126,7 @@ export const RadioCard = memo(function RadioCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  setShowActions(false);
                   onDelete(station.id);
                 }}
                 className="bg-black/70 hover:bg-destructive text-white p-2 rounded-full transition-colors"
