@@ -21,6 +21,7 @@ export type Database = {
           id: string
           requested_duration: number | null
           requested_duration_unit: string | null
+          requested_plan: string | null
           resolved_at: string | null
           resolved_by: string | null
           status: string
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           requested_duration?: number | null
           requested_duration_unit?: string | null
+          requested_plan?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
@@ -45,6 +47,7 @@ export type Database = {
           id?: string
           requested_duration?: number | null
           requested_duration_unit?: string | null
+          requested_plan?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
