@@ -838,7 +838,7 @@ export function MiniPlayer() {
       safeSet("seekforward", null);
       safeSet("seekto", null);
     } else {
-      // ── MUSIC: track skip + seek ──
+      // ── MUSIC: previous/next track only (no seek on lock screen) ──
       safeSet("previoustrack", () => {
         usePlayerStore.getState().previous();
         ms.playbackState = "playing";
@@ -847,35 +847,9 @@ export function MiniPlayer() {
         usePlayerStore.getState().next();
         ms.playbackState = "playing";
       });
-
-      // Seek ±10s (proper seek, not track skip — better UX on lock screen scrubber)
-      safeSet("seekbackward", (details) => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        const offset = details?.seekOffset ?? 10;
-        const newTime = Math.max(0, audio.currentTime - offset);
-        audio.currentTime = newTime;
-        usePlayerStore.getState().setProgress(newTime);
-        syncPositionState();
-      });
-      safeSet("seekforward", (details) => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        const offset = details?.seekOffset ?? 10;
-        const newTime = Math.min(audio.duration || Infinity, audio.currentTime + offset);
-        audio.currentTime = newTime;
-        usePlayerStore.getState().setProgress(newTime);
-        syncPositionState();
-      });
-
-      // Scrubber on lock screen
-      safeSet("seekto", (details) => {
-        if (details.seekTime != null && audioRef.current) {
-          audioRef.current.currentTime = details.seekTime;
-          usePlayerStore.getState().setProgress(details.seekTime);
-          syncPositionState();
-        }
-      });
+      safeSet("seekbackward", null);
+      safeSet("seekforward", null);
+      safeSet("seekto", null);
     }
 
     // Cleanup when player closes or song changes
