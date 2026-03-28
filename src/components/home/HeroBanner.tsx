@@ -400,7 +400,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                   </div>
                   <span className="font-medium text-[13px]">Mon profil</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/profile#audio")} className="rounded-xl gap-2.5 py-2.5 px-2.5 cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-2.5 py-2.5 px-2.5 cursor-pointer">
                   <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
                     <Settings className="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
