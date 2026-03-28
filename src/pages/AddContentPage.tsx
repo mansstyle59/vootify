@@ -297,13 +297,21 @@ function SongForm() {
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
       const streamUrl = urlData.publicUrl;
 
-      // Check for existing duplicate
+      // Check for existing duplicate (fuzzy: case-insensitive, trimmed)
+      const normalizedTitle = song.title.trim().toLowerCase();
+      const normalizedArtist = song.artist.trim().toLowerCase();
       const { data: existing } = await supabase
         .from("custom_songs")
-        .select("id")
-        .ilike("title", song.title.trim())
-        .ilike("artist", song.artist.trim())
-        .limit(1);
+        .select("id, title, artist")
+        .limit(1000);
+
+      const duplicate = (existing || []).find((e) => {
+        const eTitle = e.title.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+        const eArtist = e.artist.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+        const sTitle = normalizedTitle.replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+        const sArtist = normalizedArtist.replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+        return eTitle === sTitle && eArtist === sArtist;
+      });
 
       if (existing && existing.length > 0) {
         // Duplicate found — overwrite (update)
