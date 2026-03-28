@@ -61,32 +61,16 @@ function PremiumSongRow({
     else if (diff > 80 && onSwipeRight) { setSwiped("right"); setTimeout(() => { onSwipeRight(); setSwiped(null); }, 300); }
   };
 
-  const formatArtist = (artist: string) => {
-    const parts = artist.split(/\s*(feat\.?|ft\.?|featuring)\s*/i);
-    if (parts.length <= 1) return <span>{artist}</span>;
-    return (
-      <>
-        <span>{parts[0].trim()}</span>
-        <span className="text-muted-foreground/40"> feat. </span>
-        <span className="text-muted-foreground/60">{parts.slice(2).join(", ").trim()}</span>
-      </>
-    );
-  };
-
   return (
-    <motion.div
+    <div
       ref={containerRef}
-      initial={{ opacity: 0, x: 16 }}
-      animate={{
-        opacity: 1,
-        x: swiped === "left" ? -80 : swiped === "right" ? 80 : 0,
-      }}
-      transition={{ duration: 0.2 }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={selectable ? onSelect : onClick}
-      className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98]"
+      className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98]"
       style={{
+        transform: swiped === "left" ? "translateX(-80px)" : swiped === "right" ? "translateX(80px)" : "none",
+        transition: "transform 0.2s ease, background 0.15s ease",
         background: selected
           ? "hsl(var(--primary) / 0.08)"
           : isActive
@@ -97,9 +81,13 @@ function PremiumSongRow({
     >
       {selectable ? (
         <div className="w-6 flex-shrink-0 flex items-center justify-center">
-          <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${
-            selected ? "bg-primary border-primary" : "border-muted-foreground/25"
-          }`}>
+          <div
+            className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+            style={{
+              background: selected ? "hsl(var(--primary))" : "transparent",
+              border: selected ? "1.5px solid hsl(var(--primary))" : "1.5px solid hsl(var(--muted-foreground) / 0.25)",
+            }}
+          >
             {selected && (
               <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
@@ -124,18 +112,23 @@ function PremiumSongRow({
       ) : null}
 
       {/* Cover */}
-      <div className={`relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 transition-shadow ${
-        isActive ? "shadow-lg shadow-primary/15 ring-1 ring-primary/20" : "shadow-md shadow-black/10"
-      }`}>
+      <div
+        className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
+        style={{
+          boxShadow: isActive
+            ? "0 4px 16px hsl(var(--primary) / 0.15), 0 0 0 1px hsl(var(--primary) / 0.15)"
+            : "0 2px 8px hsl(0 0% 0% / 0.08)",
+        }}
+      >
         {song.coverUrl ? (
-          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center">
-            <Music className="w-4 h-4 text-muted-foreground/30" />
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.5))" }}>
+            <Music className="w-4 h-4 text-muted-foreground/25" />
           </div>
         )}
         {!selectable && (
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${
             isActive ? "bg-black/20 opacity-100" : "bg-black/25 opacity-0 group-hover:opacity-100"
           }`}>
             {isActive && isPlaying ? (
@@ -150,33 +143,24 @@ function PremiumSongRow({
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className={`text-[12px] font-bold leading-tight truncate ${
-            isActive ? "text-primary" : "text-foreground"
-          }`}>
+          <p className={`text-[12px] font-bold leading-tight truncate ${isActive ? "text-primary" : "text-foreground"}`}>
             {song.title}
           </p>
           {cached && (
-            <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded bg-primary/10 text-primary">
+            <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded" style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}>
               <Download className="w-2 h-2" />
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <p className="text-[10px] text-muted-foreground/55 leading-tight truncate font-medium">
-            {formatArtist(song.artist)}
-          </p>
-          {song.genre && (
-            <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary/8 text-primary/70">
-              {song.genre}
-            </span>
-          )}
-        </div>
+        <p className="text-[10px] text-muted-foreground/45 leading-tight truncate font-medium mt-0.5">
+          {song.artist}{song.album ? ` · ${song.album}` : ""}
+        </p>
       </div>
 
-      <span className="text-[10px] text-muted-foreground/40 tabular-nums flex-shrink-0 font-medium">
+      <span className="text-[10px] text-muted-foreground/35 tabular-nums flex-shrink-0 font-medium">
         {formatDuration(song.duration)}
       </span>
-    </motion.div>
+    </div>
   );
 }
 

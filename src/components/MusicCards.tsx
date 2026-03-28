@@ -1,17 +1,10 @@
-import { useState, useRef, useEffect, memo } from "react";
+import { memo } from "react";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListEnd, Music } from "lucide-react";
 import { LazyImage } from "./LazyImage";
-import { motion } from "framer-motion";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { toast } from "sonner";
-
-/** Determine the source badge type for a song */
-function getSongSourceType(song: Song): "custom" | null {
-  if (song.id.startsWith("custom-")) return "custom";
-  return null;
-}
 
 interface SongCardProps {
   song: Song;
@@ -32,10 +25,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
 
-  const isBlocked = false;
-
   const handleClick = () => {
-    if (isBlocked) return;
     if (isCurrentSong) {
       togglePlay();
     } else {
@@ -44,74 +34,81 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: (index || 0) * 0.05 }}
-      className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover-glass ${
-        isBlocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-      } ${isCurrentSong ? "bg-primary/5 ring-1 ring-primary/10" : ""}`}
+    <div
+      className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98]"
+      style={{
+        background: isCurrentSong ? "hsl(var(--primary) / 0.05)" : "transparent",
+        boxShadow: isCurrentSong ? "inset 0 0 0 1px hsl(var(--primary) / 0.12)" : "none",
+      }}
       onClick={handleClick}
     >
       {showIndex && (
-        <span className="w-5 text-center text-xs text-muted-foreground tabular-nums group-hover:hidden flex-shrink-0">
-          {(index || 0) + 1}
-        </span>
-      )}
-      {showIndex && (
-        <span className="w-5 text-center hidden group-hover:block flex-shrink-0">
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
           {isCurrentSong && isPlaying ? (
-            <Pause className="w-3.5 h-3.5 text-primary mx-auto" />
+            <div className="flex items-end gap-[2px] h-3.5">
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-1" />
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-2" />
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-3" />
+            </div>
           ) : (
-            <Play className="w-3.5 h-3.5 text-primary mx-auto" />
+            <span className={`text-[11px] tabular-nums font-medium ${isCurrentSong ? "text-primary" : "text-muted-foreground/40"}`}>
+              {(index || 0) + 1}
+            </span>
           )}
-        </span>
+        </div>
       )}
 
-      <div className="relative w-11 h-11 flex-shrink-0">
+      {/* Cover */}
+      <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
+        style={{
+          boxShadow: isCurrentSong
+            ? "0 4px 16px hsl(var(--primary) / 0.15), 0 0 0 1px hsl(var(--primary) / 0.15)"
+            : "0 2px 8px hsl(0 0% 0% / 0.08)",
+        }}
+      >
         <LazyImage
           src={song.coverUrl}
           alt={song.title}
-          className="w-full h-full rounded-lg object-cover ring-1 ring-white/[0.06]"
-          wrapperClassName="w-full h-full rounded-lg ring-1 ring-white/[0.06]"
+          className="w-full h-full object-cover"
+          wrapperClassName="w-full h-full"
         />
         {!showIndex && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${
+            isCurrentSong ? "bg-black/20 opacity-100" : "bg-black/25 opacity-0 group-hover:opacity-100"
+          }`}>
             {isCurrentSong && isPlaying ? (
-              <Pause className="w-4 h-4 text-primary" />
+              <Pause className="w-3.5 h-3.5 text-white" />
             ) : (
-              <Play className="w-4 h-4 text-primary" />
+              <Play className="w-3.5 h-3.5 text-white ml-0.5" />
             )}
           </div>
         )}
       </div>
 
-      {/* Title + Artist — takes remaining space */}
-      <div className="flex-1 min-w-0 mr-1">
-        <p className={`text-sm font-semibold leading-snug truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className={`text-[12px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
           {song.title}
         </p>
-        <p className="text-xs text-muted-foreground/70 mt-0.5 truncate">
+        <p className="text-[10px] text-muted-foreground/50 mt-0.5 truncate font-medium">
           {song.artist}{song.album ? ` · ${song.album}` : ""}
         </p>
       </div>
 
-      {/* Action buttons — always visible */}
+      {/* Actions */}
       <div className="flex items-center gap-0.5 flex-shrink-0">
-        {/* Like button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             toggleLike(song);
             if (navigator.vibrate) navigator.vibrate(8);
           }}
-          className="p-1.5 rounded-full transition-colors active:scale-90"
+          className="p-1.5 rounded-full transition-transform active:scale-90"
         >
-          <Heart className={`w-4 h-4 transition-all ${liked ? "fill-primary text-primary scale-110" : "text-muted-foreground/40"}`} />
+          <Heart className={`w-3.5 h-3.5 transition-all ${liked ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
         </button>
 
-        {/* Add to queue */}
-        {!isBlocked && song.duration > 0 && (
+        {song.duration > 0 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -120,14 +117,12 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
               toast.success(`"${song.title}" ajouté à la file`);
               if (navigator.vibrate) navigator.vibrate(8);
             }}
-            className="p-1.5 rounded-full transition-colors active:scale-90"
-            title="Ajouter à la file d'attente"
+            className="p-1.5 rounded-full transition-transform active:scale-90"
           >
-            <ListEnd className="w-4 h-4 text-muted-foreground/40 hover:text-primary transition-colors" />
+            <ListEnd className="w-3.5 h-3.5 text-muted-foreground/30" />
           </button>
         )}
 
-        {/* Download / offline */}
         {song.streamUrl && song.duration > 0 && (
           <button
             onClick={(e) => {
@@ -137,43 +132,23 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
                 if (navigator.vibrate) navigator.vibrate(8);
               }
             }}
-            className="p-1.5 rounded-full transition-colors active:scale-90"
-            title={isCached ? "Disponible hors-ligne" : isDownloading ? `${progress}%` : "Télécharger"}
+            className="p-1.5 rounded-full transition-transform active:scale-90"
           >
             {isCached ? (
-              <CheckCircle className="w-4 h-4 text-primary" />
+              <CheckCircle className="w-3.5 h-3.5 text-primary" />
             ) : isDownloading ? (
-              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
             ) : (
-              <Download className="w-4 h-4 text-muted-foreground/40" />
+              <Download className="w-3.5 h-3.5 text-muted-foreground/30" />
             )}
           </button>
         )}
       </div>
 
-      {/* Source badge */}
-      {(() => {
-        if (isCached) return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/15 text-accent-foreground border border-accent/20 flex-shrink-0">
-            Local
-          </span>
-        );
-        if (song.id.startsWith("dz-")) return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/20 flex-shrink-0">
-            30s
-          </span>
-        );
-        const sourceType = getSongSourceType(song);
-        if (sourceType === "custom") return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-secondary/80 text-secondary-foreground border border-secondary flex-shrink-0">
-            Custom
-          </span>
-        );
-        return null;
-      })()}
-
-      <span className="text-[11px] text-muted-foreground/60 tabular-nums flex-shrink-0 ml-0.5">{formatDuration(song.duration)}</span>
-    </motion.div>
+      <span className="text-[10px] text-muted-foreground/35 tabular-nums flex-shrink-0 font-medium">
+        {formatDuration(song.duration)}
+      </span>
+    </div>
   );
 });
 
@@ -186,49 +161,59 @@ interface ContentCardProps {
 
 export function ContentCard({ title, subtitle, imageUrl, onClick }: ContentCardProps) {
   return (
-    <motion.div
-      whileHover={{ scale: 1.03, y: -4 }}
-      transition={{ type: "spring", stiffness: 300 }}
-      className="glass-panel-light rounded-xl p-3 cursor-pointer group"
+    <div
+      className="rounded-2xl p-3 cursor-pointer group transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+      style={{
+        background: "hsl(var(--card) / 0.35)",
+        backdropFilter: "blur(20px) saturate(1.6)",
+        border: "1px solid hsl(var(--border) / 0.08)",
+        boxShadow: "0 2px 12px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.02)",
+      }}
       onClick={onClick}
     >
-      <div className="relative overflow-hidden rounded-lg mb-3">
-        <LazyImage src={imageUrl} alt={title} className="w-full aspect-square object-cover" />
-        <div className="absolute inset-0 bg-background/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            className="w-11 h-11 rounded-full liquid-glass flex items-center justify-center shadow-xl"
-            style={{ boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" }}
+      <div className="relative overflow-hidden rounded-xl mb-2.5">
+        <LazyImage src={imageUrl} alt={title} className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-[1.06]" />
+        <div
+          className="absolute inset-x-0 bottom-0 h-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.4), transparent)" }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{
+              background: "hsl(var(--primary))",
+              boxShadow: "0 4px 20px hsl(var(--primary) / 0.4)",
+            }}
           >
-            <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
-          </motion.div>
+            <Play className="w-4 h-4 text-primary-foreground fill-current ml-0.5" />
+          </div>
         </div>
       </div>
-      <h3 className="text-sm font-semibold truncate text-foreground">{title}</h3>
-      <p className="text-xs text-muted-foreground truncate mt-0.5">{subtitle}</p>
-    </motion.div>
+      <h3 className="text-[12px] font-bold truncate text-foreground">{title}</h3>
+      <p className="text-[10px] text-muted-foreground/40 truncate mt-0.5 font-medium">{subtitle}</p>
+    </div>
   );
 }
 
 export function SongSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-3 py-2 animate-pulse">
-      <div className="w-10 h-10 rounded bg-secondary" />
+    <div className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
+      <div className="w-11 h-11 rounded-xl" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
       <div className="flex-1">
-        <div className="h-3 w-32 bg-secondary rounded mb-1.5" />
-        <div className="h-2.5 w-20 bg-secondary rounded" />
+        <div className="h-3 w-28 rounded mb-1.5" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
+        <div className="h-2.5 w-20 rounded" style={{ background: "hsl(var(--secondary) / 0.2)" }} />
       </div>
-      <div className="h-3 w-8 bg-secondary rounded" />
+      <div className="h-2.5 w-8 rounded" style={{ background: "hsl(var(--secondary) / 0.2)" }} />
     </div>
   );
 }
 
 export function CardSkeleton() {
   return (
-    <div className="glass-panel-light rounded-xl p-3 animate-pulse">
-      <div className="w-full aspect-square rounded-lg bg-secondary mb-3" />
-      <div className="h-3 w-24 bg-secondary rounded mb-1.5" />
-      <div className="h-2.5 w-16 bg-secondary rounded" />
+    <div className="rounded-2xl p-3 animate-pulse" style={{ background: "hsl(var(--card) / 0.25)", border: "1px solid hsl(var(--border) / 0.06)" }}>
+      <div className="w-full aspect-square rounded-xl mb-2.5" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
+      <div className="h-3 w-20 rounded mb-1.5" style={{ background: "hsl(var(--secondary) / 0.3)" }} />
+      <div className="h-2.5 w-14 rounded" style={{ background: "hsl(var(--secondary) / 0.2)" }} />
     </div>
   );
 }
