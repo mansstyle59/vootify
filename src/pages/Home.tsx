@@ -470,55 +470,51 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
 
   const imageUrl = customImage || deezerImage || artist.cover;
   const isTop3 = index < 3;
-  const size = isTop3 ? "w-[80px] h-[80px]" : "w-[68px] h-[68px]";
+  const size = isTop3 ? "w-[68px] h-[68px]" : "w-[58px] h-[58px]";
   const ringColor = index === 0
-    ? "ring-yellow-400/70 shadow-yellow-400/20"
+    ? "ring-yellow-400/60"
     : index === 1
-    ? "ring-gray-300/70 shadow-gray-300/20"
+    ? "ring-gray-300/60"
     : index === 2
-    ? "ring-amber-600/60 shadow-amber-600/15"
-    : "ring-border/50";
+    ? "ring-amber-600/50"
+    : "ring-border/40";
 
   return (
     <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.06, type: "spring", stiffness: 200, damping: 18 }}
+      transition={{ delay: index * 0.05, type: "spring", stiffness: 220, damping: 20 }}
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-      className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
+      className="flex flex-col items-center gap-1 flex-shrink-0 group"
     >
       <div className="relative">
-        <div className={`${size} rounded-full overflow-hidden ring-2 ${ringColor} shadow-lg transition-transform group-hover:scale-105 group-active:scale-95`}>
+        <div className={`${size} rounded-full overflow-hidden ring-[1.5px] ${ringColor} transition-transform group-hover:scale-105 group-active:scale-95`}>
           {imageUrl ? (
-            <LazyImage
-              src={imageUrl}
-              alt={artist.name}
-              className="w-full h-full object-cover"
-            />
+            <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/25 to-primary/5 flex items-center justify-center">
-              <User className="w-1/3 h-1/3 text-primary/40" />
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              <User className="w-1/3 h-1/3 text-primary/35" />
             </div>
           )}
         </div>
         {/* Rank badge */}
         <div
-          className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-md ${
+          className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black ${
             index === 0
               ? "bg-yellow-400 text-yellow-950"
               : index === 1
               ? "bg-gray-200 text-gray-700"
               : index === 2
               ? "bg-amber-600 text-amber-50"
-              : "bg-secondary text-secondary-foreground border border-border"
+              : "bg-secondary text-secondary-foreground border border-border/50"
           }`}
         >
           {index + 1}
         </div>
       </div>
-      <div className="text-center max-w-[80px]">
-        <p className="text-[11px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[9px] text-muted-foreground font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+      <div className="text-center max-w-[68px]">
+        <p className="text-[10px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
+        <p className="text-[8px] text-muted-foreground/60 font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
     </motion.button>
   );
