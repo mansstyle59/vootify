@@ -107,8 +107,10 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-2 md:mb-3"
+      className="mb-2 md:mb-3 pt-2"
     >
+      {/* Subtle top separator */}
+      <div className="mx-5 md:mx-9 mb-3 h-px bg-border/20" />
       <motion.div
         initial={{ opacity: 0, x: -16 }}
         whileInView={{ opacity: 1, x: 0 }}
