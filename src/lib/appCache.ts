@@ -65,7 +65,6 @@ export async function performInitialCache(
     { label: "Playlists", weight: 1 },
     { label: "Historique récent", weight: 1 },
     { label: "Configuration", weight: 1 },
-    { label: "Pochettes d'albums", weight: 3 },
     { label: "Finalisation", weight: 1 },
   ];
   const totalWeight = steps.reduce((s, st) => s + st.weight, 0);
@@ -88,7 +87,10 @@ export async function performInitialCache(
     Authorization: `Bearer ${session?.access_token || ""}`,
   };
 
-  try {
+  // Global timeout — never block the user more than 8 seconds
+  const timeout = new Promise<"timeout">((r) => setTimeout(() => r("timeout"), 8000));
+
+  const cacheWork = async () => {
     // 0 — Profile
     await fetch(`${base}/profiles?user_id=eq.${userId}&limit=1`, { headers });
     report(0);
@@ -112,19 +114,26 @@ export async function performInitialCache(
     ]);
     report(4);
 
-    // 5 — Pre-cache cover images
-    await preCacheCovers(userId);
-    report(5);
-
-    // 6 — Finalize
+    // 5 — Finalize
     markCacheReady();
-    report(6);
+    report(5);
+  };
+
+  try {
+    const result = await Promise.race([cacheWork(), timeout]);
+    if (result === "timeout") {
+      console.warn("[appCache] Timeout — releasing user");
+      markCacheReady();
+      onProgress?.({ step: "Finalisation", current: steps.length, total: steps.length, percent: 100 });
+    }
   } catch (e) {
     console.warn("[appCache] Initial cache partially failed:", e);
-    // Still mark as ready so user isn't blocked forever
     markCacheReady();
-    report(6);
+    onProgress?.({ step: "Finalisation", current: steps.length, total: steps.length, percent: 100 });
   }
+
+  // Pre-cache covers in background (non-blocking)
+  preCacheCovers(userId).catch(() => {});
 }
 
 /** Pre-fetch cover images so the SW caches them */
