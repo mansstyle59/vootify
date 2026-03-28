@@ -310,39 +310,85 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
               <DropdownMenuTrigger asChild>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all duration-200 outline-none"
+                  whileHover={{ scale: 1.02 }}
+                  className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full transition-all duration-200 outline-none"
                   style={{
-                    background: "hsl(var(--card) / 0.6)",
-                    backdropFilter: "blur(20px) saturate(1.8)",
-                    WebkitBackdropFilter: "blur(20px) saturate(1.8)",
-                    border: "1px solid hsl(var(--border) / 0.4)",
-                    boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
+                    background: "linear-gradient(135deg, hsl(var(--card) / 0.7) 0%, hsl(var(--card) / 0.5) 100%)",
+                    backdropFilter: "blur(24px) saturate(2)",
+                    WebkitBackdropFilter: "blur(24px) saturate(2)",
+                    border: "1px solid hsl(var(--primary) / 0.15)",
+                    boxShadow: "0 4px 24px hsl(0 0% 0% / 0.2), 0 0 0 0.5px hsl(var(--primary) / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
                   }}
                 >
-                  <Avatar className="w-7 h-7 ring-2 ring-primary/25">
+                  <Avatar className="w-8 h-8 ring-[1.5px] ring-primary/30 shadow-md">
                     <AvatarImage src={avatarUrl} alt={displayName || "User"} />
-                    <AvatarFallback className="text-[10px] font-bold bg-primary/15 text-primary">
+                    <AvatarFallback
+                      className="text-[11px] font-extrabold"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.1))",
+                        color: "hsl(var(--primary))",
+                      }}
+                    >
                       {(displayName || "U").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs font-bold text-foreground truncate max-w-[80px]">
+                  <span className="text-[13px] font-bold text-foreground truncate max-w-[90px]">
                     {displayName}
                   </span>
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-muted-foreground/60 flex-shrink-0 -ml-0.5">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </motion.button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5" sideOffset={8}>
-                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg gap-2.5 py-2.5 cursor-pointer">
-                  <User className="w-4 h-4 text-primary" />
-                  <span className="font-medium">Mon profil</span>
+              <DropdownMenuContent
+                align="end"
+                className="w-52 rounded-2xl p-2 border-border/50"
+                sideOffset={8}
+                style={{
+                  background: "hsl(var(--card) / 0.92)",
+                  backdropFilter: "blur(40px) saturate(1.8)",
+                  WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                  boxShadow: "0 16px 48px hsl(0 0% 0% / 0.35), 0 0 0 1px hsl(var(--border) / 0.3)",
+                }}
+              >
+                {/* User info header */}
+                <div className="flex items-center gap-2.5 px-2.5 py-2 mb-1">
+                  <Avatar className="w-9 h-9 ring-[1.5px] ring-primary/20">
+                    <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+                    <AvatarFallback
+                      className="text-[11px] font-extrabold"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.1))",
+                        color: "hsl(var(--primary))",
+                      }}
+                    >
+                      {(displayName || "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-foreground truncate">{displayName}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator className="bg-border/30 my-1" />
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-xl gap-2.5 py-2.5 px-2.5 cursor-pointer">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="font-medium text-[13px]">Mon profil</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg gap-2.5 py-2.5 cursor-pointer">
-                  <Settings className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium">Paramètres audio</span>
+                <DropdownMenuItem onClick={() => navigate("/profile#audio")} className="rounded-xl gap-2.5 py-2.5 px-2.5 cursor-pointer">
+                  <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                    <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <span className="font-medium text-[13px]">Paramètres audio</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()} className="rounded-lg gap-2.5 py-2.5 cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="w-4 h-4" />
-                  <span className="font-medium">Déconnexion</span>
+                <DropdownMenuSeparator className="bg-border/30 my-1" />
+                <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-2.5 py-2.5 px-2.5 cursor-pointer text-destructive focus:text-destructive">
+                  <div className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <LogOut className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="font-medium text-[13px]">Déconnexion</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
