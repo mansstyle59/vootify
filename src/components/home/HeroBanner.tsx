@@ -211,7 +211,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-1" style={{ minHeight: "210px" }}>
+    <div ref={ref} className="relative overflow-hidden mb-4" style={{ minHeight: "clamp(320px, 55vh, 480px)" }}>
       {/* Parallax background layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
         {bgImage ? (
@@ -362,11 +362,11 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
 
       {/* Main content */}
       <motion.div
-        style={{ opacity }}
-        className="relative z-10 px-4 md:px-8 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-2 flex flex-col justify-end gpu-layer"
+        style={{ opacity, minHeight: "clamp(320px, 55vh, 480px)" }}
+        className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-8 flex flex-col justify-end gpu-layer"
       >
         {/* Badge + sound wave */}
-        <div className="flex items-center gap-2 mb-1.5 mt-0.5">
+        <div className="flex items-center gap-3 mb-4 mt-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -402,7 +402,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="text-[20px] md:text-[28px] font-black text-foreground mb-0.5 leading-[1.15] tracking-tight"
+          className="text-[26px] md:text-[36px] font-black text-foreground mb-2 leading-[1.1] tracking-tight"
         >
           {getGreeting(user ? displayName : null)}{" "}
           <motion.span
@@ -420,7 +420,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4 }}
-          className="text-[11px] md:text-[12px] text-muted-foreground max-w-[280px] md:max-w-md leading-relaxed italic"
+          className="text-[13px] md:text-[14px] text-muted-foreground max-w-[320px] md:max-w-lg leading-relaxed italic"
         >
           « {quote.text} »
           <span className="not-italic text-[10px] text-muted-foreground/60 ml-1">— {quote.author}</span>
@@ -431,49 +431,49 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.4 }}
-          className="flex gap-2 mt-2.5"
+          className="flex gap-3 mt-5"
         >
           <motion.button
             whileTap={{ scale: 0.93 }}
             onClick={handleShuffle}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-bold transition-colors"
             style={{
               background: "var(--gradient-primary)",
               color: "hsl(var(--primary-foreground))",
-              boxShadow: "0 2px 12px hsl(var(--primary) / 0.3)",
+              boxShadow: "0 4px 20px hsl(var(--primary) / 0.35)",
             }}
           >
-            <Shuffle className="w-3 h-3" />
+            <Shuffle className="w-4 h-4" />
             Aléatoire
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.93 }}
             onClick={() => navigate("/library")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold transition-colors"
             style={{
               background: "hsl(var(--card) / 0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
               border: "1px solid hsl(var(--border) / 0.3)",
               color: "hsl(var(--foreground))",
             }}
           >
-            <Heart className="w-3 h-3 text-pink-400" />
+            <Heart className="w-4 h-4 text-pink-400" />
             Favoris
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.93 }}
             onClick={() => navigate("/search")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold transition-colors"
             style={{
               background: "hsl(var(--card) / 0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
               border: "1px solid hsl(var(--border) / 0.3)",
               color: "hsl(var(--foreground))",
             }}
           >
-            <Search className="w-3 h-3" />
+            <Search className="w-4 h-4" />
             Chercher
           </motion.button>
         </motion.div>
@@ -484,7 +484,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex flex-wrap gap-1.5 mt-2"
+            className="flex flex-wrap gap-2.5 mt-5"
           >
             {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.6} />}
             {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.75} />}
@@ -498,14 +498,14 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.4 }}
-            className="grid grid-cols-2 gap-1.5 mt-2.5"
+            className="grid grid-cols-2 gap-2 mt-5"
           >
             {shortcuts.slice(0, 6).map((s) => (
               <motion.button
                 key={`${s.type}-${s.id}`}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => navigate(s.route)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left overflow-hidden"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left overflow-hidden"
                 style={{
                   background: "hsl(var(--card) / 0.5)",
                   backdropFilter: "blur(12px)",
@@ -514,13 +514,13 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                 }}
               >
                 {s.cover ? (
-                  <img src={s.cover} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                  <img src={s.cover} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                  <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
                     {s.type === "radio" ? <Radio className="w-3.5 h-3.5 text-primary" /> : s.type === "playlist" ? <ListMusic className="w-3.5 h-3.5 text-primary" /> : s.type === "album" ? <Music className="w-3.5 h-3.5 text-primary" /> : <Headphones className="w-3.5 h-3.5 text-primary" />}
                   </div>
                 )}
-                <span className="text-[10px] font-semibold text-foreground truncate">{s.label}</span>
+                <span className="text-[11px] font-semibold text-foreground truncate">{s.label}</span>
               </motion.button>
             ))}
           </motion.div>
