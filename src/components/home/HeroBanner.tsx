@@ -149,6 +149,31 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: shortcuts } = useQuery({
+    queryKey: ["hero-shortcuts", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [playlists, albums, recentlyPlayed] = await Promise.all([
+        supabase.from("playlists").select("id, name, cover_url").order("updated_at", { ascending: false }).limit(3),
+        supabase.from("custom_albums").select("id, title, cover_url, artist").order("created_at", { ascending: false }).limit(3),
+        supabase.from("recently_played").select("song_id, title, artist, cover_url").order("played_at", { ascending: false }).limit(3),
+      ]);
+      const items: { id: string; label: string; cover?: string | null; type: "playlist" | "album" | "recent"; route: string }[] = [];
+      playlists.data?.forEach((p) => items.push({ id: p.id, label: p.name, cover: p.cover_url, type: "playlist", route: `/playlist/${p.id}` }));
+      albums.data?.forEach((a) => items.push({ id: a.id, label: `${a.title} — ${a.artist}`, cover: a.cover_url, type: "album", route: `/album/${a.id}` }));
+      // Deduplicate recently played by song_id
+      const seen = new Set<string>();
+      recentlyPlayed.data?.forEach((r) => {
+        if (!seen.has(r.song_id)) {
+          seen.add(r.song_id);
+          items.push({ id: r.song_id, label: `${r.title} — ${r.artist}`, cover: r.cover_url, type: "recent", route: "/library" });
+        }
+      });
+      return items.slice(0, 6);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
   const handleShuffle = async () => {
     const { data } = await supabase
       .from("custom_songs")
@@ -462,6 +487,40 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.6} />}
             {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.75} />}
             {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.9} />}
+          </motion.div>
+        )}
+
+        {/* Personalized shortcuts */}
+        {shortcuts && shortcuts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.4 }}
+            className="grid grid-cols-2 gap-1.5 mt-2.5"
+          >
+            {shortcuts.slice(0, 4).map((s) => (
+              <motion.button
+                key={`${s.type}-${s.id}`}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => navigate(s.route)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left overflow-hidden"
+                style={{
+                  background: "hsl(var(--card) / 0.5)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid hsl(var(--border) / 0.25)",
+                }}
+              >
+                {s.cover ? (
+                  <img src={s.cover} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                    {s.type === "playlist" ? <ListMusic className="w-3.5 h-3.5 text-primary" /> : s.type === "album" ? <Music className="w-3.5 h-3.5 text-primary" /> : <Headphones className="w-3.5 h-3.5 text-primary" />}
+                  </div>
+                )}
+                <span className="text-[10px] font-semibold text-foreground truncate">{s.label}</span>
+              </motion.button>
+            ))}
           </motion.div>
         )}
       </motion.div>
