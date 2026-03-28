@@ -738,11 +738,18 @@ export function MiniPlayer() {
 
     console.log(`[mediaSession] Registering handlers — mode: ${liveStream ? "RADIO" : "MUSIC"}`);
 
-    // Common: play / pause / stop
+    // Common: play / pause / stop — with forced media session state sync
     try {
       ms.setActionHandler("play", () => {
         const store = usePlayerStore.getState();
         if (!store.isPlaying) store.togglePlay();
+        const audio = audioRef.current;
+        if (audio && audio.paused && audio.src) {
+          audio.volume = volume;
+          audio.muted = false;
+          audio.play().catch(console.error);
+        }
+        ms.playbackState = "playing";
       });
     } catch { /* unsupported */ }
 
@@ -750,12 +757,14 @@ export function MiniPlayer() {
       ms.setActionHandler("pause", () => {
         const store = usePlayerStore.getState();
         if (store.isPlaying) store.togglePlay();
+        ms.playbackState = "paused";
       });
     } catch { /* unsupported */ }
 
     try {
       ms.setActionHandler("stop", () => {
         usePlayerStore.getState().closePlayer();
+        ms.playbackState = "none";
       });
     } catch { /* unsupported */ }
 
