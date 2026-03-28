@@ -698,34 +698,60 @@ const SearchPage = () => {
                 {/* Album Results */}
                 {albumCards.length > 0 && (
                   <section className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Music className="w-4 h-4 text-primary" />
-                      <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Albums</h2>
-                    </div>
-                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                      {albumCards.map((album, i) => (
-                        <motion.button
-                          key={album.title}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-                          onClick={() => handleAlbumClick(album.title)}
-                          className="flex-shrink-0 w-[120px] group text-left"
+                    <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes</h2>
+                    <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                      {artistCards.map((artist) => (
+                        <button
+                          key={artist.name}
+                          onClick={() => handleArtistClick(artist.name)}
+                          className="flex-shrink-0 w-[80px] group text-center active:scale-95 transition-transform"
                         >
-                          <div className="w-[120px] h-[120px] rounded-2xl overflow-hidden mb-2 ring-1 ring-border/10 group-hover:ring-border/30 transition-all"
-                            style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1)" }}
+                          <div
+                            className="w-[80px] h-[80px] rounded-full overflow-hidden mb-2 mx-auto"
+                            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
                           >
-                            {album.coverUrl ? (
-                              <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            {artist.coverUrl ? (
+                              <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05))" }}>
-                                <Music className="w-8 h-8 text-primary/25" />
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                                <User className="w-6 h-6 text-muted-foreground/20" />
                               </div>
                             )}
                           </div>
-                          <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
-                          <p className="text-[10px] text-muted-foreground/50 truncate">{album.artist}</p>
-                        </motion.button>
+                          <p className="text-[12px] font-semibold text-foreground truncate">{artist.name}</p>
+                          <p className="text-[10px] text-muted-foreground/45">{artist.songCount} titre{artist.songCount > 1 ? "s" : ""}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Album Results */}
+                {albumCards.length > 0 && (
+                  <section className="mb-6">
+                    <h2 className="text-[18px] font-bold text-foreground mb-3">Albums</h2>
+                    <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
+                      {albumCards.map((album) => (
+                        <button
+                          key={album.title}
+                          onClick={() => handleAlbumClick(album.title)}
+                          className="flex-shrink-0 w-[140px] group text-left active:scale-[0.97] transition-transform"
+                        >
+                          <div
+                            className="w-[140px] h-[140px] rounded-xl overflow-hidden mb-2"
+                            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
+                          >
+                            {album.coverUrl ? (
+                              <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                                <Music className="w-7 h-7 text-muted-foreground/15" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[13px] font-semibold text-foreground truncate">{album.title}</p>
+                          <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{album.artist}</p>
+                        </button>
                       ))}
                     </div>
                   </section>
@@ -734,29 +760,23 @@ const SearchPage = () => {
                 {/* Artist Filter Pills */}
                 {uniqueArtists.length > 1 && (
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="w-3.5 h-3.5 text-muted-foreground/50" />
-                      <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Filtrer par artiste</span>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                      {[null, ...uniqueArtists].map((artist) => (
-                        <button
-                          key={artist || "all"}
-                          onClick={() => setArtistFilter(artist === artistFilter ? null : artist)}
-                          className="relative flex-shrink-0 px-3.5 py-1.5 rounded-2xl text-xs font-semibold transition-colors"
-                          style={{
-                            color: (artist === null ? !artistFilter : artistFilter === artist) ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-                          }}
-                        >
-                          {(artist === null ? !artistFilter : artistFilter === artist) && (
-                            <motion.div layoutId="searchArtistPill" className="absolute inset-0 rounded-2xl bg-primary"
-                              style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.35)" }}
-                              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                            />
-                          )}
-                          <span className="relative z-10">{artist || "Tous"}</span>
-                        </button>
-                      ))}
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                      {[null, ...uniqueArtists].map((artist) => {
+                        const isActive = artist === null ? !artistFilter : artistFilter === artist;
+                        return (
+                          <button
+                            key={artist || "all"}
+                            onClick={() => setArtistFilter(artist === artistFilter ? null : artist)}
+                            className="relative flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                            style={{
+                              background: isActive ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.05)",
+                              color: isActive ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                            }}
+                          >
+                            {artist || "Tous"}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -764,11 +784,11 @@ const SearchPage = () => {
                 {/* Song Results */}
                 {filteredResults.length > 0 ? (
                   <>
-                    <p className="text-[11px] text-muted-foreground/50 font-medium mb-3">
+                    <p className="text-[12px] text-muted-foreground/50 font-medium mb-3">
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-semibold">{artistFilter}</span></>}
                     </p>
-                    <div className="rounded-2xl overflow-hidden" style={{ ...glassCard }}>
+                    <div className="rounded-xl overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.02)" }}>
                       <VirtualSongList
                         songs={filteredResults}
                         onClickSong={(song) => handlePlayTrack(song, filteredResults)}
@@ -777,22 +797,23 @@ const SearchPage = () => {
                     </div>
                   </>
                 ) : (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16">
-                    <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5"
-                      style={{ ...glassCard, boxShadow: "0 4px 24px hsl(0 0% 0% / 0.06)" }}
+                  <div className="text-center py-20">
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                      style={{ background: "hsl(var(--foreground) / 0.04)" }}
                     >
-                      <Music className="w-9 h-9 text-muted-foreground/30" />
+                      <Music className="w-7 h-7 text-muted-foreground/20" />
                     </div>
                     <p className="text-foreground font-semibold mb-1">Aucun résultat pour « <span className="text-primary">{debouncedQuery}</span> »</p>
-                    <p className="text-sm text-muted-foreground/50 mb-4">Essayez un autre terme de recherche</p>
+                    <p className="text-[13px] text-muted-foreground/50 mb-4">Essayez un autre terme de recherche</p>
                     {alternativeSuggestions.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-[11px] text-muted-foreground/50 mb-2 font-medium">Artistes suggérés :</p>
+                        <p className="text-[11px] text-muted-foreground/40 mb-2 font-medium">Artistes suggérés :</p>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {alternativeSuggestions.map((artist) => (
                             <button key={artist} onClick={() => commitSearch(artist)}
-                              className="px-3.5 py-1.5 rounded-2xl text-primary text-xs font-semibold transition-colors"
-                              style={{ background: "hsl(var(--primary) / 0.1)", border: "1px solid hsl(var(--primary) / 0.15)" }}
+                              className="px-3.5 py-1.5 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
                             >
                               {artist}
                             </button>
@@ -800,7 +821,7 @@ const SearchPage = () => {
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
               </>
             )}
