@@ -15,10 +15,12 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, Disc3, RefreshCw, Loader2 } from "lucide-react";
+import { Music, Disc3, RefreshCw, Loader2, TrendingUp, User } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { LazyImage } from "@/components/LazyImage";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
@@ -104,6 +106,32 @@ const HomePage = () => {
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
 
+  // Top artists by play count
+  const userId = usePlayerStore((s) => s.userId);
+  const { data: topArtists, isLoading: loadingTopArtists } = useQuery({
+    queryKey: ["top-artists", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("recently_played")
+        .select("artist, cover_url")
+        .eq("user_id", userId);
+      if (error) throw error;
+      const counts = new Map<string, { count: number; cover: string }>();
+      for (const r of data || []) {
+        const existing = counts.get(r.artist);
+        if (existing) existing.count++;
+        else counts.set(r.artist, { count: 1, cover: r.cover_url || "" });
+      }
+      return Array.from(counts.entries())
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10)
+        .map(([name, { count, cover }]) => ({ name, count, cover }));
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Gather all custom section song IDs for batch fetching
   const allCustomSongIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
@@ -155,8 +183,9 @@ const HomePage = () => {
     recently_listened: { songs: recentlyListened, loading: loadingListened },
     most_played: { songs: mostPlayed, loading: loadingMost },
     recommended: { songs: recommended, loading: loadingRecommended },
-    artists: { songs: undefined, loading: false }, // special rendering
-    albums: { songs: undefined, loading: false },  // special rendering
+    artists: { songs: undefined, loading: false },
+    albums: { songs: undefined, loading: false },
+    top_artists: { songs: undefined, loading: false },
   }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
   const visibleSections = useMemo(() => {
@@ -229,6 +258,33 @@ const HomePage = () => {
             <div key={section.id}>
               {renderSection(section.title, songs, loadingCustomSongs)}
             </div>
+          );
+        }
+
+        // Top Artists bubbles section
+        if (section.id === "top_artists") {
+          if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
+          return (
+            <Section key={section.id} title={section.title}>
+              <div className="px-4 md:px-8">
+                {loadingTopArtists ? (
+                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                        <div className="w-[72px] h-[72px] rounded-full bg-muted animate-pulse" />
+                        <div className="w-12 h-3 rounded bg-muted animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                    {topArtists?.map((artist, i) => (
+                      <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Section>
           );
         }
 
@@ -354,6 +410,79 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
       rounded
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
     />
+  );
+}
+
+/** Top artist bubble with rank badge, play count, and artist photo */
+function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; count: number; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const { data: customImage } = useQuery({
+    queryKey: ["custom-artist-image", artist.name],
+    queryFn: async () => {
+      const { data } = await supabase.from("artist_images").select("image_url").eq("artist_name", artist.name).maybeSingle();
+      return data?.image_url || null;
+    },
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const { data: deezerImage } = useQuery({
+    queryKey: ["artist-image", artist.name],
+    queryFn: () => searchArtistImage(artist.name),
+    staleTime: 24 * 60 * 60 * 1000,
+    enabled: !customImage,
+  });
+
+  const imageUrl = customImage || deezerImage || artist.cover;
+  const isTop3 = index < 3;
+  const size = isTop3 ? "w-[80px] h-[80px]" : "w-[68px] h-[68px]";
+  const ringColor = index === 0
+    ? "ring-yellow-400/70 shadow-yellow-400/20"
+    : index === 1
+    ? "ring-gray-300/70 shadow-gray-300/20"
+    : index === 2
+    ? "ring-amber-600/60 shadow-amber-600/15"
+    : "ring-border/50";
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.06, type: "spring", stiffness: 200, damping: 18 }}
+      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
+    >
+      <div className="relative">
+        <div className={`${size} rounded-full overflow-hidden ring-2 ${ringColor} shadow-lg transition-transform group-hover:scale-105 group-active:scale-95`}>
+          {imageUrl ? (
+            <LazyImage
+              src={imageUrl}
+              alt={artist.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/25 to-primary/5 flex items-center justify-center">
+              <User className="w-1/3 h-1/3 text-primary/40" />
+            </div>
+          )}
+        </div>
+        {/* Rank badge */}
+        <div
+          className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-md ${
+            index === 0
+              ? "bg-yellow-400 text-yellow-950"
+              : index === 1
+              ? "bg-gray-200 text-gray-700"
+              : index === 2
+              ? "bg-amber-600 text-amber-50"
+              : "bg-secondary text-secondary-foreground border border-border"
+          }`}
+        >
+          {index + 1}
+        </div>
+      </div>
+      <div className="text-center max-w-[80px]">
+        <p className="text-[11px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
+        <p className="text-[9px] text-muted-foreground font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+      </div>
+    </motion.button>
   );
 }
 
