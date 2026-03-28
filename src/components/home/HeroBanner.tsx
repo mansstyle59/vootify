@@ -1,13 +1,36 @@
 import { motion, useScroll, useTransform, animate } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
-import { LogIn, LogOut, Headphones, Music, Radio, ListMusic } from "lucide-react";
+import { useRef, useEffect, useState, useMemo } from "react";
+import { LogIn, LogOut, Headphones, Music, Radio, ListMusic, Shuffle, Heart, Search } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlayerStore } from "@/stores/playerStore";
 
+/* ── Daily music quotes ── */
+const QUOTES = [
+  { text: "La musique est le langage des émotions.", author: "Emmanuel Kant" },
+  { text: "Sans musique, la vie serait une erreur.", author: "Friedrich Nietzsche" },
+  { text: "La musique donne une âme à nos cœurs.", author: "Platon" },
+  { text: "Un seul morceau peut changer ta journée.", author: "Vootify" },
+  { text: "Là où les mots s'arrêtent, la musique commence.", author: "Heinrich Heine" },
+  { text: "La vie sans musique est tout simplement une erreur.", author: "Nietzsche" },
+  { text: "La musique exprime ce qui ne peut être dit.", author: "Victor Hugo" },
+  { text: "Chaque jour mérite sa bande-son.", author: "Vootify" },
+  { text: "La musique est la nourriture de l'amour.", author: "Shakespeare" },
+  { text: "Écouter, c'est déjà voyager.", author: "Vootify" },
+  { text: "La musique commence là où le pouvoir des mots s'arrête.", author: "Richard Wagner" },
+  { text: "Le rythme est l'architecture du temps.", author: "Vootify" },
+];
+
+function getDailyQuote() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  return QUOTES[dayOfYear % QUOTES.length];
+}
+
+/* ── Animated counter ── */
 function AnimatedCounter({ value, label, icon: Icon, delay }: { value: number; label: string; icon: React.ElementType; delay: number }) {
   const [display, setDisplay] = useState(0);
 
@@ -41,6 +64,54 @@ function AnimatedCounter({ value, label, icon: Icon, delay }: { value: number; l
     </motion.div>
   );
 }
+
+/* ── Floating music note particle ── */
+function FloatingNote({ delay, x, size }: { delay: number; x: number; size: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40, x, scale: 0 }}
+      animate={{
+        opacity: [0, 0.4, 0.2, 0],
+        y: [40, -20, -60, -100],
+        x: [x, x + 15, x - 10, x + 5],
+        scale: [0, 1, 0.8, 0.3],
+        rotate: [0, 15, -10, 20],
+      }}
+      transition={{
+        duration: 6,
+        delay,
+        repeat: Infinity,
+        ease: "easeOut",
+      }}
+      className="absolute bottom-8 pointer-events-none"
+      style={{ left: `${x}%` }}
+    >
+      <Music className="text-primary/30" style={{ width: size, height: size }} />
+    </motion.div>
+  );
+}
+
+/* ── Sound wave visualizer bars ── */
+function SoundWave() {
+  return (
+    <div className="flex items-end gap-[2px] h-4">
+      {[0, 0.15, 0.3, 0.1, 0.25].map((d, i) => (
+        <motion.div
+          key={i}
+          className="w-[3px] rounded-full bg-primary/25"
+          animate={{ height: ["30%", "100%", "50%", "80%", "30%"] }}
+          transition={{
+            duration: 1.2,
+            delay: d,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function getGreeting(name?: string | null) {
   const h = new Date().getHours();
   const base = h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
@@ -54,17 +125,12 @@ function getGreetingEmoji() {
   return "🌙";
 }
 
-function getSubGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Commencez la journée en musique";
-  if (h < 18) return "La bande-son de votre après-midi";
-  return "Détendez-vous avec vos morceaux préférés";
-}
-
 export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { onCustomize?: () => void; customSubtitle?: string; bgColor?: string; bgImage?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { play, setQueue } = usePlayerStore();
+  const quote = useMemo(() => getDailyQuote(), []);
 
   const { data: stats } = useQuery({
     queryKey: ["hero-stats"],
@@ -83,6 +149,28 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
     staleTime: 5 * 60 * 1000,
   });
 
+  const handleShuffle = async () => {
+    const { data } = await supabase
+      .from("custom_songs")
+      .select("*")
+      .not("stream_url", "is", null)
+      .limit(50);
+    if (!data || data.length === 0) return;
+    const shuffled = [...data].sort(() => Math.random() - 0.5);
+    const songs = shuffled.map((r) => ({
+      id: `custom-${r.id}`,
+      title: r.title,
+      artist: r.artist,
+      album: r.album || "",
+      duration: r.duration || 0,
+      coverUrl: r.cover_url || "",
+      streamUrl: r.stream_url || "",
+      liked: false,
+    }));
+    setQueue(songs);
+    play(songs[0]);
+  };
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
@@ -91,13 +179,12 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
   const y = useTransform(scrollYProgress, [0, 1], [0, 60]);
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
-  const blurValue = useTransform(scrollYProgress, [0, 0.5], [0, 8]);
 
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
-    <div ref={ref} className="relative overflow-hidden mb-1" style={{ minHeight: "175px" }}>
+    <div ref={ref} className="relative overflow-hidden mb-1" style={{ minHeight: "210px" }}>
       {/* Parallax background layer */}
       <motion.div style={{ y, scale }} className="absolute inset-0 -z-10 gpu-layer">
         {bgImage ? (
@@ -143,13 +230,34 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
               }}
             />
 
-            {/* Subtle noise texture overlay */}
+            {/* Third orb — center bottom */}
+            <motion.div
+              animate={{
+                x: [0, 20, -15, 0],
+                y: [0, -8, 12, 0],
+                opacity: [0.08, 0.15, 0.1, 0.08],
+              }}
+              transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-0 left-1/3 w-48 h-48 rounded-full"
+              style={{
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 70%)",
+                filter: "blur(35px)",
+              }}
+            />
+
+            {/* Noise texture overlay */}
             <div
               className="absolute inset-0 opacity-[0.03]"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
               }}
             />
+
+            {/* Floating music notes */}
+            <FloatingNote delay={0} x={15} size={14} />
+            <FloatingNote delay={2} x={70} size={10} />
+            <FloatingNote delay={4} x={45} size={12} />
+            <FloatingNote delay={1.5} x={85} size={9} />
           </>
         )}
       </motion.div>
@@ -230,28 +338,37 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         style={{ opacity }}
         className="relative z-10 px-4 md:px-8 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-2 flex flex-col justify-end gpu-layer"
       >
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.1, type: "spring", stiffness: 200 }}
-          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit mb-1.5 mt-0.5"
-          style={{
-            background: "hsl(var(--primary) / 0.1)",
-            border: "1px solid hsl(var(--primary) / 0.15)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-          }}
-        >
+        {/* Badge + sound wave */}
+        <div className="flex items-center gap-2 mb-1.5 mt-0.5">
           <motion.div
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-2 h-2 rounded-full"
-            style={{ background: "var(--gradient-primary)", boxShadow: "0 0 8px hsl(var(--primary) / 0.5)" }}
-          />
-          <Headphones className="w-3 h-3 text-primary" />
-          <span className="text-[10px] font-extrabold text-primary tracking-[0.15em] uppercase">Vootify</span>
-        </motion.div>
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.1, type: "spring", stiffness: 200 }}
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+            style={{
+              background: "hsl(var(--primary) / 0.1)",
+              border: "1px solid hsl(var(--primary) / 0.15)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+            }}
+          >
+            <motion.div
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--gradient-primary)", boxShadow: "0 0 8px hsl(var(--primary) / 0.5)" }}
+            />
+            <Headphones className="w-3 h-3 text-primary" />
+            <span className="text-[10px] font-extrabold text-primary tracking-[0.15em] uppercase">Vootify</span>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <SoundWave />
+          </motion.div>
+        </div>
 
         {/* Greeting */}
         <motion.h1
@@ -271,27 +388,80 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           </motion.span>
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Daily quote */}
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4 }}
-          className="text-[11px] md:text-[13px] text-muted-foreground max-w-md leading-relaxed"
+          className="text-[11px] md:text-[12px] text-muted-foreground max-w-[280px] md:max-w-md leading-relaxed italic"
         >
-          {customSubtitle || getSubGreeting()}
+          « {quote.text} »
+          <span className="not-italic text-[10px] text-muted-foreground/60 ml-1">— {quote.author}</span>
         </motion.p>
+
+        {/* Quick action buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.4 }}
+          className="flex gap-2 mt-2.5"
+        >
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={handleShuffle}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors"
+            style={{
+              background: "var(--gradient-primary)",
+              color: "hsl(var(--primary-foreground))",
+              boxShadow: "0 2px 12px hsl(var(--primary) / 0.3)",
+            }}
+          >
+            <Shuffle className="w-3 h-3" />
+            Aléatoire
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={() => navigate("/library")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors"
+            style={{
+              background: "hsl(var(--card) / 0.5)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid hsl(var(--border) / 0.3)",
+              color: "hsl(var(--foreground))",
+            }}
+          >
+            <Heart className="w-3 h-3 text-pink-400" />
+            Favoris
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={() => navigate("/search")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors"
+            style={{
+              background: "hsl(var(--card) / 0.5)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid hsl(var(--border) / 0.3)",
+              color: "hsl(var(--foreground))",
+            }}
+          >
+            <Search className="w-3 h-3" />
+            Chercher
+          </motion.button>
+        </motion.div>
 
         {/* Animated stats */}
         {stats && (stats.songs > 0 || stats.radios > 0 || stats.playlists > 0) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.6 }}
             className="flex flex-wrap gap-1.5 mt-2"
           >
-            {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.5} />}
-            {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.65} />}
-            {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.8} />}
+            {stats.songs > 0 && <AnimatedCounter value={stats.songs} label="titres" icon={Music} delay={0.6} />}
+            {stats.radios > 0 && <AnimatedCounter value={stats.radios} label="radios" icon={Radio} delay={0.75} />}
+            {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.9} />}
           </motion.div>
         )}
       </motion.div>
