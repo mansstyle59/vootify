@@ -723,7 +723,7 @@ const LibraryPage = () => {
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
                     </p>
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                       {recentMusic.map((s, i) => (
                         <PremiumSongRow
                           key={`${s.id}-${i}`}
@@ -782,7 +782,7 @@ const LibraryPage = () => {
                           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                             {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
                           </p>
-                          <div className="rounded-2xl liquid-glass overflow-hidden">
+                          <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                             {filtered.map((s, i) => (
                               <PremiumSongRow
                                 key={s.id}
@@ -811,7 +811,7 @@ const LibraryPage = () => {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setShowCreate(!showCreate)}
-                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl liquid-glass text-foreground text-sm font-medium transition-all w-full"
+                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-sm font-medium transition-all w-full"
                 >
                   <div className="p-1.5 rounded-xl bg-primary/15">
                     <Plus className="w-4 h-4 text-primary" />
@@ -863,7 +863,7 @@ const LibraryPage = () => {
                           <motion.button
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/playlist/${p.id}`)}
-                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl liquid-glass transition-all"
+                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-all"
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -938,7 +938,7 @@ const LibraryPage = () => {
                                   play(spSongs[0]);
                                 }
                               }}
-                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl liquid-glass transition-all"
+                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-all"
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -1226,7 +1226,7 @@ const LibraryPage = () => {
                         <button
                           onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            selectMode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground liquid-glass"
+                            selectMode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground rounded-2xl bg-card/40 backdrop-blur-md border border-border/10"
                           }`}
                         >
                           {selectMode ? <X className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
@@ -1235,7 +1235,7 @@ const LibraryPage = () => {
                         {!selectMode && (
                           <button
                             onClick={() => setShowSortMenu(!showSortMenu)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground liquid-glass transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-colors"
                           >
                             <ArrowUpDown className="w-3 h-3" />
                             {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
@@ -1286,7 +1286,7 @@ const LibraryPage = () => {
                                 if (selectedIds.size === sortedCustomSongs.length) setSelectedIds(new Set());
                                 else setSelectedIds(new Set(sortedCustomSongs.map((s) => s.id)));
                               }}
-                              className="px-3 py-1.5 rounded-full text-xs font-medium liquid-glass text-foreground whitespace-nowrap flex-shrink-0"
+                              className="px-3 py-1.5 rounded-full text-xs font-medium rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground whitespace-nowrap flex-shrink-0"
                             >
                               {selectedIds.size === sortedCustomSongs.length ? "Tout désélectionner" : "Tout sélectionner"}
                             </button>
@@ -1309,7 +1309,7 @@ const LibraryPage = () => {
                                     toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} aux favoris`);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 >
                                   <Heart className="w-3 h-3" /> Favoris
                                 </button>
@@ -1321,7 +1321,7 @@ const LibraryPage = () => {
                                     toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} à la file`);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 >
                                   <ListPlus className="w-3 h-3" /> File
                                 </button>
@@ -1383,7 +1383,7 @@ const LibraryPage = () => {
                                 <div className="relative">
                                   <button
                                     onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                   >
                                     <ListMusic className="w-3 h-3" /> Playlist
                                   </button>
@@ -1439,7 +1439,7 @@ const LibraryPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                       {sortedCustomSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1471,7 +1471,7 @@ const LibraryPage = () => {
             {tab === "downloads" && (
               <div>
                 {cacheSize > 0 && (
-                  <div className="rounded-2xl liquid-glass p-4 mb-4">
+                  <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-primary/10">
@@ -1542,7 +1542,7 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
                       onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                       {cachedSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1560,7 +1560,7 @@ const LibraryPage = () => {
                 )}
 
                 {isGuest && (
-                  <div className="mt-8 p-5 rounded-2xl liquid-glass text-center">
+                  <div className="mt-8 p-5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-center">
                     <p className="text-sm text-muted-foreground mb-3">
                       Connectez-vous pour accéder à vos playlists et favoris
                     </p>
