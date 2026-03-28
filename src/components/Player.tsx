@@ -366,23 +366,57 @@ export function MiniPlayer() {
     };
 
     // Stall recovery — when audio buffer runs out mid-playback
+    let stallTimer: ReturnType<typeof setTimeout> | null = null;
     const handleStalled = () => {
       const audio = audioRef.current;
       const state = usePlayerStore.getState();
       if (!audio || !state.isPlaying || !state.currentSong) return;
       console.warn("[stall] Audio stalled — waiting for data");
-      // For radio, reload stream after 3s if still stalled
-      if (state.currentSong.duration === 0) {
+      const isRadio = state.currentSong.duration === 0;
+      // Escalating recovery: try resume at 2s, reload stream at 5s
+      stallTimer = setTimeout(() => {
+        if (!audio.paused && audio.readyState >= 2) return; // recovered on its own
+        if (isRadio) {
+          console.log("[stall] Reloading radio stream");
+          const src = audio.src;
+          audio.src = "";
+          audio.src = src;
+          audio.load();
+          audio.play().then(() => showResumeBanner("Reconnexion réussie ▶")).catch(console.error);
+        } else {
+          // Track: try to nudge playback
+          console.log("[stall] Nudging track playback");
+          audio.play().catch(() => {
+            // Full reload as last resort
+            const src = audio.src;
+            const pos = audio.currentTime;
+            audio.src = "";
+            audio.src = src;
+            audio.currentTime = Math.max(0, pos - 0.5);
+            audio.play().catch(console.error);
+          });
+        }
+      }, 2000);
+    };
+
+    // Waiting event — browser needs more data (buffering)
+    const handleWaiting = () => {
+      const audio = audioRef.current;
+      const state = usePlayerStore.getState();
+      if (!audio || !state.isPlaying || !state.currentSong) return;
+      const isRadio = state.currentSong.duration === 0;
+      // For radios, if waiting persists > 4s, reload stream
+      if (isRadio) {
         setTimeout(() => {
           if (audio.readyState < 2 && usePlayerStore.getState().isPlaying) {
-            console.log("[stall] Reloading radio stream");
+            console.log("[waiting] Radio still buffering — reloading");
             const src = audio.src;
             audio.src = "";
             audio.src = src;
             audio.load();
-            audio.play().then(() => showResumeBanner("Reconnexion réussie ▶")).catch(console.error);
+            audio.play().catch(console.error);
           }
-        }, 3000);
+        }, 4000);
       }
     };
 
@@ -390,12 +424,15 @@ export function MiniPlayer() {
     const audioEl = audioRef.current;
     audioEl?.addEventListener("pause", handlePause);
     audioEl?.addEventListener("stalled", handleStalled);
+    audioEl?.addEventListener("waiting", handleWaiting);
 
     return () => {
       if (resumeTimer) clearTimeout(resumeTimer);
+      if (stallTimer) clearTimeout(stallTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
       audioEl?.removeEventListener("pause", handlePause);
       audioEl?.removeEventListener("stalled", handleStalled);
+      audioEl?.removeEventListener("waiting", handleWaiting);
     };
   }, [volume]);
 
