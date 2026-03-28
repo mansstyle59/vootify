@@ -223,6 +223,40 @@ const ProfilePage = () => {
           </div>
         </GlassCard>
 
+        {/* Listening stats */}
+        <GlassCard className="p-5" delay={0.04}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Statistiques d'écoute</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                icon: Clock,
+                value: totalListeningSeconds >= 3600
+                  ? `${Math.floor(totalListeningSeconds / 3600)}h ${Math.floor((totalListeningSeconds % 3600) / 60)}m`
+                  : `${Math.floor(totalListeningSeconds / 60)}m`,
+                label: "Temps d'écoute",
+              },
+              { icon: Music, value: tracksPlayed.toString(), label: "Morceaux joués" },
+              { icon: Heart, value: likedCount.toString(), label: "Favoris" },
+              { icon: Headphones, value: playlistCount.toString(), label: "Playlists" },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + i * 0.05 }}
+                className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-center"
+              >
+                <stat.icon className="w-4 h-4 text-primary mx-auto mb-1.5" />
+                <p className="text-lg font-bold text-foreground leading-none">{stat.value}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </GlassCard>
+
         {/* Edit name */}
         <GlassCard className="p-5 space-y-4" delay={0.08}>
           <div>
