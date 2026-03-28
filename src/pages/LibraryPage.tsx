@@ -676,13 +676,12 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(recentMusic); play(recentMusic[0]); }}
                       onShuffle={() => { const s = [...recentMusic].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                       extra={
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
+                        <button
                           onClick={() => clearRecentlyPlayed()}
-                          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full bg-destructive/10 text-destructive text-xs font-medium"
+                          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full bg-destructive/10 text-destructive text-xs font-medium active:scale-95 transition-transform"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </motion.button>
+                        </button>
                       }
                     />
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
