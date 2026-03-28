@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Music, Lock, User, Loader2, Eye, EyeOff, Send } from "lucide-react";
-import { motion } from "framer-motion";
+import { Music, Lock, User, Loader2, Eye, EyeOff, Send, Fingerprint } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  enableBiometric,
+  getBiometricCredential,
+} from "@/lib/biometricAuth";
+import { toast } from "sonner";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +18,8 @@ const AuthPage = () => {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [showBiometric, setShowBiometric] = useState(false);
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,12 +29,44 @@ const AuthPage = () => {
     if (user) navigate(from, { replace: true });
   }, [user, navigate, from]);
 
+  // Check biometric availability on mount
+  useEffect(() => {
+    const canBiometric = isBiometricAvailable() && isBiometricEnabled();
+    setShowBiometric(canBiometric);
+
+    // Auto-trigger biometric on page load if available
+    if (canBiometric) {
+      handleBiometricLogin();
+    }
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    setBiometricLoading(true);
+    setError("");
+    try {
+      const cred = await getBiometricCredential();
+      if (cred) {
+        const loginEmail = cred.email.includes("@") ? cred.email : `${cred.email}@vootify.app`;
+        const result = await signIn(loginEmail, cred.password);
+        if (result.error) {
+          setError("Authentification biométrique échouée");
+        } else {
+          localStorage.setItem("vootify_remember_me", "true");
+          navigate(from);
+        }
+      }
+    } catch (e) {
+      console.warn("[biometric] Login failed:", e);
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Auto-append domain if user enters plain identifier
     const loginEmail = email.includes("@") ? email : `${email}@vootify.app`;
     const result = await signIn(loginEmail, password);
 
@@ -33,6 +74,15 @@ const AuthPage = () => {
       setError("Identifiant ou mot de passe incorrect");
     } else {
       localStorage.setItem("vootify_remember_me", rememberMe ? "true" : "false");
+
+      // Offer to save biometric if available and not yet enabled
+      if (isBiometricAvailable() && !isBiometricEnabled()) {
+        const saved = await enableBiometric(email, password);
+        if (saved) {
+          toast.success("Face ID / Touch ID activé pour la prochaine connexion");
+        }
+      }
+
       navigate(from);
     }
     setLoading(false);
@@ -56,6 +106,40 @@ const AuthPage = () => {
           </div>
           <p className="text-muted-foreground">Connectez-vous pour continuer</p>
         </div>
+
+        {/* Biometric quick login */}
+        <AnimatePresence>
+          {showBiometric && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6"
+            >
+              <button
+                type="button"
+                onClick={handleBiometricLogin}
+                disabled={biometricLoading}
+                className="w-full py-4 rounded-2xl bg-primary/10 border border-primary/20 text-foreground font-medium text-sm hover:bg-primary/15 transition-all flex flex-col items-center justify-center gap-2 active:scale-[0.98]"
+              >
+                {biometricLoading ? (
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                ) : (
+                  <Fingerprint className="w-8 h-8 text-primary" />
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {biometricLoading ? "Vérification…" : "Se connecter avec Face ID / Touch ID"}
+                </span>
+              </button>
+
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">ou</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
