@@ -17,6 +17,7 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
 import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
+import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 
 /* ── Shared glass styles — enhanced glassmorphism ── */
 const glassStyle = {
