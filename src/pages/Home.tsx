@@ -403,11 +403,24 @@ const HomePage = () => {
           </p>
         </div>
       )}
+      {/* Edit mode UI */}
+      <EditModeToggle editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+      <AnimatePresence>
+        {editMode && (
+          <EditModePanel
+            sections={userSections}
+            onToggleVisibility={toggleVisibility}
+            onMoveUp={(i) => i > 0 && reorder(i, i - 1)}
+            onMoveDown={(i) => i < userSections.length - 1 && reorder(i, i + 1)}
+            onReset={resetLayout}
+            hasCustomLayout={hasCustomLayout}
+            onClose={() => setEditMode(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
-
-/** Artist card that fetches real Deezer photo, with custom image priority */
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
