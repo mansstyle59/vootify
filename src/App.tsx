@@ -98,13 +98,40 @@ function AppContent() {
     setUserId(userId);
     if (userId) {
       loadUserData(userId);
-      // If cache already exists → silent background refresh; otherwise warmup handled by InitialCacheLoader
       if (isCacheReady()) {
         silentCacheRefresh(userId);
       }
       startCacheWarmup(userId);
     }
   }, [user, loading, loadUserData, setUserId]);
+
+  // Refresh all data when PWA returns to foreground (reopen, tab switch)
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    let lastHidden = 0;
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        lastHidden = Date.now();
+        return;
+      }
+      // Only refresh if app was hidden for more than 5 seconds
+      const away = Date.now() - lastHidden;
+      if (away < 5000) return;
+
+      // Invalidate all react-query caches → triggers refetch of visible queries
+      queryClient.invalidateQueries();
+
+      // Also refresh Supabase caches & player data
+      silentCacheRefresh(userId);
+      loadUserData(userId);
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [user, queryClient, loadUserData]);
 
   return (
     <div className="min-h-screen flex w-full">
