@@ -13,7 +13,7 @@ import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, ty
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared";
 
 interface UserProfile {
   user_id: string;
