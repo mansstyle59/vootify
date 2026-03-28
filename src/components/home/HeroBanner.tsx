@@ -500,7 +500,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
             transition={{ delay: 0.7, duration: 0.4 }}
             className="grid grid-cols-2 gap-1.5 mt-2.5"
           >
-            {shortcuts.slice(0, 4).map((s) => (
+            {shortcuts.slice(0, 6).map((s) => (
               <motion.button
                 key={`${s.type}-${s.id}`}
                 whileTap={{ scale: 0.96 }}
