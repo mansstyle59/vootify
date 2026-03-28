@@ -185,7 +185,7 @@ export function UpgradePrompt({ feature = "Cette fonctionnalité", inline = fals
               plan={p}
               index={i}
               isCurrent={plan === p.key}
-              onUpgrade={() => navigate("/request-access")}
+              onUpgrade={() => navigate(`/request-access?plan=${p.key}`)}
               priceData={prices[p.key]}
             />
           ))}
@@ -266,7 +266,7 @@ export function UpgradePrompt({ feature = "Cette fonctionnalité", inline = fals
               plan={p}
               index={i}
               isCurrent={plan === p.key}
-              onUpgrade={() => navigate("/request-access")}
+              onUpgrade={() => navigate(`/request-access?plan=${p.key}`)}
               priceData={prices[p.key]}
             />
           ))}

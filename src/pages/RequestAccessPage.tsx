@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn, User } from "lucide-react";
+import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn, User, Star, Gem } from "lucide-react";
 
 const durationOptions = [
   { label: "7 jours", value: 7, unit: "days" as const },
@@ -13,13 +13,23 @@ const durationOptions = [
   { label: "Illimité", value: 0, unit: "months" as const },
 ];
 
+const planOptions = [
+  { key: "premium", label: "Premium", icon: Crown, color: "bg-primary text-primary-foreground border-primary" },
+  { key: "gold", label: "Gold", icon: Star, color: "bg-yellow-500 text-black border-yellow-500" },
+  { key: "vip", label: "VIP", icon: Gem, color: "bg-red-500 text-white border-red-500" },
+];
+
 const RequestAccessPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialPlan = searchParams.get("plan") || "premium";
+
   const [requested, setRequested] = useState(false);
   const [sending, setSending] = useState(false);
   const [contactEmail, setContactEmail] = useState(user?.email || "");
   const [pseudo, setPseudo] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
   const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 30, unit: "days" });
 
   const handleRequest = async () => {
@@ -42,15 +52,16 @@ const RequestAccessPage = () => {
           display_name: profile?.display_name || displayName,
           requested_duration: selectedDuration.value,
           requested_duration_unit: selectedDuration.unit,
+          requested_plan: selectedPlan,
         });
       } else {
-        // Not logged in — use edge function or anon insert
         await supabase.from("access_requests").insert({
           user_id: userId,
           user_email: contactEmail.trim(),
           display_name: displayName,
           requested_duration: selectedDuration.value,
           requested_duration_unit: selectedDuration.unit,
+          requested_plan: selectedPlan,
         });
       }
       setRequested(true);
@@ -60,6 +71,8 @@ const RequestAccessPage = () => {
       setSending(false);
     }
   };
+
+  const selectedPlanInfo = planOptions.find((p) => p.key === selectedPlan) || planOptions[0];
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
@@ -87,6 +100,34 @@ const RequestAccessPage = () => {
         <div className="space-y-3">
           {!requested ? (
             <>
+              {/* Plan selector */}
+              <div className="text-left">
+                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
+                  Plan souhaité
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {planOptions.map((opt) => {
+                    const isSelected = selectedPlan === opt.key;
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setSelectedPlan(opt.key)}
+                        className={`py-2.5 rounded-xl text-sm font-medium transition-all border flex items-center justify-center gap-1.5 ${
+                          isSelected
+                            ? opt.color
+                            : "bg-muted/50 text-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Pseudo */}
               <div className="text-left">
                 <label className="text-xs text-muted-foreground font-medium mb-1 block">
@@ -153,7 +194,7 @@ const RequestAccessPage = () => {
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {sending ? "Envoi…" : "Envoyer la demande"}
+                {sending ? "Envoi…" : `Demander ${selectedPlanInfo.label}`}
               </button>
             </>
           ) : (
@@ -164,6 +205,9 @@ const RequestAccessPage = () => {
             >
               <CheckCircle className="w-6 h-6" />
               <span>Demande envoyée !</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Plan demandé : <span className="font-semibold capitalize">{selectedPlanInfo.label}</span>
+              </span>
               <span className="text-xs text-muted-foreground font-normal">
                 Vous recevrez vos informations de connexion par email une fois approuvée.
               </span>
