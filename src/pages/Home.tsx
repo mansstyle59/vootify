@@ -413,4 +413,77 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
   );
 }
 
+/** Top artist bubble with rank badge, play count, and artist photo */
+function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; count: number; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
+  const { data: customImage } = useQuery({
+    queryKey: ["custom-artist-image", artist.name],
+    queryFn: async () => {
+      const { data } = await supabase.from("artist_images").select("image_url").eq("artist_name", artist.name).maybeSingle();
+      return data?.image_url || null;
+    },
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const { data: deezerImage } = useQuery({
+    queryKey: ["artist-image", artist.name],
+    queryFn: () => searchArtistImage(artist.name),
+    staleTime: 24 * 60 * 60 * 1000,
+    enabled: !customImage,
+  });
+
+  const imageUrl = customImage || deezerImage || artist.cover;
+  const isTop3 = index < 3;
+  const size = isTop3 ? "w-[80px] h-[80px]" : "w-[68px] h-[68px]";
+  const ringColor = index === 0
+    ? "ring-yellow-400/70 shadow-yellow-400/20"
+    : index === 1
+    ? "ring-gray-300/70 shadow-gray-300/20"
+    : index === 2
+    ? "ring-amber-600/60 shadow-amber-600/15"
+    : "ring-border/50";
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.06, type: "spring", stiffness: 200, damping: 18 }}
+      onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
+    >
+      <div className="relative">
+        <div className={`${size} rounded-full overflow-hidden ring-2 ${ringColor} shadow-lg transition-transform group-hover:scale-105 group-active:scale-95`}>
+          {imageUrl ? (
+            <LazyImage
+              src={imageUrl}
+              alt={artist.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/25 to-primary/5 flex items-center justify-center">
+              <User className="w-1/3 h-1/3 text-primary/40" />
+            </div>
+          )}
+        </div>
+        {/* Rank badge */}
+        <div
+          className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-md ${
+            index === 0
+              ? "bg-yellow-400 text-yellow-950"
+              : index === 1
+              ? "bg-gray-200 text-gray-700"
+              : index === 2
+              ? "bg-amber-600 text-amber-50"
+              : "bg-secondary text-secondary-foreground border border-border"
+          }`}
+        >
+          {index + 1}
+        </div>
+      </div>
+      <div className="text-center max-w-[80px]">
+        <p className="text-[11px] font-bold text-foreground truncate leading-tight">{artist.name}</p>
+        <p className="text-[9px] text-muted-foreground font-medium">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+      </div>
+    </motion.button>
+  );
+}
+
 export default HomePage;
