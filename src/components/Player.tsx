@@ -338,6 +338,11 @@ export function MiniPlayer() {
 
     const loadAndPlay = async () => {
       let songToPlay = currentSong;
+
+      // 1. Check queue preloader for an already-buffered URL
+      const preloadedUrl = getPreloadedUrl(songToPlay.id);
+
+      // 2. Check offline cache
       const cachedUrl = await offlineCache.getCachedUrl(songToPlay.id);
 
       if (cachedUrl) {
@@ -346,16 +351,20 @@ export function MiniPlayer() {
           songToPlay = { ...songToPlay, coverUrl: cachedCover };
           usePlayerStore.setState({ currentSong: songToPlay });
         }
-      } else if (!songToPlay.streamUrl) {
+      } else if (!songToPlay.streamUrl && !preloadedUrl) {
         const { toast } = await import("sonner");
         toast.error(`"${songToPlay.title}" n'est pas disponible`);
         setTimeout(() => usePlayerStore.getState().next(), 300);
         return;
       }
 
+      // Priority: cached > preloaded > stream
+      const srcToUse = cachedUrl || preloadedUrl || songToPlay.streamUrl;
       setPlayingFromCache(!!cachedUrl);
-      const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
+
+      // Consume the preloaded buffer (main player takes over)
+      if (preloadedUrl) consumePreloaded(songToPlay.id);
 
       // Use AudioManager to play — syncs media session automatically
       const isLiveTrack = songToPlay.duration === 0;
