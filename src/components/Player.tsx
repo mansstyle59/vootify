@@ -58,6 +58,7 @@ export function MiniPlayer() {
   const bassFilterRef = useRef<BiquadFilterNode | null>(null);
   const trebleFilterRef = useRef<BiquadFilterNode | null>(null);
   const connectedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const eqFailedRef = useRef(false); // true if CORS/Web Audio failed — skip EQ
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
