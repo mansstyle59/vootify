@@ -114,7 +114,7 @@ const SearchPage = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const { data: allSongs, isLoading } = useAllLocalSongs();
+  const { data: allSongs, isLoading, refetch: refetchSongs } = useAllLocalSongs();
 
   // Play a Friday release album — only full tracks, no 30s previews
   const playFridayRelease = useCallback(async (release: DeezerNewRelease) => {
