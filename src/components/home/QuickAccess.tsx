@@ -40,18 +40,6 @@ export function QuickAccess() {
 
   const items: QuickItem[] = [];
 
-  // Add recent radios
-  for (const r of recentRadios || []) {
-    items.push({
-      id: `radio-${r.id}`,
-      label: r.name,
-      sublabel: r.genre || "Radio",
-      imageUrl: r.cover_url || "",
-      type: "radio",
-      action: () => navigate("/radio"),
-    });
-  }
-
   // Add playlists
   for (const p of playlists || []) {
     items.push({
