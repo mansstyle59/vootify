@@ -410,6 +410,7 @@ export function MiniPlayer() {
         });
       } else {
         // Direct load — instant play
+        connectEQ(audio);
         audio.src = srcToUse;
         audio.volume = volume;
         audio.muted = false;
