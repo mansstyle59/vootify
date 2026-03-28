@@ -20,33 +20,21 @@ export function QuickAccess() {
   const userId = usePlayerStore((s) => s.userId);
   const { play, setQueue } = usePlayerStore();
 
-  // Recent radios from recently_played
+  // User's custom radio stations
   const { data: recentRadios } = useQuery({
-    queryKey: ["quick-recent-radios", userId],
+    queryKey: ["quick-radios", userId],
     queryFn: async () => {
       if (!userId) return [];
       const { data, error } = await supabase
-        .from("recently_played")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("album", "Radio en direct")
-        .order("played_at", { ascending: false })
-        .limit(50);
+        .from("custom_radio_stations")
+        .select("id, name, cover_url, genre")
+        .order("created_at", { ascending: false })
+        .limit(4);
       if (error) throw error;
-      // Deduplicate by station name
-      const seen = new Set<string>();
-      const unique: typeof data = [];
-      for (const r of data || []) {
-        if (!seen.has(r.title)) {
-          seen.add(r.title);
-          unique.push(r);
-        }
-        if (unique.length >= 4) break;
-      }
-      return unique;
+      return data || [];
     },
     enabled: !!userId,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   // User playlists
@@ -72,9 +60,9 @@ export function QuickAccess() {
   // Add recent radios
   for (const r of recentRadios || []) {
     items.push({
-      id: `radio-${r.song_id}`,
-      label: r.title,
-      sublabel: "Radio",
+      id: `radio-${r.id}`,
+      label: r.name,
+      sublabel: r.genre || "Radio",
       imageUrl: r.cover_url || "",
       type: "radio",
       action: () => navigate("/radio"),

@@ -172,7 +172,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       audioDuration: 0,
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     }));
-    if (userId) {
+    // Don't record radio stations in recently played
+    if (userId && song.album !== "Radio en direct") {
       musicDb.addRecentlyPlayed(userId, song).catch((e) => {
         console.error("Failed to save recently played:", e);
       });
