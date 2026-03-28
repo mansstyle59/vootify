@@ -56,8 +56,10 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen pb-40 animate-fade-in">
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-destructive/10 via-destructive/5 to-background" />
-        <div className="relative px-4 md:px-8 pt-6 pb-6">
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 80% 60% at 50% 0%, hsl(0 72% 51% / 0.08) 0%, transparent 60%), linear-gradient(180deg, hsl(var(--background)) 60%, hsl(var(--background)) 100%)",
+        }} />
+        <div className="relative px-4 md:px-8 pt-6 pb-5">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
@@ -66,30 +68,43 @@ const AdminPage = () => {
             Retour
           </button>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-destructive/10">
-              <Shield className="w-6 h-6 text-destructive" />
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{
+              background: "linear-gradient(135deg, hsl(0 72% 51% / 0.2), hsl(0 72% 51% / 0.08))",
+              border: "1px solid hsl(0 72% 51% / 0.15)",
+              boxShadow: "0 4px 20px hsl(0 72% 51% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
+            }}>
+              <Shield className="w-5 h-5 text-destructive" />
             </div>
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">Administration</h1>
-              <p className="text-sm text-muted-foreground">Gérez votre application</p>
+              <p className="text-[12px] text-muted-foreground/70">Gérez votre application</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-1.5 px-4 md:px-8 mb-5 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex gap-1.5 px-4 md:px-8 mb-5 overflow-x-auto scrollbar-hide pb-1.5">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+            className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
               tab === key
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-                : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
+                ? "text-primary-foreground"
+                : "text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
-            {label}
+            {tab === key && (
+              <motion.div
+                layoutId="adminTab"
+                className="absolute inset-0 bg-primary rounded-full shadow-lg shadow-primary/25"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+            </span>
           </button>
         ))}
       </div>
@@ -145,18 +160,26 @@ function StatsTab() {
   ];
 
   return (
-    <div className="flex flex-wrap justify-center gap-4 py-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 py-4">
       {cards.map((c, i) => (
         <motion.div
           key={c.label}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
-          className={`w-24 h-24 rounded-full border-2 ${c.border} bg-secondary/40 flex flex-col items-center justify-center gap-0.5`}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.06, type: "spring", stiffness: 250, damping: 20 }}
+          className={`rounded-2xl border ${c.border} p-4 flex flex-col items-center justify-center gap-1.5`}
+          style={{
+            background: "hsl(var(--secondary) / 0.4)",
+            boxShadow: "0 2px 12px hsl(0 0% 0% / 0.08)",
+          }}
         >
-          <c.icon className={`w-4 h-4 ${c.color}`} />
-          <p className="text-xl font-bold text-foreground leading-none">{c.value}</p>
-          <p className="text-[10px] text-muted-foreground leading-tight text-center px-1">{c.label}</p>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${c.color}`} style={{
+            background: "hsl(var(--secondary) / 0.6)",
+          }}>
+            <c.icon className="w-4.5 h-4.5" />
+          </div>
+          <p className="text-2xl font-black text-foreground leading-none tabular-nums">{c.value}</p>
+          <p className="text-[10px] text-muted-foreground font-semibold leading-tight text-center">{c.label}</p>
         </motion.div>
       ))}
     </div>

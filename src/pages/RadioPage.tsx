@@ -559,16 +559,18 @@ const RadioPage = () => {
       <ScrollBlurHeader>
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse 70% 100% at 80% 0%, hsl(var(--primary) / 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 10% 50%, hsl(var(--accent) / 0.05) 0%, transparent 50%)",
+            background: "radial-gradient(ellipse 70% 100% at 80% 0%, hsl(var(--primary) / 0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 10% 50%, hsl(var(--accent) / 0.06) 0%, transparent 50%)",
           }} />
           <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-                background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.08))",
-                border: "1px solid hsl(var(--primary) / 0.15)",
-                boxShadow: "0 4px 16px hsl(var(--primary) / 0.15)",
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center relative" style={{
+                background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.08))",
+                border: "1px solid hsl(var(--primary) / 0.2)",
+                boxShadow: "0 4px 20px hsl(var(--primary) / 0.2), inset 0 1px 0 hsl(0 0% 100% / 0.05)",
               }}>
                 <Waves className="w-5 h-5 text-primary" />
+                {/* Live pulse dot */}
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse shadow-lg shadow-destructive/50" />
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Radio</h1>
