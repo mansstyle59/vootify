@@ -146,17 +146,21 @@ export const musicDb = {
   // Recently played
   async addRecentlyPlayed(userId: string, song: Song) {
     assertValidUserId(userId);
-    // Remove previous entry for same song to avoid duplicates
-    await supabase
-      .from("recently_played")
-      .delete()
-      .eq("user_id", userId)
-      .eq("song_id", song.id);
+    try {
+      // Remove previous entry for same song to avoid duplicates
+      await supabase
+        .from("recently_played")
+        .delete()
+        .eq("user_id", userId)
+        .eq("song_id", song.id);
 
-    const { error } = await supabase
-      .from("recently_played")
-      .insert(songToRow(song, userId));
-    if (error) console.error("Failed to save recently played:", error);
+      const { error } = await supabase
+        .from("recently_played")
+        .insert(songToRow(song, userId));
+      if (error) throw error;
+    } catch (e) {
+      console.error("Failed to save recently played:", e);
+    }
   },
 
   async getRecentlyPlayed(userId: string, limit = 30): Promise<Song[]> {
@@ -171,11 +175,12 @@ export const musicDb = {
   },
 
   async clearRecentlyPlayed(userId: string) {
+    assertValidUserId(userId);
     const { error } = await supabase
       .from("recently_played")
       .delete()
       .eq("user_id", userId);
-    if (error) console.error("Failed to clear recently played:", error);
+    if (error) throw error;
   },
 
   // Search history
