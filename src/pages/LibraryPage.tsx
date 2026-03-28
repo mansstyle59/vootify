@@ -602,9 +602,15 @@ const LibraryPage = () => {
     }
     if (isGuest && !isOffline && tab !== "downloads") {
       setTab("downloads");
+      return;
+    }
+    // If current tab is restricted by plan, switch to first allowed
+    if (!checkLibraryTab(tab) && !isOffline && !isGuest) {
+      const firstAllowed = tabs.find((t) => checkLibraryTab(t.key));
+      if (firstAllowed) setTab(firstAllowed.key);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuest, isOffline, isAdmin]);
+  }, [isGuest, isOffline, isAdmin, tab]);
 
   const visibleTabs = isOffline
     ? tabs.filter((t) => t.key === "downloads")
