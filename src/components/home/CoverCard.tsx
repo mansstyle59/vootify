@@ -21,32 +21,32 @@ export const CoverCard = memo(function CoverCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.94 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
-        delay: Math.min(index * 0.035, 0.25),
-        duration: 0.35,
+        delay: Math.min(index * 0.03, 0.2),
+        duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      whileTap={{ scale: 0.97 }}
+      whileTap={{ scale: 0.96 }}
       className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group snap-start"
       onClick={onClick}
     >
       <div
         className={`relative w-[120px] h-[120px] md:w-[140px] md:h-[140px] overflow-hidden mb-2 ${
-          rounded ? "rounded-full" : "rounded-xl"
-        } ${isActive ? "ring-2 ring-primary ring-offset-1 ring-offset-background" : ""}`}
+          rounded ? "rounded-full" : "rounded-2xl"
+        } ${isActive ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
         style={{
           boxShadow: isActive
-            ? "0 6px 24px hsl(var(--primary) / 0.3)"
-            : "0 4px 16px hsl(0 0% 0% / 0.2)",
+            ? "0 8px 28px hsl(var(--primary) / 0.35)"
+            : "0 4px 20px hsl(0 0% 0% / 0.15)",
         }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-secondary overflow-hidden">
-                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+              <div className="absolute inset-0 bg-secondary/60 overflow-hidden">
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
               </div>
             )}
             <img
@@ -54,19 +54,19 @@ export const CoverCard = memo(function CoverCard({
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-105 ${
+              className={`w-full h-full transition-all duration-300 ease-out group-hover:scale-[1.06] ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
               } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/8">
-            <Music className="w-8 h-8 text-primary/20" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/8 to-accent/5">
+            <Music className="w-8 h-8 text-primary/15" />
           </div>
         )}
 
         {/* Hover gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-250" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
         {/* Play button */}
         {(showPlay || isActive) && (
@@ -75,11 +75,8 @@ export const CoverCard = memo(function CoverCard({
           }`}>
             <motion.div
               whileTap={{ scale: 0.85 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{
-                background: "hsl(var(--primary) / 0.9)",
-                boxShadow: "0 4px 20px hsl(var(--primary) / 0.4)",
-              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary"
+              style={{ boxShadow: "0 4px 24px hsl(var(--primary) / 0.45)" }}
             >
               {isActive ? (
                 <Pause className="w-4 h-4 text-primary-foreground fill-current" />
@@ -91,11 +88,11 @@ export const CoverCard = memo(function CoverCard({
         )}
       </div>
 
-      <h3 className={`text-[11px] md:text-[12px] font-semibold leading-tight line-clamp-1 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
+      <h3 className={`text-[11px] md:text-[12px] font-bold leading-tight line-clamp-1 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
         {title}
       </h3>
       {subtitle && (
-        <p className={`text-[10px] text-muted-foreground/50 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
+        <p className={`text-[10px] text-muted-foreground/45 truncate mt-0.5 font-medium ${rounded ? "text-center" : ""}`}>
           {subtitle}
         </p>
       )}
