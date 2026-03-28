@@ -203,9 +203,11 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
     offset: ["start start", "end start"],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], [0, 60]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, 50]);
+  const orbY = useTransform(scrollYProgress, [0, 1], [0, -40]);
 
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
@@ -231,17 +233,22 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
 
             {/* Primary glow orb — top left */}
             <motion.div
+              style={{ y: orbY }}
               animate={{
                 x: [0, 15, -10, 0],
                 y: [0, -10, 8, 0],
               }}
               transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-20 -left-10 w-72 h-72 rounded-full"
-              style={{
-                background: "radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 65%)",
+              className="absolute -top-20 -left-10 w-72 h-72 rounded-full gpu-layer"
+              initial={{ opacity: 0, scale: 0.6 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-full h-full rounded-full" style={{
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.2) 0%, transparent 65%)",
                 filter: "blur(40px)",
-              }}
-            />
+              }} />
+            </motion.div>
 
             {/* Secondary orb — right */}
             <motion.div
@@ -362,7 +369,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
 
       {/* Main content */}
       <motion.div
-        style={{ opacity, minHeight: "clamp(320px, 55vh, 480px)" }}
+        style={{ opacity, y: contentY, minHeight: "clamp(320px, 55vh, 480px)" }}
         className="relative z-10 px-5 md:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-8 flex flex-col justify-end gpu-layer"
       >
         {/* Badge + sound wave */}
