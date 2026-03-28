@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 /**
  * iOS-style page transition: subtle fade + slide for native feel.
  * Non-blocking — the new page renders immediately and animates in.
+ * Also scrolls to top on every navigation for consistency.
  */
 export function PageFade({ children }: { children: ReactNode }) {
   const location = useLocation();
@@ -13,6 +14,11 @@ export function PageFade({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (location.pathname === prevPath.current) return;
     prevPath.current = location.pathname;
+
+    // Scroll to top on every navigation — native app feel
+    window.scrollTo({ top: 0, left: 0 });
+    ref.current?.parentElement?.scrollTo?.({ top: 0, left: 0 });
+
     const el = ref.current;
     if (!el) return;
     // Start: invisible + slightly shifted
