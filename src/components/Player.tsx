@@ -65,6 +65,48 @@ export function MiniPlayer() {
   const CROSSFADE_MS = crossfadeDuration * 1000;
   const FADE_STEP = 50;
 
+  // ── EQ: connect Web Audio API pipeline ──
+  const connectEQ = useCallback((audio: HTMLAudioElement) => {
+    if (connectedAudioRef.current === audio) return; // already connected
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") ctx.resume();
+
+      const source = ctx.createMediaElementSource(audio);
+      const bass = ctx.createBiquadFilter();
+      bass.type = "lowshelf";
+      bass.frequency.value = 200;
+      bass.gain.value = bassBoost;
+
+      const treble = ctx.createBiquadFilter();
+      treble.type = "highshelf";
+      treble.frequency.value = 3000;
+      treble.gain.value = trebleBoost;
+
+      source.connect(bass);
+      bass.connect(treble);
+      treble.connect(ctx.destination);
+
+      sourceNodeRef.current = source;
+      bassFilterRef.current = bass;
+      trebleFilterRef.current = treble;
+      connectedAudioRef.current = audio;
+    } catch (e) {
+      console.warn("[EQ] Web Audio API init failed:", e);
+    }
+  }, []); // stable ref — reads from refs, not deps
+
+  // Update EQ gains reactively
+  useEffect(() => {
+    if (bassFilterRef.current) bassFilterRef.current.gain.value = bassBoost;
+  }, [bassBoost]);
+  useEffect(() => {
+    if (trebleFilterRef.current) trebleFilterRef.current.gain.value = trebleBoost;
+  }, [trebleBoost]);
+
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.volume = volume;
