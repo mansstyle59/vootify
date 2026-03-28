@@ -261,6 +261,33 @@ const HomePage = () => {
           );
         }
 
+        // Top Artists bubbles section
+        if (section.id === "top_artists") {
+          if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
+          return (
+            <Section key={section.id} title={section.title}>
+              <div className="px-4 md:px-8">
+                {loadingTopArtists ? (
+                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                        <div className="w-[72px] h-[72px] rounded-full bg-muted animate-pulse" />
+                        <div className="w-12 h-3 rounded bg-muted animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                    {topArtists?.map((artist, i) => (
+                      <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Section>
+          );
+        }
+
         // Artists section
         if (section.id === "artists") {
           if (!loadingArtists && (!artists || artists.length === 0)) return null;
