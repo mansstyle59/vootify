@@ -503,18 +503,6 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
           </motion.button>
         </motion.div>
 
-        {/* Animated stats */}
-        {stats && (stats.songs > 0 || stats.radios > 0 || stats.playlists > 0) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-wrap gap-2.5 mt-5"
-          >
-            
-            {stats.playlists > 0 && <AnimatedCounter value={stats.playlists} label="playlists" icon={ListMusic} delay={0.9} />}
-          </motion.div>
-        )}
 
       </motion.div>
     </div>
