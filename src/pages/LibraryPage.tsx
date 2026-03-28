@@ -61,15 +61,14 @@ function PremiumSongRow({
     else if (diff > 80 && onSwipeRight) { setSwiped("right"); setTimeout(() => { onSwipeRight(); setSwiped(null); }, 300); }
   };
 
-  // Format artist with feat styling
   const formatArtist = (artist: string) => {
     const parts = artist.split(/\s*(feat\.?|ft\.?|featuring)\s*/i);
     if (parts.length <= 1) return <span>{artist}</span>;
     return (
       <>
         <span>{parts[0].trim()}</span>
-        <span className="text-muted-foreground/50 font-normal"> feat. </span>
-        <span className="text-muted-foreground/70">{parts.slice(2).join(", ").trim()}</span>
+        <span className="text-muted-foreground/40"> feat. </span>
+        <span className="text-muted-foreground/60">{parts.slice(2).join(", ").trim()}</span>
       </>
     );
   };
@@ -77,7 +76,7 @@ function PremiumSongRow({
   return (
     <motion.div
       ref={containerRef}
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 16 }}
       animate={{
         opacity: 1,
         x: swiped === "left" ? -80 : swiped === "right" ? 80 : 0,
@@ -86,15 +85,18 @@ function PremiumSongRow({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={selectable ? onSelect : onClick}
-      className={`group flex items-center gap-3.5 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
-        selected ? "bg-primary/12 ring-1 ring-primary/25" : isActive ? "bg-primary/8 ring-1 ring-primary/15" : "hover:bg-secondary/50"
+      className={`group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+        selected
+          ? "bg-primary/10 ring-1 ring-primary/20"
+          : isActive
+          ? "bg-primary/6 ring-1 ring-primary/10"
+          : "hover:bg-secondary/40"
       }`}
     >
-      {/* Selection checkbox or index */}
       {selectable ? (
-        <div className="w-7 flex-shrink-0 flex items-center justify-center">
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-            selected ? "bg-primary border-primary" : "border-muted-foreground/30"
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+          <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${
+            selected ? "bg-primary border-primary" : "border-muted-foreground/25"
           }`}>
             {selected && (
               <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -104,15 +106,15 @@ function PremiumSongRow({
           </div>
         </div>
       ) : showIndex ? (
-        <div className="w-7 flex-shrink-0 flex items-center justify-center">
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
           {isActive && isPlaying ? (
-            <div className="flex items-end gap-[2px] h-4">
-              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-1" />
-              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-2" />
-              <div className="w-[2.5px] rounded-full bg-primary animate-equalizer-3" />
+            <div className="flex items-end gap-[2px] h-3.5">
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-1" />
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-2" />
+              <div className="w-[2px] rounded-full bg-primary animate-equalizer-3" />
             </div>
           ) : (
-            <span className={`text-xs tabular-nums font-medium ${isActive ? "text-primary" : "text-muted-foreground/60"}`}>
+            <span className={`text-[11px] tabular-nums font-medium ${isActive ? "text-primary" : "text-muted-foreground/40"}`}>
               {index + 1}
             </span>
           )}
@@ -120,59 +122,56 @@ function PremiumSongRow({
       ) : null}
 
       {/* Cover */}
-      <div className={`relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md transition-shadow ${
-        isActive ? "shadow-primary/20 ring-1 ring-primary/30" : "shadow-black/20"
+      <div className={`relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 transition-shadow ${
+        isActive ? "shadow-lg shadow-primary/15 ring-1 ring-primary/20" : "shadow-md shadow-black/10"
       }`}>
         {song.coverUrl ? (
           <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-secondary flex items-center justify-center">
-            <Music className="w-5 h-5 text-muted-foreground/40" />
+          <div className="w-full h-full bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center">
+            <Music className="w-4 h-4 text-muted-foreground/30" />
           </div>
         )}
         {!selectable && (
           <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-            isActive ? "bg-black/25 opacity-100" : "bg-black/30 opacity-0 group-hover:opacity-100"
+            isActive ? "bg-black/20 opacity-100" : "bg-black/25 opacity-0 group-hover:opacity-100"
           }`}>
             {isActive && isPlaying ? (
-              <Pause className="w-4 h-4 text-white" />
+              <Pause className="w-3.5 h-3.5 text-white" />
             ) : (
-              <Play className="w-4 h-4 text-white ml-0.5" />
+              <Play className="w-3.5 h-3.5 text-white ml-0.5" />
             )}
           </div>
         )}
       </div>
 
-      {/* Title & Artist */}
+      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className={`text-[13px] font-semibold leading-tight truncate ${
+          <p className={`text-[12px] font-bold leading-tight truncate ${
             isActive ? "text-primary" : "text-foreground"
           }`}>
             {song.title}
           </p>
           {cached && (
-            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">
-              <Download className="w-2.5 h-2.5" />
+            <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded bg-primary/10 text-primary">
+              <Download className="w-2 h-2" />
             </span>
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <p className="text-[11px] text-muted-foreground/70 leading-tight truncate">
+          <p className="text-[10px] text-muted-foreground/55 leading-tight truncate font-medium">
             {formatArtist(song.artist)}
           </p>
           {song.genre && (
-            <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+            <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary/8 text-primary/70">
               {song.genre}
             </span>
-          )}
-          {song.year && (
-            <span className="shrink-0 text-[9px] text-muted-foreground/40">{song.year}</span>
           )}
         </div>
       </div>
 
-      <span className="text-[11px] text-muted-foreground/50 tabular-nums flex-shrink-0 font-medium">
+      <span className="text-[10px] text-muted-foreground/40 tabular-nums flex-shrink-0 font-medium">
         {formatDuration(song.duration)}
       </span>
     </motion.div>
@@ -187,23 +186,20 @@ function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
-        isActive ? "text-primary-foreground" : "text-secondary-foreground hover:bg-secondary/80"
+      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-[11px] font-bold whitespace-nowrap transition-colors flex-shrink-0 ${
+        isActive ? "text-primary-foreground" : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-secondary/40"
       }`}
     >
       {isActive && (
         <motion.div
           layoutId="libraryTab"
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))",
-            boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), 0 1px 3px hsl(var(--primary) / 0.2)",
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="absolute inset-0 rounded-2xl bg-primary"
+          style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
         />
       )}
       <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className={`w-3.5 h-3.5 ${isActive ? "drop-shadow-sm" : ""}`} />
+        <Icon className="w-3.5 h-3.5" />
         {label}
       </span>
     </button>
@@ -217,19 +213,25 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
   return (
     <div className="flex items-center gap-2 mb-4">
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.93 }}
         onClick={onPlayAll}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:brightness-110 transition-all"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground text-[12px] font-bold"
+        style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
       >
-        <Play className="w-4 h-4" />
+        <Play className="w-3.5 h-3.5 fill-current" />
         Tout lire
       </motion.button>
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.93 }}
         onClick={onShuffle}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full liquid-glass text-foreground text-sm font-medium transition-all"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[12px] font-semibold text-foreground"
+        style={{
+          background: "hsl(var(--secondary) / 0.5)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid hsl(var(--border) / 0.15)",
+        }}
       >
-        <Shuffle className="w-4 h-4" />
+        <Shuffle className="w-3.5 h-3.5" />
         Aléatoire
       </motion.button>
       {extra}
@@ -245,11 +247,18 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; 
       animate={{ opacity: 1, scale: 1 }}
       className="flex flex-col items-center justify-center py-20 text-center"
     >
-      <div className="p-5 rounded-3xl liquid-glass mb-4">
-        <Icon className="w-10 h-10 text-muted-foreground/40" />
+      <div
+        className="p-5 rounded-2xl mb-4"
+        style={{
+          background: "hsl(var(--card) / 0.5)",
+          backdropFilter: "blur(16px)",
+          border: "1px solid hsl(var(--border) / 0.1)",
+        }}
+      >
+        <Icon className="w-9 h-9 text-muted-foreground/30" />
       </div>
-      <p className="text-foreground font-semibold text-sm">{title}</p>
-      <p className="text-xs text-muted-foreground/60 mt-1 max-w-[220px]">{subtitle}</p>
+      <p className="text-foreground font-bold text-[13px]">{title}</p>
+      <p className="text-[11px] text-muted-foreground/50 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
     </motion.div>
   );
 }
@@ -623,54 +632,57 @@ const LibraryPage = () => {
       : tabs.filter((t) => checkLibraryTab(t.key));
 
   return (
-    <div className="pb-40 max-w-7xl mx-auto relative animate-fade-in">
-      {/* Dynamic gradient header */}
+    <div className="pb-40 max-w-7xl mx-auto relative">
+      {/* Header */}
       <div
-        className="sticky top-0 z-20 transition-colors duration-700"
+        className="sticky top-0 z-20 transition-colors duration-500"
         style={{
           background: headerColor
-            ? `linear-gradient(180deg, ${headerColor}30 0%, hsl(var(--background)) 100%)`
-            : undefined,
+            ? `linear-gradient(180deg, ${headerColor}20 0%, hsl(var(--background) / 0.95) 100%)`
+            : "hsl(var(--background) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
-        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3" style={{ backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)" }}>
+        <div className="px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
           {isOffline && (
             <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
-              background: "hsl(45 100% 50% / 0.08)",
-              border: "1px solid hsl(45 100% 50% / 0.15)",
+              background: "hsl(45 100% 50% / 0.06)",
+              border: "1px solid hsl(45 100% 50% / 0.12)",
             }}>
-              <WifiOff className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <p className="text-xs text-amber-400 font-medium">Mode hors-ligne — seuls les morceaux téléchargés sont disponibles</p>
+              <WifiOff className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+              <p className="text-[11px] text-amber-400 font-medium">Mode hors-ligne</p>
             </div>
           )}
 
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
-                {isOffline ? "Mode Hors-ligne" : "Bibliothèque"}
+              <h1 className="text-[22px] md:text-[26px] font-black text-foreground leading-tight tracking-tight">
+                {isOffline ? "Hors-ligne" : "Bibliothèque"}
               </h1>
-              <p className="text-[12px] text-muted-foreground/60">
-                {isOffline ? "Écoutez vos morceaux sans connexion" : "Vos morceaux, playlists et favoris"}
+              <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-medium">
+                {isOffline ? "Écoutez sans connexion" : "Morceaux, playlists & favoris"}
               </p>
             </div>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={() => {
                 queryClient.invalidateQueries();
                 if (userId) loadUserData(userId);
                 toast.success("Bibliothèque actualisée");
               }}
-              className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
+              className="p-2.5 rounded-xl text-muted-foreground/60 hover:text-foreground transition-all"
               style={{
-                background: "hsl(var(--secondary) / 0.6)",
-                border: "1px solid hsl(var(--border) / 0.2)",
+                background: "hsl(var(--card) / 0.5)",
+                border: "1px solid hsl(var(--border) / 0.1)",
               }}
             >
-              <RefreshCw className="w-4.5 h-4.5" />
-            </button>
+              <RefreshCw className="w-4 h-4" />
+            </motion.button>
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 mt-1">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1">
             {visibleTabs.map(({ key, label, icon }) => (
               <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
             ))}
@@ -679,14 +691,14 @@ const LibraryPage = () => {
       </div>
 
       {/* Content */}
-      <div className="px-4 md:px-8">
+      <div className="px-5 md:px-9 mt-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             {/* ── RECENT ── */}
             {tab === "recent" && (
@@ -711,7 +723,7 @@ const LibraryPage = () => {
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
                     </p>
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                       {recentMusic.map((s, i) => (
                         <PremiumSongRow
                           key={`${s.id}-${i}`}
@@ -745,7 +757,7 @@ const LibraryPage = () => {
                         value={likedSearch}
                         onChange={(e) => setLikedSearch(e.target.value)}
                         placeholder="Rechercher dans mes titres..."
-                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {likedSearch && (
                         <button onClick={() => setLikedSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -770,7 +782,7 @@ const LibraryPage = () => {
                           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                             {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
                           </p>
-                          <div className="rounded-2xl liquid-glass overflow-hidden">
+                          <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                             {filtered.map((s, i) => (
                               <PremiumSongRow
                                 key={s.id}
@@ -799,7 +811,7 @@ const LibraryPage = () => {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setShowCreate(!showCreate)}
-                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl liquid-glass text-foreground text-sm font-medium transition-all w-full"
+                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-sm font-medium transition-all w-full"
                 >
                   <div className="p-1.5 rounded-xl bg-primary/15">
                     <Plus className="w-4 h-4 text-primary" />
@@ -851,7 +863,7 @@ const LibraryPage = () => {
                           <motion.button
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/playlist/${p.id}`)}
-                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl liquid-glass transition-all"
+                            className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-all"
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -926,7 +938,7 @@ const LibraryPage = () => {
                                   play(spSongs[0]);
                                 }
                               }}
-                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl liquid-glass transition-all"
+                              className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-all"
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -982,7 +994,7 @@ const LibraryPage = () => {
                         value={albumSearch}
                         onChange={(e) => setAlbumSearch(e.target.value)}
                         placeholder="Rechercher par artiste..."
-                        className="w-full px-3 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full px-3 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {albumSearch && (
                         <button onClick={() => setAlbumSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1104,7 +1116,7 @@ const LibraryPage = () => {
                         value={artistSearch}
                         onChange={(e) => setArtistSearch(e.target.value)}
                         placeholder="Rechercher un artiste..."
-                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {artistSearch && (
                         <button onClick={() => setArtistSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1196,7 +1208,7 @@ const LibraryPage = () => {
                         value={customSearch}
                         onChange={(e) => setCustomSearch(e.target.value)}
                         placeholder="Rechercher un morceau..."
-                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-secondary/60 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 border border-border/30"
+                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
                       />
                       {customSearch && (
                         <button onClick={() => setCustomSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1214,7 +1226,7 @@ const LibraryPage = () => {
                         <button
                           onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            selectMode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground liquid-glass"
+                            selectMode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground rounded-2xl bg-card/40 backdrop-blur-md border border-border/10"
                           }`}
                         >
                           {selectMode ? <X className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
@@ -1223,7 +1235,7 @@ const LibraryPage = () => {
                         {!selectMode && (
                           <button
                             onClick={() => setShowSortMenu(!showSortMenu)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground liquid-glass transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 transition-colors"
                           >
                             <ArrowUpDown className="w-3 h-3" />
                             {customSort === "recent" ? "Récent" : customSort === "alpha" ? "A→Z" : customSort === "artist" ? "Artiste" : "Durée"}
@@ -1274,7 +1286,7 @@ const LibraryPage = () => {
                                 if (selectedIds.size === sortedCustomSongs.length) setSelectedIds(new Set());
                                 else setSelectedIds(new Set(sortedCustomSongs.map((s) => s.id)));
                               }}
-                              className="px-3 py-1.5 rounded-full text-xs font-medium liquid-glass text-foreground whitespace-nowrap flex-shrink-0"
+                              className="px-3 py-1.5 rounded-full text-xs font-medium rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground whitespace-nowrap flex-shrink-0"
                             >
                               {selectedIds.size === sortedCustomSongs.length ? "Tout désélectionner" : "Tout sélectionner"}
                             </button>
@@ -1297,7 +1309,7 @@ const LibraryPage = () => {
                                     toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} aux favoris`);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 >
                                   <Heart className="w-3 h-3" /> Favoris
                                 </button>
@@ -1309,7 +1321,7 @@ const LibraryPage = () => {
                                     toast.success(`${sel.length} titre${sel.length > 1 ? "s" : ""} ajouté${sel.length > 1 ? "s" : ""} à la file`);
                                     setSelectMode(false); setSelectedIds(new Set());
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-full rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 >
                                   <ListPlus className="w-3 h-3" /> File
                                 </button>
@@ -1371,7 +1383,7 @@ const LibraryPage = () => {
                                 <div className="relative">
                                   <button
                                     onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-full rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-foreground text-xs font-medium whitespace-nowrap flex-shrink-0"
                                   >
                                     <ListMusic className="w-3 h-3" /> Playlist
                                   </button>
@@ -1427,7 +1439,7 @@ const LibraryPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                       {sortedCustomSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1459,7 +1471,7 @@ const LibraryPage = () => {
             {tab === "downloads" && (
               <div>
                 {cacheSize > 0 && (
-                  <div className="rounded-2xl liquid-glass p-4 mb-4">
+                  <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-primary/10">
@@ -1530,7 +1542,7 @@ const LibraryPage = () => {
                       onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
                       onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
-                    <div className="rounded-2xl liquid-glass overflow-hidden">
+                    <div className="rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 overflow-hidden">
                       {cachedSongs.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
@@ -1548,7 +1560,7 @@ const LibraryPage = () => {
                 )}
 
                 {isGuest && (
-                  <div className="mt-8 p-5 rounded-2xl liquid-glass text-center">
+                  <div className="mt-8 p-5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/10 text-center">
                     <p className="text-sm text-muted-foreground mb-3">
                       Connectez-vous pour accéder à vos playlists et favoris
                     </p>
@@ -1596,24 +1608,24 @@ function ArtistLibraryCard({ artist, index, navigate }: {
 
   return (
     <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
-      whileTap={{ scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.025, duration: 0.3 }}
+      whileTap={{ scale: 0.94 }}
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
       className="flex flex-col items-center text-center group"
     >
-      <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary shadow-lg mb-2 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+      <div className="w-[76px] h-[76px] rounded-full overflow-hidden bg-secondary mb-2 ring-[1.5px] ring-border/20 group-hover:ring-primary/30 transition-all" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.12)" }}>
         {imageUrl ? (
-          <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+          <img src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-300" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            <User className="w-8 h-8 text-primary/30" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+            <User className="w-6 h-6 text-primary/20" />
           </div>
         )}
       </div>
-      <p className="text-xs font-bold text-foreground truncate max-w-[96px]">{artist.name}</p>
-      <p className="text-[10px] text-muted-foreground">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+      <p className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{artist.name}</p>
+      <p className="text-[9px] text-muted-foreground/45 font-medium">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
     </motion.button>
   );
 }
