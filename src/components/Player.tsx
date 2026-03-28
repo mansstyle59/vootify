@@ -14,7 +14,7 @@ import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
-import { getGlobalAudio } from "@/lib/globalAudio";
+import { audioManager } from "@/lib/audioManager";
 
 /* ── Shared glass styles ── */
 const glassStyle = {
@@ -75,7 +75,7 @@ export function MiniPlayer() {
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const errorRetryCountRef = useRef(0);
 
-  const audio = getGlobalAudio();
+  const audio = audioManager.audio;
 
   const showResumeBanner = useCallback((msg: string) => {
     if (resumeBannerTimer.current) clearTimeout(resumeBannerTimer.current);
@@ -256,6 +256,12 @@ export function MiniPlayer() {
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
 
+    // Listen for AudioManager next/prev events (from media session & ended)
+    const onAudioNext = () => usePlayerStore.getState().next();
+    const onAudioPrev = () => usePlayerStore.getState().previous();
+    window.addEventListener("audio-next", onAudioNext);
+    window.addEventListener("audio-prev", onAudioPrev);
+
     // Network recovery
     const handleOnline = () => {
       const state = usePlayerStore.getState();
@@ -272,6 +278,8 @@ export function MiniPlayer() {
       audio.removeEventListener("error", handleAudioError);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
+      window.removeEventListener("audio-next", onAudioNext);
+      window.removeEventListener("audio-prev", onAudioPrev);
       window.removeEventListener("online", handleOnline);
     };
   }, [handleTimeUpdate, handleEnded, handleAudioError]);
@@ -311,24 +319,18 @@ export function MiniPlayer() {
       const srcToUse = cachedUrl || songToPlay.streamUrl;
       if (!srcToUse) return;
 
-      // Simple: set src and play
-      if (audio.src !== srcToUse) {
-        audio.src = srcToUse;
-      }
+      // Use AudioManager to play — syncs media session automatically
+      const isLiveTrack = songToPlay.duration === 0;
+      audioManager.play({
+        url: srcToUse,
+        title: songToPlay.title,
+        artist: songToPlay.artist,
+        cover: songToPlay.coverUrl,
+        album: songToPlay.album || undefined,
+        isLive: isLiveTrack,
+      });
       audio.volume = volume;
       audio.muted = false;
-      audio.play().then(() => {
-        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-      }).catch((e) => {
-        console.warn("[player] Play failed, waiting canplay:", e);
-        const onCanPlay = () => {
-          audio.removeEventListener("canplay", onCanPlay);
-          audio.play().then(() => {
-            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-          }).catch(console.error);
-        };
-        audio.addEventListener("canplay", onCanPlay, { once: true });
-      });
     };
 
     loadAndPlay();
@@ -399,20 +401,19 @@ export function MiniPlayer() {
     }
   }, [currentSong?.id, queueLen]);
 
-  // ── Media Session metadata ──
+  // ── Media Session metadata — use AudioManager ──
   useEffect(() => {
-    if (!currentSong || !("mediaSession" in navigator)) return;
+    if (!currentSong) return;
     const title = isLive && radioMeta?.title ? radioMeta.title : currentSong.title;
     const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
     const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
 
-    navigator.mediaSession.metadata = new MediaMetadata({
+    audioManager.updateMetadata({
       title,
       artist,
-      album: currentSong.album || (isLive ? "Radio" : ""),
-      artwork: artwork
-        ? [{ src: artwork, sizes: "512x512", type: "image/png" }]
-        : [],
+      cover: artwork,
+      album: currentSong.album || (isLive ? "Radio" : undefined),
+      isLive,
     });
   }, [currentSong?.id, currentSong?.title, isLive, radioMeta?.title, radioMeta?.artist, radioMeta?.coverUrl]);
 
