@@ -1513,16 +1513,16 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     <img src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" />
                   </div>
                 )}
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="popLayout">
                   {currentSong.coverUrl ? (
                     <motion.img
                       key={currentSong.id}
                       src={currentSong.coverUrl}
                       alt={currentSong.title}
-                      initial={{ opacity: 0, scale: 0.88, rotateX: 8 }}
-                      animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                      exit={{ opacity: 0, scale: 0.92 }}
-                      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      initial={{ opacity: 0, scale: 0.82, filter: "blur(12px)", y: 20 }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }}
+                      exit={{ opacity: 0, scale: 0.88, filter: "blur(8px)", y: -15 }}
+                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                       className="relative w-full aspect-square rounded-3xl object-cover"
                       style={{
                         boxShadow: `
@@ -1535,10 +1535,10 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   ) : (
                     <motion.div
                       key={currentSong.id + "-ph"}
-                      initial={{ opacity: 0, scale: 0.88 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.92 }}
-                      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      initial={{ opacity: 0, scale: 0.82, filter: "blur(12px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 0.88, filter: "blur(8px)" }}
+                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                       className="relative w-full aspect-square rounded-3xl flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5"
                       style={{ boxShadow: "0 30px 80px -20px rgba(0,0,0,0.6)" }}
                     >
