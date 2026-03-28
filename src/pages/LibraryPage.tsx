@@ -187,19 +187,23 @@ function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+      className={`relative flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
         isActive ? "text-primary-foreground" : "text-secondary-foreground hover:bg-secondary/80"
       }`}
     >
       {isActive && (
         <motion.div
           layoutId="libraryTab"
-          className="absolute inset-0 bg-primary rounded-full shadow-lg shadow-primary/25"
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))",
+            boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), 0 1px 3px hsl(var(--primary) / 0.2)",
+          }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
         />
       )}
       <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className="w-3.5 h-3.5" />
+        <Icon className={`w-3.5 h-3.5 ${isActive ? "drop-shadow-sm" : ""}`} />
         {label}
       </span>
     </button>

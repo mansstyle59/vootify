@@ -757,8 +757,13 @@ const SearchPage = () => {
 
             {genreCards.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Disc3 className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{
+                    background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.1))",
+                    border: "1px solid hsl(var(--primary) / 0.1)",
+                  }}>
+                    <Disc3 className="w-3.5 h-3.5 text-primary" />
+                  </div>
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Parcourir par genre
                   </h2>
@@ -769,14 +774,16 @@ const SearchPage = () => {
                     return (
                       <motion.button
                         key={g.genre}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.03, duration: 0.3 }}
-                        whileTap={{ scale: 0.95 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        whileTap={{ scale: 0.96 }}
+                        whileHover={{ y: -2 }}
                         onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
-                        className="relative h-[100px] rounded-2xl overflow-hidden text-left group"
+                        className="relative h-[110px] rounded-2xl overflow-hidden text-left group"
                         style={{
                           background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
+                          boxShadow: `0 8px 24px ${def.from}30, 0 2px 8px ${def.to}20`,
                         }}
                       >
                         {/* Cover art tilted */}
@@ -784,27 +791,31 @@ const SearchPage = () => {
                           <img
                             src={g.coverUrl}
                             alt=""
-                            className="absolute -right-2 -bottom-2 w-[72px] h-[72px] rounded-xl object-cover rotate-[25deg] opacity-50 group-active:opacity-70 transition-opacity shadow-2xl"
+                            className="absolute -right-2 -bottom-2 w-[76px] h-[76px] rounded-xl object-cover rotate-[25deg] opacity-40 group-hover:opacity-60 group-hover:scale-110 transition-all duration-300 shadow-2xl"
                           />
                         ) : (
-                          <span className="absolute -right-1 -bottom-1 text-[52px] rotate-[20deg] opacity-20 select-none">
+                          <span className="absolute -right-1 -bottom-1 text-[56px] rotate-[20deg] opacity-15 select-none group-hover:opacity-25 transition-opacity">
                             {def.emoji}
                           </span>
                         )}
+                        {/* Noise texture */}
+                        <div className="absolute inset-0 opacity-[0.06]" style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                        }} />
                         {/* Content */}
                         <div className="relative z-10 p-3.5 h-full flex flex-col justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-lg">{def.emoji}</span>
+                            <span className="text-lg drop-shadow-md">{def.emoji}</span>
                             <h3 className="text-[15px] font-bold text-white drop-shadow-md leading-tight">
                               {g.genre}
                             </h3>
                           </div>
                           {g.count > 0 && (
-                            <p className="text-[11px] text-white/50 font-medium">{g.count} titres</p>
+                            <p className="text-[11px] text-white/60 font-semibold backdrop-blur-sm bg-black/10 self-start px-2 py-0.5 rounded-full">{g.count} titres</p>
                           )}
                         </div>
                         {/* Shine overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </motion.button>
                     );
                   })}
@@ -813,26 +824,39 @@ const SearchPage = () => {
             )}
 
             {allSongs && allSongs.length > 0 && (
-              <div className="pt-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <Music className="w-4 h-4 text-muted-foreground" />
+              <div className="pt-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{
+                    background: "hsl(var(--secondary) / 0.8)",
+                    border: "1px solid hsl(var(--border) / 0.2)",
+                  }}>
+                    <Music className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Votre bibliothèque
                   </h2>
                 </div>
                 <div className="flex justify-around">
                   {[
-                    { icon: <Music className="w-4 h-4" />, value: allSongs.length, label: "Morceaux", color: "text-primary border-primary/30 bg-primary/10" },
-                    { icon: <User className="w-4 h-4" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes", color: "text-primary border-primary/30 bg-primary/10" },
-                    { icon: <Disc3 className="w-4 h-4" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums", color: "text-primary border-primary/30 bg-primary/10" },
-                  ].map((stat) => (
-                    <div key={stat.label} className="flex flex-col items-center gap-1">
-                      <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-2 ${stat.color}`}>
+                    { icon: <Music className="w-4.5 h-4.5" />, value: allSongs.length, label: "Morceaux", gradient: "from-primary/20 to-primary/5", ring: "ring-primary/25" },
+                    { icon: <User className="w-4.5 h-4.5" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes", gradient: "from-accent/30 to-accent/10", ring: "ring-accent/25" },
+                    { icon: <Disc3 className="w-4.5 h-4.5" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums", gradient: "from-primary/15 to-accent/10", ring: "ring-primary/20" },
+                  ].map((stat, i) => (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.08, type: "spring", stiffness: 250, damping: 20 }}
+                      className="flex flex-col items-center gap-1.5"
+                    >
+                      <div className={`w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center bg-gradient-to-br ${stat.gradient} ring-2 ${stat.ring} text-primary shadow-lg`}
+                        style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.1)" }}
+                      >
                         {stat.icon}
-                        <span className="text-sm font-bold leading-tight mt-0.5">{stat.value}</span>
+                        <span className="text-base font-black leading-tight mt-0.5 tabular-nums">{stat.value}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground font-medium">{stat.label}</span>
-                    </div>
+                      <span className="text-[10px] text-muted-foreground font-semibold tracking-wide">{stat.label}</span>
+                    </motion.div>
                   ))}
                 </div>
               </div>
