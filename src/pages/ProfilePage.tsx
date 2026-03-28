@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
-  HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Sparkles, Fingerprint
+  HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
+  Clock, Music, Heart, BarChart3
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -52,6 +53,12 @@ const ProfilePage = () => {
   const [offlineCount, setOfflineCount] = useState(0);
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
+
+  // Listening stats
+  const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
+  const [tracksPlayed, setTracksPlayed] = useState(0);
+  const [likedCount, setLikedCount] = useState(0);
+  const [playlistCount, setPlaylistCount] = useState(0);
 
   useEffect(() => {
     if ("caches" in window) {
