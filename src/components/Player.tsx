@@ -84,11 +84,54 @@ export function MiniPlayer() {
   const loadAbortRef = useRef<AbortController | null>(null);
   const [resumeBanner, setResumeBanner] = useState<string | null>(null);
   const resumeBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backgroundPauseGraceUntilRef = useRef(0);
+  const pauseSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showResumeBanner = useCallback((msg: string) => {
     if (resumeBannerTimer.current) clearTimeout(resumeBannerTimer.current);
     setResumeBanner(msg);
     resumeBannerTimer.current = setTimeout(() => setResumeBanner(null), 2500);
+  }, []);
+
+  const shouldIgnorePauseSync = useCallback(() => {
+    return document.visibilityState === "hidden" || Date.now() < backgroundPauseGraceUntilRef.current;
+  }, []);
+
+  const handleAudioPlay = useCallback(() => {
+    if (pauseSyncTimerRef.current) {
+      clearTimeout(pauseSyncTimerRef.current);
+      pauseSyncTimerRef.current = null;
+    }
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+    if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
+  }, []);
+
+  const schedulePauseSync = useCallback(() => {
+    if (pauseSyncTimerRef.current) clearTimeout(pauseSyncTimerRef.current);
+    pauseSyncTimerRef.current = setTimeout(() => {
+      const audio = audioRef.current;
+      if (!audio?.paused) return;
+
+      if (shouldIgnorePauseSync()) {
+        if ("mediaSession" in navigator && usePlayerStore.getState().isPlaying) {
+          navigator.mediaSession.playbackState = "playing";
+        }
+        return;
+      }
+
+      if (usePlayerStore.getState().isPlaying) {
+        usePlayerStore.setState({ isPlaying: false });
+      }
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
+    }, 1800);
+  }, [shouldIgnorePauseSync]);
+
+  useEffect(() => {
+    return () => {
+      if (pauseSyncTimerRef.current) clearTimeout(pauseSyncTimerRef.current);
+    };
   }, []);
 
   // Web Audio API EQ nodes
@@ -280,6 +323,7 @@ export function MiniPlayer() {
       const state = usePlayerStore.getState();
 
       if (document.visibilityState === "hidden") {
+        backgroundPauseGraceUntilRef.current = Date.now() + 15000;
         // Going to background — remember state for recovery
         wasPlayingBeforeHidden = state.isPlaying;
         // Force media session sync before going background
@@ -290,6 +334,7 @@ export function MiniPlayer() {
       }
 
       // Coming back to foreground
+      backgroundPauseGraceUntilRef.current = Date.now() + 4000;
       if (!audio || !state.currentSong) return;
       const shouldResume = state.isPlaying || wasPlayingBeforeHidden;
       if (!shouldResume) return;
@@ -338,6 +383,16 @@ export function MiniPlayer() {
 
       // Small delay to let iOS audio session re-activate
       resumeTimer = setTimeout(() => attemptResume(1), 200);
+    };
+
+    const handlePageHide = () => {
+      backgroundPauseGraceUntilRef.current = Date.now() + 15000;
+      wasPlayingBeforeHidden = usePlayerStore.getState().isPlaying;
+    };
+
+    const handlePageShow = () => {
+      backgroundPauseGraceUntilRef.current = Date.now() + 4000;
+      handleVisibility();
     };
 
     // Handle audio interruptions (phone calls, Siri, lock-screen quirks)
@@ -436,6 +491,8 @@ export function MiniPlayer() {
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
     const audioEl = audioRef.current;
     audioEl?.addEventListener("pause", handlePause);
     audioEl?.addEventListener("stalled", handleStalled);
@@ -445,6 +502,8 @@ export function MiniPlayer() {
       if (resumeTimer) clearTimeout(resumeTimer);
       if (stallTimer) clearTimeout(stallTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
       audioEl?.removeEventListener("pause", handlePause);
       audioEl?.removeEventListener("stalled", handleStalled);
       audioEl?.removeEventListener("waiting", handleWaiting);
@@ -1164,24 +1223,8 @@ export function MiniPlayer() {
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           onError={handleAudioError}
-          onPlay={() => {
-            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-            // Sync store if audio started externally (e.g. Bluetooth resume)
-            if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
-          }}
-          onPause={() => {
-            // Debounce: only sync to store if STILL paused after 800ms
-            // Longer delay prevents iOS lock-screen pauses from killing playback
-            const audio = audioRef.current;
-            setTimeout(() => {
-              if (audio?.paused && usePlayerStore.getState().isPlaying) {
-                usePlayerStore.setState({ isPlaying: false });
-              }
-              if ("mediaSession" in navigator && audio?.paused) {
-                navigator.mediaSession.playbackState = "paused";
-              }
-            }, 800);
-          }}
+          onPlay={handleAudioPlay}
+          onPause={schedulePauseSync}
           preload="auto"
           playsInline
           // @ts-ignore — webkit attributes for iOS background playback & AirPlay
@@ -1277,21 +1320,8 @@ export function MiniPlayer() {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onError={handleAudioError}
-        onPlay={() => {
-          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-          if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
-        }}
-        onPause={() => {
-          const a = audioRef.current;
-          setTimeout(() => {
-            if (a?.paused && usePlayerStore.getState().isPlaying) {
-              usePlayerStore.setState({ isPlaying: false });
-            }
-            if ("mediaSession" in navigator && a?.paused) {
-              navigator.mediaSession.playbackState = "paused";
-            }
-          }, 800);
-        }}
+        onPlay={handleAudioPlay}
+        onPause={schedulePauseSync}
         preload="auto"
         playsInline
         // @ts-ignore — webkit attributes for iOS background playback & AirPlay
