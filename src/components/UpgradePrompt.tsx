@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Crown, Lock, ArrowLeft, Check, X, Home, Search, Library, Radio, Heart, ListMusic, Star, Gem, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
+import { supabase } from "@/integrations/supabase/client";
 import type { PlanType } from "@/lib/subscriptionPermissions";
 
 interface UpgradePromptProps {

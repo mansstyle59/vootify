@@ -2542,6 +2542,9 @@ function SubscriptionsTab() {
 
   return (
     <div className="space-y-3">
+      {/* Price editor */}
+      <PriceEditor />
+
       {/* Subscription dialog */}
       <Dialog open={showSubDialog} onOpenChange={setShowSubDialog}>
         <DialogContent className="sm:max-w-md">
