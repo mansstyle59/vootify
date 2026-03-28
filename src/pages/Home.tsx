@@ -23,7 +23,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
-import { EditModeToggle, EditModePanel } from "@/components/home/EditModeToolbar";
+
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -161,13 +161,7 @@ const HomePage = () => {
   }, [homeConfig]);
 
   const {
-    editMode,
-    setEditMode,
     sections: userSections,
-    toggleVisibility,
-    reorder,
-    resetLayout,
-    hasCustomLayout,
   } = useUserHomeLayout(adminSections);
 
   const visibleSections = useMemo(() => {
@@ -345,21 +339,6 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Edit mode */}
-      <EditModeToggle editMode={editMode} onToggle={() => setEditMode(!editMode)} />
-      <AnimatePresence>
-        {editMode && (
-          <EditModePanel
-            sections={userSections}
-            onToggleVisibility={toggleVisibility}
-            onMoveUp={(i) => i > 0 && reorder(i, i - 1)}
-            onMoveDown={(i) => i < userSections.length - 1 && reorder(i, i + 1)}
-            onReset={resetLayout}
-            hasCustomLayout={hasCustomLayout}
-            onClose={() => setEditMode(false)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
