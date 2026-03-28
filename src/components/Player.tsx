@@ -361,10 +361,12 @@ export function MiniPlayer() {
           usePlayerStore.setState({ currentSong: songToPlay });
         }
       } else {
-        // If no stream URL, skip to next
+        // If no stream URL, show error and skip to next
         if (!songToPlay.streamUrl) {
           console.warn("[player] No playable source for:", songToPlay.title);
-          usePlayerStore.getState().next();
+          const { toast } = await import("sonner");
+          toast.error(`"${songToPlay.title}" n'est pas disponible`);
+          setTimeout(() => usePlayerStore.getState().next(), 300);
           return;
         }
       }
