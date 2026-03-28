@@ -107,7 +107,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-3 md:mb-4"
+      className="mb-2 md:mb-3"
     >
       <motion.div
         initial={{ opacity: 0, x: -16 }}
