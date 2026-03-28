@@ -78,11 +78,7 @@ export function QuickAccess() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                  {item.type === "radio" ? (
-                    <Radio className="w-5 h-5 text-primary/40" />
-                  ) : (
                     <ListMusic className="w-5 h-5 text-primary/40" />
-                  )}
                 </div>
               )}
             </div>
