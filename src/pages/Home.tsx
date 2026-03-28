@@ -221,7 +221,7 @@ const HomePage = () => {
     <div className="pb-32 md:pb-40 max-w-7xl mx-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
-      <QuickAccess />
+      {/* QuickAccess playlists removed */}
 
       <div className="mt-5" />
 
