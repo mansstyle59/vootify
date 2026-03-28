@@ -17,6 +17,7 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
 import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
+import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 
 /* ── Shared glass styles — enhanced glassmorphism ── */
 const glassStyle = {
@@ -112,6 +113,7 @@ export function MiniPlayer() {
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const errorRetryCountRef = useRef(0);
+  const crossfadeTriggeredRef = useRef(false);
 
   const audio = audioManager.audio;
 
@@ -208,6 +210,75 @@ export function MiniPlayer() {
       if (Math.abs(stored - audio.duration) > 0.5) {
         usePlayerStore.setState({ audioDuration: audio.duration });
       }
+
+      // ── Crossfade trigger ──
+      const state = usePlayerStore.getState();
+      if (
+        state.crossfadeEnabled &&
+        !crossfadeTriggeredRef.current &&
+        !isCrossfading() &&
+        state.currentSong?.duration !== 0 && // Not live radio
+        shouldStartCrossfade(t, audio.duration, state.crossfadeDuration)
+      ) {
+        crossfadeTriggeredRef.current = true;
+        // Find next track
+        const { queue, shuffle, repeat } = state;
+        const idx = queue.findIndex((s) => s.id === state.currentSong?.id);
+        if (idx !== -1 && queue.length > 1 && repeat !== "one") {
+          const nextIdx = shuffle
+            ? Math.floor(Math.random() * queue.length)
+            : (idx + 1) % queue.length;
+          if (!(repeat === "off" && nextIdx === 0 && idx === queue.length - 1)) {
+            const nextSong = queue[nextIdx];
+            if (nextSong) {
+              // Resolve URL and start crossfade
+              (async () => {
+                const preUrl = getPreloadedUrl(nextSong.id);
+                const cachedUrl = await offlineCache.getCachedUrl(nextSong.id);
+                const url = cachedUrl || preUrl || nextSong.streamUrl;
+                if (!url) return;
+                if (preUrl) consumePreloaded(nextSong.id);
+
+                await startCrossfade(audio, url, state.crossfadeDuration, state.volume);
+
+                // Update store to the next track (without re-triggering loadAndPlay)
+                lastSongIdRef.current = nextSong.id;
+                crossfadeTriggeredRef.current = false;
+
+                // Update cached cover if available
+                const cachedCover = cachedUrl ? await offlineCache.getCachedCoverUrl(nextSong.id) : null;
+                const songToSet = cachedCover ? { ...nextSong, coverUrl: cachedCover } : nextSong;
+
+                usePlayerStore.setState((s) => ({
+                  currentSong: songToSet,
+                  isPlaying: true,
+                  progress: 0,
+                  audioDuration: 0,
+                  recentlyPlayed: [songToSet, ...s.recentlyPlayed.filter((x) => x.id !== nextSong.id)].slice(0, 30),
+                }));
+
+                // Update media session
+                audioManager.currentTrack = {
+                  url,
+                  title: songToSet.title,
+                  artist: songToSet.artist,
+                  cover: songToSet.coverUrl,
+                  album: songToSet.album || undefined,
+                  isLive: false,
+                };
+                audioManager.updateMediaSession(audioManager.currentTrack);
+
+                // Record recently played
+                if (state.userId && nextSong.album !== "Radio en direct") {
+                  import("@/lib/musicDb").then(({ musicDb }) =>
+                    musicDb.addRecentlyPlayed(state.userId!, songToSet).catch(() => {})
+                  );
+                }
+              })();
+            }
+          }
+        }
+      }
     }
 
     const now = Date.now();
@@ -221,6 +292,11 @@ export function MiniPlayer() {
 
   // ── Ended handler ──
   const handleEnded = useCallback(() => {
+    // Skip if crossfade already handled the transition
+    if (crossfadeTriggeredRef.current || isCrossfading()) {
+      crossfadeTriggeredRef.current = false;
+      return;
+    }
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
       audio.currentTime = 0;
@@ -328,6 +404,8 @@ export function MiniPlayer() {
     const isNewTrack = lastSongIdRef.current !== currentSong.id;
     if (!isNewTrack) return;
     lastSongIdRef.current = currentSong.id;
+    crossfadeTriggeredRef.current = false;
+    cleanupCrossfade();
     usePlayerStore.setState({ nextPreloaded: false, audioDuration: 0 });
     errorRetryCountRef.current = 0;
 

@@ -486,7 +486,7 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
         </div>
         {/* Rank badge */}
         <div
-          className="absolute -bottom-1 left-1/2 -translate-x-1/2 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-lg"
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-lg px-1"
           style={{
             background: isPodium ? podiumGradients[index] : "hsl(var(--foreground) / 0.08)",
             color: isPodium ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground) / 0.5)",
@@ -495,7 +495,7 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
               : "0 1px 4px hsl(0 0% 0% / 0.08)",
           }}
         >
-          {index + 1}
+          #{index + 1}
         </div>
       </div>
       <div className="text-center mt-0.5" style={{ maxWidth: size + 12 }}>
