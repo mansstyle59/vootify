@@ -610,7 +610,7 @@ const LibraryPage = () => {
     ? tabs.filter((t) => t.key === "downloads")
     : isGuest
       ? tabs.filter((t) => t.key === "downloads")
-      : tabs;
+      : tabs.filter((t) => checkLibraryTab(t.key));
 
   return (
     <div className="pb-40 max-w-7xl mx-auto relative animate-fade-in">
