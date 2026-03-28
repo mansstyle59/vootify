@@ -236,7 +236,37 @@ const HomePage = () => {
         if (section.id === "artists") {
           if (!loadingArtists && (!artists || artists.length === 0)) return null;
           return (
-            <Section key={section.id} title={section.title}>
+            <Section
+              key={section.id}
+              title={section.title}
+              action={isAdmin ? (
+                <button
+                  onClick={async () => {
+                    if (refreshingArtists) return;
+                    setRefreshingArtists(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("refresh-artist-images", {
+                        body: { only_missing: false, force_refresh: true },
+                      });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["custom-artist-image"] });
+                      queryClient.invalidateQueries({ queryKey: ["artist-image"] });
+                      queryClient.invalidateQueries({ queryKey: ["home-artists"] });
+                      toast.success(`${data.updated} photo${data.updated > 1 ? "s" : ""} artiste${data.updated > 1 ? "s" : ""} mise${data.updated > 1 ? "s" : ""} à jour`);
+                    } catch (e) {
+                      toast.error("Erreur lors du rafraîchissement");
+                    } finally {
+                      setRefreshingArtists(false);
+                    }
+                  }}
+                  disabled={refreshingArtists}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50"
+                >
+                  {refreshingArtists ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  {refreshingArtists ? "Refresh…" : "Refresh photos"}
+                </button>
+              ) : undefined}
+            >
               <HorizontalScroll>
                 {loadingArtists ? (
                   <CoverSkeleton count={6} />
