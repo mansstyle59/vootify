@@ -297,12 +297,12 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         style={{ background: "linear-gradient(to top, hsl(var(--background)), hsl(var(--background) / 0.6) 40%, transparent)" }}
       />
 
-      {/* User / Login pill — top right */}
+      {/* Top bar — badge left, profile right */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25, type: "spring", stiffness: 300, damping: 25 }}
-        className="absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] right-4 z-20"
+        className="absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] left-4 right-4 z-20 flex items-center justify-between"
       >
          {user ? (
           <div className="flex items-center gap-2">
