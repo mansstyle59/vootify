@@ -42,6 +42,8 @@ export function MiniPlayer() {
     _seekTime, crossfadeEnabled, crossfadeDuration
   } = usePlayerStore();
 
+  const bassBoost = usePlayerStore((s) => s.bassBoost);
+  const trebleBoost = usePlayerStore((s) => s.trebleBoost);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const crossfadeRef = useRef<HTMLAudioElement | null>(null);
   const preloadRef = useRef<HTMLAudioElement | null>(null);
@@ -49,6 +51,13 @@ export function MiniPlayer() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastSongIdRef = useRef<string | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
+
+  // Web Audio API EQ nodes
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const bassFilterRef = useRef<BiquadFilterNode | null>(null);
+  const trebleFilterRef = useRef<BiquadFilterNode | null>(null);
+  const connectedAudioRef = useRef<HTMLAudioElement | null>(null);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
