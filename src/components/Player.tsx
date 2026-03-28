@@ -1065,10 +1065,13 @@ export function MiniPlayer() {
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           onError={handleAudioError}
+          onPlay={() => { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; }}
+          onPause={() => { if ("mediaSession" in navigator && !usePlayerStore.getState().isPlaying) navigator.mediaSession.playbackState = "paused"; }}
           preload="auto"
           playsInline
-          // @ts-ignore — webkit attribute for iOS background playback
+          // @ts-ignore — webkit attributes for iOS background playback & AirPlay
           webkit-playsinline=""
+          x-webkit-airplay="allow"
         />
         <audio ref={crossfadeRef} preload="metadata" playsInline />
         <audio ref={preloadRef} preload="metadata" playsInline style={{ display: "none" }} />
