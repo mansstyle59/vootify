@@ -304,6 +304,30 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
         transition={{ delay: 0.25, type: "spring", stiffness: 300, damping: 25 }}
         className="absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] left-4 right-4 z-20 flex items-center justify-between"
       >
+        {/* Left: VOOTIFY badge + sound wave */}
+        <div className="flex items-center gap-2.5">
+          <div
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+            style={{
+              background: "hsl(var(--primary) / 0.1)",
+              border: "1px solid hsl(var(--primary) / 0.15)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+            }}
+          >
+            <motion.div
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--gradient-primary)", boxShadow: "0 0 8px hsl(var(--primary) / 0.5)" }}
+            />
+            <Headphones className="w-3 h-3 text-primary" />
+            <span className="text-[10px] font-extrabold text-primary tracking-[0.15em] uppercase">Vootify</span>
+          </div>
+          <SoundWave />
+        </div>
+
+        {/* Right: Profile / Login */}
          {user ? (
           <div className="flex items-center gap-2">
             <DropdownMenu>
@@ -351,7 +375,6 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                   boxShadow: "0 16px 48px hsl(0 0% 0% / 0.35), 0 0 0 1px hsl(var(--border) / 0.3)",
                 }}
               >
-                {/* User info header */}
                 <div className="flex items-center gap-2.5 px-2.5 py-2 mb-1">
                   <Avatar className="w-9 h-9 ring-[1.5px] ring-primary/20">
                     <AvatarImage src={avatarUrl} alt={displayName || "User"} />
