@@ -2360,15 +2360,18 @@ function RequestsTab() {
 }
 
 function PriceEditor() {
-  const [prices, setPrices] = useState<Record<string, { price: string; period: string }>>({});
+  const [prices, setPrices] = useState<Record<string, Record<string, string>>>({});
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     supabase.from("plan_prices").select("*").then(({ data }) => {
       if (data) {
-        const map: Record<string, { price: string; period: string }> = {};
-        for (const row of data) map[row.plan] = { price: row.price, period: row.period };
+        const map: Record<string, Record<string, string>> = {};
+        for (const row of data) {
+          if (!map[row.plan]) map[row.plan] = {};
+          map[row.plan][row.period] = row.price;
+        }
         setPrices(map);
       }
       setLoaded(true);
@@ -2378,8 +2381,10 @@ function PriceEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      for (const [plan, { price, period }] of Object.entries(prices)) {
-        await supabase.from("plan_prices").upsert({ plan, price, period, updated_at: new Date().toISOString() });
+      for (const [plan, periods] of Object.entries(prices)) {
+        for (const [period, price] of Object.entries(periods)) {
+          await supabase.from("plan_prices").upsert({ plan, period, price, updated_at: new Date().toISOString() });
+        }
       }
       toast.success("Prix mis à jour");
     } catch { toast.error("Erreur"); }
@@ -2389,6 +2394,14 @@ function PriceEditor() {
   if (!loaded) return null;
 
   const planColors: Record<string, string> = { premium: "text-primary", gold: "text-yellow-500", vip: "text-red-500" };
+  const periods = ["/mois", "/an"];
+
+  const updatePrice = (plan: string, period: string, value: string) => {
+    setPrices(p => ({
+      ...p,
+      [plan]: { ...(p[plan] || {}), [period]: value },
+    }));
+  };
 
   return (
     <div className="rounded-xl bg-secondary/30 border border-border p-4 space-y-3">
@@ -2402,22 +2415,21 @@ function PriceEditor() {
           Sauvegarder
         </Button>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         {["premium", "gold", "vip"].map(plan => (
-          <div key={plan} className="space-y-1.5">
+          <div key={plan} className="space-y-2">
             <p className={`text-xs font-bold uppercase ${planColors[plan] || "text-foreground"}`}>{plan}</p>
-            <Input
-              value={prices[plan]?.price || ""}
-              onChange={e => setPrices(p => ({ ...p, [plan]: { ...p[plan], price: e.target.value, period: p[plan]?.period || "/mois" } }))}
-              placeholder="9.99€"
-              className="h-8 text-xs"
-            />
-            <Input
-              value={prices[plan]?.period || ""}
-              onChange={e => setPrices(p => ({ ...p, [plan]: { ...p[plan], period: e.target.value, price: p[plan]?.price || "" } }))}
-              placeholder="/mois"
-              className="h-7 text-[10px] text-muted-foreground"
-            />
+            {periods.map(period => (
+              <div key={period} className="space-y-0.5">
+                <p className="text-[10px] text-muted-foreground">{period === "/mois" ? "Mensuel" : "Annuel"}</p>
+                <Input
+                  value={prices[plan]?.[period] || ""}
+                  onChange={e => updatePrice(plan, period, e.target.value)}
+                  placeholder={period === "/mois" ? "2,99€" : "29,99€"}
+                  className="h-8 text-xs"
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>
