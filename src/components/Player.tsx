@@ -1238,7 +1238,7 @@ export function MiniPlayer() {
             if ("mediaSession" in navigator && a?.paused) {
               navigator.mediaSession.playbackState = "paused";
             }
-          }, 150);
+          }, 800);
         }}
         preload="auto"
         playsInline
