@@ -1118,8 +1118,8 @@ export function MiniPlayer() {
             if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
           }}
           onPause={() => {
-            // Debounce: only sync to store if STILL paused after 150ms
-            // This prevents brief pauses (crossfade, route change, buffering) from killing playback
+            // Debounce: only sync to store if STILL paused after 800ms
+            // Longer delay prevents iOS lock-screen pauses from killing playback
             const audio = audioRef.current;
             setTimeout(() => {
               if (audio?.paused && usePlayerStore.getState().isPlaying) {
@@ -1128,7 +1128,7 @@ export function MiniPlayer() {
               if ("mediaSession" in navigator && audio?.paused) {
                 navigator.mediaSession.playbackState = "paused";
               }
-            }, 150);
+            }, 800);
           }}
           preload="auto"
           playsInline
