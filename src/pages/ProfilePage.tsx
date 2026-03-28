@@ -87,6 +87,24 @@ const ProfilePage = () => {
     offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
   }, []);
 
+  // Load listening stats
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      supabase.from("usage_sessions").select("duration_seconds").eq("user_id", user.id),
+      supabase.from("recently_played").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("liked_songs").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("playlists").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    ]).then(([sessions, recent, liked, playlists]) => {
+      if (sessions.data) {
+        setTotalListeningSeconds(sessions.data.reduce((sum, s) => sum + (s.duration_seconds || 0), 0));
+      }
+      setTracksPlayed(recent.count ?? 0);
+      setLikedCount(liked.count ?? 0);
+      setPlaylistCount(playlists.count ?? 0);
+    });
+  }, [user]);
+
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
     const meta = user.user_metadata;
