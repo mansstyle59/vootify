@@ -25,7 +25,7 @@ const ProfilePage = () => {
   const { isAdmin } = useAdminAuth();
   const { subscription, isActive } = useSubscription(user?.id ?? null);
   
-  const { crossfadeEnabled, crossfadeDuration, setCrossfadeEnabled, setCrossfadeDuration, bassBoost, trebleBoost, setBassBoost, setTrebleBoost } = usePlayerStore();
+  const navigate = useNavigate();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
