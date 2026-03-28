@@ -172,20 +172,20 @@ function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-[11px] font-bold whitespace-nowrap transition-colors flex-shrink-0 ${
-        isActive ? "text-primary-foreground" : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-secondary/40"
+      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+        isActive ? "text-primary-foreground" : "text-muted-foreground/60 active:scale-95"
       }`}
+      style={!isActive ? { background: "hsl(var(--foreground) / 0.04)" } : undefined}
     >
       {isActive && (
         <motion.div
           layoutId="libraryTab"
-          className="absolute inset-0 rounded-2xl bg-primary"
-          style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          className="absolute inset-0 rounded-full bg-primary"
+          transition={{ type: "spring", stiffness: 500, damping: 32 }}
         />
       )}
       <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className="w-3.5 h-3.5" />
+        <Icon className="w-3 h-3" />
         {label}
       </span>
     </button>
@@ -198,28 +198,21 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
 }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <motion.button
-        whileTap={{ scale: 0.93 }}
+      <button
         onClick={onPlayAll}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground text-[12px] font-bold"
-        style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)" }}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[12px] font-bold active:scale-[0.96] transition-transform"
       >
         <Play className="w-3.5 h-3.5 fill-current" />
         Tout lire
-      </motion.button>
-      <motion.button
-        whileTap={{ scale: 0.93 }}
+      </button>
+      <button
         onClick={onShuffle}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[12px] font-semibold text-foreground"
-        style={{
-          background: "hsl(var(--secondary) / 0.5)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid hsl(var(--border) / 0.15)",
-        }}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-[0.96] transition-transform"
+        style={{ background: "hsl(var(--foreground) / 0.06)" }}
       >
         <Shuffle className="w-3.5 h-3.5" />
         Aléatoire
-      </motion.button>
+      </button>
       {extra}
     </div>
   );
@@ -228,24 +221,16 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
 /* ── Empty State ── */
 function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-20 text-center"
-    >
+    <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
       <div
-        className="p-5 rounded-2xl mb-4"
-        style={{
-          background: "hsl(var(--card) / 0.5)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid hsl(var(--border) / 0.1)",
-        }}
+        className="p-5 rounded-full mb-4"
+        style={{ background: "hsl(var(--foreground) / 0.04)" }}
       >
-        <Icon className="w-9 h-9 text-muted-foreground/30" />
+        <Icon className="w-8 h-8 text-muted-foreground/25" />
       </div>
-      <p className="text-foreground font-bold text-[13px]">{title}</p>
-      <p className="text-[11px] text-muted-foreground/50 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
-    </motion.div>
+      <p className="text-foreground font-bold text-[14px]">{title}</p>
+      <p className="text-[11px] text-muted-foreground/45 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
+    </div>
   );
 }
 
