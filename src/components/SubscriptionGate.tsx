@@ -70,7 +70,8 @@ function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user
     setSigningOut(true);
     try {
       await supabase.auth.signOut();
-      window.location.href = "/";
+      // Use replace instead of href to avoid full page reload flash
+      window.location.replace("/auth");
     } catch {
       setSigningOut(false);
     }

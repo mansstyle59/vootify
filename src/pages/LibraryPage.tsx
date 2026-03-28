@@ -594,8 +594,13 @@ const LibraryPage = () => {
       setTab(isOffline ? "downloads" : "recent");
       return;
     }
-    if (isGuest && !isOffline && tab !== "downloads") setTab("downloads");
-    if (isOffline && tab !== "downloads") setTab("downloads");
+    if (isOffline && tab !== "downloads") {
+      setTab("downloads");
+      return;
+    }
+    if (isGuest && !isOffline && tab !== "downloads") {
+      setTab("downloads");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGuest, isOffline, isAdmin]);
 
