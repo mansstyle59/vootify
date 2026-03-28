@@ -1003,7 +1003,7 @@ function SongsTab() {
     <div className="space-y-2">
       {/* Toolbar */}
       {songs.length > 0 && (
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           <button
             onClick={toggleSelectAll}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
@@ -1012,6 +1012,17 @@ function SongsTab() {
               <><X className="w-3.5 h-3.5" /> Tout désélectionner</>
             ) : (
               <><Check className="w-3.5 h-3.5" /> Tout sélectionner</>
+            )}
+          </button>
+          <button
+            onClick={handleSmartMetadataFix}
+            disabled={smartFixing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            {smartFixing ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Correction… {smartFixProgress}</>
+            ) : (
+              <><Sparkles className="w-3.5 h-3.5" /> Corriger métadonnées {isSelecting ? `(${selectedIds.size})` : "(tout)"}</>
             )}
           </button>
           {isSelecting && (
