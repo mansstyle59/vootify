@@ -861,6 +861,19 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
   const navigate = useNavigate();
   const [showQueue, setShowQueue] = useState(false);
+  const [preloadedIds, setPreloadedIds] = useState<Set<string>>(new Set());
+
+  // Poll preload status when queue is visible
+  useEffect(() => {
+    if (!showQueue) return;
+    const poll = () => {
+      const status = getPreloadStatus();
+      setPreloadedIds(new Set(status.filter((s) => s.ready).map((s) => s.songId)));
+    };
+    poll();
+    const interval = setInterval(poll, 1500);
+    return () => clearInterval(interval);
+  }, [showQueue]);
 
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const dominantColor = useDominantColor(currentSong?.coverUrl);
