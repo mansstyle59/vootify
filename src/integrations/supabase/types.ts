@@ -645,6 +645,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_audio_settings: {
+        Row: {
+          bass_boost: number
+          crossfade_duration: number
+          crossfade_enabled: boolean
+          id: string
+          treble_boost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bass_boost?: number
+          crossfade_duration?: number
+          crossfade_enabled?: boolean
+          id?: string
+          treble_boost?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bass_boost?: number
+          crossfade_duration?: number
+          crossfade_enabled?: boolean
+          id?: string
+          treble_boost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
