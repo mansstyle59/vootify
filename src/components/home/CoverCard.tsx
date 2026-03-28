@@ -1,4 +1,4 @@
-import { memo, useState, useRef, useCallback } from "react";
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, Music } from "lucide-react";
 
@@ -17,16 +17,7 @@ interface CoverCardProps {
 export const CoverCard = memo(function CoverCard({
   title, subtitle, imageUrl, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false, showPlay = false,
 }: CoverCardProps) {
-  const [tapped, setTapped] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const tapTimer = useRef<ReturnType<typeof setTimeout>>();
-
-  const handleTap = useCallback(() => {
-    if (tapped) return;
-    setTapped(true);
-    clearTimeout(tapTimer.current);
-    tapTimer.current = setTimeout(() => setTapped(false), 2500);
-  }, [tapped]);
 
   return (
     <motion.div
@@ -40,7 +31,6 @@ export const CoverCard = memo(function CoverCard({
       whileTap={{ scale: 0.96 }}
       className="flex-shrink-0 w-[105px] md:w-[130px] cursor-pointer group snap-start"
       onClick={onClick}
-      onTouchStart={showPlay && !isActive ? handleTap : undefined}
     >
       <div className={`relative w-[105px] h-[105px] md:w-[130px] md:h-[130px] overflow-hidden mb-1.5 ${
         rounded ? "rounded-full" : "rounded-xl"
@@ -53,7 +43,6 @@ export const CoverCard = memo(function CoverCard({
       >
         {imageUrl ? (
           <>
-            {/* Blur placeholder */}
             {!imgLoaded && (
               <div className="absolute inset-0 bg-secondary animate-pulse" />
             )}
@@ -73,33 +62,31 @@ export const CoverCard = memo(function CoverCard({
           </div>
         )}
 
-        {/* Gradient overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent transition-opacity duration-200 ${
-          tapped || isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        }`} />
-
-        {/* Play button */}
+        {/* Play button — visible on hover/active only */}
         {(showPlay || isActive) && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <motion.div
-              initial={false}
-              animate={{
-                scale: isActive || tapped ? 1 : 0.7,
-                opacity: isActive || tapped ? 1 : 0,
-              }}
-              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary shadow-lg group-hover:opacity-100 group-hover:scale-100"
-              style={{
-                boxShadow: "0 4px 20px hsl(var(--primary) / 0.45)",
-              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary shadow-lg"
+              style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.45)" }}
             >
               {isActive ? (
                 <Pause className="w-4.5 h-4.5 text-primary-foreground fill-current" />
               ) : (
                 <Play className="w-4.5 h-4.5 text-primary-foreground fill-current ml-0.5" />
               )}
+            </motion.div>
+          </div>
+        )}
+
+        {/* Active indicator */}
+        {isActive && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/40 via-transparent to-transparent">
+            <motion.div
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary shadow-lg"
+              style={{ boxShadow: "0 4px 20px hsl(var(--primary) / 0.45)" }}
+            >
+              <Pause className="w-4.5 h-4.5 text-primary-foreground fill-current" />
             </motion.div>
           </div>
         )}
