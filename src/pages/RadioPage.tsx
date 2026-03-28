@@ -61,17 +61,17 @@ function GenrePill({ label, active, onClick }: { label: string; active: boolean;
   return (
     <button
       onClick={onClick}
-      className="relative px-4 py-1.5 rounded-2xl text-xs font-semibold capitalize whitespace-nowrap transition-colors duration-200"
+      className="relative px-4 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition-all duration-200 active:scale-95"
       style={{
         color: active ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+        background: !active ? "hsl(var(--foreground) / 0.04)" : undefined,
       }}
     >
       {active && (
         <motion.div
           layoutId="radioGenrePill"
-          className="absolute inset-0 rounded-2xl bg-primary"
-          style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.35)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="absolute inset-0 rounded-full bg-primary"
+          transition={{ type: "spring", stiffness: 500, damping: 32 }}
         />
       )}
       <span className="relative z-10">{label === "all" ? "Toutes" : label}</span>
@@ -574,56 +574,35 @@ const RadioPage = () => {
   return (
     <div className="pb-40 max-w-7xl mx-auto animate-fade-in">
       {/* ── Header ── */}
-      <ScrollBlurHeader>
-        <div className="relative overflow-hidden">
-          {/* Decorative gradient orbs */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full opacity-[0.07]"
-              style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full opacity-[0.05]"
-              style={{ background: "radial-gradient(circle, hsl(var(--accent)), transparent 70%)" }} />
-          </div>
-
-          <div className="relative px-4 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-4">
-            <div className="flex items-center gap-3 mb-4">
-              {/* Icon */}
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center relative"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05))",
-                  border: "1px solid hsl(var(--primary) / 0.15)",
-                  boxShadow: "0 4px 24px hsl(var(--primary) / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
-                  backdropFilter: "blur(20px)",
-                }}
-              >
-                <Waves className="w-5.5 h-5.5 text-primary" />
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse"
-                  style={{ boxShadow: "0 0 8px hsl(var(--destructive) / 0.6)" }} />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground tracking-tight">Radio</h1>
-                <p className="text-[11px] text-muted-foreground/60 font-medium">Des milliers de stations en direct</p>
-              </div>
-              {/* Refresh */}
-              <button
-                onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] });
-                  queryClient.invalidateQueries({ queryKey: ["radio-browser"] });
-                  if (navigator.vibrate) navigator.vibrate(5);
-                  toast.success("Stations actualisées");
-                }}
-                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground transition-all active:scale-90"
-                style={{
-                  background: "hsl(var(--card) / 0.5)",
-                  backdropFilter: "blur(20px) saturate(1.6)",
-                  border: "1px solid hsl(var(--border) / 0.15)",
-                }}
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+      <div
+        className="sticky top-0 z-20"
+        style={{
+          background: "hsl(var(--background) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+          borderBottom: "1px solid hsl(var(--border) / 0.05)",
+        }}
+      >
+        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1">
+              <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">Radio</h1>
             </div>
+            <button
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] });
+                queryClient.invalidateQueries({ queryKey: ["radio-browser"] });
+                if (navigator.vibrate) navigator.vibrate(5);
+                toast.success("Stations actualisées");
+              }}
+              className="p-2.5 rounded-full text-muted-foreground/50 active:scale-90 transition-all"
+              style={{ background: "hsl(var(--foreground) / 0.05)" }}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
-      </ScrollBlurHeader>
+      </div>
 
       {/* ── Now Playing Hero ── */}
       <AnimatePresence>
@@ -641,41 +620,33 @@ const RadioPage = () => {
         {/* ── Search + View Toggle ── */}
         <div className="flex items-center gap-2.5 mb-4">
           <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
             <Input
               placeholder="Rechercher une station..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 rounded-2xl text-sm border-0"
+              className="pl-10 h-10 rounded-full text-sm border-0"
               style={{
-                background: "hsl(var(--card) / 0.5)",
-                backdropFilter: "blur(20px) saturate(1.6)",
-                boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.04), 0 1px 3px hsl(0 0% 0% / 0.06)",
-                border: "1px solid hsl(var(--border) / 0.12)",
+                background: "hsl(var(--foreground) / 0.05)",
               }}
             />
           </div>
 
           {/* View mode */}
-          <div className="flex items-center rounded-2xl p-0.5 flex-shrink-0"
-            style={{
-              background: "hsl(var(--card) / 0.5)",
-              backdropFilter: "blur(20px) saturate(1.6)",
-              border: "1px solid hsl(var(--border) / 0.12)",
-            }}
+          <div className="flex items-center rounded-full p-0.5 flex-shrink-0"
+            style={{ background: "hsl(var(--foreground) / 0.05)" }}
           >
             {(["grid", "list"] as ViewMode[]).map(mode => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`p-2 rounded-xl transition-all duration-200 ${
+                className={`p-2 rounded-full transition-all duration-200 ${
                   viewMode === mode
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground"
                 }`}
-                style={viewMode === mode ? { boxShadow: "0 2px 10px hsl(var(--primary) / 0.3)" } : undefined}
               >
-                {mode === "grid" ? <LayoutGrid className="w-4 h-4" /> : <List className="w-4 h-4" />}
+                {mode === "grid" ? <LayoutGrid className="w-3.5 h-3.5" /> : <List className="w-3.5 h-3.5" />}
               </button>
             ))}
           </div>
