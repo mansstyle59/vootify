@@ -106,6 +106,32 @@ const HomePage = () => {
   const { data: mostPlayed, isLoading: loadingMost } = useMostPlayed(20);
   const { data: recommended, isLoading: loadingRecommended } = useRecommended(20);
 
+  // Top artists by play count
+  const userId = usePlayerStore((s) => s.userId);
+  const { data: topArtists, isLoading: loadingTopArtists } = useQuery({
+    queryKey: ["top-artists", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("recently_played")
+        .select("artist, cover_url")
+        .eq("user_id", userId);
+      if (error) throw error;
+      const counts = new Map<string, { count: number; cover: string }>();
+      for (const r of data || []) {
+        const existing = counts.get(r.artist);
+        if (existing) existing.count++;
+        else counts.set(r.artist, { count: 1, cover: r.cover_url || "" });
+      }
+      return Array.from(counts.entries())
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10)
+        .map(([name, { count, cover }]) => ({ name, count, cover }));
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Gather all custom section song IDs for batch fetching
   const allCustomSongIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
