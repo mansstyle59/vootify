@@ -256,6 +256,12 @@ export function MiniPlayer() {
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
 
+    // Listen for AudioManager next/prev events (from media session & ended)
+    const onAudioNext = () => usePlayerStore.getState().next();
+    const onAudioPrev = () => usePlayerStore.getState().previous();
+    window.addEventListener("audio-next", onAudioNext);
+    window.addEventListener("audio-prev", onAudioPrev);
+
     // Network recovery
     const handleOnline = () => {
       const state = usePlayerStore.getState();
@@ -272,6 +278,8 @@ export function MiniPlayer() {
       audio.removeEventListener("error", handleAudioError);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
+      window.removeEventListener("audio-next", onAudioNext);
+      window.removeEventListener("audio-prev", onAudioPrev);
       window.removeEventListener("online", handleOnline);
     };
   }, [handleTimeUpdate, handleEnded, handleAudioError]);
