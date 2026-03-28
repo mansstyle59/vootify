@@ -653,7 +653,7 @@ const RadioPage = () => {
         </div>
 
         {/* ── Genre Filters ── */}
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-4 -mx-1 px-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-4 -mx-1 px-1">
           {GENRE_TAGS.map(tag => (
             <GenrePill key={tag} label={tag} active={activeGenre === tag} onClick={() => setActiveGenre(tag)} />
           ))}
@@ -707,21 +707,16 @@ const RadioPage = () => {
           )
         ) : (
           /* ── Empty State ── */
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
-              style={{
-                background: "hsl(var(--card) / 0.6)",
-                backdropFilter: "blur(20px) saturate(1.6)",
-                border: "1px solid hsl(var(--border) / 0.15)",
-                boxShadow: "0 4px 24px hsl(0 0% 0% / 0.06)",
-              }}
+          <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
+              style={{ background: "hsl(var(--foreground) / 0.04)" }}
             >
-              <Radio className="w-9 h-9 text-muted-foreground/40" />
+              <Radio className="w-7 h-7 text-muted-foreground/25" />
             </div>
-            <h2 className="text-lg font-display font-semibold text-foreground mb-2">
+            <h2 className="text-base font-bold text-foreground mb-1">
               {searchQuery.length < 2 ? "Recherchez une station" : "Aucune station trouvée"}
             </h2>
-            <p className="text-sm text-muted-foreground/60 max-w-xs">
+            <p className="text-[12px] text-muted-foreground/45 max-w-[240px]">
               {searchQuery.length < 2
                 ? "Utilisez la barre de recherche pour trouver et ajouter des stations radio"
                 : "Essayez un autre terme de recherche."}
