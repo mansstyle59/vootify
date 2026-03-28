@@ -31,18 +31,20 @@ const RequestAccessPage = () => {
   const [selectedPlan, setSelectedPlan] = useState(initialPlan);
   const [selectedDuration, setSelectedDuration] = useState<{ value: number; unit: "days" | "months" }>({ value: 1, unit: "months" });
   const [shakeFields, setShakeFields] = useState(false);
-  const [prices, setPrices] = useState<Record<string, string>>({});
+  const [prices, setPrices] = useState<Record<string, Record<string, string>>>({});
 
   const selectedPlanInfo = planOptions.find((p) => p.key === selectedPlan) || planOptions[0];
   const isFormValid = contactEmail.trim().length > 0 && pseudo.trim().length > 0;
+  const currentPeriod = selectedDuration.value === 12 ? "/an" : "/mois";
 
   // Fetch prices from plan_prices table
   useEffect(() => {
     supabase.from("plan_prices").select("plan, price, period").then(({ data }) => {
       if (!data) return;
-      const map: Record<string, string> = {};
+      const map: Record<string, Record<string, string>> = {};
       for (const row of data) {
-        map[row.plan] = row.price;
+        if (!map[row.plan]) map[row.plan] = {};
+        map[row.plan][row.period] = row.price;
       }
       setPrices(map);
     });
