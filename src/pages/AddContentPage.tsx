@@ -313,13 +313,13 @@ function SongForm() {
         return eTitle === sTitle && eArtist === sArtist;
       });
 
-      if (existing && existing.length > 0) {
+      if (duplicate) {
         // Duplicate found — overwrite (update)
         const { error: updateErr } = await supabase.from("custom_songs").update({
           album: song.album.trim() || null, duration: song.duration || 0,
           cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
           year: song.year || null, genre: song.genre || null,
-        }).eq("id", existing[0].id);
+        }).eq("id", duplicate.id);
         if (updateErr) { toast.error(`Erreur mise à jour: ${song.title}`); setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
         replaced++;
       } else {
