@@ -517,7 +517,7 @@ export function HeroBanner({ onCustomize, customSubtitle, bgColor, bgImage }: { 
                   <img src={s.cover} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
-                    {s.type === "playlist" ? <ListMusic className="w-3.5 h-3.5 text-primary" /> : s.type === "album" ? <Music className="w-3.5 h-3.5 text-primary" /> : <Headphones className="w-3.5 h-3.5 text-primary" />}
+                    {s.type === "radio" ? <Radio className="w-3.5 h-3.5 text-primary" /> : s.type === "playlist" ? <ListMusic className="w-3.5 h-3.5 text-primary" /> : s.type === "album" ? <Music className="w-3.5 h-3.5 text-primary" /> : <Headphones className="w-3.5 h-3.5 text-primary" />}
                   </div>
                 )}
                 <span className="text-[10px] font-semibold text-foreground truncate">{s.label}</span>
