@@ -29,14 +29,14 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
     <div className="relative">
       {/* Fade edges */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-5 z-10 pointer-events-none transition-opacity duration-200"
+        className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none transition-opacity duration-200"
         style={{
           opacity: canScrollLeft ? 1 : 0,
           background: "linear-gradient(to right, hsl(var(--background)), transparent)",
         }}
       />
       <div
-        className="absolute right-0 top-0 bottom-0 w-5 z-10 pointer-events-none transition-opacity duration-200"
+        className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none transition-opacity duration-200"
         style={{
           opacity: canScrollRight ? 1 : 0,
           background: "linear-gradient(to left, hsl(var(--background)), transparent)",
@@ -45,7 +45,7 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
 
       <div
         ref={scrollRef}
-        className="flex gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide pl-5 pr-4 md:pl-9 md:pr-8 pb-2"
+        className="flex gap-3 md:gap-3.5 overflow-x-auto scrollbar-hide pl-5 pr-5 md:pl-9 md:pr-9 pb-2"
         style={{
           scrollSnapType: "x proximity",
           WebkitOverflowScrolling: "touch",
@@ -55,6 +55,8 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
         }}
       >
         {children}
+        {/* Spacer to prevent last card clipping */}
+        <div className="flex-shrink-0 w-1" aria-hidden />
       </div>
     </div>
   );
