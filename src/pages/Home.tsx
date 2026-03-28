@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
@@ -15,8 +15,10 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, Disc3 } from "lucide-react";
+import { Music, Disc3, RefreshCw, Loader2 } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { toast } from "sonner";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
