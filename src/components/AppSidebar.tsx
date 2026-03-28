@@ -87,7 +87,6 @@ export function AppSidebar() {
             </RouterNavLink>
           );
         })}
-        ))}
       </nav>
 
       {user && (
