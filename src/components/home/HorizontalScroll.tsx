@@ -1,5 +1,4 @@
 import { useRef, useState, useCallback, useEffect, type ReactNode } from "react";
-import { motion } from "framer-motion";
 
 export function HorizontalScroll({ children }: { children: ReactNode }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,17 +26,17 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
   }, [checkScroll]);
 
   return (
-    <div className="relative group/scroll">
+    <div className="relative">
       {/* Fade edges */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-6 z-10 pointer-events-none transition-opacity duration-300"
+        className="absolute left-0 top-0 bottom-0 w-5 z-10 pointer-events-none transition-opacity duration-200"
         style={{
           opacity: canScrollLeft ? 1 : 0,
           background: "linear-gradient(to right, hsl(var(--background)), transparent)",
         }}
       />
       <div
-        className="absolute right-0 top-0 bottom-0 w-6 z-10 pointer-events-none transition-opacity duration-300"
+        className="absolute right-0 top-0 bottom-0 w-5 z-10 pointer-events-none transition-opacity duration-200"
         style={{
           opacity: canScrollRight ? 1 : 0,
           background: "linear-gradient(to left, hsl(var(--background)), transparent)",
@@ -46,12 +45,11 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
 
       <div
         ref={scrollRef}
-        className="flex gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide pl-5 pr-4 md:pl-9 md:pr-8 pb-3"
+        className="flex gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide pl-5 pr-4 md:pl-9 md:pr-8 pb-2"
         style={{
           scrollSnapType: "x proximity",
           WebkitOverflowScrolling: "touch",
           scrollBehavior: "smooth",
-          /* Hide scrollbar for all browsers */
           msOverflowStyle: "none",
           scrollbarWidth: "none",
         }}
@@ -62,19 +60,19 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
   );
 }
 
-export function CoverSkeleton({ count = 8 }: { count?: number }) {
+export function CoverSkeleton({ count = 6 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-[128px] md:w-[148px] snap-start">
-          <div className="w-[128px] h-[128px] md:w-[148px] md:h-[148px] rounded-2xl bg-secondary/50 mb-2.5 overflow-hidden relative">
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+        <div key={i} className="flex-shrink-0 w-[120px] md:w-[140px] snap-start">
+          <div className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-xl bg-secondary/40 mb-2 overflow-hidden relative">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
           </div>
-          <div className="h-3 w-20 md:w-24 bg-secondary/50 rounded-md mb-1.5 overflow-hidden relative">
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          <div className="h-2.5 w-16 md:w-20 bg-secondary/40 rounded mb-1 overflow-hidden relative">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
           </div>
-          <div className="h-2.5 w-14 md:w-16 bg-secondary/30 rounded-md overflow-hidden relative">
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+          <div className="h-2 w-10 md:w-12 bg-secondary/25 rounded overflow-hidden relative">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
           </div>
         </div>
       ))}
