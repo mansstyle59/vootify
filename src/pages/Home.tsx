@@ -21,6 +21,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
+import { QuickAccess } from "@/components/home/QuickAccess";
 
 /** Fetch songs by their custom_songs UUIDs */
 function useCustomSectionSongs(songIds: string[]) {
@@ -250,6 +251,8 @@ const HomePage = () => {
   return (
     <div className="pb-32 md:pb-40 max-w-7xl mx-auto relative overflow-y-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
+
+      <QuickAccess />
 
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
