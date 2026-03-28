@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -818,8 +818,72 @@ function SongsTab() {
   const coverFileRef = useRef<HTMLInputElement>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [smartFixing, setSmartFixing] = useState(false);
+  const [smartFixProgress, setSmartFixProgress] = useState("");
 
   const isSelecting = selectedIds.size > 0;
+
+  const handleSmartMetadataFix = async () => {
+    const targetSongs = isSelecting
+      ? songs.filter((s) => selectedIds.has(s.id))
+      : songs;
+    if (targetSongs.length === 0) return;
+    if (!confirm(`Lancer la correction intelligente sur ${targetSongs.length} morceau${targetSongs.length > 1 ? "x" : ""} ?`)) return;
+
+    setSmartFixing(true);
+    let totalCorrected = 0;
+    const BATCH = 10;
+
+    try {
+      for (let i = 0; i < targetSongs.length; i += BATCH) {
+        const batch = targetSongs.slice(i, i + BATCH);
+        setSmartFixProgress(`${Math.min(i + BATCH, targetSongs.length)}/${targetSongs.length}`);
+
+        const { data, error } = await supabase.functions.invoke("smart-metadata", {
+          body: {
+            tracks: batch.map((s: any) => ({
+              title: s.title,
+              artist: s.artist,
+              album: s.album,
+              fileName: s.id,
+            })),
+          },
+        });
+
+        if (error || !data?.results) continue;
+
+        for (let j = 0; j < data.results.length; j++) {
+          const result = data.results[j];
+          const song = batch[j];
+          if (!result.corrected || result.duplicateOf) continue;
+
+          const updates: Record<string, any> = {};
+          if (result.normalizedArtist !== song.artist) updates.artist = result.normalizedArtist;
+          if (result.normalizedTitle !== song.title) updates.title = result.normalizedTitle;
+          if (result.album && result.album !== song.album) updates.album = result.album;
+
+          if (Object.keys(updates).length > 0) {
+            await supabase.from("custom_songs").update(updates).eq("id", song.id);
+            setSongs((prev) =>
+              prev.map((s) => (s.id === song.id ? { ...s, ...updates } : s))
+            );
+            totalCorrected++;
+          }
+        }
+      }
+
+      toast.success(
+        totalCorrected > 0
+          ? `${totalCorrected} morceau${totalCorrected > 1 ? "x" : ""} corrigé${totalCorrected > 1 ? "s" : ""}`
+          : "Aucune correction nécessaire"
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la correction");
+    } finally {
+      setSmartFixing(false);
+      setSmartFixProgress("");
+    }
+  };
 
   const loadSongs = async () => {
     setLoading(true);
@@ -939,7 +1003,7 @@ function SongsTab() {
     <div className="space-y-2">
       {/* Toolbar */}
       {songs.length > 0 && (
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           <button
             onClick={toggleSelectAll}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors"
@@ -948,6 +1012,17 @@ function SongsTab() {
               <><X className="w-3.5 h-3.5" /> Tout désélectionner</>
             ) : (
               <><Check className="w-3.5 h-3.5" /> Tout sélectionner</>
+            )}
+          </button>
+          <button
+            onClick={handleSmartMetadataFix}
+            disabled={smartFixing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            {smartFixing ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Correction… {smartFixProgress}</>
+            ) : (
+              <><Sparkles className="w-3.5 h-3.5" /> Corriger métadonnées {isSelecting ? `(${selectedIds.size})` : "(tout)"}</>
             )}
           </button>
           {isSelecting && (
