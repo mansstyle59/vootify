@@ -65,6 +65,20 @@ function safeLocalGet<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
+// Debounced save to backend
+let _saveTimer: ReturnType<typeof setTimeout> | null = null;
+function saveAudioSettings(userId: string, partial: Record<string, unknown>) {
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try {
+      await supabase
+        .from("user_audio_settings")
+        .upsert({ user_id: userId, ...partial, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+    } catch (e) {
+      console.error("Failed to save audio settings:", e);
+    }
+  }, 500);
+}
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentSong: null,
