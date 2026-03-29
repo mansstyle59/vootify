@@ -774,7 +774,7 @@ export function MiniPlayer() {
                     <Heart className={`w-4 h-4 transition-colors ${isLiked(currentSong.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
                   </button>
                   <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
-                    {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
+                    {isBuffering ? <Loader2 className="w-4 h-4 text-background animate-spin" /> : isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
                   </button>
                   <button onClick={next} className="relative p-2 text-foreground active:scale-90 transition-transform">
                     <SkipForward className="w-5 h-5 fill-current" />
