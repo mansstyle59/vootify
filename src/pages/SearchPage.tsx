@@ -653,7 +653,7 @@ const SearchPage = () => {
                           style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)" }}
                         >
                           {release.coverUrl ? (
-                            <img src={release.coverUrl} alt={release.title} referrerPolicy="no-referrer" crossOrigin="anonymous" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                            <img src={release.coverUrl} alt={release.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
                               <Disc3 className="w-10 h-10 text-muted-foreground/10" />
