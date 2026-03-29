@@ -795,9 +795,8 @@ export function MiniPlayer() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
       <ResumeBanner message={resumeBanner} />
     </>
   );
