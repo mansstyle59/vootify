@@ -28,12 +28,12 @@ export const CoverCard = memo(function CoverCard({
     >
       <div
         className={`relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] overflow-hidden mb-2 ${
-          rounded ? "rounded-full" : "rounded-2xl"
+          rounded ? "rounded-full" : "rounded-xl"
         }`}
         style={{
           boxShadow: isActive
             ? "0 6px 24px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.35)"
-            : "0 2px 16px hsl(0 0% 0% / 0.1)",
+            : "0 2px 12px hsl(0 0% 0% / 0.08)",
         }}
       >
         {resolvedUrl ? (
@@ -48,7 +48,7 @@ export const CoverCard = memo(function CoverCard({
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-[1.05] ${
+              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-[1.04] ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
               } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
@@ -59,22 +59,22 @@ export const CoverCard = memo(function CoverCard({
           </div>
         )}
 
-        {/* Play button overlay */}
+        {/* Play button overlay — bottom-right, Apple Music style */}
         {(showPlay || isActive) && (
-          <div className={`absolute inset-0 flex items-end justify-end p-2.5 transition-opacity duration-200 ${
+          <div className={`absolute inset-0 flex items-end justify-end p-2 transition-opacity duration-200 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}>
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+              className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{
                 background: "hsl(var(--primary))",
-                boxShadow: "0 4px 16px hsl(var(--primary) / 0.45)",
+                boxShadow: "0 4px 14px hsl(var(--primary) / 0.4)",
               }}
             >
               {isActive ? (
-                <Pause className="w-4 h-4 text-primary-foreground fill-current" />
+                <Pause className="w-3.5 h-3.5 text-primary-foreground fill-current" />
               ) : (
-                <Play className="w-4 h-4 text-primary-foreground fill-current ml-0.5" />
+                <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
               )}
             </div>
           </div>
