@@ -6,6 +6,7 @@ import { VirtualSongList } from "@/components/VirtualSongList";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link, Send, Users } from "lucide-react";
+import { notifyUser } from "@/lib/notifyUser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { offlineCache } from "@/lib/offlineCache";
@@ -95,6 +96,14 @@ const PlaylistDetailPage = () => {
 
       const targetUser = shareUsers.find(u => u.user_id === shareTargetId);
       toast.success(`Playlist envoyée à ${targetUser?.display_name || "l'utilisateur"}`);
+
+      // Push notification (fire-and-forget)
+      notifyUser({
+        targetUserId: shareTargetId,
+        title: "🎵 Nouvelle playlist partagée",
+        body: `« ${playlist.name} » — ${displaySongs.length} titre${displaySongs.length > 1 ? "s" : ""}`,
+        actionUrl: "/library",
+      });
       setShowShareDialog(false);
       setShareTargetId("");
     } catch (err: any) {
