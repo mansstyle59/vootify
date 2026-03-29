@@ -19,7 +19,7 @@ function isInStandaloneMode(): boolean {
 
 const DISMISSED_KEY = "pwa-install-dismissed";
 const VISIT_COUNT_KEY = "pwa-visit-count";
-const MIN_VISITS = 2;
+const MIN_VISITS = 1;
 
 const steps = {
   ios: [
