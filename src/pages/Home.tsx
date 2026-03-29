@@ -216,7 +216,7 @@ const HomePage = () => {
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {/* Quick access playlists */}
-      <div className="mb-5">
+      <div className="mb-2">
         <QuickAccess />
       </div>
 
