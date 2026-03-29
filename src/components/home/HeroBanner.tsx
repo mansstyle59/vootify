@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, User } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, User, ChevronDown } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import {
   DropdownMenu,
