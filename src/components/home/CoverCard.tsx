@@ -81,11 +81,11 @@ export const CoverCard = memo(function CoverCard({
         )}
       </div>
 
-      <h3 className={`text-[13px] font-semibold leading-tight line-clamp-1 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
+      <h3 className={`text-[12px] font-semibold leading-tight line-clamp-1 ${rounded ? "text-center" : ""} ${isActive ? "text-primary" : "text-foreground"}`}>
         {title}
       </h3>
       {subtitle && (
-        <p className={`text-[11px] text-muted-foreground/50 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
+        <p className={`text-[10px] text-muted-foreground/50 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
           {subtitle}
         </p>
       )}
