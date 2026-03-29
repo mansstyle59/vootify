@@ -216,12 +216,12 @@ const HomePage = () => {
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {/* Quick access playlists */}
-      <div className="mt-4 mb-2">
+      <div className="mb-5">
         <QuickAccess />
       </div>
 
       {/* Dynamic sections */}
-      <div className="mt-2 space-y-1">
+      <div>
         {visibleSections.map((section) => {
           const isCustom = section.id.startsWith("custom_");
           if (isCustom) {
