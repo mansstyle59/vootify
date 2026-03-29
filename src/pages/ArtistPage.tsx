@@ -165,14 +165,8 @@ const ArtistPage = () => {
     play(shuffled[0]);
   };
 
-  const handleAlbumClick = async (albumTitle: string) => {
-    const { data } = await supabase
-      .from("custom_albums")
-      .select("id")
-      .eq("title", albumTitle)
-      .limit(1)
-      .single();
-    if (data) navigate(`/album/${data.id}`);
+  const handleAlbumClick = (albumTitle: string) => {
+    navigate(`/album/by-name?artist=${encodeURIComponent(artistName)}&album=${encodeURIComponent(albumTitle)}`);
   };
 
   const formatDate = (dateStr: string) => {
