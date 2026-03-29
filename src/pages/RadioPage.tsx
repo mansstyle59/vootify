@@ -174,13 +174,20 @@ function NowPlayingHero({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="relative overflow-hidden mx-4 md:mx-8 mb-4 rounded-2xl"
+      className="relative overflow-hidden mx-4 md:mx-8 mb-4 rounded-3xl"
       style={{ minHeight: 120 }}
     >
       {/* BG */}
       <div className="absolute inset-0 transition-colors duration-1000" style={{ background: dominantColor || "hsl(var(--secondary))" }} />
       <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[60px] scale-[2]" />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(0 0% 0% / 0.5), hsl(0 0% 0% / 0.3))" }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(135deg, hsl(0 0% 0% / 0.45), hsl(0 0% 0% / 0.25))",
+          backdropFilter: "blur(8px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(8px) saturate(1.4)",
+        }}
+      />
 
       <div className="relative z-10 flex items-center gap-4 p-4">
         {/* Cover */}
