@@ -10,8 +10,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, Sparkles
+  Clock, Music, Heart, BarChart3, Sparkles, RefreshCw, Download
 } from "lucide-react";
+import { silentCacheRefresh } from "@/lib/appCache";
+import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -120,6 +122,8 @@ const ProfilePage = () => {
   const [offlineCount, setOfflineCount] = useState(0);
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pendingActions, setPendingActions] = useState(getPendingCount());
 
   const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
   const [tracksPlayed, setTracksPlayed] = useState(0);
@@ -588,6 +592,54 @@ const ProfilePage = () => {
               </div>
             </div>
           </div>
+
+          {/* Force refresh button */}
+          <button
+            onClick={async () => {
+              if (isRefreshing) return;
+              setIsRefreshing(true);
+              try {
+                // Refresh SW cache
+                const reg = await navigator.serviceWorker?.getRegistration();
+                if (reg) await reg.update();
+                // Refresh app data cache
+                if (user) await silentCacheRefresh(user.id);
+                // Sync offline queue
+                const synced = await flushQueue();
+                setPendingActions(getPendingCount());
+                toast.success(synced > 0
+                  ? `Mis à jour ! ${synced} action(s) synchronisée(s)`
+                  : "Tout est à jour !"
+                );
+              } catch {
+                toast.error("Erreur lors de la mise à jour");
+              } finally {
+                setIsRefreshing(false);
+              }
+            }}
+            disabled={isRefreshing}
+            className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
+            style={{
+              background: "hsl(var(--primary) / 0.08)",
+              color: "hsl(var(--primary))",
+              border: "1px solid hsl(var(--primary) / 0.12)",
+            }}
+          >
+            {isRefreshing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            {isRefreshing ? "Mise à jour…" : "Forcer la mise à jour"}
+            {pendingActions > 0 && (
+              <span
+                className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                style={{ background: "hsl(var(--primary) / 0.15)" }}
+              >
+                {pendingActions} en attente
+              </span>
+            )}
+          </button>
 
           <button
             onClick={async () => {
