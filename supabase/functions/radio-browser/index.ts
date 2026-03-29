@@ -43,7 +43,34 @@ serve(async (req) => {
   }
 
   try {
-    const { action, query, tag, country, limit = 30 } = await req.json();
+    const body = await req.json();
+    const { action, query, tag, country, limit = 30, tags } = body;
+
+    // Special action: get station counts for multiple tags
+    if (action === "tag_counts") {
+      const tagList: string[] = tags || [];
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        tagList.map(async (t: string) => {
+          try {
+            const r = await fetch(
+              `${API_BASE}/stations/bytag/${encodeURIComponent(t)}?hidebroken=true&limit=200`,
+              { headers: { "User-Agent": "Vootify/1.0" } }
+            );
+            const data = await r.json();
+            counts[t] = Array.isArray(data) ? data.length : 0;
+          } catch {
+            counts[t] = 0;
+          }
+        })
+      );
+
+      return new Response(
+        JSON.stringify({ success: true, counts }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     let url: string;
     const params = new URLSearchParams({

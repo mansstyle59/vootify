@@ -72,7 +72,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   news: "200 60% 45%",
 };
 
-function CategoryCard({ genre, active, onClick }: { genre: string; active: boolean; onClick: () => void }) {
+function CategoryCard({ genre, active, onClick, count }: { genre: string; active: boolean; onClick: () => void; count?: number }) {
   const Icon = CATEGORY_ICONS[genre] || Radio;
   const color = CATEGORY_COLORS[genre] || "var(--primary)";
 
@@ -99,6 +99,14 @@ function CategoryCard({ genre, active, onClick }: { genre: string; active: boole
         style={{ width: 48, height: 48, color: active ? "white" : `hsl(${color})` }}
       />
       <div className="relative z-10 h-full flex flex-col justify-end p-3">
+        {count != null && count > 0 && (
+          <span
+            className="text-[9px] font-semibold mb-0.5 opacity-70"
+            style={{ color: active ? "white" : `hsl(${color})` }}
+          >
+            {count >= 200 ? "200+" : count} stations
+          </span>
+        )}
         <span
           className="text-[12px] font-bold capitalize leading-tight"
           style={{ color: active ? "white" : `hsl(${color})` }}
@@ -618,6 +626,13 @@ const RadioPage = () => {
     return merged;
   }, [isSearching, searchResults, myRadioResults, myRadioLogoMap]);
 
+  // Fetch station counts per genre tag
+  const { data: genreCounts = {} } = useQuery({
+    queryKey: ["radio-genre-counts"],
+    queryFn: () => radioBrowserApi.getTagCounts(GENRE_LIST),
+    staleTime: 30 * 60 * 1000,
+  });
+
   // Fetch stations from API when a genre is selected
   const { data: apiGenreStations = [], isLoading: loadingGenre } = useQuery({
     queryKey: ["radio-genre", activeGenre],
@@ -810,6 +825,7 @@ const RadioPage = () => {
                 genre={genre}
                 active={false}
                 onClick={() => setActiveGenre(genre)}
+                count={genreCounts[genre]}
               />
             ))}
           </StationStrip>
