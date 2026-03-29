@@ -307,10 +307,6 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Quick access playlists */}
-      <div className="mb-2">
-        <QuickAccess />
-      </div>
 
       {/* Dynamic sections */}
       <div>
