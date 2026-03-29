@@ -4,6 +4,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListEnd, Music } from "lucide-react";
 import { LazyImage } from "./LazyImage";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
 import { toast } from "sonner";
 
 interface SongCardProps {
@@ -24,6 +25,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
   const isCurrentSong = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   const { isCached, isDownloading, progress, download } = useOfflineCache(song.id);
+  const resolvedCover = useOfflineCoverUrl(song.id, song.coverUrl);
 
   const handleClick = () => {
     if (isCurrentSong) {
@@ -67,7 +69,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
         }}
       >
         <LazyImage
-          src={song.coverUrl}
+          src={resolvedCover}
           alt={song.title}
           className="w-full h-full object-cover"
           wrapperClassName="w-full h-full"
