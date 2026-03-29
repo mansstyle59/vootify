@@ -725,7 +725,7 @@ const RadioPage = () => {
           ) : searchStations.length > 0 ? (
             <div>
               {searchStations.map((station) => (
-                <SearchResultRow key={station.id} station={station} />
+                <SearchResultRowComponent key={station.id} station={station} ctx={stationTileProps} />
               ))}
             </div>
           ) : (
@@ -753,7 +753,7 @@ const RadioPage = () => {
           {genreStations.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
               {genreStations.map((station) => (
-                <StationTile key={station.id} station={station} />
+                <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
               ))}
             </div>
           ) : (
@@ -787,13 +787,13 @@ const RadioPage = () => {
               {showAllStations ? (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
                   {enrichedCustom.map((station) => (
-                    <StationTile key={station.id} station={station} />
+                    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
                   ))}
                 </div>
               ) : (
                 <StationStrip>
                   {displayStations.map((station) => (
-                    <StationTile key={station.id} station={station} />
+                    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
                   ))}
                 </StationStrip>
               )}
