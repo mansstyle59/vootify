@@ -3170,7 +3170,8 @@ function NotificationsTab() {
   const [actionUrl, setActionUrl] = useState("");
   const [sending, setSending] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
-  const { saveSetting } = useSaveAppSetting();
+  const saveSettingMutation = useSaveAppSetting();
+  const { user } = useAuth();
 
   const { data: history = [] } = useQuery({
     queryKey: ["admin-notifications"],
