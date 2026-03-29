@@ -352,18 +352,25 @@ const LibraryPage = () => {
   const [libraryCachedIds, setLibraryCachedIds] = useState<Set<string>>(new Set());
   const [playlistCachedCounts, setPlaylistCachedCounts] = useState<Record<string, number>>({});
 
+  const playlistIds = useMemo(() => playlists.map((p) => p.id).join(","), [playlists]);
+
   useEffect(() => {
     if (tab === "playlists") {
       playlists.forEach((p) => { if (!playlistSongs[p.id]) loadPlaylistSongs(p.id); });
     }
-  }, [tab, playlists]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, playlistIds]);
+
+  const playlistSongsRef = useRef(playlistSongs);
+  playlistSongsRef.current = playlistSongs;
 
   useEffect(() => {
     if (tab !== "playlists") return;
+    const ps = playlistSongsRef.current;
     const countCached = async () => {
       const counts: Record<string, number> = {};
       for (const p of playlists) {
-        const songs = playlistSongs[p.id] || [];
+        const songs = ps[p.id] || [];
         let count = 0;
         for (const s of songs) { if (await offlineCache.isCached(s.id)) count++; }
         counts[p.id] = count;
@@ -371,7 +378,8 @@ const LibraryPage = () => {
       setPlaylistCachedCounts(counts);
     };
     countCached();
-  }, [tab, playlists, playlistSongs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, playlistIds]);
 
   // (cache check moved after customSongs declaration)
 
