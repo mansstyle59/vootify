@@ -338,7 +338,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           {/* Primary CTA — Shuffle */}
           <button
             onClick={handleShuffle}
-            className="flex items-center justify-center gap-2.5 w-full py-3 rounded-2xl text-[13px] font-bold active:scale-[0.97] transition-all duration-200"
+            className="flex items-center justify-center gap-2.5 w-full py-3 rounded-full text-[13px] font-bold active:scale-[0.97] transition-all duration-200"
             style={{
               background: "hsl(var(--primary) / 0.12)",
               color: "hsl(var(--primary))",
@@ -352,50 +352,38 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => navigate("/library")}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl text-foreground active:scale-[0.95] transition-all duration-200"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200"
               style={{
-                background: "hsl(var(--foreground) / 0.05)",
+                background: "hsl(var(--primary) / 0.10)",
+                color: "hsl(var(--primary))",
               }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, hsl(340 80% 55% / 0.15), hsl(340 80% 55% / 0.05))" }}
-              >
-                <Heart className="w-4 h-4" style={{ color: "hsl(340 80% 55%)" }} />
-              </div>
-              <span className="text-[11px] font-semibold text-foreground/70">Favoris</span>
+              <Heart className="w-4 h-4" />
+              Favoris
             </button>
 
             <button
               onClick={() => navigate("/search")}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl text-foreground active:scale-[0.95] transition-all duration-200"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200"
               style={{
-                background: "hsl(var(--foreground) / 0.05)",
+                background: "hsl(var(--primary) / 0.10)",
+                color: "hsl(var(--primary))",
               }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: "hsl(var(--primary) / 0.1)" }}
-              >
-                <Search className="w-4 h-4 text-primary" />
-              </div>
-              <span className="text-[11px] font-semibold text-foreground/70">Rechercher</span>
+              <Search className="w-4 h-4" />
+              Rechercher
             </button>
 
             <button
               onClick={() => navigate("/radio")}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl text-foreground active:scale-[0.95] transition-all duration-200"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200"
               style={{
-                background: "hsl(var(--foreground) / 0.05)",
+                background: "hsl(var(--primary) / 0.10)",
+                color: "hsl(var(--primary))",
               }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: "hsl(var(--accent) / 0.15)" }}
-              >
-                <Radio className="w-4 h-4 text-accent-foreground" />
-              </div>
-              <span className="text-[11px] font-semibold text-foreground/70">Radio</span>
+              <Radio className="w-4 h-4" />
+              Radio
             </button>
           </div>
         </motion.div>
