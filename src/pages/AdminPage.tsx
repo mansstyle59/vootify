@@ -2348,12 +2348,26 @@ function SongPickerModal({
 
         {/* Footer */}
         <div className="p-3 border-t border-border flex items-center justify-between gap-3">
-          <button
-            onClick={() => setSelected(new Set())}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Tout désélectionner
-          </button>
+          {(() => {
+            const selectableIds = deezerTracks.filter(t => t.dbSongId).map(t => t.dbSongId!);
+            const allSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
+            return (
+              <button
+                onClick={() => {
+                  if (allSelected) {
+                    setSelected(new Set());
+                  } else {
+                    const next = new Set(selected);
+                    selectableIds.forEach(id => next.add(id));
+                    setSelected(next);
+                  }
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
+              </button>
+            );
+          })()}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleDone}
