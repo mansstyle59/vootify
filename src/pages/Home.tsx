@@ -222,23 +222,34 @@ const HomePage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
-      {/* ── Compact Header ── */}
+      {/* ── Qobuz-style Glass Header ── */}
       <div
-        className="flex items-center justify-between px-5 md:px-8 pb-1"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+        className="sticky top-0 z-30 flex items-center justify-between px-5 md:px-8 pb-3"
+        style={{
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
+          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 70%, hsl(var(--background) / 0) 100%)",
+          backdropFilter: "blur(40px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+        }}
       >
-        <h1 className="text-[32px] md:text-[36px] font-black text-foreground leading-tight tracking-tight">
+        <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-none tracking-tight">
           {(() => { const h = new Date().getHours(); return h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; })()}
         </h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <NotificationBell />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className="relative outline-none active:scale-[0.93] transition-all duration-150 flex items-center gap-2 rounded-full py-1 pl-1 pr-3"
-                  style={{ background: "hsl(var(--foreground) / 0.06)" }}
+                  style={{
+                    background: "linear-gradient(145deg, hsl(var(--card) / 0.6), hsl(var(--card) / 0.3))",
+                    backdropFilter: "blur(40px) saturate(2)",
+                    WebkitBackdropFilter: "blur(40px) saturate(2)",
+                    border: "0.5px solid hsl(var(--foreground) / 0.08)",
+                    boxShadow: "0 2px 12px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+                  }}
                 >
                   <Avatar className="w-7 h-7">
                     <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.picture} alt={user.user_metadata?.display_name || "User"} />
@@ -259,11 +270,11 @@ const HomePage = () => {
                 className="w-56 rounded-2xl p-2 animate-scale-in"
                 sideOffset={8}
                 style={{
-                  background: "hsl(var(--card) / 0.95)",
-                  backdropFilter: "blur(60px) saturate(2)",
-                  WebkitBackdropFilter: "blur(60px) saturate(2)",
-                  border: "1px solid hsl(var(--border) / 0.1)",
-                  boxShadow: "0 20px 60px hsl(0 0% 0% / 0.5)",
+                  background: "linear-gradient(160deg, hsl(var(--card) / 0.85), hsl(var(--card) / 0.65))",
+                  backdropFilter: "blur(80px) saturate(2.2)",
+                  WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+                  border: "0.5px solid hsl(var(--foreground) / 0.08)",
+                  boxShadow: "0 24px 64px hsl(0 0% 0% / 0.5), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
                 }}
               >
                 <div className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl" style={{ background: "hsl(var(--foreground) / 0.04)" }}>

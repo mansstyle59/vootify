@@ -114,15 +114,15 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
   const hasSongs = songs && songs.length > 0;
 
   return (
-    <section className="mb-7 md:mb-9">
-      {/* Separator line — Apple Music style */}
-      <div className="px-5 md:px-9 mb-3">
-        <div className="h-px" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+    <section className="mb-8 md:mb-10">
+      {/* Separator — subtle glass divider */}
+      <div className="px-5 md:px-9 mb-4">
+        <div className="h-px" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.08), transparent)" }} />
       </div>
 
-      {/* Header */}
-      <div className="flex items-end justify-between px-5 md:px-9 mb-3">
-        <h2 className="text-[22px] md:text-[24px] font-extrabold text-foreground leading-none tracking-tight line-clamp-1 break-words">
+      {/* Header — Qobuz editorial style */}
+      <div className="flex items-end justify-between px-5 md:px-9 mb-4">
+        <h2 className="text-[20px] md:text-[22px] font-bold text-foreground leading-none tracking-tight line-clamp-1 break-words">
           {title}
         </h2>
         <div className="flex items-center gap-1.5 relative flex-shrink-0 ml-3">
@@ -130,8 +130,13 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           {hasSongs && onPlayAll && (
             <button
               onClick={onPlayAll}
-              className="flex items-center gap-1 p-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform"
-              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
+              className="flex items-center gap-1 p-2 rounded-full text-[11px] font-semibold active:scale-95 transition-transform"
+              style={{
+                background: "linear-gradient(145deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.06))",
+                color: "hsl(var(--primary))",
+                border: "0.5px solid hsl(var(--primary) / 0.12)",
+                boxShadow: "0 2px 8px hsl(var(--primary) / 0.1)",
+              }}
             >
               <Play className="w-3 h-3 fill-current" />
             </button>
@@ -140,7 +145,7 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
             <>
               <button
                 onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                className="flex items-center p-1.5 rounded-full text-muted-foreground/40 active:scale-95 transition-transform"
+                className="flex items-center p-2 rounded-full text-muted-foreground/40 active:scale-95 transition-transform"
               >
                 <ListPlus className="w-3.5 h-3.5" />
               </button>
@@ -154,11 +159,11 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}
-              className="flex items-center gap-0.5 text-[13px] font-semibold active:opacity-70 transition-opacity"
-              style={{ color: "hsl(var(--primary))" }}
+              className="flex items-center gap-0.5 text-[12px] font-semibold active:opacity-70 transition-opacity"
+              style={{ color: "hsl(var(--primary) / 0.8)" }}
             >
               Voir tout
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
