@@ -1,18 +1,11 @@
 /**
- * Global Audio Singleton — persists across all React renders and navigation.
- * NEVER recreate this instance. Always reuse it via `getGlobalAudio()`.
+ * Global Audio Singleton — delegates to AudioManager.
+ * This file exists for backward compatibility only.
+ * @deprecated Import audioManager from "@/lib/audioManager" instead.
  */
 
-const globalAudio = new Audio();
-globalAudio.preload = "auto";
-globalAudio.setAttribute("playsinline", "true");
-// @ts-ignore — webkit iOS attributes
-globalAudio.setAttribute("webkit-playsinline", "");
-globalAudio.setAttribute("x-webkit-airplay", "allow");
-
-// Expose on window for debugging (optional)
-(window as any).__globalAudio = globalAudio;
+import { audioManager } from "@/lib/audioManager";
 
 export function getGlobalAudio(): HTMLAudioElement {
-  return globalAudio;
+  return audioManager.audio;
 }

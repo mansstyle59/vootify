@@ -385,9 +385,10 @@ export function MiniPlayer() {
       setIsBuffering(false);
     };
     const handlePause = () => {
-      // Only sync pause if user explicitly paused (not background interruption)
-      if (document.visibilityState === "visible") {
+      // Only sync pause state if user explicitly paused (not OS background interruption)
+      if (audioManager.wasExplicitlyPaused) {
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+        if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
       }
     };
 

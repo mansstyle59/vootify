@@ -19,11 +19,15 @@ class AudioManager {
   isPlaying = false;
   isBuffering = false;
 
+  /** True when the user explicitly paused (vs OS interrupt) */
+  private _explicitPause = false;
+
   private _stalledTimer: ReturnType<typeof setTimeout> | null = null;
   private _stalledRetries = 0;
   private static readonly MAX_STALLED_RETRIES = 4;
   private _keepaliveInterval: ReturnType<typeof setInterval> | null = null;
   private _interruptRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
+  private _webLock: any = null;
 
   constructor() {
     if ((window as any).__audioManager) return (window as any).__audioManager;
@@ -38,9 +42,15 @@ class AudioManager {
     this.audio.addEventListener("play", () => {
       this.isPlaying = true;
       this.isBuffering = false;
-      this._stalledRetries = 0;
+      this._explicitPause = false;
+      this._acquireWakeLock();
     });
-    this.audio.addEventListener("pause", () => { this.isPlaying = false; });
+    this.audio.addEventListener("pause", () => {
+      this.isPlaying = false;
+      if (this._explicitPause) {
+        this._releaseWakeLock();
+      }
+    });
     this.audio.addEventListener("ended", () => this.next());
 
     // ── Buffering / Stalled recovery ──
@@ -61,11 +71,24 @@ class AudioManager {
     this.audio.addEventListener("stalled", () => this._handleStalled());
 
     // ── iOS audio interrupt recovery ──
-    this.audio.addEventListener("pause", () => this._scheduleInterruptRecovery());
+    this.audio.addEventListener("pause", () => {
+      if (!this._explicitPause) {
+        this._scheduleInterruptRecovery();
+      }
+    });
     this.audio.addEventListener("play", () => this._cancelInterruptRecovery());
 
-    // ── iOS background keepalive ──
+    // ── Background keepalive ──
     this._setupKeepalive();
+
+    // ── Visibility change — resume on foreground return ──
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && this.currentTrack && !this._explicitPause) {
+        if (this.audio.paused && this.audio.src) {
+          this.audio.play().catch(() => {});
+        }
+      }
+    });
 
     (window as any).__audioManager = this;
     (window as any).__globalAudio = this.audio;
@@ -74,6 +97,8 @@ class AudioManager {
   play(track?: TrackInfo) {
     const t = track || this.currentTrack;
     if (!t) return;
+
+    this._explicitPause = false;
 
     if (!this.currentTrack || this.currentTrack.url !== t.url) {
       this.audio.src = t.url;
@@ -87,12 +112,14 @@ class AudioManager {
   }
 
   pause() {
+    this._explicitPause = true;
     this._cancelInterruptRecovery();
     this.audio.pause();
   }
 
   toggle() {
     if (this.audio.paused) {
+      this._explicitPause = false;
       this.audio.play().catch(() => {});
     } else {
       this.pause();
@@ -100,11 +127,13 @@ class AudioManager {
   }
 
   stop() {
+    this._explicitPause = true;
     this._cancelInterruptRecovery();
     this.audio.pause();
     this.audio.currentTime = 0;
     this.currentTrack = null;
     this.isBuffering = false;
+    this._releaseWakeLock();
   }
 
   next() {
@@ -115,9 +144,13 @@ class AudioManager {
     window.dispatchEvent(new Event("audio-prev"));
   }
 
+  /** Was the last pause an explicit user action? */
+  get wasExplicitlyPaused(): boolean {
+    return this._explicitPause;
+  }
+
   /**
    * Handle stalled events with exponential backoff retry.
-   * Tries to recover playback when the network stalls.
    */
   private _handleStalled() {
     if (this._stalledTimer) clearTimeout(this._stalledTimer);
@@ -136,7 +169,6 @@ class AudioManager {
     this._stalledTimer = setTimeout(() => {
       if (!this.currentTrack || this.audio.paused) return;
 
-      // If still stalled, try seeking slightly forward or reloading
       if (this.audio.readyState < 3) {
         const currentSrc = this.audio.src;
         const currentTime = this.audio.currentTime;
@@ -161,26 +193,35 @@ class AudioManager {
 
   /**
    * iOS audio interrupt recovery — when iOS pauses audio for a phone call
-   * or Siri, we detect the unwanted pause and try to resume.
+   * or Siri, detect the unwanted pause and try to resume.
+   * Only runs if user hasn't explicitly paused.
    */
   private _scheduleInterruptRecovery() {
-    // Only attempt if we think playback should be active
-    if (!this.currentTrack) return;
+    if (!this.currentTrack || this._explicitPause) return;
 
-    // If the page is hidden (background), the pause might be from OS
-    // Give a grace period then try to resume
-    this._interruptRecoveryTimer = setTimeout(() => {
-      if (!this.currentTrack) return;
-      // If audio is paused but we haven't explicitly paused, try resuming
-      if (this.audio.paused && this.audio.src && document.visibilityState === "hidden") {
+    this._cancelInterruptRecovery();
+
+    // Progressive retry: 2s, 4s, 8s
+    let attempt = 0;
+    const tryResume = () => {
+      if (this._explicitPause || !this.currentTrack) return;
+      if (this.audio.paused && this.audio.src) {
         this.audio.play().then(() => {
           if ("mediaSession" in navigator) {
             navigator.mediaSession.playbackState = "playing";
           }
-          console.log("[AudioManager] Recovered from audio interrupt");
-        }).catch(() => {});
+          console.log(`[AudioManager] Recovered from interrupt (attempt ${attempt + 1})`);
+        }).catch(() => {
+          attempt++;
+          if (attempt < 3) {
+            this._interruptRecoveryTimer = setTimeout(tryResume, 2000 * Math.pow(2, attempt));
+          }
+        });
       }
-    }, 3000);
+    };
+
+    // Initial grace period before first attempt
+    this._interruptRecoveryTimer = setTimeout(tryResume, 2000);
   }
 
   private _cancelInterruptRecovery() {
@@ -192,26 +233,50 @@ class AudioManager {
 
   /**
    * Keepalive ping — prevents iOS from suspending the audio context
-   * when the PWA is in background. Periodically touches the audio
-   * element to keep the process alive.
+   * when the PWA is in background.
    */
   private _setupKeepalive() {
-    // Only on iOS PWA
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isPwa = window.matchMedia("(display-mode: standalone)").matches;
+
+    // Run on iOS PWA or any standalone PWA
     if (!isIos && !isPwa) return;
 
     this._keepaliveInterval = setInterval(() => {
-      if (!this.isPlaying || !this.currentTrack) return;
+      if (!this.currentTrack || this._explicitPause) return;
+
       if (this.audio.paused && this.audio.src) {
         // Audio got silently paused by OS — try to resume
         this.audio.play().catch(() => {});
       }
+
       // Touch the media session to keep it alive
-      if ("mediaSession" in navigator && this.currentTrack) {
+      if ("mediaSession" in navigator && this.isPlaying) {
         navigator.mediaSession.playbackState = "playing";
       }
     }, 10000);
+  }
+
+  /**
+   * Acquire a Web Lock to hint to the browser that work is ongoing
+   * (helps prevent suspension on some browsers)
+   */
+  private _acquireWakeLock() {
+    if (this._webLock || typeof navigator.locks === "undefined") return;
+    try {
+      navigator.locks.request("audio-playback-lock", { mode: "exclusive" }, () => {
+        return new Promise<void>((resolve) => {
+          this._webLock = resolve;
+        });
+      }).catch(() => {});
+    } catch {}
+  }
+
+  private _releaseWakeLock() {
+    if (this._webLock) {
+      this._webLock();
+      this._webLock = null;
+    }
   }
 
   updateMediaSession(track: TrackInfo) {
