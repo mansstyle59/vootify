@@ -108,7 +108,12 @@ export function MiniPlayer() {
 
   const handleClose = useCallback(() => {
     setClosing(true);
-  }, []);
+    // Directly close since no exit animation
+    setTimeout(() => {
+      closePlayer();
+      setClosing(false);
+    }, 50);
+  }, [closePlayer]);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
