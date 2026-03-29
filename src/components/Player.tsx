@@ -1077,7 +1077,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           >
             <div className="sticky top-0 z-10 pt-2 pb-3" style={{ background: `${bgColor}ee` }}>
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-2">En cours de lecture</h3>
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/8 border border-white/8 backdrop-blur-xl">
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/8" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.03))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.1)" }}>
                 <div className="relative">
                   {currentSong.coverUrl ? (
                     <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" />
@@ -1296,7 +1296,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     <motion.div animate={{ scale: isSeeking ? 1.2 : 0, opacity: isSeeking ? 1 : 0 }} transition={{ duration: 0.15 }} className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full bg-white" style={{ boxShadow: "0 0 10px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.3)" }} />
                     <AnimatePresence>
                       {isSeeking && (
-                        <motion.div initial={{ opacity: 0, y: 5, scale: 0.8 }} animate={{ opacity: 1, y: -10, scale: 1 }} exit={{ opacity: 0, y: 5, scale: 0.8 }} className="absolute -right-5 -top-10 px-2.5 py-1 rounded-lg text-[11px] font-bold text-white tabular-nums bg-white/15 backdrop-blur-xl border border-white/10">
+                        <motion.div initial={{ opacity: 0, y: 5, scale: 0.8 }} animate={{ opacity: 1, y: -10, scale: 1 }} exit={{ opacity: 0, y: 5, scale: 0.8 }} className="absolute -right-5 -top-10 px-2.5 py-1 rounded-lg text-[11px] font-bold text-white tabular-nums border border-white/10" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.18), hsl(0 0% 100% / 0.06))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
                           {formatDuration(Math.floor(progress))}
                         </motion.div>
                       )}
