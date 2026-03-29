@@ -43,6 +43,79 @@ const HomePage = () => {
   const queryClient = useQueryClient();
   const [refreshingArtists, setRefreshingArtists] = useState(false);
 
+  // ── Friday Releases ──
+  interface FridayRelease { id: number; title: string; artist: string; coverUrl: string; albumId: number; }
+  const { data: fridayReleases = [] } = useQuery<FridayRelease[]>({
+    queryKey: ["friday-releases-home"],
+    queryFn: async () => {
+      const { data: cached } = await (supabase
+        .from("friday_releases" as any)
+        .select("album_id, title, artist, cover_url")
+        .order("position", { ascending: true })
+        .limit(20) as any);
+      if (!cached || cached.length === 0) return [];
+
+      // Resolve covers from offline cache
+      const releases = await Promise.all(
+        cached.map(async (r: any) => {
+          let coverUrl = r.cover_url;
+          try { const c = await getFridayCoverUrl(r.album_id); if (c) coverUrl = c; } catch {}
+          return { id: r.album_id, title: r.title, artist: r.artist, coverUrl, albumId: r.album_id };
+        })
+      );
+
+      // Background refresh if stale
+      if (isFridayDataStale()) {
+        supabase.functions.invoke("refresh-friday-releases", { body: {} })
+          .then(() => { markFridayRefreshed(); queryClient.invalidateQueries({ queryKey: ["friday-releases-home"] }); })
+          .catch(() => {});
+      } else { markFridayRefreshed(); }
+
+      return releases;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: allSongsForFriday } = useQuery({
+    queryKey: ["all-songs-for-friday"],
+    queryFn: async () => {
+      const { data } = await supabase.from("custom_songs").select("id, title, artist, album, duration, cover_url, stream_url").not("stream_url", "is", null);
+      return (data || []).map((r) => ({
+        id: `custom-${r.id}`, title: r.title, artist: r.artist, album: r.album || "",
+        duration: r.duration || 0, coverUrl: r.cover_url || "", streamUrl: r.stream_url || "", liked: false,
+      })) as Song[];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: fridayReleases.length > 0,
+  });
+
+  const playFridayRelease = useCallback(async (release: FridayRelease) => {
+    try {
+      const { data } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/album/${release.albumId}/tracks?limit=50` },
+      });
+      const deezerTracks = data?.data || [];
+      if (deezerTracks.length === 0) return;
+      const library = allSongsForFriday || [];
+      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      const fullTracks: Song[] = [];
+      for (const t of deezerTracks) {
+        const dTitle = normalize(t.title || "");
+        const dArtist = normalize(t.artist?.name || release.artist);
+        const match = library.find((s) => {
+          const sTitle = normalize(s.title);
+          const sArtist = normalize(s.artist);
+          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
+                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
+        });
+        if (match && match.streamUrl) {
+          fullTracks.push({ ...match, album: release.title, coverUrl: release.coverUrl || match.coverUrl });
+        }
+      }
+      if (fullTracks.length > 0) { setQueue(fullTracks); play(fullTracks[0]); }
+    } catch {}
+  }, [play, setQueue, allSongsForFriday]);
+
   const { data: artists, isLoading: loadingArtists } = useQuery({
     queryKey: ["home-artists"],
     queryFn: async () => {
