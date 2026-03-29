@@ -7,7 +7,6 @@ import type { Song } from "@/data/mockData";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { ContentStrip, StripSkeleton } from "@/components/home/ContentStrip";
-import { HeroBanner } from "@/components/home/HeroBanner";
 import {
   useRecentlyAdded,
   useRecentlyListened,
@@ -15,15 +14,24 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, RefreshCw, Loader2, User } from "lucide-react";
+import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
-
+import { NotificationBell } from "@/components/NotificationBell";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const HomePage = () => {
   const navigate = useNavigate();
