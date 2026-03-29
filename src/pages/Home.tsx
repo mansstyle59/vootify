@@ -471,8 +471,8 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
     >
       <div
-        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-xl overflow-hidden mb-2"
-        style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)" }}
+        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl overflow-hidden mb-2.5"
+        style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), 0 1px 3px hsl(0 0% 0% / 0.1)" }}
       >
         {imageUrl ? (
           <>
@@ -492,10 +492,14 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
             <UserIcon className="w-8 h-8 text-muted-foreground/20" />
           </div>
         )}
-        {/* Name overlay */}
+        {/* Name overlay — glass frosted */}
         <div
-          className="absolute inset-x-0 bottom-0 h-[45%] flex items-end p-2.5"
-          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.6) 0%, transparent 100%)" }}
+          className="absolute inset-x-0 bottom-0 flex items-end p-2.5"
+          style={{
+            background: "linear-gradient(to top, hsl(0 0% 0% / 0.7) 0%, hsl(0 0% 0% / 0.3) 60%, transparent 100%)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+          }}
         >
           <p className="text-[12px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
             {artist.name}
@@ -595,8 +599,8 @@ function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; tit
       onClick={() => navigate(`/album/${album.id}`)}
     >
       <div
-        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-xl overflow-hidden mb-2"
-        style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)" }}
+        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl overflow-hidden mb-2.5"
+        style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), 0 1px 3px hsl(0 0% 0% / 0.1)" }}
       >
         {imageUrl ? (
           <>
@@ -617,8 +621,12 @@ function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; tit
           </div>
         )}
         <div
-          className="absolute inset-x-0 bottom-0 h-[50%] flex flex-col justify-end p-2.5"
-          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, transparent 100%)" }}
+          className="absolute inset-x-0 bottom-0 flex flex-col justify-end p-2.5"
+          style={{
+            background: "linear-gradient(to top, hsl(0 0% 0% / 0.7) 0%, hsl(0 0% 0% / 0.3) 60%, transparent 100%)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+          }}
         >
           <p className="text-[12px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
             {album.title}
