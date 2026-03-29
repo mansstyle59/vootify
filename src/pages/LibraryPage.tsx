@@ -657,23 +657,23 @@ const LibraryPage = () => {
   const isGuest = !authLoading && !user;
 
   useEffect(() => {
-    if (!isAdmin && tab === "custom") {
-      setTab(isOffline ? "downloads" : null);
-      return;
-    }
-    if (isOffline && tab !== "downloads" && tab !== null) {
-      setTab("downloads");
-      return;
-    }
-    if (isGuest && !isOffline && tab !== "downloads" && tab !== null) {
-      setTab("downloads");
-      return;
-    }
-    if (tab && !checkLibraryTab(tab) && !isOffline && !isGuest) {
-      setTab(null);
-    }
+    setTab((prev) => {
+      if (!isAdmin && prev === "custom") {
+        return isOffline ? "downloads" : null;
+      }
+      if (isOffline && prev !== "downloads" && prev !== null) {
+        return "downloads";
+      }
+      if (isGuest && !isOffline && prev !== "downloads" && prev !== null) {
+        return "downloads";
+      }
+      if (prev && !checkLibraryTab(prev) && !isOffline && !isGuest) {
+        return null;
+      }
+      return prev;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuest, isOffline, isAdmin, tab]);
+  }, [isGuest, isOffline, isAdmin]);
 
   const visibleTabs = isOffline
     ? tabs.filter((t) => t.key === "downloads")
