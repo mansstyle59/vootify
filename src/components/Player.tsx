@@ -913,10 +913,11 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             onClick={togglePlay}
             className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
             style={{
-              background: "hsl(var(--foreground) / 0.12)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid hsl(var(--foreground) / 0.15)",
+              background: "linear-gradient(135deg, hsl(var(--foreground) / 0.15), hsl(var(--foreground) / 0.06))",
+              backdropFilter: "blur(80px) saturate(2.2)",
+              WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+              border: "0.5px solid hsl(var(--foreground) / 0.12)",
+              boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1)",
             }}
           >
             {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-current" /> : <Play className="w-8 h-8 text-foreground fill-current ml-1" />}
@@ -1044,7 +1045,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       {/* Top bar */}
       <div className="relative z-10 flex items-center px-6 pb-3">
         <div className="w-[72px] flex items-center justify-start">
-          <motion.button whileTap={{ scale: 0.85 }} onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             <ChevronDown className="w-5 h-5 text-white/80" />
           </motion.button>
         </div>
@@ -1053,13 +1054,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           <p className="text-[12px] font-bold text-white/70 truncate mt-0.5">{currentSong.album || "Ma bibliothèque"}</p>
         </div>
         <div className="w-[72px] flex items-center justify-end gap-1.5">
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { onClose(); setTimeout(() => navigate("/audio-settings"), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { onClose(); setTimeout(() => navigate("/audio-settings"), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             <SlidersHorizontal className="w-4 h-4 text-white/80" />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { const q = encodeURIComponent(`${currentSong.title} ${currentSong.artist}`.trim()); onClose(); setTimeout(() => navigate(`/search?q=${q}`), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { const q = encodeURIComponent(`${currentSong.title} ${currentSong.artist}`.trim()); onClose(); setTimeout(() => navigate(`/search?q=${q}`), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             <Search className="w-4 h-4 text-white/80" />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setShowQueue(!showQueue)} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setShowQueue(!showQueue)} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
           </motion.button>
         </div>
@@ -1076,7 +1077,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           >
             <div className="sticky top-0 z-10 pt-2 pb-3" style={{ background: `${bgColor}ee` }}>
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-2">En cours de lecture</h3>
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/8 border border-white/8 backdrop-blur-xl">
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/8" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.03))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.1)" }}>
                 <div className="relative">
                   {currentSong.coverUrl ? (
                     <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" />
@@ -1295,7 +1296,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     <motion.div animate={{ scale: isSeeking ? 1.2 : 0, opacity: isSeeking ? 1 : 0 }} transition={{ duration: 0.15 }} className="absolute right-0 top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full bg-white" style={{ boxShadow: "0 0 10px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.3)" }} />
                     <AnimatePresence>
                       {isSeeking && (
-                        <motion.div initial={{ opacity: 0, y: 5, scale: 0.8 }} animate={{ opacity: 1, y: -10, scale: 1 }} exit={{ opacity: 0, y: 5, scale: 0.8 }} className="absolute -right-5 -top-10 px-2.5 py-1 rounded-lg text-[11px] font-bold text-white tabular-nums bg-white/15 backdrop-blur-xl border border-white/10">
+                        <motion.div initial={{ opacity: 0, y: 5, scale: 0.8 }} animate={{ opacity: 1, y: -10, scale: 1 }} exit={{ opacity: 0, y: 5, scale: 0.8 }} className="absolute -right-5 -top-10 px-2.5 py-1 rounded-lg text-[11px] font-bold text-white tabular-nums border border-white/10" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.18), hsl(0 0% 100% / 0.06))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
                           {formatDuration(Math.floor(progress))}
                         </motion.div>
                       )}
