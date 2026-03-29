@@ -308,7 +308,7 @@ export function MiniPlayer() {
     }
   }, [next, volume]);
 
-  // ── Error handler ──
+  // ── Error handler with smart offline fallback ──
   const handleAudioError = useCallback(async () => {
     if (!currentSong) return;
     const isRadio = currentSong.duration === 0;
@@ -333,11 +333,33 @@ export function MiniPlayer() {
       return;
     }
 
-    // Music: try cache → retry → skip
+    // Music: intelligent fallback chain → cache → preloaded → stream → skip
     const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
     if (cachedUrl && !audio.src.includes("blob:")) {
+      setPlayingFromCache(true);
       audio.src = cachedUrl;
       audio.play().catch(console.error);
+      return;
+    }
+
+    // Try preloaded URL
+    const preloadedUrl = getPreloadedUrl(currentSong.id);
+    if (preloadedUrl) {
+      consumePreloaded(currentSong.id);
+      audio.src = preloadedUrl;
+      audio.play().catch(console.error);
+      return;
+    }
+
+    if (currentSong.streamUrl && !navigator.onLine) {
+      // Offline and no cache — wait for network
+      const waitOnline = () => {
+        window.removeEventListener("online", waitOnline);
+        if (usePlayerStore.getState().currentSong?.id !== currentSong.id) return;
+        audio.src = currentSong.streamUrl!;
+        audio.play().catch(() => usePlayerStore.getState().next());
+      };
+      window.addEventListener("online", waitOnline);
       return;
     }
 
