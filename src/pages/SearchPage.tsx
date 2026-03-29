@@ -566,7 +566,11 @@ const SearchPage = () => {
                     <div key={stat.label} className="flex flex-col items-center gap-1.5">
                       <div
                         className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary"
-                        style={{ background: "hsl(var(--primary) / 0.08)" }}
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
+                          border: "0.5px solid hsl(var(--primary) / 0.1)",
+                          boxShadow: "0 2px 12px hsl(var(--primary) / 0.08)",
+                        }}
                       >
                         {stat.icon}
                         <span className="text-base font-black leading-tight mt-1 tabular-nums">{stat.value}</span>
