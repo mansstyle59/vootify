@@ -346,7 +346,7 @@ const HomePage = () => {
   );
 };
 
-/* ── Artist Card ── */
+/* ── Artist Card — Apple Music style ── */
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const { data: customImage } = useQuery({
@@ -368,35 +368,35 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
 
   return (
     <div
-      className="flex-shrink-0 w-[130px] md:w-[150px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
+      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
     >
       <div
-        className="relative w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl overflow-hidden mb-1.5"
-        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.15)" }}
+        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-xl overflow-hidden mb-2"
+        style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)" }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+              <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.05)" }} />
             )}
             <img
               src={imageUrl}
               alt={artist.name}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.05)" }}>
             <User className="w-8 h-8 text-muted-foreground/20" />
           </div>
         )}
-        {/* Overlay with name */}
+        {/* Name overlay */}
         <div
-          className="absolute inset-x-0 bottom-0 h-[50%] flex items-end p-2.5"
-          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, transparent 100%)" }}
+          className="absolute inset-x-0 bottom-0 h-[45%] flex items-end p-2.5"
+          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.6) 0%, transparent 100%)" }}
         >
           <p className="text-[12px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
             {artist.name}
@@ -407,7 +407,7 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
   );
 }
 
-/* ── Top Artist Bubble ── */
+/* ── Top Artist Bubble — clean & minimal ── */
 function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; count: number; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
@@ -426,30 +426,24 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
 
   const imageUrl = customImage || deezerImage || artist.cover;
   const isPodium = index < 3;
-  const size = isPodium ? 76 : 64;
-
-  const podiumGradients: Record<number, string> = {
-    0: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.6))",
-    1: "linear-gradient(135deg, hsl(var(--primary) / 0.7), hsl(var(--primary) / 0.3))",
-    2: "linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--primary) / 0.2))",
-  };
-
-  const podiumGlow: Record<number, string> = {
-    0: "0 0 16px hsl(var(--primary) / 0.4), 0 4px 12px hsl(0 0% 0% / 0.15)",
-    1: "0 0 12px hsl(var(--primary) / 0.25), 0 4px 10px hsl(0 0% 0% / 0.12)",
-    2: "0 0 8px hsl(var(--primary) / 0.15), 0 4px 8px hsl(0 0% 0% / 0.1)",
-  };
+  const size = isPodium ? 72 : 60;
 
   return (
     <button
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-      className="flex flex-col items-center gap-2 flex-shrink-0 group active:scale-[0.93] transition-transform duration-200"
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-[0.93] transition-transform duration-200"
     >
       <div className="relative">
         {isPodium && (
           <div
-            className="absolute -inset-[3px] rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
-            style={{ background: podiumGradients[index] }}
+            className="absolute -inset-[2.5px] rounded-full"
+            style={{
+              background: index === 0
+                ? "hsl(var(--primary))"
+                : index === 1
+                ? "hsl(var(--primary) / 0.6)"
+                : "hsl(var(--primary) / 0.35)",
+            }}
           />
         )}
         <div
@@ -457,27 +451,27 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
           style={{
             width: size,
             height: size,
-            boxShadow: isPodium ? podiumGlow[index] : "0 2px 8px hsl(0 0% 0% / 0.1)",
+            boxShadow: isPodium
+              ? "0 4px 12px hsl(var(--primary) / 0.2)"
+              : "0 2px 8px hsl(0 0% 0% / 0.08)",
             border: isPodium ? "none" : "2px solid hsl(var(--foreground) / 0.06)",
           }}
         >
           {imageUrl ? (
             <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.05)" }}>
               <User className="w-1/3 h-1/3 text-muted-foreground/30" />
             </div>
           )}
         </div>
         {/* Rank badge */}
         <div
-          className="absolute -bottom-1 left-1/2 -translate-x-1/2 min-w-[20px] h-[20px] rounded-full flex items-center justify-center text-[10px] font-black shadow-lg px-1"
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black px-1"
           style={{
-            background: isPodium ? podiumGradients[index] : "hsl(var(--foreground) / 0.08)",
+            background: isPodium ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.08)",
             color: isPodium ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground) / 0.5)",
-            boxShadow: isPodium
-              ? "0 2px 8px hsl(var(--primary) / 0.3)"
-              : "0 1px 4px hsl(0 0% 0% / 0.08)",
+            boxShadow: "0 1px 6px hsl(0 0% 0% / 0.1)",
           }}
         >
           #{index + 1}
@@ -485,52 +479,52 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
       </div>
       <div className="text-center mt-0.5" style={{ maxWidth: size + 12 }}>
         <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[9px] mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+        <p className="text-[9px] mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.45)" }}>{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
     </button>
   );
 }
 
-/* ── Album Card ── */
+/* ── Album Card — overlay style ── */
 function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; title: string; artist: string; cover_url: string | null }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const imageUrl = album.cover_url || "";
 
   return (
     <div
-      className="flex-shrink-0 w-[130px] md:w-[150px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
+      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
       onClick={() => navigate(`/album/${album.id}`)}
     >
       <div
-        className="relative w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl overflow-hidden mb-1.5"
-        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.15)" }}
+        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-xl overflow-hidden mb-2"
+        style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)" }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+              <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.05)" }} />
             )}
             <img
               src={imageUrl}
               alt={album.title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.05)" }}>
             <Music className="w-8 h-8 text-muted-foreground/20" />
           </div>
         )}
         <div
-          className="absolute inset-x-0 bottom-0 h-[55%] flex flex-col justify-end p-2.5"
-          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.7) 0%, transparent 100%)" }}
+          className="absolute inset-x-0 bottom-0 h-[50%] flex flex-col justify-end p-2.5"
+          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, transparent 100%)" }}
         >
           <p className="text-[12px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
             {album.title}
           </p>
-          <p className="text-[10px] text-white/60 truncate mt-0.5">
+          <p className="text-[10px] text-white/55 truncate mt-0.5">
             {album.artist}
           </p>
         </div>
