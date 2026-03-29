@@ -21,7 +21,7 @@ export interface PlaylistDownloadState {
   total: number;
 }
 
-const CONCURRENCY = 3;
+const CONCURRENCY = 6;
 
 export function usePlaylistDownload() {
   const [state, setState] = useState<PlaylistDownloadState>({

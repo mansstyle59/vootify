@@ -571,7 +571,7 @@ const LibraryPage = () => {
       let done = 0;
       // Download 3 at a time
       const queue = [...toDownload];
-      const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
+      const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
         while (queue.length > 0) {
           const song = queue.shift()!;
           try {
