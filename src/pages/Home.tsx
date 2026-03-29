@@ -213,7 +213,90 @@ const HomePage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
-      {/* Hero banner removed */}
+      {/* ── Compact Header ── */}
+      <div
+        className="flex items-center justify-between px-5 md:px-8 pb-1"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+      >
+        <h1 className="text-[32px] md:text-[36px] font-black text-foreground leading-tight tracking-tight">
+          {(() => { const h = new Date().getHours(); return h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; })()}
+        </h1>
+
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="relative outline-none active:scale-[0.93] transition-all duration-150 flex items-center gap-2 rounded-full py-1 pl-1 pr-3"
+                  style={{ background: "hsl(var(--foreground) / 0.06)" }}
+                >
+                  <Avatar className="w-7 h-7">
+                    <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.picture} alt={user.user_metadata?.display_name || "User"} />
+                    <AvatarFallback
+                      className="text-[9px] font-bold"
+                      style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
+                    >
+                      {(user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-[12px] font-semibold text-foreground/80 truncate max-w-[80px]">
+                    {(user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "U").split(" ")[0]}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 rounded-2xl p-2 animate-scale-in"
+                sideOffset={8}
+                style={{
+                  background: "hsl(var(--card) / 0.95)",
+                  backdropFilter: "blur(60px) saturate(2)",
+                  WebkitBackdropFilter: "blur(60px) saturate(2)",
+                  border: "1px solid hsl(var(--border) / 0.1)",
+                  boxShadow: "0 20px 60px hsl(0 0% 0% / 0.5)",
+                }}
+              >
+                <div className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.picture} />
+                    <AvatarFallback className="text-[11px] font-bold" style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}>
+                      {(user.user_metadata?.display_name || user.email?.split("@")[0] || "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-bold text-foreground truncate">{user.user_metadata?.display_name || user.email?.split("@")[0]}</p>
+                    <p className="text-[10px] text-muted-foreground/50 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-[13px]">Mon profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
+                  <Headphones className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-semibold text-[13px]">Paramètres audio</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
+                <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="w-4 h-4" />
+                  <span className="font-semibold text-[13px]">Déconnexion</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <button
+              onClick={() => navigate("/auth")}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-bold active:scale-95 transition-transform"
+              style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Connexion
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Quick access playlists */}
       <div className="mb-2">
