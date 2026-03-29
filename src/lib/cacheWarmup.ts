@@ -23,7 +23,7 @@ async function warmApiData(userId: string) {
     fetch(`${base}/playlists?user_id=eq.${userId}&order=created_at.desc`, { headers }),
     fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers }),
     fetch(`${base}/profiles?user_id=eq.${userId}&limit=1`, { headers }),
-    fetch(`${base}/home_config?id=eq.global&limit=1`, { headers }),
+    fetch(`${base}/home_config?limit=1`, { headers }),
   ];
 
   await Promise.allSettled(queries);

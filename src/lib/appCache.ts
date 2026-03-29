@@ -109,7 +109,7 @@ export async function performInitialCache(
 
     // 4 — Home config + audio settings
     await Promise.all([
-      fetch(`${base}/home_config?id=eq.global&limit=1`, { headers }),
+      fetch(`${base}/home_config?limit=1`, { headers }),
       fetch(`${base}/user_audio_settings?user_id=eq.${userId}&limit=1`, { headers }),
     ]);
     report(4);
@@ -241,7 +241,7 @@ export function silentCacheRefresh(userId: string) {
       fetch(`${base}/liked_songs?user_id=eq.${userId}&order=created_at.desc&limit=200`, { headers }),
       fetch(`${base}/playlists?user_id=eq.${userId}&order=created_at.desc`, { headers }),
       fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers }),
-      fetch(`${base}/home_config?id=eq.global&limit=1`, { headers }),
+      fetch(`${base}/home_config?limit=1`, { headers }),
       fetch(`${base}/user_audio_settings?user_id=eq.${userId}&limit=1`, { headers }),
     ]);
 
