@@ -664,20 +664,15 @@ export function MiniPlayer() {
                 <MiniPlayerProgress percent={0} isLive />
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={toggleFullScreen}>
-                    <motion.div
+                    <div
                       className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
                       style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
-                      whileTap={{ scale: 0.92 }}
                     >
                       {bubbleCover ? (
-                        <motion.img
-                          key={bubbleCover}
+                        <img
                           src={bubbleCover}
                           alt={currentSong.title}
                           className="w-full h-full object-cover"
-                          initial={{ opacity: 0, scale: 1.1 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.4 }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
@@ -685,12 +680,9 @@ export function MiniPlayer() {
                         </div>
                       )}
                       {isPlaying && (
-                        <div className="absolute inset-0 rounded-xl" style={{ boxShadow: "inset 0 0 12px hsl(var(--primary) / 0.15)" }} />
-                      )}
-                      {isPlaying && (
                         <div className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
                       )}
-                    </motion.div>
+                    </div>
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
