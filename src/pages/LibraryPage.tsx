@@ -961,12 +961,7 @@ const LibraryPage = () => {
                           >
                             <motion.button
                               whileTap={{ scale: 0.98 }}
-                              onClick={() => {
-                                if (spSongs.length > 0) {
-                                  setQueue(spSongs);
-                                  play(spSongs[0]);
-                                }
-                              }}
+                              onClick={() => navigate(`/shared-playlist/${sp.id}`)}
                               className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
                               style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
                             >

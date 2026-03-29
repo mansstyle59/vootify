@@ -44,6 +44,7 @@ const AudioSettingsPage = lazy(() => import("./pages/AudioSettingsPage"));
 const RequestAccessPage = lazy(() => import("./pages/RequestAccessPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const GenrePage = lazy(() => import("./pages/GenrePage"));
+const SharedPlaylistDetailPage = lazy(() => import("./pages/SharedPlaylistDetailPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +81,7 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
             <Route path="/audio-settings" element={<AudioSettingsPage />} />
             <Route path="/request-access" element={<RequestAccessPage />} />
             <Route path="/genre/:name" element={<GenrePage />} />
+            <Route path="/shared-playlist/:id" element={<SharedPlaylistDetailPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </RouteGuard>
