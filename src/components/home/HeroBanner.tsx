@@ -116,9 +116,9 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
             {/* Mesh gradient background */}
             <div className="absolute inset-0" style={{
               background: `
-                radial-gradient(ellipse 80% 50% at 20% 10%, hsl(var(--primary) / 0.15) 0%, transparent 55%),
-                radial-gradient(ellipse 60% 40% at 80% 30%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse 40% 60% at 50% 80%, hsl(var(--primary) / 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 50% at 20% 10%, hsl(var(--primary) / 0.20) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 80% 30%, hsl(var(--primary) / 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 60% at 50% 80%, hsl(var(--primary) / 0.06) 0%, transparent 60%),
                 hsl(var(--background))
               `,
             }} />
@@ -298,32 +298,37 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
         style={{ opacity, y: contentY }}
         className="relative z-10 px-5 md:px-8 pt-3 pb-7"
       >
-        {/* Sound wave visualizer */}
+        {/* Large greeting with subtle sound wave accent */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="mb-4"
-        >
-          <SoundWaveVisualizer />
-        </motion.div>
-
-        {/* Large greeting */}
-        <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="text-[34px] md:text-[40px] font-black text-foreground leading-[1.02] tracking-tight"
+          className="flex items-end gap-3"
         >
-          {getGreeting()}
-        </motion.h1>
+          <h1 className="text-[36px] md:text-[42px] font-black text-foreground leading-[1.02] tracking-tight">
+            {getGreeting()}
+          </h1>
+          <div className="mb-2 opacity-30">
+            <div className="flex items-end gap-[2px] h-5">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="w-[2px] rounded-full bg-primary"
+                  animate={{ height: [3, 8 + Math.random() * 10, 4, 12 + Math.random() * 6, 3] }}
+                  transition={{ duration: 1.8 + Math.random() * 0.8, repeat: Infinity, ease: "easeInOut", delay: i * 0.09 }}
+                />
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
-        {/* Daily quote */}
+        {/* Daily quote — soft green */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
-          className="text-[13px] text-muted-foreground/50 mt-1.5 font-medium italic"
+          className="text-[13px] mt-3 font-medium italic"
+          style={{ color: "hsl(var(--primary) / 0.55)" }}
         >
           « {customSubtitle || quote} »
         </motion.p>
@@ -333,29 +338,32 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.35 }}
-          className="flex flex-col gap-3 mt-5"
+          className="flex flex-col gap-3 mt-7"
         >
           {/* Primary CTA — Shuffle */}
           <button
             onClick={handleShuffle}
-            className="flex items-center justify-center gap-2.5 w-full py-3 rounded-full text-[13px] font-bold active:scale-[0.97] transition-all duration-200"
+            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-full text-[14px] font-bold active:scale-[0.97] transition-all duration-200 border"
             style={{
               background: "hsl(var(--primary) / 0.12)",
               color: "hsl(var(--primary))",
+              borderColor: "hsl(var(--primary) / 0.25)",
+              boxShadow: "inset 0 1px 0 hsl(var(--primary) / 0.08), 0 2px 12px hsl(var(--primary) / 0.08)",
             }}
           >
-            <Shuffle className="w-4 h-4" />
+            <Shuffle className="w-4.5 h-4.5" />
             Lecture aléatoire
           </button>
 
           {/* Secondary actions row */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2.5">
             <button
               onClick={() => navigate("/library")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
               style={{
-                background: "hsl(var(--primary) / 0.10)",
+                background: "hsl(var(--primary) / 0.08)",
                 color: "hsl(var(--primary))",
+                borderColor: "hsl(var(--primary) / 0.15)",
               }}
             >
               <Heart className="w-4 h-4" />
@@ -364,10 +372,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
 
             <button
               onClick={() => navigate("/search")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
               style={{
-                background: "hsl(var(--primary) / 0.10)",
+                background: "hsl(var(--primary) / 0.08)",
                 color: "hsl(var(--primary))",
+                borderColor: "hsl(var(--primary) / 0.15)",
               }}
             >
               <Search className="w-4 h-4" />
@@ -376,10 +385,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
 
             <button
               onClick={() => navigate("/radio")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
               style={{
-                background: "hsl(var(--primary) / 0.10)",
+                background: "hsl(var(--primary) / 0.08)",
                 color: "hsl(var(--primary))",
+                borderColor: "hsl(var(--primary) / 0.15)",
               }}
             >
               <Radio className="w-4 h-4" />
