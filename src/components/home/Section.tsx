@@ -114,40 +114,30 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
   const hasSongs = songs && songs.length > 0;
 
   return (
-    <section className="mb-8 md:mb-10">
-      {/* Apple Music style header — bold title, minimal actions */}
-      <div className="flex items-end justify-between px-5 md:px-9 mb-3">
-        <div className="flex items-baseline gap-2 min-w-0">
-          <h2 className="text-[20px] md:text-[22px] font-bold text-foreground leading-tight tracking-tight line-clamp-2 break-words">
-            {title}
-          </h2>
-          {viewAllLink && (
-            <button
-              onClick={() => navigate(viewAllLink)}
-              className="text-[13px] font-medium text-primary flex-shrink-0 active:opacity-70 transition-opacity"
-            >
-              Tout voir
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 relative flex-shrink-0 ml-2">
+    <section className="mb-5 md:mb-7">
+      {/* Compact header */}
+      <div className="flex items-center justify-between px-5 md:px-9 mb-2">
+        <h2 className="text-[17px] md:text-[19px] font-bold text-foreground leading-tight tracking-tight line-clamp-1 break-words">
+          {title}
+        </h2>
+        <div className="flex items-center gap-1 relative flex-shrink-0 ml-2">
           {action}
           {hasSongs && onPlayAll && (
             <button
               onClick={onPlayAll}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform"
+              className="flex items-center gap-1 p-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform"
               style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
             >
-              <Play className="w-2.5 h-2.5 fill-current" />
+              <Play className="w-3 h-3 fill-current" />
             </button>
           )}
           {hasSongs && (
             <>
               <button
                 onClick={() => setShowPlaylistPicker(!showPlaylistPicker)}
-                className="flex items-center px-1.5 py-1.5 rounded-full text-muted-foreground/40 active:scale-95 transition-transform"
+                className="flex items-center p-1.5 rounded-full text-muted-foreground/40 active:scale-95 transition-transform"
               >
-                <ListPlus className="w-4 h-4" />
+                <ListPlus className="w-3.5 h-3.5" />
               </button>
               <AnimatePresence>
                 {showPlaylistPicker && songs && (
@@ -156,11 +146,16 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
               </AnimatePresence>
             </>
           )}
+          {viewAllLink && (
+            <button
+              onClick={() => navigate(viewAllLink)}
+              className="text-[12px] font-medium text-primary active:opacity-70 transition-opacity"
+            >
+              Voir
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Subtle separator */}
-      <div className="mx-5 md:mx-9 mb-3" style={{ height: 1, background: "hsl(var(--foreground) / 0.04)" }} />
 
       {children}
     </section>

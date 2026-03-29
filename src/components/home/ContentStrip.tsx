@@ -76,14 +76,13 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3.5 overflow-x-auto pl-24 pr-9 md:pl-24 md:pr-14 pb-2 scrollbar-hide"
+        className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-1.5 scrollbar-hide"
         style={{
           scrollSnapType: "x proximity",
           WebkitOverflowScrolling: "touch",
         }}
       >
         {children}
-        {/* Spacer to prevent last card clipping */}
         <div className="flex-shrink-0 w-1" aria-hidden />
       </div>
     </div>
@@ -94,15 +93,15 @@ export function StripSkeleton({ count = 6 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-[140px] md:w-[160px] snap-start">
+        <div key={i} className="flex-shrink-0 w-[130px] md:w-[150px] snap-start">
           <div
-            className="w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-xl mb-2.5 overflow-hidden relative"
+            className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-xl mb-1.5 overflow-hidden relative"
             style={{ background: "hsl(var(--foreground) / 0.04)" }}
           >
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
           </div>
-          <div className="h-3 w-20 rounded mb-1" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
-          <div className="h-2.5 w-14 rounded" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
+          <div className="h-2.5 w-16 rounded mb-1" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+          <div className="h-2 w-12 rounded" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
         </div>
       ))}
     </>
