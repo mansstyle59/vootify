@@ -626,6 +626,13 @@ const RadioPage = () => {
     return merged;
   }, [isSearching, searchResults, myRadioResults, myRadioLogoMap]);
 
+  // Fetch station counts per genre tag
+  const { data: genreCounts = {} } = useQuery({
+    queryKey: ["radio-genre-counts"],
+    queryFn: () => radioBrowserApi.getTagCounts(GENRE_LIST),
+    staleTime: 30 * 60 * 1000,
+  });
+
   // Fetch stations from API when a genre is selected
   const { data: apiGenreStations = [], isLoading: loadingGenre } = useQuery({
     queryKey: ["radio-genre", activeGenre],
