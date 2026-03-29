@@ -104,6 +104,7 @@ const ProfilePage = () => {
   const [offlineCount, setOfflineCount] = useState(0);
   const [coverCacheCount, setCoverCacheCount] = useState(0);
   const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
+  const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
   const [isRefreshing, setIsRefreshing] = useState(false);
