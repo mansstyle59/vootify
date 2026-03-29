@@ -697,17 +697,6 @@ const LibraryPage = () => {
                 {isOffline ? "Hors-ligne" : "Bibliothèque"}
               </h1>
             </div>
-            <button
-              onClick={() => {
-                queryClient.invalidateQueries();
-                if (userId) loadUserData(userId);
-                toast.success("Bibliothèque actualisée");
-              }}
-              className="p-2.5 rounded-full text-muted-foreground/50 active:scale-90 transition-all"
-              style={{ background: "hsl(var(--foreground) / 0.05)" }}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Tab pills */}

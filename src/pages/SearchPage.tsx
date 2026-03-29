@@ -390,13 +390,6 @@ const SearchPage = () => {
       <div className="px-5 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[28px] md:text-[32px] font-black text-foreground tracking-tight">Rechercher</h1>
-          <button
-            onClick={() => { refetchSongs(); if (navigator.vibrate) navigator.vibrate(5); toast.success("Recherche actualisée"); }}
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-all active:scale-90"
-            style={{ background: "hsl(var(--foreground) / 0.04)" }}
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
