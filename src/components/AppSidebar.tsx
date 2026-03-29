@@ -174,10 +174,11 @@ export function MobileNav() {
       <div
         className="flex items-center rounded-[28px] px-1 py-1"
         style={{
-          background: "hsl(var(--card) / 0.85)",
-          backdropFilter: "blur(40px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-          boxShadow: "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+          background: "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
+          backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+          boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
+          border: "0.5px solid hsl(var(--foreground) / 0.08)",
         }}
       >
         {pillItems.map((item) => {
@@ -236,12 +237,15 @@ export function MobileNav() {
           }`
         }
         style={({ isActive }: { isActive: boolean }) => ({
-          background: isActive ? "hsl(var(--primary) / 0.12)" : "hsl(var(--card) / 0.85)",
-          backdropFilter: "blur(40px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+          background: isActive
+            ? "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.06))"
+            : "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
+          backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
           boxShadow: isActive
-            ? "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), 0 0 16px hsl(var(--primary) / 0.15)"
-            : "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+            ? "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), 0 0 20px hsl(var(--primary) / 0.12)"
+            : "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
+          border: "0.5px solid hsl(var(--foreground) / 0.08)",
         }) as React.CSSProperties}
       >
         {({ isActive }) => (
@@ -258,10 +262,11 @@ export function MobileNav() {
         <div
           className="flex items-center gap-1 rounded-full px-1 py-1"
           style={{
-            background: "hsl(var(--card) / 0.85)",
-            backdropFilter: "blur(40px) saturate(1.8)",
-            WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-            boxShadow: "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+            background: "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
+            backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+            boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
+            border: "0.5px solid hsl(var(--foreground) / 0.08)",
           }}
         >
           {adminItems.map((item) => (
