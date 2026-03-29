@@ -62,7 +62,8 @@ export async function performInitialCache(
   const steps = [
     { label: "Profil utilisateur", weight: 1 },
     { label: "Morceaux favoris", weight: 2 },
-    { label: "Playlists", weight: 1 },
+    { label: "Playlists & morceaux", weight: 2 },
+    { label: "Albums & artistes", weight: 2 },
     { label: "Historique récent", weight: 1 },
     { label: "Configuration", weight: 1 },
     { label: "Finalisation", weight: 1 },
