@@ -19,14 +19,14 @@ import { preloadNextTrack } from "@/lib/smartPreload";
 import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 
-/* ── Shared glass styles — enhanced glassmorphism ── */
+/* ── Shared liquid glass styles ── */
 const glassStyle = {
-  background: "hsl(var(--card) / 0.72)",
-  backdropFilter: "blur(80px) saturate(2.0) brightness(1.05)",
-  WebkitBackdropFilter: "blur(80px) saturate(2.0) brightness(1.05)",
-  border: "1px solid hsl(var(--foreground) / 0.08)",
+  background: "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
+  backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+  WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+  border: "0.5px solid hsl(var(--foreground) / 0.08)",
   boxShadow:
-    "0 -4px 30px hsl(0 0% 0% / 0.3), 0 12px 40px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.06)",
+    "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
 };
 
 /* ── Animated progress bar with glow ── */
