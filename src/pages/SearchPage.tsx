@@ -532,7 +532,31 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* Trending Artists */}
+            {/* Library Stats */}
+            {allSongs && allSongs.length > 0 && (
+              <section>
+                <h2 className="text-[18px] font-bold text-foreground mb-3">Votre bibliothèque</h2>
+                <div className="flex justify-around">
+                  {[
+                    { icon: <Music className="w-4 h-4" />, value: allSongs.length, label: "Morceaux" },
+                    { icon: <User className="w-4 h-4" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes" },
+                    { icon: <Disc3 className="w-4 h-4" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary"
+                        style={{ background: "hsl(var(--primary) / 0.08)" }}
+                      >
+                        {stat.icon}
+                        <span className="text-base font-black leading-tight mt-1 tabular-nums">{stat.value}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/50 font-semibold">{stat.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {trendingArtists.length > 0 && (
               <section>
                 <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes populaires</h2>
