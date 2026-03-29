@@ -115,6 +115,11 @@ export default function IosPwaInstallBanner() {
     localStorage.setItem(DISMISSED_KEY, "1");
   };
 
+  const dismissForever = () => {
+    setVisible(false);
+    localStorage.setItem(INSTALLED_KEY, "1");
+  };
+
   const activeSteps = steps[platform];
 
   const nextStep = () => {
