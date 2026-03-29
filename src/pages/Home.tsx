@@ -392,6 +392,35 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* ── Top Artists — integrated in hero zone ── */}
+      {visibleSections.some((s) => s.id === "top_artists") && (topArtists && topArtists.length > 0 || loadingTopArtists) && (
+        <div className="mt-1 mb-2">
+          <div className="px-5 md:px-9 mb-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsl(var(--muted-foreground) / 0.4)" }}>
+              {visibleSections.find((s) => s.id === "top_artists")?.title || "Top Artistes 🏆"}
+            </p>
+          </div>
+          <div className="px-5 md:px-9">
+            {loadingTopArtists ? (
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 -mx-1 px-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                    <div className="w-[64px] h-[64px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+                    <div className="w-12 h-2 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 -mx-1 px-1">
+                {topArtists?.map((artist, i) => (
+                  <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
+                ))}
+                <div className="w-1 flex-shrink-0" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Dynamic sections */}
       <div>
@@ -403,30 +432,7 @@ const HomePage = () => {
           }
 
           if (section.id === "top_artists") {
-            if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
-            return (
-              <Section key={section.id} title={section.title}>
-                <div className="px-5 md:px-9">
-                  {loadingTopArtists ? (
-                    <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2.5 flex-shrink-0">
-                          <div className="w-[76px] h-[76px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
-                          <div className="w-14 h-2.5 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
-                      {topArtists?.map((artist, i) => (
-                        <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
-                      ))}
-                      <div className="w-1 flex-shrink-0" />
-                    </div>
-                  )}
-                </div>
-              </Section>
-            );
+            return null; // Already rendered in hero zone
           }
 
           if (section.id === "artists") {
