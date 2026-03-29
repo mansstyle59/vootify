@@ -226,7 +226,7 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; 
 }
 
 const LibraryPage = () => {
-  const [tab, setTab] = useState<Tab>("recent");
+  const [tab, setTab] = useState<Tab>(null);
   const [customSort, setCustomSort] = useState<SortOption>("recent");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
