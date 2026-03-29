@@ -486,8 +486,8 @@ const ProfilePage = () => {
               className="h-full" style={{ background: "hsl(var(--primary) / 0.3)", borderRadius: "0 9999px 9999px 0" }} />
           </div>
 
-          {/* Legend compact - 3 columns */}
-          <div className="grid grid-cols-3 gap-1">
+          {/* Legend compact - 4 columns */}
+          <div className="grid grid-cols-4 gap-1">
             <div className="text-center py-1.5">
               <div className="flex items-center justify-center gap-1 mb-0.5">
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--primary))" }} />
@@ -508,6 +508,13 @@ const ProfilePage = () => {
                 <span className="text-[9px] text-muted-foreground/60 font-medium">Hors-ligne</span>
               </div>
               <p className="text-[10px] font-semibold text-foreground">{offlineCount} titre{offlineCount > 1 ? "s" : ""}</p>
+            </div>
+            <div className="text-center py-1.5">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <Layers className="w-2.5 h-2.5 text-primary/60" />
+                <span className="text-[9px] text-muted-foreground/60 font-medium">Pages</span>
+              </div>
+              <p className="text-[10px] font-semibold text-foreground">{pageCacheCount.albums + pageCacheCount.artists + pageCacheCount.playlists}</p>
             </div>
           </div>
 
