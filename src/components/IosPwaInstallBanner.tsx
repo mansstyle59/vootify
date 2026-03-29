@@ -294,6 +294,13 @@ export default function IosPwaInstallBanner() {
                   "C'est compris !"
                 )}
               </motion.button>
+              </div>
+              <button
+                onClick={dismissForever}
+                className="text-[11px] text-muted-foreground/60 py-1 transition-colors hover:text-muted-foreground"
+              >
+                Ne plus afficher
+              </button>
             </div>
           </div>
         </motion.div>
