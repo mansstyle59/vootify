@@ -150,10 +150,15 @@ export function AppSidebar() {
 
 /* ═══════════════════ Mobile Tab Bar ═══════════════════ */
 
+const pillItems = [
+  { to: "/", icon: Home, label: "Accueil" },
+  { to: "/radio", icon: Radio, label: "Radio" },
+  { to: "/library", icon: Library, label: "Bibliothèque" },
+];
+
 export function MobileNav() {
   const { isAdmin } = useAdminAuth();
   const { checkRoute } = useSubscriptionAccess();
-  const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
   const handleTap = useCallback((to: string) => {
     prefetchRoute(to);
@@ -162,17 +167,20 @@ export function MobileNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40"
-      style={{
-        paddingBottom: "env(safe-area-inset-bottom)",
-        background: "hsl(var(--background) / 0.82)",
-        backdropFilter: "blur(40px) saturate(1.8)",
-        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-        borderTop: "1px solid hsl(var(--border) / 0.08)",
-      }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-2.5 px-4 py-2"
+      style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
     >
-      <div className="flex justify-around items-end px-1 pt-1.5 pb-1">
-        {items.map((item) => {
+      {/* ── Main pill ── */}
+      <div
+        className="flex items-center rounded-[28px] px-1 py-1"
+        style={{
+          background: "hsl(var(--card) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+          boxShadow: "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+        }}
+      >
+        {pillItems.map((item) => {
           const restricted = !checkRoute(item.to);
           return (
             <RouterNavLink
@@ -181,45 +189,94 @@ export function MobileNav() {
               end={item.to === "/"}
               onTouchStart={() => handleTap(item.to)}
               className={({ isActive }) =>
-                `relative flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[44px] px-2 text-[10px] font-medium transition-colors duration-150 ${
+                `relative flex flex-col items-center justify-center min-w-[72px] min-h-[52px] px-4 py-1.5 rounded-[22px] text-[11px] font-semibold transition-all duration-200 ${
                   restricted
                     ? "text-muted-foreground/20"
                     : isActive
-                    ? "text-primary"
-                    : "text-muted-foreground/50 active:text-muted-foreground/70"
+                    ? "bg-secondary/80 text-primary"
+                    : "text-muted-foreground/60 active:text-muted-foreground/80"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <div className="relative z-10">
-                    {restricted ? (
-                      <Lock className="w-[20px] h-[20px]" strokeWidth={1.5} />
-                    ) : (
-                      <item.icon
-                        className="w-[22px] h-[22px] transition-transform duration-150"
-                        strokeWidth={isActive ? 2.2 : 1.5}
-                        fill={isActive ? "currentColor" : "none"}
-                      />
-                    )}
-                  </div>
-                  <span
-                    className={`relative z-10 leading-tight ${
-                      restricted
-                        ? "opacity-25"
-                        : isActive
-                        ? "opacity-100 font-semibold"
-                        : "opacity-60"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                  {restricted ? (
+                    <Lock className="w-[22px] h-[22px] mb-0.5" strokeWidth={1.5} />
+                  ) : (
+                    <item.icon
+                      className="w-[22px] h-[22px] mb-0.5"
+                      strokeWidth={isActive ? 2 : 1.5}
+                      fill={isActive ? "currentColor" : "none"}
+                    />
+                  )}
+                  <span className={restricted ? "opacity-25" : ""}>{item.label}</span>
                 </>
               )}
             </RouterNavLink>
           );
         })}
       </div>
+
+      {/* ── Search circle ── */}
+      <RouterNavLink
+        to="/search"
+        onTouchStart={() => handleTap("/search")}
+        className={({ isActive }) =>
+          `flex items-center justify-center w-[52px] h-[52px] rounded-full transition-all duration-200 ${
+            isActive
+              ? "text-primary"
+              : "text-muted-foreground/60 active:text-muted-foreground/80"
+          }`
+        }
+        style={{
+          background: "hsl(var(--card) / 0.85)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+          boxShadow: "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+        }}
+      >
+        {({ isActive }) => (
+          <Search
+            className="w-[22px] h-[22px]"
+            strokeWidth={isActive ? 2.4 : 1.8}
+            fill={isActive ? "currentColor" : "none"}
+          />
+        )}
+      </RouterNavLink>
+
+      {/* ── Admin items (small pills above if admin) ── */}
+      {isAdmin && (
+        <div
+          className="flex items-center gap-1 rounded-full px-1 py-1"
+          style={{
+            background: "hsl(var(--card) / 0.85)",
+            backdropFilter: "blur(40px) saturate(1.8)",
+            WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+            boxShadow: "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+          }}
+        >
+          {adminItems.map((item) => (
+            <RouterNavLink
+              key={item.to}
+              to={item.to}
+              onTouchStart={() => handleTap(item.to)}
+              className={({ isActive }) =>
+                `flex items-center justify-center w-[40px] h-[40px] rounded-full transition-all duration-200 ${
+                  isActive ? "bg-secondary/80 text-primary" : "text-muted-foreground/60"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <item.icon
+                  className="w-[18px] h-[18px]"
+                  strokeWidth={isActive ? 2.2 : 1.5}
+                  fill={isActive ? "currentColor" : "none"}
+                />
+              )}
+            </RouterNavLink>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }
