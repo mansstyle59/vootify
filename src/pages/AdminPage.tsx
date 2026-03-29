@@ -3164,4 +3164,179 @@ function SharedPlaylistsTab() {
   );
 }
 
+function NotificationsTab() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [actionUrl, setActionUrl] = useState("");
+  const [sending, setSending] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(true);
+  const { saveSetting } = useSaveAppSetting();
+
+  const { data: history = [] } = useQuery({
+    queryKey: ["admin-notifications"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("admin_notifications")
+        .select("*")
+        .order("sent_at", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+  });
+
+  const { data: subCount = 0 } = useQuery({
+    queryKey: ["push-sub-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("push_subscriptions")
+        .select("id", { count: "exact", head: true });
+      return count || 0;
+    },
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ["app-settings", "push_notifications_enabled"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "push_notifications_enabled")
+        .maybeSingle();
+      return data?.value === true || data?.value === "true";
+    },
+  });
+
+  useEffect(() => {
+    if (settings !== undefined) setPushEnabled(!!settings);
+  }, [settings]);
+
+  const togglePush = async () => {
+    const newVal = !pushEnabled;
+    setPushEnabled(newVal);
+    await saveSetting("push_notifications_enabled", newVal);
+    toast.success(newVal ? "Notifications activées" : "Notifications désactivées");
+  };
+
+  const handleSend = async () => {
+    if (!title.trim() || !body.trim()) {
+      toast.error("Titre et message requis");
+      return;
+    }
+    setSending(true);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await supabase.functions.invoke("send-push-notification", {
+        body: { title: title.trim(), body: body.trim(), action_url: actionUrl.trim() || undefined },
+      });
+      if (res.error) throw res.error;
+      const data = res.data as { sent: number; total: number };
+      toast.success(`Notification envoyée à ${data.sent}/${data.total} abonnés`);
+      setTitle("");
+      setBody("");
+      setActionUrl("");
+    } catch (e: any) {
+      toast.error("Erreur: " + (e.message || "Échec de l'envoi"));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Toggle push */}
+      <div className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border">
+        <div className="flex items-center gap-3">
+          {pushEnabled ? <Bell className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
+          <div>
+            <p className="text-sm font-semibold text-foreground">Notifications push</p>
+            <p className="text-xs text-muted-foreground">{subCount} abonné{subCount > 1 ? "s" : ""}</p>
+          </div>
+        </div>
+        <button
+          onClick={togglePush}
+          className={`relative w-12 h-7 rounded-full transition-colors ${pushEnabled ? "bg-primary" : "bg-muted"}`}
+        >
+          <motion.div
+            animate={{ x: pushEnabled ? 20 : 2 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="absolute top-1 w-5 h-5 rounded-full bg-white shadow-md"
+          />
+        </button>
+      </div>
+
+      {/* Compose notification */}
+      {pushEnabled && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl bg-card border border-border space-y-3"
+        >
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Send className="w-4 h-4 text-primary" />
+            Envoyer une notification
+          </h3>
+          <div>
+            <Label className="text-xs text-muted-foreground">Titre</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Nouvelle sortie 🎵"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Message</Label>
+            <Input
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Découvrez les nouveautés de la semaine !"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Lien d'action (optionnel)</Label>
+            <Input
+              value={actionUrl}
+              onChange={(e) => setActionUrl(e.target.value)}
+              placeholder="/search"
+              className="mt-1"
+            />
+          </div>
+          <Button
+            onClick={handleSend}
+            disabled={sending || !title.trim() || !body.trim()}
+            className="w-full"
+          >
+            {sending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+            Envoyer à {subCount} abonné{subCount > 1 ? "s" : ""}
+          </Button>
+        </motion.div>
+      )}
+
+      {/* History */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Historique</h3>
+        {history.length === 0 ? (
+          <p className="text-xs text-muted-foreground/60 text-center py-8">Aucune notification envoyée</p>
+        ) : (
+          history.map((n: any) => (
+            <div key={n.id} className="p-3 rounded-xl bg-card border border-border/50">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-foreground">{n.title}</p>
+                <span className="text-[10px] text-muted-foreground">
+                  {new Date(n.sent_at).toLocaleDateString("fr-FR")}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">{n.body}</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">
+                Envoyé à {n.target_count} appareil{n.target_count > 1 ? "s" : ""}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default AdminPage;
