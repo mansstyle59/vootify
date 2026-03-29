@@ -1991,6 +1991,11 @@ function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist"; i
   }
 }
 
+/** Check if URL is a Deezer short link */
+function isDeezerShortLink(url: string): boolean {
+  return /^https?:\/\/link\.deezer\.com\//i.test(url.trim());
+}
+
 /** Modal to pick songs for a custom section */
 function SongPickerModal({
   sectionId,
