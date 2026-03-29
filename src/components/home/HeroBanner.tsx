@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useMemo, useEffect, useState } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2 } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2, Radio, Library } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -311,47 +311,77 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           « {customSubtitle || quote} »
         </motion.p>
 
-        {/* Action pills */}
+        {/* Action buttons — premium hierarchy */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.35 }}
-          className="flex gap-2.5 mt-5"
+          className="flex flex-col gap-3 mt-5"
         >
+          {/* Primary CTA — Shuffle */}
           <button
             onClick={handleShuffle}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold active:scale-95 transition-all duration-200 hover:brightness-110"
+            className="flex items-center justify-center gap-2.5 w-full py-3 rounded-2xl text-[13px] font-bold active:scale-[0.97] transition-all duration-200 hover:brightness-110"
             style={{
               background: "hsl(var(--primary))",
               color: "hsl(var(--primary-foreground))",
-              boxShadow: "0 4px 24px hsl(var(--primary) / 0.35), 0 1px 3px hsl(var(--primary) / 0.2)",
+              boxShadow: "0 6px 28px hsl(var(--primary) / 0.35), 0 2px 6px hsl(var(--primary) / 0.2)",
             }}
           >
-            <Shuffle className="w-3.5 h-3.5" />
+            <Shuffle className="w-4 h-4" />
             Lecture aléatoire
           </button>
-          <button
-            onClick={() => navigate("/library")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-95 transition-all duration-200"
-            style={{
-              background: "hsl(var(--foreground) / 0.06)",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <Heart className="w-3 h-3 text-pink-400" />
-            Favoris
-          </button>
-          <button
-            onClick={() => navigate("/search")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-95 transition-all duration-200"
-            style={{
-              background: "hsl(var(--foreground) / 0.06)",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <Search className="w-3 h-3" />
-            Chercher
-          </button>
+
+          {/* Secondary actions row */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => navigate("/library")}
+              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl text-foreground active:scale-[0.95] transition-all duration-200"
+              style={{
+                background: "hsl(var(--foreground) / 0.05)",
+              }}
+            >
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, hsl(340 80% 55% / 0.15), hsl(340 80% 55% / 0.05))" }}
+              >
+                <Heart className="w-4 h-4" style={{ color: "hsl(340 80% 55%)" }} />
+              </div>
+              <span className="text-[11px] font-semibold text-foreground/70">Favoris</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/search")}
+              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl text-foreground active:scale-[0.95] transition-all duration-200"
+              style={{
+                background: "hsl(var(--foreground) / 0.05)",
+              }}
+            >
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(var(--primary) / 0.1)" }}
+              >
+                <Search className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-[11px] font-semibold text-foreground/70">Rechercher</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/radio")}
+              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl text-foreground active:scale-[0.95] transition-all duration-200"
+              style={{
+                background: "hsl(var(--foreground) / 0.05)",
+              }}
+            >
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(var(--accent) / 0.15)" }}
+              >
+                <Radio className="w-4 h-4 text-accent-foreground" />
+              </div>
+              <span className="text-[11px] font-semibold text-foreground/70">Radio</span>
+            </button>
+          </div>
         </motion.div>
       </motion.div>
     </div>
