@@ -334,12 +334,14 @@ const AlbumDetailPage = () => {
 
       {/* ─── TRACK LIST ─── */}
       <div className="px-4 md:px-8">
-        <VirtualSongList
-          songs={tracks}
-          showIndex
-          onClickSong={(song) => handlePlay(song)}
-          className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}
-        />
+        <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
+          <VirtualSongList
+            songs={tracks}
+            showIndex
+            onClickSong={(song) => handlePlay(song)}
+            className=""
+          />
+        </div>
       </div>
     </div>
   );
