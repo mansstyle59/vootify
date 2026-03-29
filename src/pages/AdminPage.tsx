@@ -1991,6 +1991,11 @@ function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist"; i
   }
 }
 
+/** Check if URL is a Deezer short link */
+function isDeezerShortLink(url: string): boolean {
+  return /^https?:\/\/link\.deezer\.com\//i.test(url.trim());
+}
+
 /** Modal to pick songs for a custom section */
 function SongPickerModal({
   sectionId,
@@ -2061,9 +2066,35 @@ function SongPickerModal({
 
   /** Fetch tracks from a Deezer link */
   const fetchDeezer = async () => {
-    const parsed = parseDeezerUrl(deezerUrl);
+    let urlToUse = deezerUrl.trim();
+
+    // Resolve short links first
+    if (isDeezerShortLink(urlToUse)) {
+      setDeezerError("");
+      setDeezerLoading(true);
+      setDeezerTracks([]);
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("deezer-proxy", {
+          body: { resolveUrl: urlToUse },
+        });
+        if (resolveData?.resolvedUrl) {
+          urlToUse = resolveData.resolvedUrl;
+        } else {
+          setDeezerError("Impossible de résoudre ce lien court Deezer.");
+          setDeezerLoading(false);
+          return;
+        }
+      } catch {
+        setDeezerError("Erreur lors de la résolution du lien court.");
+        setDeezerLoading(false);
+        return;
+      }
+    }
+
+    const parsed = parseDeezerUrl(urlToUse);
     if (!parsed) {
       setDeezerError("Lien Deezer invalide. Formats acceptés : album, playlist ou artiste.");
+      setDeezerLoading(false);
       return;
     }
     setDeezerError("");
