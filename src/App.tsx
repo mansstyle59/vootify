@@ -142,12 +142,23 @@ function AppContent() {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [user, queryClient, loadUserData]);
 
+  const handlePullRefresh = useCallback(async () => {
+    // Invalidate all React Query caches → triggers refetch of visible queries
+    await queryClient.invalidateQueries();
+    // Refresh Supabase caches & player data
+    const userId = user?.id;
+    if (userId) {
+      silentCacheRefresh(userId);
+      loadUserData(userId);
+    }
+  }, [queryClient, user, loadUserData]);
+
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <div id="main-scroll" className="flex-1 scrollbar-hide overflow-y-auto" style={{ paddingBottom: currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
+      <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 scrollbar-hide" style={{ paddingBottom: currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
         <AnimatedRoutes />
-      </div>
+      </PullToRefresh>
       {/* NotificationBell moved into HeroBanner */}
       <MiniPlayer />
       <MobileNav />
