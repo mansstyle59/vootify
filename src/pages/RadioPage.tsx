@@ -658,6 +658,11 @@ const RadioPage = () => {
     savedIds, currentSong, isPlaying, radioMetadata, isSearching,
     playStation, startEdit, confirmDelete, saveStation, removeStation,
   }), [savedIds, currentSong, isPlaying, radioMetadata, isSearching, playStation, startEdit, confirmDelete, saveStation, removeStation]);
+  /* ── Context for genre browsing (isSearching=true to show save buttons) ── */
+  const genreCtx = useMemo(() => ({
+    ...stationTileProps,
+    isSearching: true,
+  }), [stationTileProps]);
 
   const renderStationTile = useCallback((station: RadioBrowserStation) => (
     <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
