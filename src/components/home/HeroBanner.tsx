@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, User, ChevronDown } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, User } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import {
   DropdownMenu,
@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -84,39 +83,37 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           <div className="flex items-center gap-2">
             <NotificationBell />
             <DropdownMenu>
-              <TooltipProvider delayDuration={400}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <button className="relative outline-none active:scale-[0.92] transition-transform duration-150 flex items-center gap-1">
-                        <div className="relative">
-                          <Avatar className="w-8 h-8 ring-2 ring-primary/25">
-                            <AvatarImage src={avatarUrl} alt={displayName || "User"} />
-                            <AvatarFallback
-                              className="text-[10px] font-bold"
-                              style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
-                            >
-                              {(displayName || "U").slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {getPendingCount() > 0 && (
-                            <span
-                              className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center text-[8px] font-bold border-[1.5px] border-background"
-                              style={{ background: "hsl(var(--destructive))", color: "hsl(var(--destructive-foreground))" }}
-                            >
-                              {getPendingCount()}
-                            </span>
-                          )}
-                        </div>
-                        <ChevronDown className="w-3 h-3 text-muted-foreground/60 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_3]" />
-                      </button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">
-                    Menu du compte
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="relative outline-none active:scale-[0.93] transition-all duration-150 flex items-center gap-2 rounded-full py-1 pl-1 pr-3"
+                  style={{
+                    background: "hsl(var(--foreground) / 0.06)",
+                  }}
+                >
+                  <div className="relative">
+                    <Avatar className="w-7 h-7">
+                      <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+                      <AvatarFallback
+                        className="text-[9px] font-bold"
+                        style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
+                      >
+                        {(displayName || "U").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {getPendingCount() > 0 && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 rounded-full flex items-center justify-center text-[7px] font-bold border border-background"
+                        style={{ background: "hsl(var(--destructive))", color: "hsl(var(--destructive-foreground))" }}
+                      >
+                        {getPendingCount()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[12px] font-semibold text-foreground/80 truncate max-w-[80px]">
+                    {(displayName || "U").split(" ")[0]}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
                 className="w-56 rounded-2xl p-2 animate-scale-in"
