@@ -6,6 +6,7 @@ interface PullToRefreshProps {
   onRefresh: () => Promise<void> | void;
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const THRESHOLD = 72;
