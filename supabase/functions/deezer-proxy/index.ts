@@ -5,13 +5,40 @@ const corsHeaders = {
 
 const DEEZER_API = 'https://api.deezer.com';
 
+/**
+ * Resolve a Deezer short link (link.deezer.com/s/...) to its full URL.
+ * Follows redirects to get the final deezer.com URL.
+ */
+async function resolveShortLink(shortUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(shortUrl, {
+      redirect: 'follow',
+      headers: { 'User-Agent': 'Vootify/1.0' },
+    });
+    // The final URL after redirect is what we want
+    return res.url || null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { path } = await req.json();
+    const body = await req.json();
+    const { path, resolveUrl } = body;
+
+    // If resolveUrl is provided, resolve a short link
+    if (resolveUrl && typeof resolveUrl === 'string') {
+      const resolved = await resolveShortLink(resolveUrl);
+      return new Response(JSON.stringify({ resolvedUrl: resolved }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!path || typeof path !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing path' }), {
         status: 400,
