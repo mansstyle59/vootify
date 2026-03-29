@@ -444,13 +444,13 @@ const RadioPage = () => {
         <div
           className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 transition-all duration-300 ${
             isActive
-              ? "ring-2 ring-primary shadow-lg"
-              : "ring-1 ring-border/10 hover:ring-border/30"
+              ? "ring-2 ring-primary/60"
+              : "ring-1 ring-border/5 hover:ring-border/20"
           }`}
           style={{
             boxShadow: isActive
-              ? "0 8px 32px hsl(var(--primary) / 0.25), 0 2px 8px hsl(var(--primary) / 0.15)"
-              : "0 2px 12px hsl(0 0% 0% / 0.08)",
+              ? "0 8px 32px hsl(var(--primary) / 0.2)"
+              : "0 2px 8px hsl(0 0% 0% / 0.06)",
           }}
         >
           {/* Neutral bg for logos */}
@@ -496,9 +496,9 @@ const RadioPage = () => {
             </motion.div>
           )}
 
-          {/* Action buttons — always visible on mobile, hover on desktop */}
+          {/* Action buttons — hidden by default, shown on hover/active */}
           <div className={`absolute top-2 right-2 flex gap-1.5 transition-all duration-200 ${
-            isActivePlaying ? "opacity-100 scale-100" : "md:opacity-0 md:scale-90 md:group-hover:opacity-100 md:group-hover:scale-100"
+            isActivePlaying ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
           }`}>
             {isCustomTab ? (
               <>
