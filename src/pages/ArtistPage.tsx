@@ -116,18 +116,25 @@ const ArtistPage = () => {
 
   const coverUrl = customArtistImage || artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
 
-  const albums = useMemo(() => {
-    const map = new Map<string, { title: string; coverUrl: string; count: number }>();
+  // Separate albums (multi-track) vs singles (1 track)
+  const { albumsList, singlesList } = useMemo(() => {
+    const map = new Map<string, { title: string; coverUrl: string; count: number; year?: number }>();
     for (const s of songs) {
       if (!s.album) continue;
       if (!map.has(s.album)) {
-        map.set(s.album, { title: s.album, coverUrl: s.coverUrl, count: 1 });
+        map.set(s.album, { title: s.album, coverUrl: s.coverUrl, count: 1, year: s.year });
       } else {
         map.get(s.album)!.count++;
       }
     }
-    return Array.from(map.values());
+    const all = Array.from(map.values());
+    return {
+      albumsList: all.filter((a) => a.count > 1),
+      singlesList: all.filter((a) => a.count === 1),
+    };
   }, [songs]);
+
+  const albums = useMemo(() => [...albumsList, ...singlesList], [albumsList, singlesList]);
 
   const genres = useMemo(() => {
     const set = new Set<string>();
@@ -391,14 +398,14 @@ const ArtistPage = () => {
       )}
 
       {/* Albums */}
-      {albums.length > 0 && (
+      {albumsList.length > 0 && (
         <div className="px-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Disc3 className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Discographie</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Albums</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {albums.map((album, i) => (
+            {albumsList.map((album, i) => (
               <motion.button
                 key={album.title}
                 initial={{ opacity: 0, y: 12 }}
@@ -417,7 +424,44 @@ const ArtistPage = () => {
                   )}
                 </div>
                 <p className="text-xs font-bold text-foreground truncate">{album.title}</p>
-                <p className="text-[10px] text-muted-foreground">{album.count} titre{album.count > 1 ? "s" : ""}</p>
+                <p className="text-[10px] text-muted-foreground">{album.count} titre{album.count > 1 ? "s" : ""}{album.year ? ` · ${album.year}` : ""}</p>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Singles */}
+      {singlesList.length > 0 && (
+        <div className="px-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Music className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Singles</h2>
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {singlesList.map((single, i) => (
+              <motion.button
+                key={single.title}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => {
+                  const song = songs.find((s) => s.album === single.title);
+                  if (song) handlePlay(song);
+                }}
+                className="flex-shrink-0 w-28 group cursor-pointer text-left"
+              >
+                <div className="w-28 h-28 rounded-xl overflow-hidden bg-secondary mb-2 shadow-lg group-hover:shadow-xl transition-shadow">
+                  {single.coverUrl ? (
+                    <img src={single.coverUrl} alt={single.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                      <Music className="w-8 h-8 text-primary/30" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs font-bold text-foreground truncate">{single.title}</p>
+                <p className="text-[10px] text-muted-foreground">Single{single.year ? ` · ${single.year}` : ""}</p>
               </motion.button>
             ))}
           </div>
