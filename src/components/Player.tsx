@@ -32,16 +32,7 @@ const glassStyle = {
 /* ── Animated progress bar with glow ── */
 function MiniPlayerProgress({ percent, isLive }: { percent: number; isLive: boolean }) {
   if (isLive) {
-    return (
-      <div className="h-[3px] w-full bg-primary/20 overflow-hidden">
-        <motion.div
-          className="h-full bg-primary"
-          animate={{ x: ["-100%", "100%"] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          style={{ width: "40%" }}
-        />
-      </div>
-    );
+    return null;
   }
   return (
     <div className="h-[3px] w-full" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
