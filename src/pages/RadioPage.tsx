@@ -356,7 +356,7 @@ const RadioPage = () => {
   const showNowPlaying = isLiveRadio && currentSong;
 
   /* ── Station List Item ── */
-  const StationListItem = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
+  function StationListItem({ station, index }: { station: RadioBrowserStation; index: number }) {
     const isSaved = savedIds.has(station.id);
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
@@ -364,21 +364,15 @@ const RadioPage = () => {
     const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "";
 
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.03 }}
+      <div
         onClick={() => playStation(station)}
         className={`group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-primary/10 ring-1 ring-primary/20"
             : "hover:bg-card/60"
         }`}
-        style={{
-          backdropFilter: isActive ? "blur(20px) saturate(1.5)" : undefined,
-        }}
       >
-        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-secondary/40 ring-1 ring-border/10">
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/10">
           <LazyImage src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" fallback wrapperClassName="w-full h-full" />
           <div className={`absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity ${isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
             {isActivePlaying ? <Volume2 className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
@@ -416,9 +410,9 @@ const RadioPage = () => {
             </button>
           )}
         </div>
-      </motion.div>
+      </div>
     );
-  }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
+  }
 
   /* ── Station Grid Card (proper component for hooks) ── */
   function StationCard({ station, index }: { station: RadioBrowserStation; index: number }) {
