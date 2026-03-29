@@ -11,11 +11,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, Sparkles, RefreshCw, Download
+  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3
 } from "lucide-react";
 import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   isBiometricAvailable,
@@ -32,80 +32,59 @@ function formatBytes(bytes: number): string {
 
 const GlassCard = ({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={`rounded-3xl ${className}`}
+    transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={`rounded-2xl ${className}`}
     style={{
       background: "hsl(var(--card) / 0.3)",
       backdropFilter: "blur(48px) saturate(1.6)",
       WebkitBackdropFilter: "blur(48px) saturate(1.6)",
       border: "1px solid hsl(var(--border) / 0.08)",
-      boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
+      boxShadow: "0 4px 24px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
     }}
   >
     {children}
   </motion.div>
 );
 
-const StatCard = ({ icon: Icon, value, label, delay }: { icon: any; value: string; label: string; delay: number }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ delay, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    className="p-4 rounded-2xl text-center"
-    style={{
-      background: "hsl(var(--card) / 0.25)",
-      border: "1px solid hsl(var(--border) / 0.06)",
-      boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.02)",
-    }}
-  >
-    <div
-      className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center"
-      style={{ background: "hsl(var(--primary) / 0.1)" }}
-    >
-      <Icon className="w-4 h-4 text-primary" />
-    </div>
-    <p className="text-xl font-bold text-foreground leading-none">{value}</p>
-    <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">{label}</p>
-  </motion.div>
-);
-
 const MenuRow = ({
   icon: Icon,
-  iconBg,
   title,
   subtitle,
   onClick,
   trailing,
+  destructive,
 }: {
   icon: any;
-  iconBg?: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   onClick?: () => void;
   trailing?: React.ReactNode;
+  destructive?: boolean;
 }) => (
   <button
     onClick={onClick}
-    className="w-full p-4 flex items-center gap-3.5 transition-colors active:scale-[0.98] active:opacity-80"
+    className="w-full px-4 py-3 flex items-center gap-3 transition-colors active:scale-[0.98] active:opacity-80"
     style={{ background: "transparent" }}
     onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(var(--foreground) / 0.02)")}
     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
   >
     <div
-      className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-      style={{ background: iconBg || "hsl(var(--primary) / 0.1)" }}
+      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+      style={{ background: destructive ? "hsl(var(--destructive) / 0.1)" : "hsl(var(--primary) / 0.1)" }}
     >
-      <Icon className="w-4.5 h-4.5 text-primary" />
+      <Icon className={`w-4 h-4 ${destructive ? "text-destructive" : "text-primary"}`} />
     </div>
     <div className="flex-1 min-w-0 text-left">
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      <p className="text-[11px] text-muted-foreground/60 font-medium">{subtitle}</p>
+      <p className={`text-[13px] font-semibold ${destructive ? "text-destructive" : "text-foreground"}`}>{title}</p>
+      {subtitle && <p className="text-[10px] text-muted-foreground/50 font-medium">{subtitle}</p>}
     </div>
-    {trailing || <ChevronRight className="w-4 h-4 text-muted-foreground/20 flex-shrink-0" />}
+    {trailing || <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/20 flex-shrink-0" />}
   </button>
 );
+
+const Divider = () => <div className="mx-4" style={{ height: 1, background: "hsl(var(--border) / 0.06)" }} />;
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
@@ -119,6 +98,7 @@ const ProfilePage = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingName, setEditingName] = useState(false);
   const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
   const [offlineCacheSize, setOfflineCacheSize] = useState<number | null>(null);
   const [offlineCount, setOfflineCount] = useState(0);
@@ -146,10 +126,7 @@ const ProfilePage = () => {
             for (const req of keys) {
               try {
                 const res = await cache.match(req);
-                if (res) {
-                  const blob = await res.clone().blob();
-                  total += blob.size;
-                }
+                if (res) { const blob = await res.clone().blob(); total += blob.size; }
               } catch {}
             }
           }
@@ -160,7 +137,6 @@ const ProfilePage = () => {
     offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
     offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
 
-    // Count pre-cached covers
     (async () => {
       try {
         const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -181,8 +157,7 @@ const ProfilePage = () => {
           r.onsuccess = () => resolve(r.result || []);
           r.onerror = () => resolve([]);
         });
-        const total = allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0);
-        setCoverCacheSize(total);
+        setCoverCacheSize(allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0));
       } catch {}
     })();
   }, []);
@@ -195,9 +170,7 @@ const ProfilePage = () => {
       supabase.from("liked_songs").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("playlists").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     ]).then(([sessions, recent, liked, playlists]) => {
-      if (sessions.data) {
-        setTotalListeningSeconds(sessions.data.reduce((sum, s) => sum + (s.duration_seconds || 0), 0));
-      }
+      if (sessions.data) setTotalListeningSeconds(sessions.data.reduce((sum, s) => sum + (s.duration_seconds || 0), 0));
       setTracksPlayed(recent.count ?? 0);
       setLikedCount(liked.count ?? 0);
       setPlaylistCount(playlists.count ?? 0);
@@ -209,17 +182,12 @@ const ProfilePage = () => {
     const meta = user.user_metadata;
     setDisplayName(meta?.display_name || meta?.full_name || user.email?.split("@")[0] || "");
     setAvatarUrl(meta?.avatar_url || meta?.picture || null);
-    supabase
-      .from("profiles")
-      .select("display_name, avatar_url")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          if (data.display_name) setDisplayName(data.display_name);
-          if (data.avatar_url) setAvatarUrl(data.avatar_url);
-        }
-      });
+    supabase.from("profiles").select("display_name, avatar_url").eq("user_id", user.id).single().then(({ data }) => {
+      if (data) {
+        if (data.display_name) setDisplayName(data.display_name);
+        if (data.avatar_url) setAvatarUrl(data.avatar_url);
+      }
+    });
   }, [user, navigate]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,8 +201,7 @@ const ProfilePage = () => {
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(`${urlData.publicUrl}?t=${Date.now()}`);
       toast.success("Photo mise à jour");
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de l'upload");
@@ -245,16 +212,12 @@ const ProfilePage = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ display_name: displayName, avatar_url: avatarUrl, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-      if (profileError) throw profileError;
-      const { error: authError } = await supabase.auth.updateUser({ data: { display_name: displayName, avatar_url: avatarUrl } });
-      if (authError) throw authError;
+      await supabase.from("profiles").update({ display_name: displayName, avatar_url: avatarUrl, updated_at: new Date().toISOString() }).eq("user_id", user.id);
+      await supabase.auth.updateUser({ data: { display_name: displayName, avatar_url: avatarUrl } });
+      setEditingName(false);
       toast.success("Profil mis à jour !");
     } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la sauvegarde");
+      toast.error(err.message || "Erreur");
     } finally { setSaving(false); }
   };
 
@@ -274,21 +237,22 @@ const ProfilePage = () => {
   };
   const badge = planBadge[plan];
 
+  const formatListenTime = () => {
+    if (totalListeningSeconds >= 3600) {
+      const h = Math.floor(totalListeningSeconds / 3600);
+      const m = Math.floor((totalListeningSeconds % 3600) / 60);
+      return `${h}h${m}m`;
+    }
+    return `${Math.floor(totalListeningSeconds / 60)}m`;
+  };
+
   return (
     <div className="min-h-screen pb-20">
       {/* Ambient background */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div
-          className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.08) 0%, transparent 70%)", filter: "blur(80px)" }}
-        />
-        <div
-          className="absolute bottom-[20%] right-[-10%] w-[400px] h-[400px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, hsl(var(--accent) / 0.06) 0%, transparent 70%)", filter: "blur(100px)" }}
-        />
-        <div
-          className="absolute top-[50%] left-[-5%] w-[300px] h-[300px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.04) 0%, transparent 70%)", filter: "blur(80px)" }}
+          className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full"
+          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.07) 0%, transparent 70%)", filter: "blur(80px)" }}
         />
       </div>
 
@@ -297,7 +261,7 @@ const ProfilePage = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="sticky top-0 z-30 px-4 md:px-8 py-3"
+        className="sticky top-0 z-30 px-4 py-3"
         style={{
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
           background: "hsl(var(--background) / 0.6)",
@@ -307,421 +271,260 @@ const ProfilePage = () => {
         }}
       >
         <div className="max-w-lg mx-auto flex items-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full active:scale-95 transition-transform">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <h1 className="flex-1 text-center text-sm font-bold text-foreground">Profil</h1>
-          <div className="w-14" /> {/* balance */}
+          <div className="w-9" />
         </div>
       </motion.div>
 
-      <div className="px-4 md:px-8 max-w-lg mx-auto space-y-4 mt-4">
-        {/* Hero profile */}
+      <div className="px-4 max-w-lg mx-auto space-y-3 mt-3">
+        {/* ─── HERO : Avatar + Nom + Stats en une seule carte ─── */}
         <GlassCard className="relative overflow-hidden" delay={0}>
-          {/* Decorative gradient */}
           <div
-            className="absolute inset-x-0 top-0 h-32 pointer-events-none"
-            style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.08) 0%, transparent 100%)" }}
+            className="absolute inset-x-0 top-0 h-24 pointer-events-none"
+            style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.06) 0%, transparent 100%)" }}
           />
 
-          <div className="relative p-6 pb-5 text-center">
-            {/* Avatar */}
-            <div className="relative group cursor-pointer mx-auto w-fit" onClick={() => fileInputRef.current?.click()}>
-              <div
-                className="absolute -inset-1.5 rounded-full"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.1))",
-                  filter: "blur(6px)",
-                }}
-              />
-              <Avatar className="relative w-24 h-24 shadow-2xl" style={{ border: "2px solid hsl(var(--border) / 0.15)" }}>
-                <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-                <AvatarFallback
-                  className="text-xl font-bold"
-                  style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
-                >
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                {uploading ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
-              </div>
-              {isAdmin && (
+          <div className="relative px-5 pt-5 pb-4">
+            {/* Avatar + Info row */}
+            <div className="flex items-center gap-4">
+              {/* Avatar */}
+              <div className="relative group cursor-pointer flex-shrink-0" onClick={() => fileInputRef.current?.click()}>
                 <div
-                  className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "hsl(var(--primary) / 0.9)",
-                    border: "2px solid hsl(var(--background))",
-                  }}
-                >
-                  <Shield className="w-3.5 h-3.5 text-primary-foreground" />
-                </div>
-              )}
-            </div>
-
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-
-            <h2 className="mt-4 text-lg font-bold text-foreground">{displayName || "Utilisateur"}</h2>
-            <p className="text-xs text-muted-foreground/60 font-medium">{user.email}</p>
-
-            {badge && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full"
-                style={{
-                  background: badge.bg,
-                  border: `1px solid ${badge.border}`,
-                  color: badge.text,
-                }}
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold capitalize">{getPlanConfig(plan).label}</span>
-              </motion.div>
-            )}
-          </div>
-        </GlassCard>
-
-        {/* Stats */}
-        <GlassCard className="p-5" delay={0.05}>
-          <div className="flex items-center gap-2.5 mb-4">
-            <div
-              className="w-7 h-7 rounded-xl flex items-center justify-center"
-              style={{ background: "hsl(var(--primary) / 0.1)" }}
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-primary" />
-            </div>
-            <h3 className="text-sm font-bold text-foreground">Statistiques d'écoute</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <StatCard
-              icon={Clock}
-              value={totalListeningSeconds >= 3600
-                ? `${Math.floor(totalListeningSeconds / 3600)}h${Math.floor((totalListeningSeconds % 3600) / 60)}m`
-                : `${Math.floor(totalListeningSeconds / 60)}m`}
-              label="Temps d'écoute"
-              delay={0.1}
-            />
-            <StatCard icon={Music} value={tracksPlayed.toString()} label="Morceaux joués" delay={0.15} />
-            <StatCard icon={Heart} value={likedCount.toString()} label="Favoris" delay={0.2} />
-            <StatCard icon={Headphones} value={playlistCount.toString()} label="Playlists" delay={0.25} />
-          </div>
-        </GlassCard>
-
-        {/* Edit name */}
-        <GlassCard className="p-5 space-y-4" delay={0.1}>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div
-              className="w-7 h-7 rounded-xl flex items-center justify-center"
-              style={{ background: "hsl(var(--primary) / 0.1)" }}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-            </div>
-            <h3 className="text-sm font-bold text-foreground">Informations</h3>
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-muted-foreground/60 mb-1.5 uppercase tracking-wider">
-              Nom d'affichage
-            </label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Votre nom"
-              className="w-full px-4 py-2.5 rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
-              style={{
-                background: "hsl(var(--foreground) / 0.03)",
-                border: "1px solid hsl(var(--border) / 0.08)",
-                boxShadow: "inset 0 1px 2px hsl(0 0% 0% / 0.1)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "hsl(var(--primary) / 0.3)";
-                e.currentTarget.style.boxShadow = "inset 0 1px 2px hsl(0 0% 0% / 0.1), 0 0 0 3px hsl(var(--primary) / 0.08)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "hsl(var(--border) / 0.08)";
-                e.currentTarget.style.boxShadow = "inset 0 1px 2px hsl(0 0% 0% / 0.1)";
-              }}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-muted-foreground/60 mb-1.5 uppercase tracking-wider">
-              Email
-            </label>
-            <input
-              type="email"
-              value={user.email || ""}
-              disabled
-              className="w-full px-4 py-2.5 rounded-2xl text-sm text-muted-foreground/50 cursor-not-allowed"
-              style={{
-                background: "hsl(var(--foreground) / 0.015)",
-                border: "1px solid hsl(var(--border) / 0.05)",
-              }}
-            />
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
-            style={{
-              background: "hsl(var(--primary) / 0.12)",
-              color: "hsl(var(--primary))",
-            }}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Sauvegarder
-          </button>
-        </GlassCard>
-
-        {/* Quick links */}
-        <GlassCard delay={0.15}>
-          <div style={{ borderBottom: "1px solid hsl(var(--border) / 0.05)" }}>
-            <MenuRow
-              icon={Headphones}
-              title="Paramètres audio"
-              subtitle="Égaliseur, crossfade, presets"
-              onClick={() => navigate("/audio-settings")}
-            />
-          </div>
-
-          {isAdmin && (
-            <div style={{ borderBottom: "1px solid hsl(var(--border) / 0.05)" }}>
-              <MenuRow
-                icon={Shield}
-                title="Administration"
-                subtitle="Gérer les utilisateurs et contenus"
-                onClick={() => navigate("/admin")}
-              />
-            </div>
-          )}
-
-          {biometricSupported && (
-            <div className="p-4 flex items-center gap-3.5">
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "hsl(var(--primary) / 0.1)" }}
-              >
-                <Fingerprint className="w-4.5 h-4.5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-foreground">Face ID / Touch ID</p>
-                <p className="text-[11px] text-muted-foreground/60 font-medium">Connexion biométrique rapide</p>
-              </div>
-              <button
-                onClick={() => {
-                  if (biometricOn) {
-                    disableBiometric();
-                    setBiometricOn(false);
-                    toast.success("Authentification biométrique désactivée");
-                  } else {
-                    toast("Connectez-vous avec votre mot de passe pour activer Face ID");
-                  }
-                }}
-                className="relative w-12 h-7 rounded-full transition-colors"
-                style={{ background: biometricOn ? "hsl(var(--primary))" : "hsl(var(--muted))" }}
-              >
-                <motion.div
-                  animate={{ x: biometricOn ? 22 : 3 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  className="absolute top-1.5 w-4 h-4 rounded-full bg-white shadow-sm"
+                  className="absolute -inset-1 rounded-full"
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--primary) / 0.05))", filter: "blur(4px)" }}
                 />
-              </button>
+                <Avatar className="relative w-16 h-16 shadow-xl" style={{ border: "2px solid hsl(var(--border) / 0.12)" }}>
+                  <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+                  <AvatarFallback className="text-base font-bold" style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}>
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {uploading ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Camera className="w-4 h-4 text-white" />}
+                </div>
+                {isAdmin && (
+                  <div
+                    className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: "hsl(var(--primary) / 0.9)", border: "2px solid hsl(var(--background))" }}
+                  >
+                    <Shield className="w-2.5 h-2.5 text-primary-foreground" />
+                  </div>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+
+              {/* Name + email + badge */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <AnimatePresence mode="wait">
+                    {editingName ? (
+                      <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 flex-1">
+                        <input
+                          autoFocus
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                          className="flex-1 min-w-0 text-base font-bold text-foreground bg-transparent border-b border-primary/30 focus:outline-none focus:border-primary py-0.5"
+                        />
+                        <button onClick={handleSave} disabled={saving} className="p-1 rounded-lg active:scale-90" style={{ color: "hsl(var(--primary))" }}>
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        </button>
+                      </motion.div>
+                    ) : (
+                      <motion.div key="display" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5">
+                        <h2 className="text-base font-bold text-foreground truncate">{displayName || "Utilisateur"}</h2>
+                        <button onClick={() => setEditingName(true)} className="p-1 rounded-lg active:scale-90 text-muted-foreground/30 hover:text-muted-foreground/60">
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <p className="text-[11px] text-muted-foreground/50 font-medium truncate">{user.email}</p>
+                {badge && (
+                  <div
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full mt-1.5"
+                    style={{ background: badge.bg, border: `1px solid ${badge.border}`, color: badge.text }}
+                  >
+                    <Crown className="w-3 h-3" />
+                    <span className="text-[10px] font-bold capitalize">{getPlanConfig(plan).label}</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Stats row compact */}
+            <div className="grid grid-cols-4 gap-2 mt-4">
+              {[
+                { icon: Clock, value: formatListenTime(), label: "Écoute" },
+                { icon: Music, value: tracksPlayed.toString(), label: "Morceaux" },
+                { icon: Heart, value: likedCount.toString(), label: "Favoris" },
+                { icon: Headphones, value: playlistCount.toString(), label: "Playlists" },
+              ].map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 + i * 0.05, duration: 0.3 }}
+                  className="py-2.5 rounded-xl text-center"
+                  style={{ background: "hsl(var(--foreground) / 0.02)", border: "1px solid hsl(var(--border) / 0.04)" }}
+                >
+                  <stat.icon className="w-3.5 h-3.5 text-primary mx-auto mb-1" />
+                  <p className="text-sm font-bold text-foreground leading-none">{stat.value}</p>
+                  <p className="text-[9px] text-muted-foreground/50 mt-0.5 font-medium">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* ─── MENU RAPIDE ─── */}
+        <GlassCard delay={0.08}>
+          <MenuRow icon={Headphones} title="Paramètres audio" subtitle="Égaliseur, crossfade et qualité" onClick={() => navigate("/audio-settings")} />
+          {isAdmin && (
+            <>
+              <Divider />
+              <MenuRow icon={Shield} title="Administration" subtitle="Utilisateurs et contenus" onClick={() => navigate("/admin")} />
+            </>
+          )}
+          {biometricSupported && (
+            <>
+              <Divider />
+              <div className="px-4 py-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--primary) / 0.1)" }}>
+                  <Fingerprint className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-foreground">Face ID / Touch ID</p>
+                  <p className="text-[10px] text-muted-foreground/50 font-medium">Connexion biométrique</p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (biometricOn) { disableBiometric(); setBiometricOn(false); toast.success("Biométrique désactivé"); }
+                    else toast("Connectez-vous avec votre mot de passe pour activer");
+                  }}
+                  className="relative w-11 h-6 rounded-full transition-colors"
+                  style={{ background: biometricOn ? "hsl(var(--primary))" : "hsl(var(--muted))" }}
+                >
+                  <motion.div
+                    animate={{ x: biometricOn ? 20 : 3 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                  />
+                </button>
+              </div>
+            </>
           )}
         </GlassCard>
 
-        {/* Storage */}
-        <GlassCard className="p-5 space-y-4" delay={0.2}>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center"
-              style={{ background: "hsl(var(--primary) / 0.1)" }}
+        {/* ─── STOCKAGE COMPACT ─── */}
+        <GlassCard className="p-4 space-y-3" delay={0.12}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.1)" }}>
+                <Database className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-[13px] font-bold text-foreground">Stockage</h3>
+                <p className="text-[10px] text-muted-foreground/50 font-medium">
+                  {totalUsed > 0 ? formatBytes(totalUsed) : "Calcul…"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                if (isRefreshing) return;
+                setIsRefreshing(true);
+                try {
+                  const reg = await navigator.serviceWorker?.getRegistration();
+                  if (reg) await reg.update();
+                  if (user) silentCacheRefresh(user.id);
+                  const synced = await flushQueue();
+                  setPendingActions(getPendingCount());
+                  await queryClient.invalidateQueries();
+                  toast.success(synced > 0 ? `${synced} action(s) synchronisée(s)` : "Données à jour !");
+                } catch { toast.error("Erreur"); }
+                finally { setIsRefreshing(false); }
+              }}
+              disabled={isRefreshing}
+              className="p-2 rounded-xl active:scale-95 transition-transform"
+              style={{ background: "hsl(var(--primary) / 0.08)" }}
             >
-              <Database className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-foreground">Stockage</h3>
-              <p className="text-[11px] text-muted-foreground/60 font-medium">
-                {totalUsed > 0 ? `${formatBytes(totalUsed)} utilisé` : "Calcul…"}
-              </p>
-            </div>
+              {isRefreshing ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <RefreshCw className="w-4 h-4 text-primary" />}
+            </button>
           </div>
 
           {/* Progress bar */}
-          <div
-            className="h-2.5 rounded-full overflow-hidden flex"
-            style={{ background: "hsl(var(--foreground) / 0.03)" }}
-          >
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${swPercent}%` }}
-              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="h-full"
-              style={{
-                background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
-                borderRadius: (offlinePercent > 0 || coverPercent > 0) ? "9999px 0 0 9999px" : "9999px",
-              }}
-            />
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${coverPercent}%` }}
-              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-              className="h-full"
-              style={{
-                background: "hsl(var(--primary) / 0.55)",
-              }}
-            />
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${offlinePercent}%` }}
-              transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-              className="h-full"
-              style={{
-                background: "hsl(var(--primary) / 0.35)",
-                borderRadius: "0 9999px 9999px 0",
-              }}
-            />
+          <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: `${swPercent}%` }} transition={{ duration: 0.8, delay: 0.2 }}
+              className="h-full" style={{ background: "hsl(var(--primary))", borderRadius: (offlinePercent > 0 || coverPercent > 0) ? "9999px 0 0 9999px" : "9999px" }} />
+            <motion.div initial={{ width: 0 }} animate={{ width: `${coverPercent}%` }} transition={{ duration: 0.8, delay: 0.3 }}
+              className="h-full" style={{ background: "hsl(var(--primary) / 0.55)" }} />
+            <motion.div initial={{ width: 0 }} animate={{ width: `${offlinePercent}%` }} transition={{ duration: 0.8, delay: 0.4 }}
+              className="h-full" style={{ background: "hsl(var(--primary) / 0.3)", borderRadius: "0 9999px 9999px 0" }} />
           </div>
 
-          {/* Legend */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--primary))" }} />
-                <span className="text-xs text-muted-foreground font-medium">Cache navigateur</span>
+          {/* Legend compact - 3 columns */}
+          <div className="grid grid-cols-3 gap-1">
+            <div className="text-center py-1.5">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--primary))" }} />
+                <span className="text-[9px] text-muted-foreground/60 font-medium">Cache</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-foreground">
-                  {swCacheSize !== null ? formatBytes(swCacheSize) : "…"}
-                </span>
-                <button
-                  onClick={async () => {
-                    if (!("caches" in window)) return;
-                    const names = await caches.keys();
-                    await Promise.all(names.map((n) => caches.delete(n)));
-                    setSwCacheSize(0);
-                    toast.success("Cache navigateur vidé !");
-                  }}
-                  className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors active:scale-95"
-                  style={{
-                    background: "hsl(var(--destructive) / 0.08)",
-                    color: "hsl(var(--destructive))",
-                  }}
-                >
-                  Vider
-                </button>
-              </div>
+              <p className="text-[10px] font-semibold text-foreground">{swCacheSize !== null ? formatBytes(swCacheSize) : "…"}</p>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.55)" }} />
-                <span className="text-xs text-muted-foreground font-medium">Pochettes</span>
+            <div className="text-center py-1.5">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.55)" }} />
+                <span className="text-[9px] text-muted-foreground/60 font-medium">Pochettes</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-foreground">
-                  {coverCacheCount} image{coverCacheCount > 1 ? "s" : ""} · {coverCacheSize !== null ? formatBytes(coverCacheSize) : "…"}
-                </span>
-                <Download className="w-3.5 h-3.5 text-muted-foreground/25" />
-              </div>
+              <p className="text-[10px] font-semibold text-foreground">{coverCacheCount}</p>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.35)" }} />
-                <span className="text-xs text-muted-foreground font-medium">Hors-ligne</span>
+            <div className="text-center py-1.5">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.3)" }} />
+                <span className="text-[9px] text-muted-foreground/60 font-medium">Hors-ligne</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-foreground">
-                  {offlineCount} titre{offlineCount > 1 ? "s" : ""} · {offlineCacheSize !== null ? formatBytes(offlineCacheSize) : "…"}
-                </span>
-                <HardDrive className="w-3.5 h-3.5 text-muted-foreground/25" />
-              </div>
+              <p className="text-[10px] font-semibold text-foreground">{offlineCount} titre{offlineCount > 1 ? "s" : ""}</p>
             </div>
           </div>
 
-          {/* Force refresh button */}
-          <button
-            onClick={async () => {
-              if (isRefreshing) return;
-              setIsRefreshing(true);
-              try {
-                // Refresh SW cache
-                const reg = await navigator.serviceWorker?.getRegistration();
-                if (reg) await reg.update();
-                // Refresh app data cache
-                if (user) silentCacheRefresh(user.id);
-                // Sync offline queue
-                const synced = await flushQueue();
-                setPendingActions(getPendingCount());
-                // Invalidate ALL React Query caches so UI shows fresh data
-                await queryClient.invalidateQueries();
-                toast.success(synced > 0
-                  ? `Mis à jour ! ${synced} action(s) synchronisée(s)`
-                  : "Données rafraîchies !"
-                );
-              } catch {
-                toast.error("Erreur lors de la mise à jour");
-              } finally {
-                setIsRefreshing(false);
-              }
-            }}
-            disabled={isRefreshing}
-            className="w-full py-2.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
-            style={{
-              background: "hsl(var(--primary) / 0.10)",
-              color: "hsl(var(--primary))",
-            }}
-          >
-            {isRefreshing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3.5 h-3.5" />
-            )}
-            {isRefreshing ? "Mise à jour…" : "Forcer la mise à jour"}
-            {pendingActions > 0 && (
-              <span
-                className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
-                style={{ background: "hsl(var(--primary) / 0.15)" }}
-              >
-                {pendingActions} en attente
-              </span>
-            )}
-          </button>
+          {pendingActions > 0 && (
+            <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg" style={{ background: "hsl(var(--primary) / 0.06)" }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-semibold text-primary">{pendingActions} action{pendingActions > 1 ? "s" : ""} en attente</span>
+            </div>
+          )}
 
+          {/* Clear cache */}
           <button
             onClick={async () => {
               if (!("caches" in window)) return;
               const names = await caches.keys();
               await Promise.all(names.map((n) => caches.delete(n)));
               setSwCacheSize(0);
-              toast.success("Tout le cache a été vidé !");
+              toast.success("Cache vidé !");
             }}
-            className="w-full py-2.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
-            style={{
-              background: "hsl(var(--destructive) / 0.08)",
-              color: "hsl(var(--destructive))",
-            }}
+            className="w-full py-2 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
+            style={{ background: "hsl(var(--destructive) / 0.06)", color: "hsl(var(--destructive))" }}
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            Vider tout le cache
+            <Trash2 className="w-3 h-3" />
+            Vider le cache
           </button>
         </GlassCard>
 
-        {/* Logout */}
-        <GlassCard delay={0.25}>
-          <button
+        {/* ─── DÉCONNEXION ─── */}
+        <GlassCard delay={0.16}>
+          <MenuRow
+            icon={LogOut}
+            title="Se déconnecter"
+            destructive
             onClick={async () => { await signOut(); navigate("/"); }}
-            className="w-full p-4 flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors active:scale-[0.98]"
-          >
-            <LogOut className="w-4 h-4" />
-            Se déconnecter
-          </button>
+            trailing={<span />}
+          />
         </GlassCard>
       </div>
     </div>
