@@ -62,10 +62,28 @@ export function UpdateNotification() {
   }, []);
 
   const handleUpdate = useCallback(() => {
-    if (waitingWorker) {
+    if (waitingWorker && !updating) {
+      setUpdating(true);
+      setProgress(0);
+      // Simulate progress while SW activates
+      let p = 0;
+      const interval = setInterval(() => {
+        p += Math.random() * 15 + 5;
+        if (p >= 95) {
+          p = 95;
+          clearInterval(interval);
+        }
+        setProgress(Math.round(p));
+      }, 200);
       waitingWorker.postMessage({ type: "SKIP_WAITING" });
+      // controllerchange will reload — but show 100% briefly
+      const onDone = () => {
+        clearInterval(interval);
+        setProgress(100);
+      };
+      navigator.serviceWorker.addEventListener("controllerchange", onDone, { once: true });
     }
-  }, [waitingWorker]);
+  }, [waitingWorker, updating]);
 
   const handleDismiss = useCallback(() => {
     setUpdateAvailable(false);
