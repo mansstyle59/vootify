@@ -215,9 +215,7 @@ const HomePage = () => {
     <div className="pb-20 max-w-7xl mx-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
-      {/* QuickAccess playlists removed */}
-
-      <div className="mt-5" />
+      <div className="mt-3" />
 
       {visibleSections.map((section) => {
         const isCustom = section.id.startsWith("custom_");
