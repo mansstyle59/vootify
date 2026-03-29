@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useMemo, useEffect, useState } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2, Radio, Library, RefreshCw } from "lucide-react";
+import { useRef, useMemo } from "react";
+import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2, Radio } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import {
   DropdownMenu,
@@ -36,29 +36,15 @@ function getDailyQuote() {
   return QUOTES[day % QUOTES.length];
 }
 
-/* ── Animated sound wave bars ── */
-function SoundWaveVisualizer() {
-  return (
-    <div className="flex items-end gap-[3px] h-8 opacity-40">
-      {Array.from({ length: 20 }).map((_, i) => (
-        <motion.div
-          key={i}
-          className="w-[2px] rounded-full"
-          style={{ background: "hsl(var(--primary))" }}
-          animate={{
-            height: [4, 12 + Math.random() * 18, 6, 16 + Math.random() * 14, 4],
-          }}
-          transition={{
-            duration: 1.8 + Math.random() * 0.8,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 0.07,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+/* ── Floating particles for immersion ── */
+const PARTICLES = Array.from({ length: 8 }).map((_, i) => ({
+  id: i,
+  size: 2 + Math.random() * 3,
+  x: 10 + Math.random() * 80,
+  y: 20 + Math.random() * 60,
+  duration: 6 + Math.random() * 8,
+  delay: Math.random() * 4,
+}));
 
 export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?: () => void; customSubtitle?: string; bgColor?: string; bgImage?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -113,34 +99,71 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           </>
         ) : (
           <>
-            {/* Mesh gradient background */}
+            {/* Deep mesh gradient */}
             <div className="absolute inset-0" style={{
               background: `
-                radial-gradient(ellipse 80% 50% at 20% 10%, hsl(var(--primary) / 0.20) 0%, transparent 55%),
-                radial-gradient(ellipse 60% 40% at 80% 30%, hsl(var(--primary) / 0.12) 0%, transparent 50%),
-                radial-gradient(ellipse 40% 60% at 50% 80%, hsl(var(--primary) / 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 90% 60% at 15% 5%, hsl(var(--primary) / 0.22) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 50% at 85% 25%, hsl(var(--primary) / 0.14) 0%, transparent 45%),
+                radial-gradient(ellipse 50% 70% at 40% 90%, hsl(var(--primary) / 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 100% 80% at 50% 50%, hsl(var(--primary) / 0.03) 0%, transparent 70%),
                 hsl(var(--background))
               `,
             }} />
-            {/* Animated glow orb */}
+            {/* Primary glow orb */}
             <motion.div
-              className="absolute w-[200px] h-[200px] rounded-full"
+              className="absolute w-[260px] h-[260px] rounded-full"
               style={{
-                top: "10%",
-                left: "15%",
-                background: "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
+                top: "5%",
+                left: "10%",
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 65%)",
+                filter: "blur(50px)",
+              }}
+              animate={{
+                x: [0, 40, -15, 25, 0],
+                y: [0, -20, 15, -8, 0],
+                scale: [1, 1.1, 0.95, 1.05, 1],
+              }}
+              transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+            />
+            {/* Secondary glow orb */}
+            <motion.div
+              className="absolute w-[180px] h-[180px] rounded-full"
+              style={{
+                bottom: "15%",
+                right: "5%",
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)",
                 filter: "blur(40px)",
               }}
               animate={{
-                x: [0, 30, -10, 20, 0],
-                y: [0, -15, 10, -5, 0],
+                x: [0, -20, 10, -15, 0],
+                y: [0, 10, -12, 6, 0],
               }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
             />
+            {/* Floating particles */}
+            {PARTICLES.map((p) => (
+              <motion.div
+                key={p.id}
+                className="absolute rounded-full"
+                style={{
+                  width: p.size,
+                  height: p.size,
+                  left: `${p.x}%`,
+                  top: `${p.y}%`,
+                  background: "hsl(var(--primary) / 0.25)",
+                }}
+                animate={{
+                  y: [0, -20, 5, -10, 0],
+                  opacity: [0.15, 0.4, 0.2, 0.35, 0.15],
+                }}
+                transition={{
+                  duration: p.duration,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: p.delay,
+                }}
+              />
+            ))}
           </>
         )}
       </motion.div>
@@ -148,13 +171,10 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
       {/* ─── Top bar ─── */}
       <div
         className="sticky top-0 z-30 flex items-center justify-between px-5 md:px-8 py-2.5"
-        style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.625rem)",
-        }}
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.625rem)" }}
       >
-        {/* Brand + SoundWave indicator */}
         <div className="flex items-center gap-2.5">
-          <span className="text-[13px] font-black text-primary tracking-wide uppercase">Vootify</span>
+          <span className="text-[13px] font-black tracking-wide uppercase" style={{ color: "hsl(var(--primary))" }}>Vootify</span>
           {currentSong && isPlaying && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -163,7 +183,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
               style={{ background: "hsl(var(--primary) / 0.1)" }}
             >
               <Music2 className="w-2.5 h-2.5 text-primary" />
-              <span className="text-[9px] font-bold text-primary tracking-wider uppercase">SoundWave</span>
+              <span className="text-[9px] font-bold text-primary tracking-wider uppercase">Live</span>
             </motion.div>
           )}
         </div>
@@ -175,7 +195,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full outline-none active:scale-[0.93] transition-all duration-200 hover:shadow-lg"
+                  className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full outline-none active:scale-[0.93] transition-all duration-200"
                   style={{
                     background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--foreground) / 0.06))",
                     backdropFilter: "blur(20px) saturate(1.6)",
@@ -184,9 +204,8 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                     boxShadow: "0 2px 12px hsl(var(--primary) / 0.08), inset 0 1px 0 hsl(var(--primary) / 0.06)",
                   }}
                 >
-                  <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ boxShadow: "0 0 20px hsl(var(--primary) / 0.2), inset 0 0 8px hsl(var(--primary) / 0.05)" }} />
-                  <Avatar className="w-7 h-7 ring-[1.5px] ring-primary/30 group-hover:ring-primary/50 transition-all duration-200">
-                    <AvatarImage src={avatarUrl} alt={displayName || "User"} className="group-hover:brightness-110 transition-all duration-200" />
+                  <Avatar className="w-7 h-7 ring-[1.5px] ring-primary/30">
+                    <AvatarImage src={avatarUrl} alt={displayName || "User"} />
                     <AvatarFallback
                       className="text-[10px] font-bold"
                       style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.1))", color: "hsl(var(--primary))" }}
@@ -197,13 +216,9 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   <span className="text-[11px] font-semibold text-foreground truncate max-w-[72px] relative z-10">
                     {displayName}
                   </span>
-                  {/* Online indicator */}
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 6px hsl(var(--primary) / 0.5)" }} />
-                  {/* Sync pending badge */}
                   {getPendingCount() > 0 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
+                    <span
                       className="absolute -bottom-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[8px] font-bold border-2 border-background"
                       style={{
                         background: "hsl(var(--destructive))",
@@ -212,7 +227,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                       }}
                     >
                       {getPendingCount()}
-                    </motion.span>
+                    </span>
                   )}
                 </button>
               </DropdownMenuTrigger>
@@ -228,10 +243,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   boxShadow: "0 24px 80px hsl(0 0% 0% / 0.55), 0 0 0 1px hsl(var(--primary) / 0.04), inset 0 1px 0 hsl(var(--primary) / 0.06)",
                 }}
               >
-                <div
-                  className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl"
-                  style={{ background: "hsl(var(--primary) / 0.06)" }}
-                >
+                <div className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl" style={{ background: "hsl(var(--primary) / 0.06)" }}>
                   <Avatar className="w-10 h-10 ring-2 ring-primary/20">
                     <AvatarImage src={avatarUrl} alt={displayName || "User"} />
                     <AvatarFallback className="text-[11px] font-bold" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.1))", color: "hsl(var(--primary))" }}>
@@ -243,15 +255,15 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                     <p className="text-[10px] text-muted-foreground/50 truncate">{user.email}</p>
                     <div className="flex items-center gap-1 mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 4px hsl(var(--primary) / 0.5)" }} />
-                      <span className="text-[9px] font-medium text-primary/70">En ligne</span>
+                      <span className="text-[9px] font-medium" style={{ color: "hsl(var(--primary) / 0.7)" }}>En ligne</span>
                     </div>
                   </div>
                 </div>
 
                 <DropdownMenuSeparator className="my-1.5" style={{ background: "hsl(var(--border) / 0.06)" }} />
 
-                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer group/item transition-all duration-150 focus:bg-primary/8">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 group-hover/item:scale-110" style={{ background: "hsl(var(--primary) / 0.1)", boxShadow: "0 2px 8px hsl(var(--primary) / 0.1)" }}>
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer group/item transition-all duration-150">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 group-hover/item:scale-110" style={{ background: "hsl(var(--primary) / 0.1)" }}>
                     <User className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div className="flex-1">
@@ -296,105 +308,93 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
       {/* ─── Main content ─── */}
       <motion.div
         style={{ opacity, y: contentY }}
-        className="relative z-10 px-5 md:px-8 pt-1 pb-5"
+        className="relative z-10 px-5 md:px-8 pt-2 pb-6"
       >
-        {/* Large greeting with subtle sound wave accent */}
+        {/* Greeting */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-end gap-2.5"
+          transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h1 className="text-[32px] md:text-[38px] font-black text-foreground leading-[1.05] tracking-tight">
+          <h1 className="text-[34px] md:text-[40px] font-black text-foreground leading-[1.02] tracking-tight">
             {getGreeting()}
+            <span className="inline-block ml-2 align-middle">
+              <span className="inline-flex items-end gap-[2px] h-5 opacity-20">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <motion.span
+                    key={i}
+                    className="w-[2px] rounded-full inline-block"
+                    style={{ background: "hsl(var(--primary))" }}
+                    animate={{ height: [2, 8 + Math.random() * 10, 3, 12 + Math.random() * 6, 2] }}
+                    transition={{ duration: 2 + Math.random() * 1, repeat: Infinity, ease: "easeInOut", delay: i * 0.1 }}
+                  />
+                ))}
+              </span>
+            </span>
           </h1>
-          <div className="mb-1.5 opacity-25">
-            <div className="flex items-end gap-[2px] h-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="w-[2px] rounded-full bg-primary"
-                  animate={{ height: [2, 6 + Math.random() * 8, 3, 10 + Math.random() * 4, 2] }}
-                  transition={{ duration: 1.8 + Math.random() * 0.8, repeat: Infinity, ease: "easeInOut", delay: i * 0.09 }}
-                />
-              ))}
-            </div>
-          </div>
         </motion.div>
 
-        {/* Daily quote — soft green */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.3 }}
-          className="text-[12px] mt-1.5 font-medium italic"
-          style={{ color: "hsl(var(--primary) / 0.5)" }}
-        >
-          « {customSubtitle || quote} »
-        </motion.p>
-
-        {/* Action buttons — premium hierarchy */}
+        {/* Quote with decorative line */}
         <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
-          className="flex flex-col gap-2.5 mt-5"
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="flex items-center gap-2.5 mt-2"
         >
-          {/* Primary CTA — Shuffle */}
+          <div className="w-[3px] h-4 rounded-full" style={{ background: "hsl(var(--primary) / 0.35)" }} />
+          <p className="text-[12px] font-medium italic" style={{ color: "hsl(var(--primary) / 0.55)" }}>
+            {customSubtitle || quote}
+          </p>
+        </motion.div>
+
+        {/* Action buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+          className="flex flex-col gap-2.5 mt-6"
+        >
+          {/* Primary CTA — Shuffle with glow */}
           <button
             onClick={handleShuffle}
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-full text-[14px] font-bold active:scale-[0.97] transition-all duration-200 border"
+            className="relative flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl text-[14px] font-bold active:scale-[0.97] transition-all duration-200 overflow-hidden"
             style={{
-              background: "hsl(var(--primary) / 0.12)",
+              background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.08))",
               color: "hsl(var(--primary))",
-              borderColor: "hsl(var(--primary) / 0.25)",
-              boxShadow: "inset 0 1px 0 hsl(var(--primary) / 0.08), 0 2px 12px hsl(var(--primary) / 0.08)",
+              border: "1px solid hsl(var(--primary) / 0.2)",
+              boxShadow: "0 4px 20px hsl(var(--primary) / 0.1), inset 0 1px 0 hsl(var(--primary) / 0.1)",
             }}
           >
-            <Shuffle className="w-4.5 h-4.5" />
-            Lecture aléatoire
+            {/* Shimmer effect */}
+            <div
+              className="absolute inset-0 -translate-x-full animate-[shimmer_3s_infinite]"
+              style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.06), transparent)" }}
+            />
+            <Shuffle className="w-[18px] h-[18px] relative z-10" />
+            <span className="relative z-10">Lecture aléatoire</span>
           </button>
 
-          {/* Secondary actions row */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <button
-              onClick={() => navigate("/library")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
-              style={{
-                background: "hsl(var(--primary) / 0.08)",
-                color: "hsl(var(--primary))",
-                borderColor: "hsl(var(--primary) / 0.15)",
-              }}
-            >
-              <Heart className="w-4 h-4" />
-              Favoris
-            </button>
-
-            <button
-              onClick={() => navigate("/search")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
-              style={{
-                background: "hsl(var(--primary) / 0.08)",
-                color: "hsl(var(--primary))",
-                borderColor: "hsl(var(--primary) / 0.15)",
-              }}
-            >
-              <Search className="w-4 h-4" />
-              Rechercher
-            </button>
-
-            <button
-              onClick={() => navigate("/radio")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
-              style={{
-                background: "hsl(var(--primary) / 0.08)",
-                color: "hsl(var(--primary))",
-                borderColor: "hsl(var(--primary) / 0.15)",
-              }}
-            >
-              <Radio className="w-4 h-4" />
-              Radio
-            </button>
+          {/* Secondary actions */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { icon: Heart, label: "Favoris", route: "/library" },
+              { icon: Search, label: "Rechercher", route: "/search" },
+              { icon: Radio, label: "Radio", route: "/radio" },
+            ].map(({ icon: Icon, label, route }) => (
+              <button
+                key={route}
+                onClick={() => navigate(route)}
+                className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-[11px] font-semibold active:scale-[0.95] transition-all duration-200"
+                style={{
+                  background: "hsl(var(--foreground) / 0.04)",
+                  color: "hsl(var(--foreground) / 0.7)",
+                  border: "1px solid hsl(var(--foreground) / 0.06)",
+                }}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            ))}
           </div>
         </motion.div>
       </motion.div>
