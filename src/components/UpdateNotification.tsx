@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCw, X } from "lucide-react";
+import { RefreshCw, X, Check } from "lucide-react";
 
 /**
- * Detects Service Worker updates and shows a sleek "update available" banner.
- * The user can tap to reload immediately or dismiss.
+ * Detects Service Worker updates and shows a sleek "update available" banner
+ * with a visual progress percentage during the update process.
  */
 export function UpdateNotification() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
