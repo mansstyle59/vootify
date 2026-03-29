@@ -134,6 +134,24 @@ const ProfilePage = () => {
           setSwCacheSize(total);
         } catch {}
       })();
+      // Count cached page data (API responses for albums, artists, playlists)
+      (async () => {
+        try {
+          const cacheNames = await caches.keys();
+          let albums = 0, artists = 0, playlists = 0;
+          for (const name of cacheNames) {
+            const cache = await caches.open(name);
+            const keys = await cache.keys();
+            for (const req of keys) {
+              const url = req.url || "";
+              if (url.includes("custom_albums")) albums++;
+              else if (url.includes("custom_songs") || url.includes("artist_images")) artists++;
+              else if (url.includes("playlist_songs")) playlists++;
+            }
+          }
+          setPageCacheCount({ albums, artists, playlists });
+        } catch {}
+      })();
     }
     offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
     offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
