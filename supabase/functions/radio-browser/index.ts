@@ -53,15 +53,68 @@ serve(async (req) => {
       reverse: "true",
     });
 
+    // Special action: get station counts for multiple tags
+    if (action === "tag_counts") {
+      const { tags } = await req.json().catch(() => ({ tags: [] }));
+      const tagList: string[] = body?.tags || tags || [];
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        tagList.map(async (t: string) => {
+          try {
+            const r = await fetch(
+              `${API_BASE}/stations/bytag/${encodeURIComponent(t)}?hidebroken=true&limit=1&offset=0`,
+              { headers: { "User-Agent": "Vootify/1.0" } }
+            );
+            // Use search endpoint with count
+            const r2 = await fetch(
+              `${API_BASE}/stations/search?tag=${encodeURIComponent(t)}&hidebroken=true&limit=0`,
+              { headers: { "User-Agent": "Vootify/1.0" } }
+            );
+            const countHeader = r2.headers.get("x-total-count");
+            if (countHeader) {
+              counts[t] = parseInt(countHeader, 10);
+            } else {
+              // Fallback: fetch a batch and use length as estimate
+              const r3 = await fetch(
+                `${API_BASE}/stations/bytag/${encodeURIComponent(t)}?hidebroken=true&limit=200`,
+                { headers: { "User-Agent": "Vootify/1.0" } }
+              );
+              const data = await r3.json();
+              counts[t] = Array.isArray(data) ? data.length : 0;
+            }
+          } catch {
+            counts[t] = 0;
+          }
+        })
+      );
+
+      return new Response(
+        JSON.stringify({ success: true, counts }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const body = await req.json();
+    const { query: q2, tag: t2, country: c2, limit: l2 = 30 } = body;
+
+    let url: string;
+    const params = new URLSearchParams({
+      limit: String(l2),
+      hidebroken: "true",
+      order: "clickcount",
+      reverse: "true",
+    });
+
     switch (action) {
       case "search":
-        url = `${API_BASE}/stations/search?name=${encodeURIComponent(query || "")}&${params}`;
+        url = `${API_BASE}/stations/search?name=${encodeURIComponent(q2 || "")}&${params}`;
         break;
       case "by_tag":
-        url = `${API_BASE}/stations/bytag/${encodeURIComponent(tag || "")}?${params}`;
+        url = `${API_BASE}/stations/bytag/${encodeURIComponent(t2 || "")}?${params}`;
         break;
       case "by_country":
-        url = `${API_BASE}/stations/bycountry/${encodeURIComponent(country || "France")}?${params}`;
+        url = `${API_BASE}/stations/bycountry/${encodeURIComponent(c2 || "France")}?${params}`;
         break;
       case "top":
         url = `${API_BASE}/stations/topclick?${params}`;
