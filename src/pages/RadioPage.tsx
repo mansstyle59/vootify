@@ -618,13 +618,36 @@ const RadioPage = () => {
     return merged;
   }, [isSearching, searchResults, myRadioResults, myRadioLogoMap]);
 
-  // Genre-filtered stations from saved
+  // Fetch stations from API when a genre is selected
+  const { data: apiGenreStations = [], isLoading: loadingGenre } = useQuery({
+    queryKey: ["radio-genre", activeGenre],
+    queryFn: async () => {
+      if (!activeGenre) return [];
+      const stations = await radioBrowserApi.getByTag(activeGenre, 50);
+      // Enrich with MyRadio logos
+      if (myRadioLogoMap) {
+        return stations.map(s => {
+          const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+          if (hdLogo) return { ...s, coverUrl: hdLogo };
+          return s;
+        });
+      }
+      return stations;
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!activeGenre,
+  });
+
+  // Combine saved genre stations + API stations (saved first, deduped)
   const genreStations = useMemo(() => {
     if (!activeGenre) return [];
-    return enrichedCustom.filter(s =>
+    const savedGenre = enrichedCustom.filter(s =>
       s.genre?.toLowerCase().includes(activeGenre.toLowerCase())
     );
-  }, [enrichedCustom, activeGenre]);
+    const savedIds_ = new Set(savedGenre.map(s => s.id));
+    const apiFiltered = apiGenreStations.filter(s => !savedIds_.has(s.id));
+    return [...savedGenre, ...apiFiltered];
+  }, [enrichedCustom, activeGenre, apiGenreStations]);
 
   const showNowPlaying = isLiveRadio && currentSong;
 
