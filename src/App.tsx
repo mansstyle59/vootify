@@ -143,14 +143,13 @@ function AppContent() {
   }, [user, queryClient, loadUserData]);
 
   const handlePullRefresh = useCallback(async () => {
-    // Invalidate all React Query caches → triggers refetch of visible queries
     await queryClient.invalidateQueries();
-    // Refresh Supabase caches & player data
     const userId = user?.id;
     if (userId) {
       silentCacheRefresh(userId);
       loadUserData(userId);
     }
+    toast.success("Contenu actualisé");
   }, [queryClient, user, loadUserData]);
 
   return (
