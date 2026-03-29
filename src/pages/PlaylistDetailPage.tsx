@@ -538,7 +538,7 @@ const PlaylistDetailPage = () => {
       </div>
       {/* Share to user dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-3xl" style={{ backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", background: "hsl(var(--card) / 0.85)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-primary" />
