@@ -162,7 +162,7 @@ const AlbumDetailPage = () => {
 
         {/* Navigation bar */}
         <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-          <button onClick={() => navigate("/")} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90">
+          <button onClick={() => navigate("/")} className="p-2.5 rounded-full text-foreground transition-all active:scale-90" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}>
             <ArrowLeft className="w-5 h-5" />
           </button>
           <motion.div style={{ opacity: headerOpacity }} className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-foreground truncate max-w-[200px]">
@@ -171,7 +171,7 @@ const AlbumDetailPage = () => {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90"
+              className="p-2.5 rounded-full text-foreground transition-all active:scale-90" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}
             >
               <MoreHorizontal className="w-5 h-5" />
             </button>
@@ -184,7 +184,8 @@ const AlbumDetailPage = () => {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: -8 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl bg-card/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/40 overflow-hidden"
+                  className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl overflow-hidden"
+                  style={{ background: "linear-gradient(160deg, hsl(var(--card) / 0.75), hsl(var(--card) / 0.5))", backdropFilter: "blur(60px) saturate(2)", WebkitBackdropFilter: "blur(60px) saturate(2)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 12px 40px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}
                 >
                   <div className="p-1.5 space-y-0.5">
                     <button
@@ -302,7 +303,7 @@ const AlbumDetailPage = () => {
         <button
           onClick={playAll}
           className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all"
-          style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
+          style={{ background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))", color: "hsl(var(--primary-foreground))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)" }}
         >
           <Play className="w-5 h-5 fill-current" />
           Lecture
@@ -310,7 +311,7 @@ const AlbumDetailPage = () => {
         <button
           onClick={playShuffle}
           className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all"
-          style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
+          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", color: "hsl(var(--foreground))", border: "0.5px solid hsl(var(--foreground) / 0.06)", boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)" }}
         >
           <Shuffle className="w-4 h-4" />
           Aléatoire
@@ -324,7 +325,7 @@ const AlbumDetailPage = () => {
                 ? "text-primary"
                 : "text-muted-foreground hover:text-primary"
             }`}
-            style={{ background: "hsl(var(--primary) / 0.08)" }}
+            style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
           >
             {isSaved ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
           </button>
@@ -337,7 +338,7 @@ const AlbumDetailPage = () => {
           songs={tracks}
           showIndex
           onClickSong={(song) => handlePlay(song)}
-          className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+          className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}
         />
       </div>
     </div>
