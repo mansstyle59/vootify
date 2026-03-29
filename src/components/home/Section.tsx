@@ -115,17 +115,11 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
 
   return (
     <section className="mb-6 md:mb-8">
-      {/* Header with accent dot */}
+      {/* Apple Music style header — bold title + actions */}
       <div className="flex items-center justify-between px-5 md:px-9 mb-2.5">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-1 h-4 rounded-full"
-            style={{ background: "hsl(var(--primary) / 0.5)" }}
-          />
-          <h2 className="text-[17px] md:text-[19px] font-extrabold text-foreground leading-tight tracking-tight line-clamp-1 break-words">
-            {title}
-          </h2>
-        </div>
+        <h2 className="text-[20px] md:text-[22px] font-extrabold text-foreground leading-tight tracking-tight line-clamp-1 break-words">
+          {title}
+        </h2>
         <div className="flex items-center gap-1 relative flex-shrink-0 ml-2">
           {action}
           {hasSongs && onPlayAll && (
@@ -155,11 +149,11 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}
-              className="flex items-center gap-0.5 text-[11px] font-semibold active:opacity-70 transition-opacity"
-              style={{ color: "hsl(var(--primary) / 0.7)" }}
+              className="flex items-center gap-0.5 text-[13px] font-medium active:opacity-70 transition-opacity"
+              style={{ color: "hsl(var(--primary))" }}
             >
               Voir tout
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

@@ -19,7 +19,7 @@ import { Music, RefreshCw, Loader2, User } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
@@ -216,12 +216,12 @@ const HomePage = () => {
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
       {/* Quick access playlists */}
-      <div className="mt-4 mb-2">
+      <div className="mb-5">
         <QuickAccess />
       </div>
 
       {/* Dynamic sections */}
-      <div className="mt-2 space-y-1">
+      <div>
         {visibleSections.map((section) => {
           const isCustom = section.id.startsWith("custom_");
           if (isCustom) {
