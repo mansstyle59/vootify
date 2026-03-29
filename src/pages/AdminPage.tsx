@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2 } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { useSaveAppSetting } from "@/hooks/useAppSettings";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs";
 
 interface UserProfile {
   user_id: string;
@@ -54,6 +54,7 @@ const AdminPage = () => {
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "logs", label: "Logs", icon: ScrollText },
+    { key: "notifs", label: "Notifs", icon: Bell },
   ];
 
   return (
@@ -126,6 +127,7 @@ const AdminPage = () => {
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
+        {tab === "notifs" && <NotificationsTab />}
       </div>
     </div>
   );
