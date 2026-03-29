@@ -61,7 +61,7 @@ function ResumeBanner({ message }: { message: string | null }) {
           exit={{ opacity: 0, y: -8, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
-          style={{ bottom: "calc(8.5rem + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
         >
           <div
             className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg"
@@ -658,7 +658,7 @@ export function MiniPlayer() {
         {!closing && (
             <div
               className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-              style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto", opacity: fullScreen ? 0 : 1, transform: fullScreen ? "scale(0.92) translateY(60px)" : "none", transition: "opacity 0.2s, transform 0.2s" }}
+            style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto", opacity: fullScreen ? 0 : 1, transform: fullScreen ? "scale(0.92) translateY(60px)" : "none", transition: "opacity 0.2s, transform 0.2s" }}
             >
               <div className="rounded-2xl overflow-hidden" style={glassStyle}>
                 <MiniPlayerProgress percent={0} isLive />
@@ -724,7 +724,7 @@ export function MiniPlayer() {
         {!closing && (
           <div
             className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-            style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto", opacity: fullScreen ? 0 : 1, transform: fullScreen ? "scale(0.92) translateY(60px)" : "none", transition: "opacity 0.2s, transform 0.2s" }}
+            style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto", opacity: fullScreen ? 0 : 1, transform: fullScreen ? "scale(0.92) translateY(60px)" : "none", transition: "opacity 0.2s, transform 0.2s" }}
           >
             <div className="rounded-2xl overflow-hidden" style={glassStyle}>
               <MiniPlayerProgress percent={progressPct} isLive={false} />
