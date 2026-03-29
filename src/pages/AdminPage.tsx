@@ -2286,6 +2286,21 @@ function SongPickerModal({
               <p className="text-[10px] text-muted-foreground">Album, playlist ou artiste Deezer</p>
             </div>
 
+            {/* Counter bar */}
+            {deezerTracks.length > 0 && !deezerLoading && (
+              <div className="px-3 py-1.5 border-b border-border flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">
+                  <span className="text-primary font-semibold">{deezerTracks.filter(t => t.dbSongId).length}</span>
+                  <span> Local sur </span>
+                  <span className="font-medium text-foreground">{deezerTracks.length}</span>
+                  <span> importés</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  <span className="font-semibold text-foreground">{selected.size}</span> sélectionné{selected.size > 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
+
             {/* Deezer tracks list */}
             <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
               {deezerLoading ? (
