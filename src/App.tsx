@@ -19,6 +19,7 @@ import { NetworkStatus } from "@/components/NetworkStatus";
 import { UpdateNotification } from "@/components/UpdateNotification";
 import IosPwaInstallBanner from "@/components/IosPwaInstallBanner";
 import { AuthGate } from "@/components/AuthGate";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { InitialCacheLoader } from "@/components/InitialCacheLoader";
@@ -171,6 +172,7 @@ const App = () => {
               <NetworkStatus />
               <UpdateNotification />
               <IosPwaInstallBanner />
+              <PushNotificationPrompt />
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
