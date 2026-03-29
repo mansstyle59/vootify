@@ -83,6 +83,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          action_url: string | null
+          body: string
+          icon_url: string | null
+          id: string
+          sent_at: string
+          sent_by: string
+          target_count: number | null
+          title: string
+        }
+        Insert: {
+          action_url?: string | null
+          body: string
+          icon_url?: string | null
+          id?: string
+          sent_at?: string
+          sent_by: string
+          target_count?: number | null
+          title: string
+        }
+        Update: {
+          action_url?: string | null
+          body?: string
+          icon_url?: string | null
+          id?: string
+          sent_at?: string
+          sent_by?: string
+          target_count?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -444,6 +477,33 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
           user_id?: string
         }
         Relationships: []
