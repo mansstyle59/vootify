@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, type CustomSection } from "@/hooks/useHomeConfig";
 import { useSaveAppSetting } from "@/hooks/useAppSettings";
+import { notifyUser } from "@/lib/notifyUser";
 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -291,6 +292,14 @@ function UsersTab() {
       if (songsError) throw songsError;
 
       toast.success(`Playlist envoyée à ${shareTargetUser.display_name || "l'utilisateur"}`);
+
+      // Send push notification (fire-and-forget)
+      notifyUser({
+        targetUserId: shareTargetUser.user_id,
+        title: "🎵 Nouvelle playlist partagée",
+        body: `« ${sharePlaylistName.trim()} » — ${shareSelectedSongs.size} titre${shareSelectedSongs.size > 1 ? "s" : ""}`,
+        actionUrl: "/library",
+      });
       setShowShareDialog(false);
       setSharePlaylistName("");
       setShareSelectedSongs(new Set());
