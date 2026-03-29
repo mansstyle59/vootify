@@ -837,7 +837,13 @@ const SearchPage = () => {
                   <div className="text-center py-20">
                     <div
                       className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                      style={{ background: "hsl(var(--foreground) / 0.04)" }}
+                      style={{
+                        background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.2))",
+                        backdropFilter: "blur(40px) saturate(1.8)",
+                        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                        border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                        boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+                      }}
                     >
                       <Music className="w-7 h-7 text-muted-foreground/20" />
                     </div>
