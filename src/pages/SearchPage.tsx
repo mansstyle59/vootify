@@ -527,7 +527,7 @@ const SearchPage = () => {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-[18px] font-bold text-foreground">Récentes</h2>
-                  <button onClick={clearAllRecent} className="text-[12px] text-primary font-medium active:opacity-70 transition-opacity">Tout effacer</button>
+                  <button onClick={clearAllRecent} className="text-[12px] text-primary/80 font-medium active:opacity-70 transition-opacity">Tout effacer</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {recentSearches.map((term) => (
@@ -535,7 +535,11 @@ const SearchPage = () => {
                       <button
                         onClick={() => commitSearch(term)}
                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
-                        style={{ background: "hsl(var(--foreground) / 0.05)" }}
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.18))",
+                          backdropFilter: "blur(16px)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                        }}
                       >
                         <Clock className="w-3 h-3 text-muted-foreground/40" />
                         {term}
