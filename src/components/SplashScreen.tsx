@@ -25,86 +25,89 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.06, filter: "blur(8px)" }}
+          exit={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
           transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform"
           style={{ background: "hsl(var(--background))" }}
         >
-          {/* Deep layered ambient glows */}
+          {/* ── Liquid Glass ambient layer ── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.3 }}
-            animate={{ opacity: 0.2, scale: 1.8 }}
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={{ opacity: 0.35, scale: 1.6 }}
             transition={{ duration: 2.5, ease: "easeOut" }}
-            className="absolute w-[600px] h-[600px] rounded-full"
+            className="absolute w-[500px] h-[500px] rounded-full"
             style={{
-              background: "radial-gradient(circle, hsl(142 71% 45% / 0.5) 0%, hsl(142 71% 45% / 0.1) 40%, transparent 65%)",
+              background: "radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, hsl(var(--primary) / 0.08) 45%, transparent 70%)",
+              filter: "blur(60px)",
             }}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.2, rotate: -30 }}
-            animate={{ opacity: 0.12, scale: 2.2, rotate: 0 }}
-            transition={{ duration: 3, ease: "easeOut", delay: 0.15 }}
-            className="absolute w-[700px] h-[500px] rounded-full"
+            initial={{ opacity: 0, scale: 0.3, rotate: -20 }}
+            animate={{ opacity: 0.15, scale: 2, rotate: 10 }}
+            transition={{ duration: 3, ease: "easeOut", delay: 0.2 }}
+            className="absolute w-[600px] h-[400px] rounded-full"
             style={{
-              background: "radial-gradient(ellipse, hsl(var(--primary) / 0.35) 0%, transparent 60%)",
+              background: "radial-gradient(ellipse, hsl(168 60% 35% / 0.3) 0%, transparent 65%)",
+              filter: "blur(80px)",
             }}
           />
-          {/* Subtle particle dots */}
-          {Array.from({ length: 6 }).map((_, i) => (
+
+          {/* ── Glass orb particles ── */}
+          {Array.from({ length: 5 }).map((_, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 40 + i * 10, x: (i - 3) * 30, scale: 0 }}
-              animate={{ opacity: [0, 0.4, 0], y: -60 - i * 20, scale: [0, 1, 0.5] }}
-              transition={{
-                duration: 2.2,
-                delay: 0.6 + i * 0.12,
-                ease: "easeOut",
-              }}
+              initial={{ opacity: 0, y: 30, x: (i - 2) * 50, scale: 0 }}
+              animate={{ opacity: [0, 0.5, 0], y: -80 - i * 15, scale: [0, 1.2, 0.3] }}
+              transition={{ duration: 2.5, delay: 0.7 + i * 0.15, ease: "easeOut" }}
               className="absolute rounded-full"
               style={{
-                width: 3 + (i % 3) * 2,
-                height: 3 + (i % 3) * 2,
-                background: `hsl(142 71% ${55 + i * 5}% / 0.6)`,
-                filter: "blur(0.5px)",
+                width: 6 + (i % 3) * 4,
+                height: 6 + (i % 3) * 4,
+                background: `radial-gradient(circle, hsl(var(--primary) / 0.6) 0%, hsl(var(--primary) / 0.1) 70%)`,
+                backdropFilter: "blur(4px)",
+                border: "0.5px solid hsl(var(--primary) / 0.2)",
               }}
             />
           ))}
 
-          {/* Logo — cinematic 3D entrance */}
+          {/* ── Logo — liquid glass container ── */}
           <motion.div
-            initial={{ scale: 0, opacity: 0, rotateY: -40, rotateX: 15 }}
-            animate={{ scale: 1, opacity: 1, rotateY: 0, rotateX: 0 }}
-            transition={{ type: "spring", stiffness: 180, damping: 16, delay: 0.08 }}
-            className="relative mb-7"
+            initial={{ scale: 0, opacity: 0, rotateY: -30 }}
+            animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.08 }}
+            className="relative mb-8"
             style={{ perspective: "800px" }}
           >
-            {/* Outer glow pulse */}
+            {/* Glass glow halo */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: [0, 0.6, 0.3], scale: [0.6, 1.3, 1.15] }}
-              transition={{ delay: 0.3, duration: 1.5, ease: "easeOut" }}
-              className="absolute -inset-5 rounded-[36px]"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: [0, 0.5, 0.3], scale: [0.5, 1.4, 1.2] }}
+              transition={{ delay: 0.3, duration: 1.8, ease: "easeOut" }}
+              className="absolute -inset-8 rounded-[40px]"
               style={{
-                background: "radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)",
-                filter: "blur(16px)",
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.2) 0%, transparent 65%)",
+                filter: "blur(20px)",
               }}
             />
-            {/* Inner ring */}
+            {/* Glass border ring */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
+              transition={{ delay: 0.35, duration: 0.8 }}
               className="absolute -inset-[3px] rounded-[30px]"
               style={{
-                background: "linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(142 71% 45% / 0.15), hsl(var(--primary) / 0.3))",
-                filter: "blur(1px)",
+                background: "linear-gradient(145deg, hsl(var(--primary) / 0.35), hsl(var(--foreground) / 0.05), hsl(var(--primary) / 0.2))",
+                filter: "blur(0.5px)",
               }}
             />
+            {/* Glass container */}
             <div
               className="relative rounded-[28px] overflow-hidden"
               style={{
+                backdropFilter: "blur(40px) saturate(2)",
+                WebkitBackdropFilter: "blur(40px) saturate(2)",
                 boxShadow:
-                  "0 0 80px hsl(var(--primary) / 0.25), 0 20px 50px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.1)",
+                  "0 0 60px hsl(var(--primary) / 0.2), 0 20px 50px hsl(0 0% 0% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.12), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
               }}
             >
               <motion.img
@@ -113,31 +116,41 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
                 width={112}
                 height={112}
                 className="w-[112px] h-[112px] rounded-[28px]"
-                initial={{ filter: "brightness(0.5) saturate(0)" }}
-                animate={{ filter: "brightness(1) saturate(1)" }}
-                transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                initial={{ filter: "brightness(0.4) saturate(0)" }}
+                animate={{ filter: "brightness(1) saturate(1.1)" }}
+                transition={{ delay: 0.3, duration: 0.9, ease: "easeOut" }}
+              />
+              {/* Glass glare overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.15 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+                className="absolute inset-0 rounded-[28px] pointer-events-none"
+                style={{
+                  background: "linear-gradient(135deg, hsl(0 0% 100% / 0.2) 0%, transparent 50%, hsl(0 0% 100% / 0.05) 100%)",
+                }}
               />
             </div>
           </motion.div>
 
-          {/* Brand name — staggered letter reveal with glow wave */}
+          {/* ── Brand name — glass letter reveal ── */}
           <div className="flex items-center gap-[3px] mb-3">
             {letters.map((letter, i) => (
               <motion.span
                 key={i}
-                initial={{ opacity: 0, y: 24, scale: 0.3, rotateX: 90 }}
+                initial={{ opacity: 0, y: 20, scale: 0.4, rotateX: 60 }}
                 animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
                 transition={{
                   type: "spring",
-                  stiffness: 280,
-                  damping: 18,
-                  delay: 0.25 + i * 0.065,
+                  stiffness: 300,
+                  damping: 20,
+                  delay: 0.25 + i * 0.06,
                 }}
-                className="text-[34px] font-display font-black tracking-[0.18em]"
+                className="text-[32px] font-display font-black tracking-[0.16em]"
                 style={{
                   color: "hsl(var(--primary))",
                   textShadow:
-                    "0 0 30px hsl(var(--primary) / 0.5), 0 0 60px hsl(var(--primary) / 0.2)",
+                    "0 0 24px hsl(var(--primary) / 0.4), 0 0 50px hsl(var(--primary) / 0.15)",
                 }}
               >
                 {letter}
@@ -145,40 +158,44 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
             ))}
           </div>
 
-          {/* Tagline — elegant fade */}
+          {/* ── Tagline ── */}
           <motion.p
-            initial={{ opacity: 0, y: 10, letterSpacing: "0.5em" }}
-            animate={{ opacity: 0.55, y: 0, letterSpacing: "0.35em" }}
+            initial={{ opacity: 0, y: 8, letterSpacing: "0.5em" }}
+            animate={{ opacity: 0.5, y: 0, letterSpacing: "0.3em" }}
             transition={{ delay: 0.85, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="text-[11px] font-semibold uppercase text-muted-foreground mb-1"
+            className="text-[10px] font-semibold uppercase text-muted-foreground mb-1"
           >
             Ta musique, sans limites
           </motion.p>
 
-          {/* Elegant loading indicator — pulsing dots */}
+          {/* ── Glass loading bar ── */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.1 }}
-            className="absolute bottom-28 flex items-center gap-1.5"
+            transition={{ delay: 1 }}
+            className="absolute bottom-28"
           >
-            {[0, 1, 2].map((i) => (
+            <div
+              className="w-[100px] h-[3px] rounded-full overflow-hidden"
+              style={{
+                background: "hsl(var(--foreground) / 0.06)",
+                border: "0.5px solid hsl(var(--foreground) / 0.04)",
+              }}
+            >
               <motion.div
-                key={i}
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.3, 0.8, 0.3],
-                }}
+                initial={{ x: "-100%" }}
+                animate={{ x: "100%" }}
                 transition={{
-                  duration: 1,
+                  duration: 1.2,
                   repeat: Infinity,
-                  delay: i * 0.2,
                   ease: "easeInOut",
                 }}
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ background: "hsl(var(--primary) / 0.7)" }}
+                className="h-full w-[40%] rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent)",
+                }}
               />
-            ))}
+            </div>
           </motion.div>
         </motion.div>
       )}
