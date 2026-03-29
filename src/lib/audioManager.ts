@@ -242,6 +242,7 @@ class AudioManager {
     // Run on iOS PWA or any standalone PWA
     if (!isIos && !isPwa) return;
 
+    // More aggressive keepalive (5s) for iOS background resilience
     this._keepaliveInterval = setInterval(() => {
       if (!this.currentTrack || this._explicitPause) return;
 
@@ -254,7 +255,7 @@ class AudioManager {
       if ("mediaSession" in navigator && this.isPlaying) {
         navigator.mediaSession.playbackState = "playing";
       }
-    }, 10000);
+    }, 5000);
   }
 
   /**
@@ -283,13 +284,21 @@ class AudioManager {
     if (!("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
 
+    // Multiple artwork sizes for optimal display on iOS lock screen & Control Center
+    const artwork: MediaImage[] = track.cover
+      ? [
+          { src: track.cover, sizes: "96x96", type: "image/jpeg" },
+          { src: track.cover, sizes: "128x128", type: "image/jpeg" },
+          { src: track.cover, sizes: "256x256", type: "image/jpeg" },
+          { src: track.cover, sizes: "512x512", type: "image/jpeg" },
+        ]
+      : [];
+
     ms.metadata = new MediaMetadata({
       title: track.title,
       artist: track.artist,
       album: track.album || (track.isLive ? "Radio" : ""),
-      artwork: track.cover
-        ? [{ src: track.cover, sizes: "512x512", type: "image/png" }]
-        : [],
+      artwork,
     });
 
     ms.setActionHandler("play", () => this.play());
@@ -297,12 +306,33 @@ class AudioManager {
     ms.setActionHandler("nexttrack", () => this.next());
     ms.setActionHandler("previoustrack", () => this.prev());
 
-    // ── SEEK DISABLED — force track-based navigation on lock screen ──
-    try {
-      ms.setActionHandler("seekforward", null);
-      ms.setActionHandler("seekbackward", null);
-      ms.setActionHandler("seekto", null);
-    } catch { /* unsupported */ }
+    // ── Enable seek on lock screen for non-live tracks ──
+    if (!track.isLive) {
+      try {
+        ms.setActionHandler("seekto", (details) => {
+          if (details.seekTime != null && isFinite(details.seekTime)) {
+            this.audio.currentTime = details.seekTime;
+            // Dispatch event so Player component can sync progress
+            window.dispatchEvent(new CustomEvent("audio-seeked", { detail: details.seekTime }));
+          }
+        });
+        ms.setActionHandler("seekforward", (details) => {
+          const skip = details.seekOffset || 10;
+          this.audio.currentTime = Math.min(this.audio.currentTime + skip, this.audio.duration || Infinity);
+        });
+        ms.setActionHandler("seekbackward", (details) => {
+          const skip = details.seekOffset || 10;
+          this.audio.currentTime = Math.max(this.audio.currentTime - skip, 0);
+        });
+      } catch { /* unsupported */ }
+    } else {
+      // Disable seek for live/radio
+      try {
+        ms.setActionHandler("seekforward", null);
+        ms.setActionHandler("seekbackward", null);
+        ms.setActionHandler("seekto", null);
+      } catch { /* unsupported */ }
+    }
   }
 
   updateMetadata(partial: Partial<TrackInfo>) {

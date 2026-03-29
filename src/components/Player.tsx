@@ -403,6 +403,18 @@ export function MiniPlayer() {
     window.addEventListener("audio-next", onAudioNext);
     window.addEventListener("audio-prev", onAudioPrev);
 
+    // Listen for lock screen seek events
+    const onAudioSeeked = (e: Event) => {
+      const seekTime = (e as CustomEvent).detail;
+      if (typeof seekTime === "number" && isFinite(seekTime)) {
+        const duration = audio.duration || usePlayerStore.getState().audioDuration;
+        if (duration > 0) {
+          usePlayerStore.setState({ progress: (seekTime / duration) * 100 });
+        }
+      }
+    };
+    window.addEventListener("audio-seeked", onAudioSeeked);
+
     // Network recovery — try cached URL first, then stream
     const handleOnline = async () => {
       const state = usePlayerStore.getState();
@@ -430,6 +442,7 @@ export function MiniPlayer() {
       window.removeEventListener("audio-ready", onReady);
       window.removeEventListener("audio-next", onAudioNext);
       window.removeEventListener("audio-prev", onAudioPrev);
+      window.removeEventListener("audio-seeked", onAudioSeeked);
       window.removeEventListener("online", handleOnline);
     };
   }, [handleTimeUpdate, handleEnded, handleAudioError]);
@@ -619,7 +632,7 @@ export function MiniPlayer() {
     if (positionSyncRef.current) clearInterval(positionSyncRef.current);
     if (!currentSong || isLive || !isPlaying) return;
     syncPositionState();
-    positionSyncRef.current = setInterval(syncPositionState, 2000);
+    positionSyncRef.current = setInterval(syncPositionState, 1000);
     return () => { if (positionSyncRef.current) clearInterval(positionSyncRef.current); };
   }, [currentSong?.id, isPlaying, isLive, syncPositionState]);
 
