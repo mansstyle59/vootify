@@ -433,28 +433,57 @@ const RadioPage = () => {
       ? `${radioMetadata.artist} — ${radioMetadata.title}`
       : (!isActive && myRadioMeta) ? myRadioMeta : null;
 
+    const [showCardActions, setShowCardActions] = useState(false);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
+    const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+
+    const handleTouchStart = useCallback(() => {
+      longPressTimer.current = setTimeout(() => {
+        setShowCardActions(true);
+        if (navigator.vibrate) navigator.vibrate(10);
+        hideTimer.current = setTimeout(() => setShowCardActions(false), 3500);
+      }, 400);
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+      clearTimeout(longPressTimer.current);
+    }, []);
+
+    const handleCardClick = useCallback(() => {
+      if (showCardActions) {
+        setShowCardActions(false);
+        return;
+      }
+      playStation(station);
+    }, [showCardActions, station]);
+
+    const actionsVisible = showCardActions || isActivePlaying;
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-        className="group cursor-pointer"
-        onClick={() => playStation(station)}
+        className="group cursor-pointer active:scale-[0.97] transition-transform duration-150"
+        onClick={handleCardClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         <div
           className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 transition-all duration-300 ${
             isActive
-              ? "ring-2 ring-primary shadow-lg"
-              : "ring-1 ring-border/10 hover:ring-border/30"
+              ? "ring-2 ring-primary/60"
+              : "ring-1 ring-border/5 hover:ring-border/20"
           }`}
           style={{
             boxShadow: isActive
-              ? "0 8px 32px hsl(var(--primary) / 0.25), 0 2px 8px hsl(var(--primary) / 0.15)"
-              : "0 2px 12px hsl(0 0% 0% / 0.08)",
+              ? "0 8px 32px hsl(var(--primary) / 0.2)"
+              : "0 2px 8px hsl(0 0% 0% / 0.06)",
           }}
         >
           {/* Neutral bg for logos */}
-          <div className="absolute inset-0 bg-secondary/50" />
+          <div className="absolute inset-0 bg-card" />
           <LazyImage
             src={displayCover}
             alt={station.name}
@@ -496,9 +525,9 @@ const RadioPage = () => {
             </motion.div>
           )}
 
-          {/* Action buttons — always visible on mobile, hover on desktop */}
+          {/* Action buttons — long-press on mobile, hover on desktop */}
           <div className={`absolute top-2 right-2 flex gap-1.5 transition-all duration-200 ${
-            isActivePlaying ? "opacity-100 scale-100" : "md:opacity-0 md:scale-90 md:group-hover:opacity-100 md:group-hover:scale-100"
+            actionsVisible ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
           }`}>
             {isCustomTab ? (
               <>
