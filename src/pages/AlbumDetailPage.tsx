@@ -278,7 +278,7 @@ const AlbumDetailPage = () => {
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight leading-tight mb-1.5">
               {album.title}
             </h1>
-            <p className="text-base text-primary font-medium mb-3">{album.artist}</p>
+            <button onClick={() => navigate(`/artist/${encodeURIComponent(album.artist)}`)} className="text-base text-primary font-medium mb-3 hover:underline active:opacity-70 transition-opacity">{album.artist}</button>
             <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground/60 uppercase tracking-widest font-medium">
               <span>Album</span>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
