@@ -106,17 +106,17 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "saavn-covers",
               expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
-          // Deezer covers — aggressive cache
+          // Deezer covers — aggressive cache (both cdn-images and cdn-images subdomains)
           {
-            urlPattern: /^https:\/\/cdns-images\.dzcdn\.net\/.*/i,
+            urlPattern: /^https:\/\/cdn[s-]*images\.dzcdn\.net\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "deezer-covers",
               expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           // Deezer API images (e.g. artist images)
@@ -137,7 +137,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "supabase-functions",
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 4 },
               networkTimeoutSeconds: 1.5,
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           // Supabase REST API — stale-while-revalidate for instant UX
@@ -147,7 +147,7 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "supabase-api",
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 3 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           // Supabase Auth — network first, short cache
