@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
+import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { ContentStrip, StripSkeleton } from "@/components/home/ContentStrip";
