@@ -115,6 +115,11 @@ export default function IosPwaInstallBanner() {
     localStorage.setItem(DISMISSED_KEY, "1");
   };
 
+  const dismissForever = () => {
+    setVisible(false);
+    localStorage.setItem(INSTALLED_KEY, "1");
+  };
+
   const activeSteps = steps[platform];
 
   const nextStep = () => {
@@ -266,14 +271,15 @@ export default function IosPwaInstallBanner() {
             </div>
 
             {/* Actions */}
-            <div className="px-5 pb-5 pt-2 flex gap-2">
-              <button
-                onClick={dismiss}
-                className="flex-1 text-[12px] font-semibold py-2.5 rounded-full transition-colors text-muted-foreground"
-                style={{ background: "hsl(var(--foreground) / 0.06)" }}
-              >
-                Plus tard
-              </button>
+            <div className="px-5 pb-4 pt-2 flex flex-col gap-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={dismiss}
+                  className="flex-1 text-[12px] font-semibold py-2.5 rounded-full transition-colors text-muted-foreground"
+                  style={{ background: "hsl(var(--foreground) / 0.06)" }}
+                >
+                  Plus tard
+                </button>
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={nextStep}
@@ -293,6 +299,13 @@ export default function IosPwaInstallBanner() {
                   "C'est compris !"
                 )}
               </motion.button>
+              </div>
+              <button
+                onClick={dismissForever}
+                className="text-[11px] text-muted-foreground/60 py-1 transition-colors hover:text-muted-foreground"
+              >
+                Ne plus afficher
+              </button>
             </div>
           </div>
         </motion.div>
