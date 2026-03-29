@@ -51,21 +51,23 @@ export function ContentStrip({ children }: ContentStripProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Fade edges */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-10 z-10 pointer-events-none transition-opacity duration-300"
-        style={{
-          opacity: canScrollLeft ? 1 : 0,
-          background: "linear-gradient(to right, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
-        }}
-      />
-      <div
-        className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none transition-opacity duration-300"
-        style={{
-          opacity: canScrollRight ? 1 : 0,
-          background: "linear-gradient(to left, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
-        }}
-      />
+      {/* Fade edges — offset to avoid clipping content */}
+      {canScrollLeft && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-6 z-10 pointer-events-none"
+          style={{
+            background: "linear-gradient(to right, hsl(var(--background)), transparent)",
+          }}
+        />
+      )}
+      {canScrollRight && (
+        <div
+          className="absolute right-0 top-0 bottom-0 w-6 z-10 pointer-events-none"
+          style={{
+            background: "linear-gradient(to left, hsl(var(--background)), transparent)",
+          }}
+        />
+      )}
 
       {/* Desktop arrows */}
       {isHovered && canScrollLeft && (
@@ -100,14 +102,15 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-3 scrollbar-hide"
+        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-4 scrollbar-hide -mx-0"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
+          scrollPaddingLeft: "20px",
         }}
       >
         {children}
-        <div className="flex-shrink-0 w-1" aria-hidden />
+        <div className="flex-shrink-0 w-3" aria-hidden />
       </div>
 
       {/* Scroll progress indicator (mobile) */}
