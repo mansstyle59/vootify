@@ -51,21 +51,23 @@ export function ContentStrip({ children }: ContentStripProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Fade edges */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-10 z-10 pointer-events-none transition-opacity duration-300"
-        style={{
-          opacity: canScrollLeft ? 1 : 0,
-          background: "linear-gradient(to right, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
-        }}
-      />
-      <div
-        className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none transition-opacity duration-300"
-        style={{
-          opacity: canScrollRight ? 1 : 0,
-          background: "linear-gradient(to left, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
-        }}
-      />
+      {/* Fade edges — offset to avoid clipping content */}
+      {canScrollLeft && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-6 z-10 pointer-events-none"
+          style={{
+            background: "linear-gradient(to right, hsl(var(--background)), transparent)",
+          }}
+        />
+      )}
+      {canScrollRight && (
+        <div
+          className="absolute right-0 top-0 bottom-0 w-6 z-10 pointer-events-none"
+          style={{
+            background: "linear-gradient(to left, hsl(var(--background)), transparent)",
+          }}
+        />
+      )}
 
       {/* Desktop arrows */}
       {isHovered && canScrollLeft && (
