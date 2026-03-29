@@ -134,6 +134,7 @@ export async function performInitialCache(
 
   // Pre-cache covers in background (non-blocking)
   preCacheCovers(userId).catch(() => {});
+  preCacheFridayCovers().catch(() => {});
 }
 
 /** Pre-fetch ALL song covers into IndexedDB for offline display */
@@ -224,6 +225,145 @@ async function preCacheCovers(_userId: string) {
   }
 }
 
+/** Pre-fetch Friday release covers into IndexedDB for offline display */
+async function preCacheFridayCovers() {
+  const KEY = "vootify-friday-covers-cached-v1";
+  try {
+    if (sessionStorage.getItem(KEY)) return;
+
+    const { data: releases } = await supabase
+      .from("friday_releases" as any)
+      .select("album_id, cover_url")
+      .order("position", { ascending: true })
+      .limit(25) as any;
+
+    if (!releases || releases.length === 0) return;
+
+    const DB_NAME = "music-offline-cache";
+    const DB_VERSION = 2;
+    const COVER_STORE = "covers";
+
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains("audio")) d.createObjectStore("audio");
+        if (!d.objectStoreNames.contains("meta")) d.createObjectStore("meta");
+        if (!d.objectStoreNames.contains(COVER_STORE)) d.createObjectStore(COVER_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+    // Use album_id as key prefix to avoid collisions with song covers
+    const existingKeys = await new Promise<Set<string>>((resolve) => {
+      const tx = db.transaction(COVER_STORE, "readonly");
+      const req = tx.objectStore(COVER_STORE).getAllKeys();
+      req.onsuccess = () => resolve(new Set((req.result || []).map(String)));
+      req.onerror = () => resolve(new Set());
+    });
+
+    const missing = releases.filter(
+      (r: any) => r.cover_url && !existingKeys.has(`friday-${r.album_id}`)
+    );
+    if (missing.length === 0) {
+      sessionStorage.setItem(KEY, "1");
+      return;
+    }
+
+    const BATCH = 6;
+    for (let i = 0; i < missing.length; i += BATCH) {
+      const batch = missing.slice(i, i + BATCH);
+      const results = await Promise.allSettled(
+        batch.map(async (r: any) => {
+          const res = await fetch(r.cover_url, { mode: "cors" }).catch(() => null);
+          if (!res || !res.ok) return null;
+          const blob = await res.blob();
+          if (blob.size === 0) return null;
+          return { id: `friday-${r.album_id}`, blob };
+        })
+      );
+
+      const toStore = results
+        .filter((r): r is PromiseFulfilledResult<{ id: string; blob: Blob } | null> => r.status === "fulfilled")
+        .map((r) => r.value)
+        .filter(Boolean) as { id: string; blob: Blob }[];
+
+      if (toStore.length > 0) {
+        await new Promise<void>((resolve) => {
+          const tx = db.transaction(COVER_STORE, "readwrite");
+          const store = tx.objectStore(COVER_STORE);
+          toStore.forEach((item) => store.put(item.blob, item.id));
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        });
+      }
+
+      if (i + BATCH < missing.length) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
+
+    sessionStorage.setItem(KEY, "1");
+  } catch (e) {
+    console.warn("[appCache] Friday covers pre-cache failed:", e);
+  }
+}
+
+/** Get a cached Friday release cover as an object URL */
+export async function getFridayCoverUrl(albumId: number): Promise<string | null> {
+  try {
+    const DB_NAME = "music-offline-cache";
+    const DB_VERSION = 2;
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return new Promise((resolve) => {
+      const tx = db.transaction("covers", "readonly");
+      const req = tx.objectStore("covers").get(`friday-${albumId}`);
+      req.onsuccess = () => {
+        if (req.result instanceof Blob) {
+          resolve(URL.createObjectURL(req.result));
+        } else {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Check if Friday releases data is stale (older than current week's Friday) */
+export function isFridayDataStale(): boolean {
+  try {
+    const lastRefresh = localStorage.getItem("vootify-friday-last-refresh");
+    if (!lastRefresh) return true;
+    const lastDate = new Date(lastRefresh);
+    const now = new Date();
+    // Find most recent Friday 6:00 UTC
+    const daysSinceFriday = (now.getUTCDay() + 2) % 7; // 0=Fri, 1=Sat, ...
+    const lastFriday = new Date(now);
+    lastFriday.setUTCDate(now.getUTCDate() - daysSinceFriday);
+    lastFriday.setUTCHours(6, 0, 0, 0);
+    return lastDate < lastFriday;
+  } catch {
+    return true;
+  }
+}
+
+/** Mark Friday data as freshly refreshed */
+export function markFridayRefreshed() {
+  try {
+    localStorage.setItem("vootify-friday-last-refresh", new Date().toISOString());
+    // Clear session flag so covers get re-cached
+    sessionStorage.removeItem("vootify-friday-covers-cached-v1");
+  } catch {}
+}
+
 /**
  * Silent background refresh — called on subsequent opens.
  * Re-fetches data so the SW gets fresh copies without blocking UI.
@@ -243,7 +383,14 @@ export function silentCacheRefresh(userId: string) {
       fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers }),
       fetch(`${base}/home_config?limit=1`, { headers }),
       fetch(`${base}/user_audio_settings?user_id=eq.${userId}&limit=1`, { headers }),
+      fetch(`${base}/friday_releases?order=position.asc&limit=25`, { headers }),
     ]);
+
+    // Refresh Friday covers if stale
+    if (isFridayDataStale()) {
+      await preCacheFridayCovers();
+      markFridayRefreshed();
+    }
 
     // Update version if needed
     if (needsCacheUpdate()) {

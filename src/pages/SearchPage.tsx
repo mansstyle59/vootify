@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { LazyImage } from "@/components/LazyImage";
+import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
 
 /* ── Minimal style helpers ── */
 const glassCard = {
@@ -83,13 +84,52 @@ const SearchPage = () => {
           .select("album_id, title, artist, cover_url")
           .order("position", { ascending: true })
           .limit(25) as any);
+
         if (!cancelled && cached && cached.length > 0) {
-          setNewReleases(cached.map((r: any) => ({
-            id: r.album_id, title: r.title, artist: r.artist,
-            coverUrl: r.cover_url, albumId: r.album_id,
-          })));
+          // Resolve covers from offline cache for each release
+          const releasesWithCovers = await Promise.all(
+            cached.map(async (r: any) => {
+              let coverUrl = r.cover_url;
+              try {
+                const cachedCover = await getFridayCoverUrl(r.album_id);
+                if (cachedCover) coverUrl = cachedCover;
+              } catch {}
+              return {
+                id: r.album_id, title: r.title, artist: r.artist,
+                coverUrl, albumId: r.album_id,
+              };
+            })
+          );
+          if (!cancelled) setNewReleases(releasesWithCovers);
+
+          // If data is stale (past this week's Friday), trigger background refresh
+          if (isFridayDataStale()) {
+            supabase.functions.invoke("refresh-friday-releases", { body: {} })
+              .then(() => {
+                markFridayRefreshed();
+                // Re-fetch after refresh
+                supabase
+                  .from("friday_releases" as any)
+                  .select("album_id, title, artist, cover_url")
+                  .order("position", { ascending: true })
+                  .limit(25)
+                  .then(({ data: fresh }: any) => {
+                    if (!cancelled && fresh && fresh.length > 0) {
+                      setNewReleases(fresh.map((r: any) => ({
+                        id: r.album_id, title: r.title, artist: r.artist,
+                        coverUrl: r.cover_url, albumId: r.album_id,
+                      })));
+                    }
+                  });
+              })
+              .catch(() => {});
+          } else {
+            markFridayRefreshed();
+          }
           return;
         }
+
+        // Fallback: fetch directly from Deezer
         const playlistIds = ["1071669561", "1478649355"];
         const results = await Promise.allSettled(
           playlistIds.map((pid) =>
