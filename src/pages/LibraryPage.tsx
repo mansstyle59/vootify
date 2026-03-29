@@ -173,12 +173,23 @@ function MenuRow({ icon: Icon, label, onClick, iconColor }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3.5 py-3.5 active:scale-[0.98] transition-transform duration-150"
-      style={{ borderBottom: "1px solid hsl(var(--border) / 0.06)" }}
+      className="w-full flex items-center gap-3.5 py-3.5 active:scale-[0.98] transition-transform duration-150 rounded-2xl px-3 mb-1"
+      style={{
+        background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+        backdropFilter: "blur(24px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+        border: "0.5px solid hsl(var(--foreground) / 0.05)",
+        boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
+      }}
     >
-      <Icon className="w-5 h-5 flex-shrink-0" style={{ color: iconColor || "hsl(var(--primary))" }} />
-      <span className="flex-1 text-left text-[16px] font-semibold text-foreground">{label}</span>
-      <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: `${iconColor || "hsl(var(--primary))"}15`, color: iconColor || "hsl(var(--primary))" }}
+      >
+        <Icon className="w-[18px] h-[18px]" />
+      </div>
+      <span className="flex-1 text-left text-[15px] font-semibold text-foreground">{label}</span>
+      <ChevronRight className="w-4 h-4 text-muted-foreground/25 flex-shrink-0" />
     </button>
   );
 }
@@ -191,7 +202,12 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
     <div className="flex items-center gap-2 mb-4">
       <button
         onClick={onPlayAll}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[12px] font-bold active:scale-[0.96] transition-transform"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold active:scale-[0.96] transition-transform"
+        style={{
+          background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))",
+          color: "hsl(var(--primary-foreground))",
+          boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
+        }}
       >
         <Play className="w-3.5 h-3.5 fill-current" />
         Tout lire
@@ -199,7 +215,13 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
       <button
         onClick={onShuffle}
         className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-[0.96] transition-transform"
-        style={{ background: "hsl(var(--foreground) / 0.06)" }}
+        style={{
+          background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+          boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+        }}
       >
         <Shuffle className="w-3.5 h-3.5" />
         Aléatoire
@@ -214,8 +236,14 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; 
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
       <div
-        className="p-5 rounded-full mb-4"
-        style={{ background: "hsl(var(--foreground) / 0.04)" }}
+        className="p-5 rounded-2xl mb-4"
+        style={{
+          background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.2))",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+        }}
       >
         <Icon className="w-8 h-8 text-muted-foreground/25" />
       </div>
@@ -657,24 +685,27 @@ const LibraryPage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto relative">
-      {/* Header */}
+      {/* Header — Liquid Glass */}
       <div
         className="sticky top-0 z-20 transition-colors duration-500"
         style={{
           background: tab && headerColor
-            ? `linear-gradient(180deg, ${headerColor}12 0%, hsl(var(--background)) 100%)`
-            : "hsl(var(--background) / 0.85)",
-          backdropFilter: "blur(40px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.6)",
-          borderBottom: tab ? "1px solid hsl(var(--border) / 0.05)" : "none",
+            ? `linear-gradient(180deg, ${headerColor}12 0%, hsl(var(--background) / 0.92) 70%, hsl(var(--background) / 0) 100%)`
+            : "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 70%, hsl(var(--background) / 0) 100%)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
         <div className="relative px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
           {isOffline && (
-            <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl" style={{
-              background: "hsl(45 100% 50% / 0.06)",
-              border: "1px solid hsl(45 100% 50% / 0.12)",
-            }}>
+            <div
+              className="flex items-center gap-2 px-3 py-2 mb-3 rounded-2xl"
+              style={{
+                background: "linear-gradient(145deg, hsl(45 100% 50% / 0.08), hsl(45 100% 50% / 0.03))",
+                backdropFilter: "blur(20px)",
+                border: "0.5px solid hsl(45 100% 50% / 0.15)",
+              }}
+            >
               <WifiOff className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
               <p className="text-[11px] text-amber-400 font-medium">Mode hors-ligne</p>
             </div>
