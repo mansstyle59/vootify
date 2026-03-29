@@ -3171,7 +3171,7 @@ function NotificationsTab() {
   const [sending, setSending] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
   const saveSettingMutation = useSaveAppSetting();
-  const { user } = useAuth();
+  const { user } = useAdminAuth();
 
   const { data: history = [] } = useQuery({
     queryKey: ["admin-notifications"],
@@ -3214,7 +3214,7 @@ function NotificationsTab() {
   const togglePush = async () => {
     const newVal = !pushEnabled;
     setPushEnabled(newVal);
-    await saveSetting("push_notifications_enabled", newVal);
+    await saveSettingMutation.mutateAsync({ key: "push_notifications_enabled", value: newVal, userId: user?.id || "" });
     toast.success(newVal ? "Notifications activées" : "Notifications désactivées");
   };
 
