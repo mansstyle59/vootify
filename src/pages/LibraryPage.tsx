@@ -863,7 +863,7 @@ const LibraryPage = () => {
                         className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         autoFocus
                       />
-                      <button onClick={handleCreate} className="px-5 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold">Créer</button>
+                      <button onClick={handleCreate} className="px-5 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>Créer</button>
                     </motion.div>
                   )}
                 </AnimatePresence>

@@ -91,13 +91,15 @@ export function PushNotificationPrompt() {
             <div className="flex gap-2 mt-3">
               <button
                 onClick={handleEnable}
-                className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold active:scale-[0.97] transition-transform"
+                className="flex-1 py-2.5 rounded-full text-xs font-bold active:scale-[0.97] transition-transform"
+                style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
               >
                 Activer
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-4 py-2.5 rounded-xl bg-muted text-muted-foreground text-xs font-semibold active:scale-[0.97] transition-transform"
+                className="px-4 py-2.5 rounded-full text-xs font-semibold active:scale-[0.97] transition-transform"
+                style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
               >
                 Plus tard
               </button>

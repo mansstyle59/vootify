@@ -410,7 +410,8 @@ const PlaylistDetailPage = () => {
         <button
           onClick={handlePlayAll}
           disabled={displaySongs.length === 0}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
+          style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
         >
           <Play className="w-5 h-5 fill-current" />
           Lecture
@@ -418,7 +419,8 @@ const PlaylistDetailPage = () => {
         <button
           onClick={handleShufflePlay}
           disabled={displaySongs.length === 0}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] text-foreground font-semibold text-sm hover:bg-white/[0.12] active:scale-[0.98] transition-all disabled:opacity-40"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
+          style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
         >
           <Shuffle className="w-4 h-4" />
           Aléatoire
