@@ -165,23 +165,26 @@ export function MobileNav() {
     if (navigator.vibrate) navigator.vibrate(5);
   }, []);
 
+  const allItems = isAdmin
+    ? [...pillItems, { to: "/search", icon: Search, label: "Recherche" }, ...adminItems]
+    : [...pillItems, { to: "/search", icon: Search, label: "Recherche" }];
+
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-2.5 px-4 py-2"
-      style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center px-3 py-1.5"
+      style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }}
     >
-      {/* ── Main pill ── */}
       <div
-        className="flex items-center rounded-[28px] px-1.5 py-1.5"
+        className="flex items-center justify-around w-full max-w-[420px] rounded-[26px] px-1 py-1"
         style={{
-          background: "linear-gradient(145deg, hsl(var(--card) / 0.55), hsl(var(--card) / 0.3))",
-          backdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
-          WebkitBackdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
-          boxShadow: "0 8px 32px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
-          border: "0.5px solid hsl(var(--foreground) / 0.1)",
+          background: "linear-gradient(160deg, hsl(var(--card) / 0.6), hsl(var(--card) / 0.3))",
+          backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+          boxShadow: "0 8px 40px hsl(0 0% 0% / 0.4), inset 0 0.5px 0 hsl(var(--foreground) / 0.08), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
+          border: "0.5px solid hsl(var(--foreground) / 0.08)",
         }}
       >
-        {pillItems.map((item) => {
+        {allItems.map((item) => {
           const restricted = !checkRoute(item.to);
           return (
             <RouterNavLink
@@ -190,36 +193,34 @@ export function MobileNav() {
               end={item.to === "/"}
               onTouchStart={() => handleTap(item.to)}
               className={({ isActive }) =>
-                `relative flex flex-col items-center justify-center min-w-[74px] min-h-[54px] px-4 py-2 rounded-[20px] text-[10.5px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.9] ${
+                `relative flex flex-col items-center justify-center min-w-[52px] min-h-[48px] px-3 py-1.5 rounded-2xl text-[10px] font-medium tracking-wide transition-all duration-200 active:scale-[0.88] ${
                   restricted
                     ? "text-muted-foreground/20"
                     : isActive
                     ? "text-primary"
-                    : "text-muted-foreground/50 active:text-muted-foreground/70"
+                    : "text-muted-foreground/45"
                 }`
               }
               style={({ isActive }: { isActive: boolean }) => ({
                 background: !restricted && isActive
-                  ? "linear-gradient(145deg, hsl(var(--primary) / 0.18), hsl(var(--primary) / 0.08))"
+                  ? "hsl(var(--primary) / 0.1)"
                   : "transparent",
-                boxShadow: !restricted && isActive
-                  ? "0 0 20px hsl(var(--primary) / 0.12), inset 0 0.5px 0 hsl(var(--primary) / 0.15)"
-                  : "none",
-                border: !restricted && isActive ? "0.5px solid hsl(var(--primary) / 0.15)" : "0.5px solid transparent",
               }) as React.CSSProperties}
             >
               {({ isActive }) => (
                 <>
                   {restricted ? (
-                    <Lock className="w-[21px] h-[21px] mb-1" strokeWidth={1.6} />
+                    <Lock className="w-[20px] h-[20px] mb-0.5" strokeWidth={1.5} />
                   ) : (
                     <item.icon
-                      className={`w-[24px] h-[24px] mb-0.5 transition-all duration-250 ${isActive ? "drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]" : ""}`}
-                      strokeWidth={isActive ? 2.4 : 1.4}
+                      className={`w-[22px] h-[22px] mb-0.5 transition-all duration-200 ${isActive ? "drop-shadow-[0_0_6px_hsl(var(--primary)/0.35)]" : ""}`}
+                      strokeWidth={isActive ? 2.2 : 1.5}
                       fill={isActive ? "currentColor" : "none"}
                     />
                   )}
-                  <span className={`transition-all duration-200 ${restricted ? "opacity-25" : isActive ? "font-bold tracking-wider" : "opacity-70"}`}>
+                  <span className={`transition-all duration-150 leading-tight ${
+                    restricted ? "opacity-20" : isActive ? "font-semibold opacity-100" : "opacity-50"
+                  }`}>
                     {item.label}
                   </span>
                 </>
@@ -228,77 +229,6 @@ export function MobileNav() {
           );
         })}
       </div>
-
-      {/* ── Search circle ── */}
-      <RouterNavLink
-        to="/search"
-        onTouchStart={() => handleTap("/search")}
-        className={({ isActive }) =>
-          `flex items-center justify-center w-[54px] h-[54px] rounded-full transition-all duration-200 active:scale-[0.87] ${
-            isActive
-              ? "text-primary"
-              : "text-muted-foreground/50 active:text-muted-foreground/70"
-          }`
-        }
-        style={({ isActive }: { isActive: boolean }) => ({
-          background: isActive
-            ? "linear-gradient(145deg, hsl(var(--primary) / 0.18), hsl(var(--primary) / 0.08))"
-            : "linear-gradient(145deg, hsl(var(--card) / 0.55), hsl(var(--card) / 0.3))",
-          backdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
-          WebkitBackdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
-          boxShadow: isActive
-            ? "0 8px 32px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.1), 0 0 24px hsl(var(--primary) / 0.1)"
-            : "0 8px 32px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
-          border: isActive ? "0.5px solid hsl(var(--primary) / 0.15)" : "0.5px solid hsl(var(--foreground) / 0.1)",
-        }) as React.CSSProperties}
-      >
-        {({ isActive }) => (
-          <Search
-            className={`w-[24px] h-[24px] transition-all duration-250 ${isActive ? "drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]" : ""}`}
-            strokeWidth={isActive ? 2.6 : 1.6}
-            fill={isActive ? "currentColor" : "none"}
-          />
-        )}
-      </RouterNavLink>
-
-      {/* ── Admin items (small pills above if admin) ── */}
-      {isAdmin && (
-        <div
-          className="flex items-center gap-1 rounded-full px-1 py-1"
-          style={{
-            background: "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
-            backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
-            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
-            boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
-            border: "0.5px solid hsl(var(--foreground) / 0.08)",
-          }}
-        >
-          {adminItems.map((item) => (
-            <RouterNavLink
-              key={item.to}
-              to={item.to}
-              onTouchStart={() => handleTap(item.to)}
-              className={({ isActive }) =>
-                `flex items-center justify-center w-[40px] h-[40px] rounded-full transition-all duration-200 active:scale-[0.85] ${
-                  isActive ? "text-primary" : "text-muted-foreground/60"
-                }`
-              }
-              style={({ isActive }: { isActive: boolean }) => ({
-                background: isActive ? "hsl(var(--primary) / 0.12)" : "transparent",
-                boxShadow: isActive ? "0 0 12px hsl(var(--primary) / 0.15)" : "none",
-              }) as React.CSSProperties}
-            >
-              {({ isActive }) => (
-                <item.icon
-                  className={`w-[18px] h-[18px] transition-transform duration-200 ${isActive ? "scale-110" : ""}`}
-                  strokeWidth={isActive ? 2.2 : 1.5}
-                  fill={isActive ? "currentColor" : "none"}
-                />
-              )}
-            </RouterNavLink>
-          ))}
-        </div>
-      )}
     </nav>
   );
 }
