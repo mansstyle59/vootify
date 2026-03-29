@@ -197,7 +197,23 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   <span className="text-[11px] font-semibold text-foreground truncate max-w-[72px] relative z-10">
                     {displayName}
                   </span>
+                  {/* Online indicator */}
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 6px hsl(var(--primary) / 0.5)" }} />
+                  {/* Sync pending badge */}
+                  {getPendingCount() > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -bottom-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[8px] font-bold border-2 border-background"
+                      style={{
+                        background: "hsl(var(--destructive))",
+                        color: "hsl(var(--destructive-foreground))",
+                        boxShadow: "0 2px 8px hsl(var(--destructive) / 0.4)",
+                      }}
+                    >
+                      {getPendingCount()}
+                    </motion.span>
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
