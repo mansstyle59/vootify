@@ -38,6 +38,7 @@ const HomePage = () => {
   const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { data: homeConfig } = useHomeConfig();
   const { isAdmin } = useAdminAuth();
+  const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [refreshingArtists, setRefreshingArtists] = useState(false);
 
