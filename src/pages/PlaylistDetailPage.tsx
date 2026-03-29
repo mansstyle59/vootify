@@ -533,6 +533,7 @@ const PlaylistDetailPage = () => {
               </div>
             )}
           />
+          </div>
         )}
       </div>
       {/* Share to user dialog */}
