@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useMemo, useEffect, useState } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2, Radio, Library } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, Heart, Search, User, Music2, Radio, Library, RefreshCw } from "lucide-react";
+import { getPendingCount } from "@/lib/offlineQueue";
 import {
   DropdownMenu,
   DropdownMenuContent,
