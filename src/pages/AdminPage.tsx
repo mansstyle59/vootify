@@ -28,7 +28,7 @@ interface UserProfile {
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("stats");
+  const [tab, setTab] = useState<Tab>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) navigate("/", { replace: true });
