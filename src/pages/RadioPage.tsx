@@ -618,13 +618,36 @@ const RadioPage = () => {
     return merged;
   }, [isSearching, searchResults, myRadioResults, myRadioLogoMap]);
 
-  // Genre-filtered stations from saved
+  // Fetch stations from API when a genre is selected
+  const { data: apiGenreStations = [], isLoading: loadingGenre } = useQuery({
+    queryKey: ["radio-genre", activeGenre],
+    queryFn: async () => {
+      if (!activeGenre) return [];
+      const stations = await radioBrowserApi.getByTag(activeGenre, 50);
+      // Enrich with MyRadio logos
+      if (myRadioLogoMap) {
+        return stations.map(s => {
+          const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+          if (hdLogo) return { ...s, coverUrl: hdLogo };
+          return s;
+        });
+      }
+      return stations;
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!activeGenre,
+  });
+
+  // Combine saved genre stations + API stations (saved first, deduped)
   const genreStations = useMemo(() => {
     if (!activeGenre) return [];
-    return enrichedCustom.filter(s =>
+    const savedGenre = enrichedCustom.filter(s =>
       s.genre?.toLowerCase().includes(activeGenre.toLowerCase())
     );
-  }, [enrichedCustom, activeGenre]);
+    const savedIds_ = new Set(savedGenre.map(s => s.id));
+    const apiFiltered = apiGenreStations.filter(s => !savedIds_.has(s.id));
+    return [...savedGenre, ...apiFiltered];
+  }, [enrichedCustom, activeGenre, apiGenreStations]);
 
   const showNowPlaying = isLiveRadio && currentSong;
 
@@ -635,6 +658,11 @@ const RadioPage = () => {
     savedIds, currentSong, isPlaying, radioMetadata, isSearching,
     playStation, startEdit, confirmDelete, saveStation, removeStation,
   }), [savedIds, currentSong, isPlaying, radioMetadata, isSearching, playStation, startEdit, confirmDelete, saveStation, removeStation]);
+  /* ── Context for genre browsing (isSearching=true to show save buttons) ── */
+  const genreCtx = useMemo(() => ({
+    ...stationTileProps,
+    isSearching: true,
+  }), [stationTileProps]);
 
   const renderStationTile = useCallback((station: RadioBrowserStation) => (
     <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
@@ -746,14 +774,24 @@ const RadioPage = () => {
               </button>
               <h2 className="text-[20px] font-extrabold text-foreground capitalize">{activeGenre}</h2>
               <span className="text-[11px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.45)" }}>
-                {genreStations.length} station{genreStations.length > 1 ? "s" : ""}
+                {loadingGenre ? "Chargement…" : `${genreStations.length} station${genreStations.length > 1 ? "s" : ""}`}
               </span>
             </div>
           </div>
-          {genreStations.length > 0 ? (
+          {loadingGenre ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i}>
+                  <div className="aspect-square rounded-xl mb-2 animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                  <div className="h-2.5 w-3/4 rounded mb-1 animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                  <div className="h-2 w-1/2 rounded animate-pulse" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
+                </div>
+              ))}
+            </div>
+          ) : genreStations.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
               {genreStations.map((station) => (
-                <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
+                <StationTileComponent key={station.id} station={station} ctx={genreCtx} />
               ))}
             </div>
           ) : (
