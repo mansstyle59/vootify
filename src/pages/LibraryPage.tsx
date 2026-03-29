@@ -884,7 +884,7 @@ const LibraryPage = () => {
                     WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                     border: "0.5px solid hsl(var(--foreground) / 0.05)",
                     boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
-                  }
+                  }}
                 >
                   <div className="p-1.5 rounded-lg bg-primary/10">
                     <Plus className="w-4 h-4 text-primary" />
@@ -943,7 +943,7 @@ const LibraryPage = () => {
                               WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                               border: "0.5px solid hsl(var(--foreground) / 0.05)",
                               boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
-                            }
+                            }}
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -1020,7 +1020,7 @@ const LibraryPage = () => {
                                 WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                                 border: "0.5px solid hsl(var(--foreground) / 0.05)",
                                 boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
-                              }
+                              }}
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -1083,7 +1083,7 @@ const LibraryPage = () => {
                           WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                           border: "0.5px solid hsl(var(--foreground) / 0.06)",
                           boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
-                        }
+                        }}
                       />
                       {albumSearch && (
                         <button onClick={() => setAlbumSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1212,7 +1212,7 @@ const LibraryPage = () => {
                           WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                           border: "0.5px solid hsl(var(--foreground) / 0.06)",
                           boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
-                        }
+                        }}
                       />
                       {artistSearch && (
                         <button onClick={() => setArtistSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1311,7 +1311,7 @@ const LibraryPage = () => {
                           WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                           border: "0.5px solid hsl(var(--foreground) / 0.06)",
                           boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
-                        }
+                        }}
                       />
                       {customSearch && (
                         <button onClick={() => setCustomSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
