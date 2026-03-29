@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { offlineCache } from "@/lib/offlineCache";
 import { useSubscription } from "@/hooks/useSubscription";
 import { normalizePlan, getPlanConfig } from "@/lib/subscriptionPermissions";
@@ -11,7 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers
+  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi
 } from "lucide-react";
 import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
@@ -22,6 +22,7 @@ import {
   isBiometricEnabled,
   disableBiometric,
 } from "@/lib/biometricAuth";
+import { isAutoDownloadEnabled, setAutoDownloadEnabled } from "@/lib/autoDownload";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
