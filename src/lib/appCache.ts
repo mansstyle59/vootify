@@ -100,24 +100,42 @@ export async function performInitialCache(
     await fetch(`${base}/liked_songs?user_id=eq.${userId}&order=created_at.desc&limit=200`, { headers });
     report(1);
 
-    // 2 — Playlists
-    await fetch(`${base}/playlists?user_id=eq.${userId}&order=created_at.desc`, { headers });
+    // 2 — Playlists + their songs
+    const plRes = await fetch(`${base}/playlists?user_id=eq.${userId}&order=created_at.desc`, { headers });
+    const playlists = await plRes.clone().json().catch(() => []);
+    if (Array.isArray(playlists) && playlists.length > 0) {
+      const plIds = playlists.map((p: any) => p.id).filter(Boolean);
+      // Pre-fetch playlist songs for all playlists
+      await Promise.allSettled(
+        plIds.map((pid: string) =>
+          fetch(`${base}/playlist_songs?playlist_id=eq.${pid}&order=position.asc`, { headers })
+        )
+      );
+    }
     report(2);
 
-    // 3 — Recently played
-    await fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers });
+    // 3 — Albums, artist images, all songs catalog
+    await Promise.allSettled([
+      fetch(`${base}/custom_albums?order=created_at.desc`, { headers }),
+      fetch(`${base}/custom_songs?select=id,title,artist,album,cover_url,stream_url,duration,genre,year&order=artist.asc`, { headers }),
+      fetch(`${base}/artist_images?select=artist_name,image_url`, { headers }),
+    ]);
     report(3);
 
-    // 4 — Home config + audio settings
+    // 4 — Recently played
+    await fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers });
+    report(4);
+
+    // 5 — Home config + audio settings
     await Promise.all([
       fetch(`${base}/home_config?limit=1`, { headers }),
       fetch(`${base}/user_audio_settings?user_id=eq.${userId}&limit=1`, { headers }),
     ]);
-    report(4);
-
-    // 5 — Finalize
-    markCacheReady();
     report(5);
+
+    // 6 — Finalize
+    markCacheReady();
+    report(6);
   };
 
   try {
