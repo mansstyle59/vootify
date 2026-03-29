@@ -114,13 +114,18 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
   const hasSongs = songs && songs.length > 0;
 
   return (
-    <section className="mb-6 md:mb-8">
-      {/* Apple Music style header — bold title + actions */}
-      <div className="flex items-center justify-between px-5 md:px-9 mb-2.5">
-        <h2 className="text-[20px] md:text-[22px] font-extrabold text-foreground leading-tight tracking-tight line-clamp-1 break-words">
+    <section className="mb-7 md:mb-9">
+      {/* Separator line — Apple Music style */}
+      <div className="px-5 md:px-9 mb-3">
+        <div className="h-px" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+      </div>
+
+      {/* Header */}
+      <div className="flex items-end justify-between px-5 md:px-9 mb-3">
+        <h2 className="text-[22px] md:text-[24px] font-extrabold text-foreground leading-none tracking-tight line-clamp-1 break-words">
           {title}
         </h2>
-        <div className="flex items-center gap-1 relative flex-shrink-0 ml-2">
+        <div className="flex items-center gap-1.5 relative flex-shrink-0 ml-3">
           {action}
           {hasSongs && onPlayAll && (
             <button
@@ -149,11 +154,11 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}
-              className="flex items-center gap-0.5 text-[13px] font-medium active:opacity-70 transition-opacity"
+              className="flex items-center gap-0.5 text-[13px] font-semibold active:opacity-70 transition-opacity"
               style={{ color: "hsl(var(--primary))" }}
             >
               Voir tout
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           )}
         </div>
