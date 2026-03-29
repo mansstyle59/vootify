@@ -35,13 +35,17 @@ export function QuickAccess() {
           <button
             key={p.id}
             onClick={() => navigate(`/playlist/${p.id}`)}
-            className="group flex items-center gap-2.5 rounded-xl overflow-hidden h-[52px] active:scale-[0.97] transition-transform duration-150"
+            className="group flex items-center gap-2.5 rounded-2xl overflow-hidden h-[56px] active:scale-[0.97] transition-transform duration-150"
             style={{
-              background: "hsl(var(--foreground) / 0.04)",
+              background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))",
+              backdropFilter: "blur(40px) saturate(1.8)",
+              WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+              border: "0.5px solid hsl(var(--foreground) / 0.06)",
+              boxShadow: "0 2px 12px hsl(0 0% 0% / 0.15), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
             }}
           >
             <div
-              className="w-[52px] h-[52px] flex-shrink-0 overflow-hidden"
+              className="w-[56px] h-[56px] flex-shrink-0 overflow-hidden rounded-l-2xl"
               style={{ background: "hsl(var(--foreground) / 0.06)" }}
             >
               {p.cover_url ? (

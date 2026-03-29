@@ -27,13 +27,13 @@ export const CoverCard = memo(function CoverCard({
       onClick={onClick}
     >
       <div
-        className={`relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] overflow-hidden mb-2 ${
-          rounded ? "rounded-full" : "rounded-xl"
+        className={`relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] overflow-hidden mb-2.5 ${
+          rounded ? "rounded-full" : "rounded-2xl"
         }`}
         style={{
           boxShadow: isActive
-            ? "0 6px 24px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.35)"
-            : "0 2px 12px hsl(0 0% 0% / 0.08)",
+            ? "0 8px 28px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.35)"
+            : "0 4px 16px hsl(0 0% 0% / 0.2), 0 1px 3px hsl(0 0% 0% / 0.1)",
         }}
       >
         {resolvedUrl ? (
@@ -59,7 +59,7 @@ export const CoverCard = memo(function CoverCard({
           </div>
         )}
 
-        {/* Play button overlay — bottom-right, Apple Music style */}
+        {/* Play button overlay — glass style */}
         {(showPlay || isActive) && (
           <div className={`absolute inset-0 flex items-end justify-end p-2 transition-opacity duration-200 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
@@ -67,8 +67,9 @@ export const CoverCard = memo(function CoverCard({
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{
-                background: "hsl(var(--primary))",
-                boxShadow: "0 4px 14px hsl(var(--primary) / 0.4)",
+                background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))",
+                backdropFilter: "blur(12px)",
+                boxShadow: "0 4px 16px hsl(var(--primary) / 0.4), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
               }}
             >
               {isActive ? (
@@ -85,7 +86,7 @@ export const CoverCard = memo(function CoverCard({
         {title}
       </h3>
       {subtitle && (
-        <p className={`text-[11px] truncate mt-0.5 ${rounded ? "text-center" : ""}`} style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
+        <p className={`text-[11px] truncate mt-0.5 ${rounded ? "text-center" : ""}`} style={{ color: "hsl(var(--muted-foreground) / 0.45)" }}>
           {subtitle}
         </p>
       )}
