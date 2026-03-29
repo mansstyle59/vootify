@@ -23,7 +23,7 @@ import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
 
-type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists";
+type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | null;
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
@@ -166,30 +166,19 @@ function PremiumSongRow({
   );
 }
 
-/* ── Animated Tab Pill ── */
-function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
-  tab: Tab; activeTab: Tab; label: string; icon: React.ElementType; onClick: () => void;
+/* ── Apple Music style menu row ── */
+function MenuRow({ icon: Icon, label, onClick, iconColor }: {
+  icon: React.ElementType; label: string; onClick: () => void; iconColor?: string;
 }) {
-  const isActive = tab === activeTab;
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
-        isActive ? "text-primary-foreground" : "text-muted-foreground/60 active:scale-95"
-      }`}
-      style={!isActive ? { background: "hsl(var(--foreground) / 0.04)" } : undefined}
+      className="w-full flex items-center gap-3.5 py-3.5 active:scale-[0.98] transition-transform duration-150"
+      style={{ borderBottom: "1px solid hsl(var(--border) / 0.06)" }}
     >
-      {isActive && (
-        <motion.div
-          layoutId="libraryTab"
-          className="absolute inset-0 rounded-full bg-primary"
-          transition={{ type: "spring", stiffness: 500, damping: 32 }}
-        />
-      )}
-      <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className="w-3 h-3" />
-        {label}
-      </span>
+      <Icon className="w-5 h-5 flex-shrink-0" style={{ color: iconColor || "hsl(var(--primary))" }} />
+      <span className="flex-1 text-left text-[16px] font-semibold text-foreground">{label}</span>
+      <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
     </button>
   );
 }
