@@ -1045,7 +1045,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
       {/* Top bar */}
       <div className="relative z-10 flex items-center px-6 pb-3">
         <div className="w-[72px] flex items-center justify-start">
-          <motion.button whileTap={{ scale: 0.85 }} onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             <ChevronDown className="w-5 h-5 text-white/80" />
           </motion.button>
         </div>
@@ -1054,13 +1054,13 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           <p className="text-[12px] font-bold text-white/70 truncate mt-0.5">{currentSong.album || "Ma bibliothèque"}</p>
         </div>
         <div className="w-[72px] flex items-center justify-end gap-1.5">
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { onClose(); setTimeout(() => navigate("/audio-settings"), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { onClose(); setTimeout(() => navigate("/audio-settings"), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             <SlidersHorizontal className="w-4 h-4 text-white/80" />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { const q = encodeURIComponent(`${currentSong.title} ${currentSong.artist}`.trim()); onClose(); setTimeout(() => navigate(`/search?q=${q}`), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { const q = encodeURIComponent(`${currentSong.title} ${currentSong.artist}`.trim()); onClose(); setTimeout(() => navigate(`/search?q=${q}`), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             <Search className="w-4 h-4 text-white/80" />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setShowQueue(!showQueue)} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl active:bg-white/20 transition-colors">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setShowQueue(!showQueue)} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
             {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
           </motion.button>
         </div>
