@@ -433,13 +433,42 @@ const RadioPage = () => {
       ? `${radioMetadata.artist} — ${radioMetadata.title}`
       : (!isActive && myRadioMeta) ? myRadioMeta : null;
 
+    const [showCardActions, setShowCardActions] = useState(false);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
+    const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+
+    const handleTouchStart = useCallback(() => {
+      longPressTimer.current = setTimeout(() => {
+        setShowCardActions(true);
+        if (navigator.vibrate) navigator.vibrate(10);
+        hideTimer.current = setTimeout(() => setShowCardActions(false), 3500);
+      }, 400);
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+      clearTimeout(longPressTimer.current);
+    }, []);
+
+    const handleCardClick = useCallback(() => {
+      if (showCardActions) {
+        setShowCardActions(false);
+        return;
+      }
+      playStation(station);
+    }, [showCardActions, station]);
+
+    const actionsVisible = showCardActions || isActivePlaying;
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.04, type: "spring", stiffness: 300, damping: 25 }}
-        className="group cursor-pointer"
-        onClick={() => playStation(station)}
+        className="group cursor-pointer active:scale-[0.97] transition-transform duration-150"
+        onClick={handleCardClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         <div
           className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 transition-all duration-300 ${
