@@ -25,47 +25,56 @@ const AudioSettingsPage = () => {
 
   return (
     <div className="min-h-screen pb-20 animate-fade-in">
+      {/* Ambient background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div
+          className="absolute top-[-10%] right-[-10%] w-[500px] h-[400px] rounded-full"
+          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.07) 0%, transparent 70%)", filter: "blur(80px)" }}
+        />
+      </div>
+
       {/* Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/15 via-primary/5 to-background" />
-        <div className="absolute top-0 right-0 w-60 h-60 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" />
-
-        <div className="relative px-4 md:px-8 pb-6" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}>
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
+      <div
+        className="sticky top-0 z-30 px-4 py-3"
+        style={{
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
+          background: "linear-gradient(180deg, hsl(var(--background) / 0.7), hsl(var(--background) / 0.5))",
+          backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+          borderBottom: "0.5px solid hsl(var(--foreground) / 0.06)",
+        }}
+      >
+        <div className="max-w-lg mx-auto flex items-center">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full active:scale-95 transition-transform">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-              <Headphones className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Paramètres audio</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Personnalisez votre expérience sonore</p>
-            </div>
-          </div>
+          <h1 className="flex-1 text-center text-sm font-bold text-foreground">Paramètres audio</h1>
+          <div className="w-9" />
         </div>
       </div>
 
-      <div className="px-4 md:px-8 max-w-lg mx-auto space-y-5">
+      <div className="px-4 md:px-8 max-w-lg mx-auto space-y-4 mt-3">
         {/* Crossfade */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="p-5 rounded-2xl bg-secondary/50 border border-border space-y-5"
+          className="p-5 rounded-2xl space-y-5"
+          style={{
+            background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.2))",
+            backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            border: "0.5px solid hsl(var(--foreground) / 0.07)",
+            boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), inset 0 -0.5px 0 hsl(0 0% 0% / 0.1)",
+          }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.12)" }}>
               <Disc3 className="w-4 h-4 text-primary" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-foreground">Crossfade</h3>
-              <p className="text-[11px] text-muted-foreground">Transition fluide entre les pistes</p>
+              <p className="text-[11px] text-muted-foreground/60">Transition fluide entre les pistes</p>
             </div>
           </div>
 
@@ -102,15 +111,22 @@ const AudioSettingsPage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="p-5 rounded-2xl bg-secondary/50 border border-border space-y-5"
+          className="p-5 rounded-2xl space-y-5"
+          style={{
+            background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.2))",
+            backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            border: "0.5px solid hsl(var(--foreground) / 0.07)",
+            boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), inset 0 -0.5px 0 hsl(0 0% 0% / 0.1)",
+          }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.12)" }}>
               <Music className="w-4 h-4 text-primary" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-foreground">Égaliseur</h3>
-              <p className="text-[11px] text-muted-foreground">Ajustez les basses et les aigus</p>
+              <p className="text-[11px] text-muted-foreground/60">Ajustez les basses et les aigus</p>
             </div>
           </div>
 
@@ -125,11 +141,16 @@ const AudioSettingsPage = () => {
                     key={preset.label}
                     whileTap={{ scale: 0.93 }}
                     onClick={() => { setBassBoost(preset.bass); setTrebleBoost(preset.treble); }}
-                    className={`flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-xs font-medium transition-all border ${
-                      active
-                        ? "bg-primary/15 text-primary border-primary/25 shadow-sm"
-                        : "bg-secondary/60 text-muted-foreground border-border/50 hover:bg-secondary"
-                    }`}
+                    className="flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-xs font-medium transition-all"
+                    style={{
+                      background: active
+                        ? "hsl(var(--primary) / 0.15)"
+                        : "hsl(var(--foreground) / 0.03)",
+                      border: active
+                        ? "0.5px solid hsl(var(--primary) / 0.25)"
+                        : "0.5px solid hsl(var(--foreground) / 0.05)",
+                      color: active ? "hsl(var(--primary))" : undefined,
+                    }}
                   >
                     <span className="text-lg">{preset.emoji}</span>
                     <span className="text-[10px] leading-tight">{preset.label}</span>
@@ -186,8 +207,8 @@ const AudioSettingsPage = () => {
           </div>
 
           {/* Visual indicator */}
-          <div className="pt-3 border-t border-border/50">
-            <p className="text-[11px] text-muted-foreground text-center">
+          <div className="pt-3" style={{ borderTop: "0.5px solid hsl(var(--foreground) / 0.05)" }}>
+            <p className="text-[11px] text-muted-foreground/50 text-center">
               Les changements sont appliqués en temps réel et sauvegardés automatiquement
             </p>
           </div>
