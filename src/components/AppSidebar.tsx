@@ -1,6 +1,7 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Home, Search, Library, Radio, PlusCircle, LogOut, Shield, Lock } from "lucide-react";
+import {
+  Home, Search, Library, Radio, PlusCircle, LogOut, Shield, Lock,
+} from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Badge } from "@/components/ui/badge";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -21,7 +22,6 @@ const adminItems = [
   { to: "/admin", icon: Shield, label: "Admin" },
 ];
 
-// Route → lazy chunk mapping for prefetch
 const routeImports: Record<string, () => Promise<unknown>> = {
   "/": () => import("@/pages/Home"),
   "/search": () => import("@/pages/SearchPage"),
@@ -42,6 +42,8 @@ function prefetchRoute(to: string) {
   }
 }
 
+/* ═══════════════════ Desktop Sidebar ═══════════════════ */
+
 export function AppSidebar() {
   const { isAdmin } = useAdminAuth();
   const { user, signOut } = useAuth();
@@ -49,8 +51,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const items = isAdmin ? [...navItems, ...adminItems] : navItems;
 
-  const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0];
-  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const displayName =
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0];
+  const avatarUrl =
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
     <aside className="hidden md:flex flex-col w-[240px] min-h-screen bg-card/80 backdrop-blur-xl border-r border-border/50 p-4">
@@ -61,7 +67,7 @@ export function AppSidebar() {
         <NotificationBell />
       </div>
 
-      <nav className="flex flex-col gap-1 flex-1">
+      <nav className="flex flex-col gap-0.5 flex-1">
         {items.map((item) => {
           const restricted = !checkRoute(item.to);
           return (
@@ -72,7 +78,7 @@ export function AppSidebar() {
               onMouseEnter={() => prefetchRoute(item.to)}
               onTouchStart={() => prefetchRoute(item.to)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 ${
                   restricted
                     ? "text-muted-foreground/40 hover:text-muted-foreground/50"
                     : isActive
@@ -81,9 +87,19 @@ export function AppSidebar() {
                 }`
               }
             >
-              <item.icon className="w-5 h-5" />
-              <span className="flex-1">{item.label}</span>
-              {restricted && <Lock className="w-3.5 h-3.5 text-muted-foreground/30" />}
+              {({ isActive }) => (
+                <>
+                  <item.icon
+                    className="w-5 h-5"
+                    strokeWidth={isActive && !restricted ? 2.4 : 1.6}
+                    fill={isActive && !restricted ? "currentColor" : "none"}
+                  />
+                  <span className="flex-1">{item.label}</span>
+                  {restricted && (
+                    <Lock className="w-3.5 h-3.5 text-muted-foreground/30" />
+                  )}
+                </>
+              )}
             </RouterNavLink>
           );
         })}
@@ -92,7 +108,10 @@ export function AppSidebar() {
       {user && (
         <div className="mt-auto pt-4 border-t border-border/50">
           <div className="flex items-center gap-3 px-2">
-            <button onClick={() => navigate("/profile")} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+            <button
+              onClick={() => navigate("/profile")}
+              className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+            >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={avatarUrl} alt={displayName || "User"} />
                 <AvatarFallback className="text-xs font-semibold bg-primary/20 text-primary">
@@ -101,9 +120,14 @@ export function AppSidebar() {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {displayName}
+                  </p>
                   {isAdmin && (
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-primary/40 text-primary bg-primary/10 font-semibold shrink-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] px-1.5 py-0 h-4 border-primary/40 text-primary bg-primary/10 font-semibold shrink-0"
+                    >
                       Admin
                     </Badge>
                   )}
@@ -124,6 +148,8 @@ export function AppSidebar() {
   );
 }
 
+/* ═══════════════════ Mobile Tab Bar ═══════════════════ */
+
 export function MobileNav() {
   const { isAdmin } = useAdminAuth();
   const { checkRoute } = useSubscriptionAccess();
@@ -139,10 +165,10 @@ export function MobileNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-40"
       style={{
         paddingBottom: "env(safe-area-inset-bottom)",
-        background: "hsl(var(--background) / 0.75)",
-        backdropFilter: "blur(48px) saturate(1.8)",
-        WebkitBackdropFilter: "blur(48px) saturate(1.8)",
-        borderTop: "1px solid hsl(var(--border) / 0.06)",
+        background: "hsl(var(--background) / 0.82)",
+        backdropFilter: "blur(40px) saturate(1.8)",
+        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+        borderTop: "1px solid hsl(var(--border) / 0.08)",
       }}
     >
       <div className="flex justify-around items-end px-1 pt-1.5 pb-1">
@@ -160,7 +186,7 @@ export function MobileNav() {
                     ? "text-muted-foreground/20"
                     : isActive
                     ? "text-primary"
-                    : "text-muted-foreground/45 active:text-muted-foreground/70"
+                    : "text-muted-foreground/50 active:text-muted-foreground/70"
                 }`
               }
             >
@@ -170,33 +196,24 @@ export function MobileNav() {
                     {restricted ? (
                       <Lock className="w-[20px] h-[20px]" strokeWidth={1.5} />
                     ) : (
-                      <motion.div
-                        animate={isActive ? { y: -2 } : { y: 0 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 28 }}
-                      >
-                        <item.icon
-                          className="w-[21px] h-[21px]"
-                          strokeWidth={isActive ? 2.2 : 1.5}
-                        />
-                      </motion.div>
+                      <item.icon
+                        className="w-[22px] h-[22px] transition-transform duration-150"
+                        strokeWidth={isActive ? 2.2 : 1.5}
+                        fill={isActive ? "currentColor" : "none"}
+                      />
                     )}
                   </div>
-                  <span className={`relative z-10 leading-tight ${
-                    restricted ? "opacity-25" : isActive ? "opacity-100 font-semibold" : "opacity-50"
-                  }`}>
+                  <span
+                    className={`relative z-10 leading-tight ${
+                      restricted
+                        ? "opacity-25"
+                        : isActive
+                        ? "opacity-100 font-semibold"
+                        : "opacity-60"
+                    }`}
+                  >
                     {item.label}
                   </span>
-                  {/* Active indicator bar */}
-                  {isActive && !restricted && (
-                    <motion.div
-                      layoutId="nav-indicator"
-                      className="absolute -top-1.5 left-1/2 h-[2.5px] w-5 rounded-full bg-primary"
-                      style={{
-                        marginLeft: -10,
-                      }}
-                      transition={{ type: "spring", stiffness: 500, damping: 32 }}
-                    />
-                  )}
                 </>
               )}
             </RouterNavLink>
@@ -206,4 +223,3 @@ export function MobileNav() {
     </nav>
   );
 }
-
