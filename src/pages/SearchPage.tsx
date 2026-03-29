@@ -27,6 +27,8 @@ import {
   Plus,
   Check,
   RefreshCw,
+  ChevronRight,
+  Headphones,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,14 +37,7 @@ import { searchArtistImage } from "@/lib/coverArtSearch";
 import { LazyImage } from "@/components/LazyImage";
 import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
 
-/* ── Liquid glass style helpers ── */
-const glassCard = {
-  background: "linear-gradient(145deg, hsl(var(--card) / 0.3), hsl(var(--card) / 0.12))",
-  backdropFilter: "blur(24px) saturate(1.6)",
-  WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-  border: "0.5px solid hsl(var(--foreground) / 0.05)",
-} as const;
-
+/* ── Qobuz-inspired glass helpers ── */
 const glassCardStrong = {
   background: "linear-gradient(160deg, hsl(var(--card) / 0.75), hsl(var(--card) / 0.5))",
   backdropFilter: "blur(60px) saturate(2)",
@@ -50,6 +45,21 @@ const glassCardStrong = {
   border: "0.5px solid hsl(var(--foreground) / 0.08)",
   boxShadow: "0 12px 40px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
 } as const;
+
+/* ── Section Header (editorial style) ── */
+function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-[20px] font-extrabold text-foreground tracking-tight">{title}</h2>
+      {action && (
+        <button onClick={onAction} className="flex items-center gap-0.5 text-[12px] font-semibold text-primary active:opacity-70 transition-opacity">
+          {action}
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -79,7 +89,7 @@ const SearchPage = () => {
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [newReleases, setNewReleases] = useState<DeezerNewRelease[]>([]);
 
-  // ── Data fetching (unchanged logic) ──
+  // ── Data fetching ──
   useEffect(() => {
     let cancelled = false;
     const fetchNew = async () => {
@@ -91,7 +101,6 @@ const SearchPage = () => {
           .limit(25) as any);
 
         if (!cancelled && cached && cached.length > 0) {
-          // Resolve covers from offline cache for each release
           const releasesWithCovers = await Promise.all(
             cached.map(async (r: any) => {
               let coverUrl = r.cover_url;
@@ -99,20 +108,15 @@ const SearchPage = () => {
                 const cachedCover = await getFridayCoverUrl(r.album_id);
                 if (cachedCover) coverUrl = cachedCover;
               } catch {}
-              return {
-                id: r.album_id, title: r.title, artist: r.artist,
-                coverUrl, albumId: r.album_id,
-              };
+              return { id: r.album_id, title: r.title, artist: r.artist, coverUrl, albumId: r.album_id };
             })
           );
           if (!cancelled) setNewReleases(releasesWithCovers);
 
-          // If data is stale (past this week's Friday), trigger background refresh
           if (isFridayDataStale()) {
             supabase.functions.invoke("refresh-friday-releases", { body: {} })
               .then(() => {
                 markFridayRefreshed();
-                // Re-fetch after refresh
                 supabase
                   .from("friday_releases" as any)
                   .select("album_id, title, artist, cover_url")
@@ -134,7 +138,6 @@ const SearchPage = () => {
           return;
         }
 
-        // Fallback: fetch directly from Deezer
         const playlistIds = ["1071669561", "1478649355"];
         const results = await Promise.allSettled(
           playlistIds.map((pid) =>
@@ -193,7 +196,7 @@ const SearchPage = () => {
         }
       }
       if (fullTracks.length > 0) { setQueue(fullTracks); play(fullTracks[0]); }
-      else { toast.info("Morceaux non disponibles en version complète dans votre bibliothèque"); }
+      else { toast.info("Morceaux non disponibles dans votre bibliothèque"); }
     } catch { toast.error("Impossible de charger cet album"); }
   }, [play, setQueue, allSongs]);
 
@@ -412,9 +415,12 @@ const SearchPage = () => {
     setQueue(allSongs); play(song);
   };
 
-  const handleAlbumClick = async (albumTitle: string) => {
-    const { data } = await supabase.from("custom_albums").select("id").eq("title", albumTitle).limit(1).single();
-    if (data) navigate(`/album/${data.id}`);
+  const handleAlbumClick = (albumTitle: string, artistName?: string) => {
+    if (artistName) {
+      navigate(`/album/by-name?artist=${encodeURIComponent(artistName)}&album=${encodeURIComponent(albumTitle)}`);
+    } else {
+      navigate(`/album/by-name?album=${encodeURIComponent(albumTitle)}`);
+    }
   };
 
   const handleArtistClick = (artistName: string) => navigate(`/artist/${encodeURIComponent(artistName)}`);
@@ -427,27 +433,36 @@ const SearchPage = () => {
     if (userId) musicDb.clearSearchHistory(userId).then(() => setRecentSearches([]));
   };
 
+  // Library stats
+  const libraryStats = useMemo(() => {
+    if (!allSongs || allSongs.length === 0) return null;
+    const artists = new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size;
+    const albums = new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size;
+    const totalDuration = allSongs.reduce((sum, s) => sum + s.duration, 0);
+    const hours = Math.floor(totalDuration / 3600);
+    const mins = Math.floor((totalDuration % 3600) / 60);
+    return { songs: allSongs.length, artists, albums, duration: hours > 0 ? `${hours}h ${mins}m` : `${mins}m` };
+  }, [allSongs]);
+
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
-      {/* ── Glass Header ── */}
+      {/* ── Sticky Header ── */}
       <div
-        className="sticky top-0 z-20 px-5 md:px-8 pb-2"
+        className="sticky top-0 z-20 px-5 md:px-8 pb-3"
         style={{
-          paddingTop: "max(2rem,env(safe-area-inset-top))",
-          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 70%, hsl(var(--background) / 0) 100%)",
+          paddingTop: "max(1.5rem,env(safe-area-inset-top))",
+          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.95) 80%, hsl(var(--background) / 0) 100%)",
           backdropFilter: "blur(40px) saturate(1.8)",
           WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-[28px] md:text-[32px] font-black text-foreground tracking-tight">Rechercher</h1>
-        </div>
+        <h1 className="text-[34px] font-black text-foreground tracking-tight mb-3 leading-none">Rechercher</h1>
 
-        {/* ── Glass Search Bar ── */}
+        {/* ── Search Bar ── */}
         <div ref={searchRef} className="relative">
-          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 z-10" />
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/40 z-10" />
           <input
             ref={inputRef}
             type="text"
@@ -458,22 +473,20 @@ const SearchPage = () => {
               if (e.key === "Enter") commitSearch(query.trim());
               if (e.key === "Escape") setShowSuggestions(false);
             }}
-            placeholder="Titres, artistes, albums..."
-            className="w-full pl-10 pr-10 py-3 rounded-2xl text-foreground placeholder:text-muted-foreground/35 focus:outline-none text-[14px] transition-all"
+            placeholder="Artistes, titres, albums..."
+            className="w-full pl-11 pr-10 py-3.5 rounded-2xl text-foreground placeholder:text-muted-foreground/30 focus:outline-none text-[15px] font-medium transition-all"
             style={{
-              background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
-              backdropFilter: "blur(24px) saturate(1.6)",
-              WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+              background: "hsl(var(--foreground) / 0.04)",
               border: "0.5px solid hsl(var(--foreground) / 0.06)",
-              boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
             }}
           />
           {query && (
             <button
               onClick={() => { setQuery(""); setDebouncedQuery(""); setArtistFilter(null); setShowSuggestions(false); }}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full z-10"
+              style={{ background: "hsl(var(--foreground) / 0.08)" }}
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           )}
 
@@ -481,31 +494,31 @@ const SearchPage = () => {
           <AnimatePresence>
             {showSuggestions && query.length >= 1 && autocompleteSuggestions.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-                className="absolute left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden z-50 shadow-xl"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.12 }}
+                className="absolute left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden z-50"
                 style={{ ...glassCardStrong }}
               >
                 {autocompleteSuggestions.map((item, i) => (
                   <button
                     key={`${item.type}-${item.label}-${i}`}
                     onClick={() => commitSearch(item.label)}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-primary/5 transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors"
                   >
                     {item.coverUrl ? (
-                      <img src={item.coverUrl} alt="" className={`w-9 h-9 object-cover flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`} />
+                      <img src={item.coverUrl} alt="" className={`w-10 h-10 object-cover flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`} />
                     ) : (
-                      <div className={`w-9 h-9 bg-secondary/60 flex items-center justify-center flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`}>
-                        {item.type === "artist" ? <User className="w-4 h-4 text-muted-foreground" /> : <Music className="w-4 h-4 text-muted-foreground" />}
+                      <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`} style={{ background: "hsl(var(--foreground) / 0.04)" }}>
+                        {item.type === "artist" ? <User className="w-4 h-4 text-muted-foreground/30" /> : <Music className="w-4 h-4 text-muted-foreground/30" />}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{item.label}</p>
-                      <p className="text-xs text-muted-foreground/60 truncate">{item.type === "artist" ? "Artiste" : item.sub}</p>
+                      <p className="text-[14px] font-semibold text-foreground truncate">{item.label}</p>
+                      <p className="text-[11px] text-muted-foreground/50 truncate">{item.type === "artist" ? "Artiste" : item.sub}</p>
                     </div>
-                    <SearchIcon className="w-3.5 h-3.5 text-muted-foreground/30 flex-shrink-0" />
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/20 flex-shrink-0" />
                   </button>
                 ))}
               </motion.div>
@@ -514,37 +527,67 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {/* spacer after sticky header */}
-      <div className="h-2" />
+      <div className="h-1" />
+
       {/* ── Content ── */}
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
-          /* ══════════════ EXPLORE MODE ══════════════ */
-          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-8">
+          /* ══════════════ EXPLORE MODE (Qobuz style) ══════════════ */
+          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-7">
 
-            {/* Recent Searches */}
+            {/* ── Library Overview Card ── */}
+            {libraryStats && (
+              <section>
+                <div
+                  className="rounded-3xl p-5 relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(145deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.02))",
+                    border: "0.5px solid hsl(var(--primary) / 0.08)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <Headphones className="w-4 h-4 text-primary" />
+                    <h3 className="text-[13px] font-bold text-primary uppercase tracking-wider">Ma bibliothèque</h3>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: libraryStats.songs, label: "Titres" },
+                      { value: libraryStats.artists, label: "Artistes" },
+                      { value: libraryStats.albums, label: "Albums" },
+                      { value: libraryStats.duration, label: "Durée" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center">
+                        <p className="text-[22px] font-black text-foreground leading-none tabular-nums">{stat.value}</p>
+                        <p className="text-[10px] text-muted-foreground/50 font-medium mt-1">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* ── Recent Searches ── */}
             {recentSearches.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[18px] font-bold text-foreground">Récentes</h2>
-                  <button onClick={clearAllRecent} className="text-[12px] text-primary/80 font-medium active:opacity-70 transition-opacity">Tout effacer</button>
+                  <h2 className="text-[16px] font-bold text-foreground">Recherches récentes</h2>
+                  <button onClick={clearAllRecent} className="text-[11px] text-primary/70 font-medium">Effacer</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {recentSearches.map((term) => (
                     <div key={term} className="group flex items-center">
                       <button
                         onClick={() => commitSearch(term)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
                         style={{
-                          background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.18))",
-                          backdropFilter: "blur(16px)",
-                          border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                          background: "hsl(var(--foreground) / 0.04)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
                         }}
                       >
-                        <Clock className="w-3 h-3 text-muted-foreground/40" />
+                        <Clock className="w-3 h-3 text-muted-foreground/30" />
                         {term}
                       </button>
-                      <button onClick={() => handleRemoveRecent(term)} className="ml-0.5 p-1 rounded-full text-muted-foreground/30 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleRemoveRecent(term)} className="ml-0.5 p-1 rounded-full text-muted-foreground/20 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
                         <X className="w-3 h-3" />
                       </button>
                     </div>
@@ -553,69 +596,97 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* Library Stats */}
-            {allSongs && allSongs.length > 0 && (
-              <section>
-                <h2 className="text-[18px] font-bold text-foreground mb-3">Votre bibliothèque</h2>
-                <div className="flex justify-around">
-                  {[
-                    { icon: <Music className="w-4 h-4" />, value: allSongs.length, label: "Morceaux" },
-                    { icon: <User className="w-4 h-4" />, value: new Set(allSongs.map((s) => s.artist.split(",")[0].trim())).size, label: "Artistes" },
-                    { icon: <Disc3 className="w-4 h-4" />, value: new Set(allSongs.filter((s) => s.album).map((s) => s.album)).size, label: "Albums" },
-                  ].map((stat) => (
-                    <div key={stat.label} className="flex flex-col items-center gap-1.5">
-                      <div
-                        className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary"
-                        style={{
-                          background: "linear-gradient(145deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
-                          border: "0.5px solid hsl(var(--primary) / 0.1)",
-                          boxShadow: "0 2px 12px hsl(var(--primary) / 0.08)",
-                        }}
-                      >
-                        {stat.icon}
-                        <span className="text-base font-black leading-tight mt-1 tabular-nums">{stat.value}</span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground/50 font-semibold">{stat.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
+            {/* ── Trending Artists (Qobuz editorial style) ── */}
             {trendingArtists.length > 0 && (
               <section>
-                <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes populaires</h2>
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-                  {trendingArtists.map((artist) => (
+                <SectionHeader title="Artistes populaires" />
+                <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                  {trendingArtists.map((artist, i) => (
                     <button
                       key={artist.name}
                       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] group active:scale-95 transition-transform"
+                      className="flex flex-col items-center gap-2 flex-shrink-0 w-[80px] group active:scale-95 transition-transform"
                     >
                       <div
-                        className="w-16 h-16 rounded-full overflow-hidden"
-                        style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
+                        className="w-[76px] h-[76px] rounded-full overflow-hidden relative"
+                        style={{
+                          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+                          background: `linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))`,
+                          padding: "2px",
+                        }}
                       >
-                        {(artistPhotos[artist.name] || artist.cover) ? (
-                          <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
-                            <User className="w-5 h-5 text-muted-foreground/20" />
-                          </div>
-                        )}
+                        <div className="w-full h-full rounded-full overflow-hidden bg-background">
+                          {(artistPhotos[artist.name] || artist.cover) ? (
+                            <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
+                              <User className="w-6 h-6 text-muted-foreground/15" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-[11px] text-foreground font-semibold truncate w-full text-center leading-tight">{artist.name}</span>
+                      <div className="text-center w-full">
+                        <span className="text-[11px] text-foreground font-bold truncate block leading-tight">{artist.name}</span>
+                        <span className="text-[9px] text-muted-foreground/40 font-medium">{artist.count} titres</span>
+                      </div>
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
+            {/* ── New Releases (Qobuz editorial card style) ── */}
+            {newReleases.length > 0 && (
+              <section>
+                <SectionHeader title="Nouveautés" />
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                  {newReleases.slice(0, 12).map((release) => {
+                    const isAvailable = availableReleases.has(release.albumId);
+                    return (
+                      <button
+                        key={release.albumId}
+                        onClick={() => isAvailable ? playFridayRelease(release) : undefined}
+                        className="flex-shrink-0 w-[150px] group text-left active:scale-[0.97] transition-transform"
+                      >
+                        <div
+                          className="w-[150px] h-[150px] rounded-2xl overflow-hidden mb-2.5 relative"
+                          style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)" }}
+                        >
+                          {release.coverUrl ? (
+                            <LazyImage src={release.coverUrl} alt={release.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" wrapperClassName="w-full h-full" fallback />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
+                              <Disc3 className="w-10 h-10 text-muted-foreground/10" />
+                            </div>
+                          )}
+                          {isAvailable && (
+                            <div
+                              className="absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                              style={{
+                                background: "hsl(var(--primary))",
+                                boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)",
+                              }}
+                            >
+                              <Play className="w-4 h-4 text-primary-foreground fill-current ml-0.5" />
+                            </div>
+                          )}
+                          {!isAvailable && (
+                            <div className="absolute inset-0 bg-background/30" />
+                          )}
+                        </div>
+                        <p className="text-[13px] font-bold text-foreground truncate leading-tight">{release.title}</p>
+                        <p className="text-[11px] text-muted-foreground/45 truncate mt-0.5">{release.artist}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-            {/* Genre Cards */}
+            {/* ── Genre Cards (Qobuz editorial blocks) ── */}
             {genreCards.length > 0 && (
               <section>
-                <h2 className="text-[18px] font-bold text-foreground mb-3">Parcourir par genre</h2>
+                <SectionHeader title="Explorer par genre" />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {genreCards.map((g) => {
                     const def = genreDefs[g.genre] || defaultGenreColor;
@@ -623,24 +694,23 @@ const SearchPage = () => {
                       <button
                         key={g.genre}
                         onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
-                        className="relative h-[100px] rounded-xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
+                        className="relative h-[88px] rounded-2xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
                         style={{
-                          background: `linear-gradient(145deg, ${def.from}, ${def.to})`,
-                          boxShadow: `0 4px 16px ${def.from}20`,
+                          background: `linear-gradient(155deg, ${def.from}, ${def.to})`,
+                          boxShadow: `0 4px 24px ${def.from}15`,
                         }}
                       >
-                        {g.coverUrl ? (
-                          <img src={g.coverUrl} alt="" className="absolute -right-2 -bottom-2 w-[70px] h-[70px] rounded-lg object-cover rotate-[20deg] opacity-30 transition-opacity duration-300 group-hover:opacity-45" />
-                        ) : (
-                          <span className="absolute -right-1 -bottom-1 text-[48px] rotate-[18deg] opacity-15 select-none">{def.emoji}</span>
-                        )}
-                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-base">{def.emoji}</span>
-                            <h3 className="text-[14px] font-bold text-white leading-tight">{g.genre}</h3>
+                        {/* Decorative emoji */}
+                        <span className="absolute -right-2 -bottom-2 text-[52px] rotate-[15deg] opacity-10 select-none leading-none">{def.emoji}</span>
+                        {/* Subtle glass overlay */}
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.15))" }} />
+                        <div className="relative z-10 p-4 h-full flex flex-col justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg leading-none">{def.emoji}</span>
+                            <h3 className="text-[15px] font-extrabold text-white leading-tight">{g.genre}</h3>
                           </div>
                           {g.count > 0 && (
-                            <p className="text-[10px] text-white/55 font-medium">{g.count} titres</p>
+                            <p className="text-[10px] text-white/50 font-semibold">{g.count} titres</p>
                           )}
                         </div>
                       </button>
@@ -650,17 +720,45 @@ const SearchPage = () => {
               </section>
             )}
 
-
+            {/* ── Recently Played (editorial strip) ── */}
+            {recentlyPlayed.length > 0 && (
+              <section>
+                <SectionHeader title="Écoutés récemment" />
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                  {recentlyPlayed.slice(0, 10).map((song) => (
+                    <button
+                      key={song.id}
+                      onClick={() => handlePlayTrack(song, recentlyPlayed)}
+                      className="flex-shrink-0 w-[120px] group text-left active:scale-[0.97] transition-transform"
+                    >
+                      <div
+                        className="w-[120px] h-[120px] rounded-xl overflow-hidden mb-2 relative"
+                        style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.08)" }}
+                      >
+                        {song.coverUrl ? (
+                          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
+                            <Music className="w-6 h-6 text-muted-foreground/10" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <p className="text-[12px] font-semibold text-foreground truncate leading-tight">{song.title}</p>
+                      <p className="text-[10px] text-muted-foreground/40 truncate">{song.artist}</p>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
           </motion.div>
         ) : (
           /* ══════════════ RESULTS MODE ══════════════ */
           <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8">
             {isLoading ? (
               <div className="rounded-2xl overflow-hidden" style={{
-                background: "linear-gradient(145deg, hsl(var(--card) / 0.3), hsl(var(--card) / 0.12))",
-                backdropFilter: "blur(24px) saturate(1.6)",
-                WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                background: "hsl(var(--foreground) / 0.02)",
+                border: "0.5px solid hsl(var(--foreground) / 0.04)",
               }}>
                 {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
@@ -669,34 +767,31 @@ const SearchPage = () => {
                 {/* Artist Results */}
                 {artistCards.length > 0 && (
                   <section className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <User className="w-4 h-4 text-primary" />
-                      <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">Artistes</h2>
-                    </div>
-                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                      {artistCards.map((artist, i) => (
-                        <motion.button
+                    <SectionHeader title="Artistes" />
+                    <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                      {artistCards.map((artist) => (
+                        <button
                           key={artist.name}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 25 }}
                           onClick={() => handleArtistClick(artist.name)}
-                          className="flex-shrink-0 w-[100px] group text-center"
+                          className="flex-shrink-0 w-[90px] group text-center active:scale-95 transition-transform"
                         >
-                          <div className="w-[100px] h-[100px] rounded-full overflow-hidden mb-2 mx-auto ring-2 ring-border/10 group-hover:ring-primary/30 transition-all"
-                            style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1)" }}
+                          <div
+                            className="w-[88px] h-[88px] rounded-full overflow-hidden mb-2 mx-auto"
+                            style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1)", padding: "2px", background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.15))" }}
                           >
-                            {artist.coverUrl ? (
-                              <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05))" }}>
-                                <User className="w-8 h-8 text-primary/25" />
-                              </div>
-                            )}
+                            <div className="w-full h-full rounded-full overflow-hidden bg-background">
+                              {artist.coverUrl ? (
+                                <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
+                                  <User className="w-7 h-7 text-muted-foreground/15" />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-[11px] font-bold text-foreground truncate">{artist.name}</p>
-                          <p className="text-[10px] text-muted-foreground/50">{artist.songCount} titre{artist.songCount > 1 ? "s" : ""}</p>
-                        </motion.button>
+                          <p className="text-[12px] font-bold text-foreground truncate">{artist.name}</p>
+                          <p className="text-[10px] text-muted-foreground/40">{artist.songCount} titre{artist.songCount > 1 ? "s" : ""}</p>
+                        </button>
                       ))}
                     </div>
                   </section>
@@ -705,28 +800,28 @@ const SearchPage = () => {
                 {/* Album Results */}
                 {albumCards.length > 0 && (
                   <section className="mb-6">
-                    <h2 className="text-[18px] font-bold text-foreground mb-3">Albums</h2>
-                    <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
+                    <SectionHeader title="Albums" />
+                    <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                       {albumCards.map((album) => (
                         <button
                           key={album.title}
-                          onClick={() => handleAlbumClick(album.title)}
+                          onClick={() => handleAlbumClick(album.title, album.artist)}
                           className="flex-shrink-0 w-[140px] group text-left active:scale-[0.97] transition-transform"
                         >
                           <div
                             className="w-[140px] h-[140px] rounded-xl overflow-hidden mb-2"
-                            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
+                            style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.08)" }}
                           >
                             {album.coverUrl ? (
                               <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
-                                <Music className="w-7 h-7 text-muted-foreground/15" />
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
+                                <Music className="w-7 h-7 text-muted-foreground/10" />
                               </div>
                             )}
                           </div>
-                          <p className="text-[13px] font-semibold text-foreground truncate">{album.title}</p>
-                          <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{album.artist}</p>
+                          <p className="text-[13px] font-bold text-foreground truncate">{album.title}</p>
+                          <p className="text-[11px] text-muted-foreground/45 truncate mt-0.5">{album.artist}</p>
                         </button>
                       ))}
                     </div>
@@ -743,10 +838,11 @@ const SearchPage = () => {
                           <button
                             key={artist || "all"}
                             onClick={() => setArtistFilter(artist === artistFilter ? null : artist)}
-                            className="relative flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                            className="flex-shrink-0 px-4 py-2 rounded-full text-[12px] font-semibold active:scale-95 transition-all"
                             style={{
-                              background: isActive ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.05)",
+                              background: isActive ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.04)",
                               color: isActive ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                              border: isActive ? "none" : "0.5px solid hsl(var(--foreground) / 0.06)",
                             }}
                           >
                             {artist || "Tous"}
@@ -760,15 +856,13 @@ const SearchPage = () => {
                 {/* Song Results */}
                 {filteredResults.length > 0 ? (
                   <>
-                    <p className="text-[12px] text-muted-foreground/50 font-medium mb-3">
+                    <p className="text-[12px] text-muted-foreground/40 font-medium mb-3">
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-semibold">{artistFilter}</span></>}
                     </p>
                     <div className="rounded-2xl overflow-hidden" style={{
-                      background: "linear-gradient(145deg, hsl(var(--card) / 0.3), hsl(var(--card) / 0.12))",
-                      backdropFilter: "blur(24px) saturate(1.6)",
-                      WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                      border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                      background: "hsl(var(--foreground) / 0.02)",
+                      border: "0.5px solid hsl(var(--foreground) / 0.04)",
                     }}>
                       <VirtualSongList
                         songs={filteredResults}
@@ -780,27 +874,24 @@ const SearchPage = () => {
                 ) : (
                   <div className="text-center py-20">
                     <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                      className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5"
                       style={{
-                        background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.2))",
-                        backdropFilter: "blur(40px) saturate(1.8)",
-                        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-                        border: "0.5px solid hsl(var(--foreground) / 0.06)",
-                        boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+                        background: "hsl(var(--foreground) / 0.03)",
+                        border: "0.5px solid hsl(var(--foreground) / 0.05)",
                       }}
                     >
-                      <Music className="w-7 h-7 text-muted-foreground/20" />
+                      <SearchIcon className="w-8 h-8 text-muted-foreground/15" />
                     </div>
-                    <p className="text-foreground font-semibold mb-1">Aucun résultat pour « <span className="text-primary">{debouncedQuery}</span> »</p>
-                    <p className="text-[13px] text-muted-foreground/50 mb-4">Essayez un autre terme de recherche</p>
+                    <p className="text-[17px] text-foreground font-bold mb-1">Aucun résultat</p>
+                    <p className="text-[13px] text-muted-foreground/40 mb-5">Aucun résultat pour « <span className="text-primary font-medium">{debouncedQuery}</span> »</p>
                     {alternativeSuggestions.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-[11px] text-muted-foreground/40 mb-2 font-medium">Artistes suggérés :</p>
+                      <div>
+                        <p className="text-[11px] text-muted-foreground/30 mb-3 font-medium uppercase tracking-wider">Artistes suggérés</p>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {alternativeSuggestions.map((artist) => (
                             <button key={artist} onClick={() => commitSearch(artist)}
-                              className="px-3.5 py-1.5 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
-                              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
+                              className="px-4 py-2 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                              style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
                             >
                               {artist}
                             </button>
@@ -883,7 +974,7 @@ const SearchPage = () => {
                           onKeyDown={(e) => e.key === "Enter" && handleCreateAndAdd()}
                           placeholder="Nom de la playlist..."
                           className="flex-1 px-3 py-2 rounded-xl text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none"
-                          style={{ ...glassCard }}
+                          style={{ background: "hsl(var(--foreground) / 0.04)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
                           autoFocus
                         />
                         <button onClick={handleCreateAndAdd} className="px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
