@@ -35,15 +35,20 @@ import { searchArtistImage } from "@/lib/coverArtSearch";
 import { LazyImage } from "@/components/LazyImage";
 import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
 
-/* ── Minimal style helpers ── */
+/* ── Liquid glass style helpers ── */
 const glassCard = {
-  background: "hsl(var(--foreground) / 0.03)",
+  background: "linear-gradient(145deg, hsl(var(--card) / 0.3), hsl(var(--card) / 0.12))",
+  backdropFilter: "blur(24px) saturate(1.6)",
+  WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+  border: "0.5px solid hsl(var(--foreground) / 0.05)",
 } as const;
 
 const glassCardStrong = {
-  background: "hsl(var(--card) / 0.8)",
-  backdropFilter: "blur(24px)",
-  border: "1px solid hsl(var(--border) / 0.1)",
+  background: "linear-gradient(160deg, hsl(var(--card) / 0.75), hsl(var(--card) / 0.5))",
+  backdropFilter: "blur(60px) saturate(2)",
+  WebkitBackdropFilter: "blur(60px) saturate(2)",
+  border: "0.5px solid hsl(var(--foreground) / 0.08)",
+  boxShadow: "0 12px 40px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
 } as const;
 
 const SearchPage = () => {
@@ -426,16 +431,22 @@ const SearchPage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
-      {/* ── Header ── */}
-      <div className="px-5 md:px-8 pt-[max(2rem,env(safe-area-inset-top))] pb-2">
+      {/* ── Glass Header ── */}
+      <div
+        className="sticky top-0 z-20 px-5 md:px-8 pb-2"
+        style={{
+          paddingTop: "max(2rem,env(safe-area-inset-top))",
+          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 70%, hsl(var(--background) / 0) 100%)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+        }}
+      >
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[28px] md:text-[32px] font-black text-foreground tracking-tight">Rechercher</h1>
         </div>
-      </div>
 
-      {/* ── Search Bar ── */}
-      <div className="px-5 md:px-8 mb-5" ref={searchRef}>
-        <div className="relative">
+        {/* ── Glass Search Bar ── */}
+        <div ref={searchRef} className="relative">
           <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 z-10" />
           <input
             ref={inputRef}
@@ -448,9 +459,13 @@ const SearchPage = () => {
               if (e.key === "Escape") setShowSuggestions(false);
             }}
             placeholder="Titres, artistes, albums..."
-            className="w-full pl-10 pr-10 py-3 rounded-xl text-foreground placeholder:text-muted-foreground/35 focus:outline-none text-[14px] transition-all"
+            className="w-full pl-10 pr-10 py-3 rounded-2xl text-foreground placeholder:text-muted-foreground/35 focus:outline-none text-[14px] transition-all"
             style={{
-              background: "hsl(var(--foreground) / 0.05)",
+              background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+              backdropFilter: "blur(24px) saturate(1.6)",
+              WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+              border: "0.5px solid hsl(var(--foreground) / 0.06)",
+              boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
             }}
           />
           {query && (
@@ -499,6 +514,8 @@ const SearchPage = () => {
         </div>
       </div>
 
+      {/* spacer after sticky header */}
+      <div className="h-2" />
       {/* ── Content ── */}
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
@@ -510,7 +527,7 @@ const SearchPage = () => {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-[18px] font-bold text-foreground">Récentes</h2>
-                  <button onClick={clearAllRecent} className="text-[12px] text-primary font-medium active:opacity-70 transition-opacity">Tout effacer</button>
+                  <button onClick={clearAllRecent} className="text-[12px] text-primary/80 font-medium active:opacity-70 transition-opacity">Tout effacer</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {recentSearches.map((term) => (
@@ -518,7 +535,11 @@ const SearchPage = () => {
                       <button
                         onClick={() => commitSearch(term)}
                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
-                        style={{ background: "hsl(var(--foreground) / 0.05)" }}
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.18))",
+                          backdropFilter: "blur(16px)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                        }}
                       >
                         <Clock className="w-3 h-3 text-muted-foreground/40" />
                         {term}
@@ -545,7 +566,11 @@ const SearchPage = () => {
                     <div key={stat.label} className="flex flex-col items-center gap-1.5">
                       <div
                         className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary"
-                        style={{ background: "hsl(var(--primary) / 0.08)" }}
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
+                          border: "0.5px solid hsl(var(--primary) / 0.1)",
+                          boxShadow: "0 2px 12px hsl(var(--primary) / 0.08)",
+                        }}
                       >
                         {stat.icon}
                         <span className="text-base font-black leading-tight mt-1 tabular-nums">{stat.value}</span>
