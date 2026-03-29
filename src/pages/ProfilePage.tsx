@@ -108,6 +108,7 @@ const ProfilePage = () => {
   const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
+  const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pendingActions, setPendingActions] = useState(getPendingCount());
 
