@@ -150,7 +150,7 @@ export function AppSidebar() {
 
 /* ═══════════════════ Mobile Tab Bar ═══════════════════ */
 
-const pillItems = [
+const mainItems = [
   { to: "/", icon: Home, label: "Accueil" },
   { to: "/radio", icon: Radio, label: "Radio" },
   { to: "/library", icon: Library, label: "Bibliothèque" },
@@ -165,69 +165,100 @@ export function MobileNav() {
     if (navigator.vibrate) navigator.vibrate(5);
   }, []);
 
-  const allItems = isAdmin
-    ? [...pillItems, { to: "/search", icon: Search, label: "Recherche" }, ...adminItems]
-    : [...pillItems, { to: "/search", icon: Search, label: "Recherche" }];
+  const extraItems = isAdmin ? adminItems : [];
 
   return (
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center px-3 py-1.5"
       style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }}
     >
-      <div
-        className="flex items-center justify-around w-full max-w-[420px] rounded-[26px] px-1 py-1"
-        style={{
-          background: "linear-gradient(160deg, hsl(var(--card) / 0.6), hsl(var(--card) / 0.3))",
-          backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-          boxShadow: "0 8px 40px hsl(0 0% 0% / 0.4), inset 0 0.5px 0 hsl(var(--foreground) / 0.08), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
-          border: "0.5px solid hsl(var(--foreground) / 0.08)",
-        }}
-      >
-        {allItems.map((item) => {
-          const restricted = !checkRoute(item.to);
-          return (
-            <RouterNavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              onTouchStart={() => handleTap(item.to)}
-              className={({ isActive }) =>
-                `relative flex flex-col items-center justify-center min-w-[52px] min-h-[48px] px-3 py-1.5 rounded-2xl text-[10px] font-medium tracking-wide transition-all duration-200 active:scale-[0.88] ${
-                  restricted
-                    ? "text-muted-foreground/20"
-                    : isActive
-                    ? "text-primary"
-                    : "text-muted-foreground/45"
-                }`
-              }
-              style={({ isActive }: { isActive: boolean }) => ({
-                background: !restricted && isActive
-                  ? "hsl(var(--primary) / 0.1)"
-                  : "transparent",
-              }) as React.CSSProperties}
-            >
-              {({ isActive }) => (
-                <>
-                  {restricted ? (
-                    <Lock className="w-[20px] h-[20px] mb-0.5" strokeWidth={1.5} />
-                  ) : (
-                    <item.icon
-                      className={`w-[22px] h-[22px] mb-0.5 transition-all duration-200 ${isActive ? "drop-shadow-[0_0_6px_hsl(var(--primary)/0.35)]" : ""}`}
-                      strokeWidth={isActive ? 2.2 : 1.5}
-                      fill={isActive ? "currentColor" : "none"}
-                    />
-                  )}
-                  <span className={`transition-all duration-150 leading-tight ${
-                    restricted ? "opacity-20" : isActive ? "font-semibold opacity-100" : "opacity-50"
-                  }`}>
-                    {item.label}
-                  </span>
-                </>
-              )}
-            </RouterNavLink>
-          );
-        })}
+      <div className="flex items-center gap-2 w-full max-w-[420px]">
+        {/* ── Main pill bar ── */}
+        <div
+          className="flex items-center flex-1 rounded-[22px] px-1 py-1"
+          style={{
+            background: "hsl(var(--card) / 0.55)",
+            backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            boxShadow: "0 8px 40px hsl(0 0% 0% / 0.4), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+            border: "0.5px solid hsl(var(--foreground) / 0.07)",
+          }}
+        >
+          {[...mainItems, ...extraItems].map((item) => {
+            const restricted = !checkRoute(item.to);
+            return (
+              <RouterNavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                onTouchStart={() => handleTap(item.to)}
+                className={({ isActive }) =>
+                  `relative flex flex-col items-center justify-center flex-1 min-h-[50px] rounded-[18px] text-[10px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.90] ${
+                    restricted
+                      ? "text-muted-foreground/20"
+                      : isActive
+                      ? "text-primary"
+                      : "text-muted-foreground/50"
+                  }`
+                }
+                style={({ isActive }: { isActive: boolean }) => ({
+                  background: !restricted && isActive
+                    ? "hsl(var(--secondary) / 0.8)"
+                    : "transparent",
+                  boxShadow: !restricted && isActive
+                    ? "inset 0 0.5px 0 hsl(var(--foreground) / 0.06), 0 2px 8px hsl(0 0% 0% / 0.2)"
+                    : "none",
+                }) as React.CSSProperties}
+              >
+                {({ isActive }) => (
+                  <>
+                    {restricted ? (
+                      <Lock className="w-[21px] h-[21px] mb-0.5" strokeWidth={1.8} />
+                    ) : (
+                      <item.icon
+                        className="w-[23px] h-[23px] mb-0.5 transition-all duration-200"
+                        strokeWidth={isActive ? 2.4 : 1.6}
+                        fill={isActive ? "currentColor" : "none"}
+                      />
+                    )}
+                    <span className={`leading-tight ${
+                      restricted ? "opacity-20" : isActive ? "opacity-100" : "opacity-50"
+                    }`}>
+                      {item.label}
+                    </span>
+                  </>
+                )}
+              </RouterNavLink>
+            );
+          })}
+        </div>
+
+        {/* ── Search circle button ── */}
+        <RouterNavLink
+          to="/search"
+          onTouchStart={() => handleTap("/search")}
+          className={({ isActive }) =>
+            `flex items-center justify-center w-[52px] h-[52px] rounded-full shrink-0 transition-all duration-200 active:scale-[0.88] ${
+              isActive ? "text-primary" : "text-muted-foreground/60"
+            }`
+          }
+          style={({ isActive }: { isActive: boolean }) => ({
+            background: isActive
+              ? "hsl(var(--secondary) / 0.9)"
+              : "hsl(var(--card) / 0.55)",
+            backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+            boxShadow: "0 8px 40px hsl(0 0% 0% / 0.4), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+            border: "0.5px solid hsl(var(--foreground) / 0.07)",
+          }) as React.CSSProperties}
+        >
+          {({ isActive }) => (
+            <Search
+              className="w-[22px] h-[22px]"
+              strokeWidth={isActive ? 2.6 : 2}
+            />
+          )}
+        </RouterNavLink>
       </div>
     </nav>
   );
