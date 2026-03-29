@@ -482,7 +482,7 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.05)" }}>
-            <User className="w-8 h-8 text-muted-foreground/20" />
+            <UserIcon className="w-8 h-8 text-muted-foreground/20" />
           </div>
         )}
         {/* Name overlay */}
@@ -553,7 +553,7 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
             <LazyImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.05)" }}>
-              <User className="w-1/3 h-1/3 text-muted-foreground/30" />
+              <UserIcon className="w-1/3 h-1/3 text-muted-foreground/30" />
             </div>
           )}
         </div>
