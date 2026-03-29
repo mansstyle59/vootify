@@ -343,11 +343,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           {/* Primary CTA — Shuffle */}
           <button
             onClick={handleShuffle}
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-full text-[14px] font-bold active:scale-[0.97] transition-all duration-200 ring-1"
+            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-full text-[14px] font-bold active:scale-[0.97] transition-all duration-200 border"
             style={{
               background: "hsl(var(--primary) / 0.12)",
               color: "hsl(var(--primary))",
-              ringColor: "hsl(var(--primary) / 0.25)",
+              borderColor: "hsl(var(--primary) / 0.25)",
               boxShadow: "inset 0 1px 0 hsl(var(--primary) / 0.08), 0 2px 12px hsl(var(--primary) / 0.08)",
             }}
           >
@@ -359,11 +359,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           <div className="grid grid-cols-3 gap-2.5">
             <button
               onClick={() => navigate("/library")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 ring-1"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
               style={{
                 background: "hsl(var(--primary) / 0.08)",
                 color: "hsl(var(--primary))",
-                ringColor: "hsl(var(--primary) / 0.15)",
+                borderColor: "hsl(var(--primary) / 0.15)",
               }}
             >
               <Heart className="w-4 h-4" />
@@ -372,11 +372,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
 
             <button
               onClick={() => navigate("/search")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 ring-1"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
               style={{
                 background: "hsl(var(--primary) / 0.08)",
                 color: "hsl(var(--primary))",
-                ringColor: "hsl(var(--primary) / 0.15)",
+                borderColor: "hsl(var(--primary) / 0.15)",
               }}
             >
               <Search className="w-4 h-4" />
@@ -385,11 +385,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
 
             <button
               onClick={() => navigate("/radio")}
-              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 ring-1"
+              className="flex items-center justify-center gap-2 py-3 rounded-full text-[12px] font-semibold active:scale-[0.95] transition-all duration-200 border"
               style={{
                 background: "hsl(var(--primary) / 0.08)",
                 color: "hsl(var(--primary))",
-                ringColor: "hsl(var(--primary) / 0.15)",
+                borderColor: "hsl(var(--primary) / 0.15)",
               }}
             >
               <Radio className="w-4 h-4" />
