@@ -1226,7 +1226,12 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                 <div className="min-w-0 flex-1">
                   <h2 className="text-2xl font-extrabold text-white truncate leading-tight tracking-tight">{currentSong.title}</h2>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-base text-white/50 truncate font-medium">{currentSong.artist}</p>
+                    <button
+                      onClick={() => { onClose(); setTimeout(() => navigate(`/artist/${encodeURIComponent(currentSong.artist)}`), 150); }}
+                      className="text-base text-white/50 truncate font-medium hover:text-white/80 active:scale-95 transition-all text-left"
+                    >
+                      {currentSong.artist}
+                    </button>
                     {isCached && (
                       <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                         <WifiOff className="w-2.5 h-2.5" /> OFFLINE
@@ -1235,7 +1240,14 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                   </div>
                   {(currentSong.album || currentSong.genre || currentSong.year) && (
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                      {currentSong.album && <span className="text-[11px] text-white/30 truncate max-w-[150px]">{currentSong.album}</span>}
+                      {currentSong.album && (
+                        <button
+                          onClick={() => { onClose(); setTimeout(() => navigate(`/album/by-name/${encodeURIComponent(currentSong.album!)}`), 150); }}
+                          className="text-[11px] text-white/30 truncate max-w-[150px] hover:text-white/60 active:scale-95 transition-all text-left"
+                        >
+                          {currentSong.album}
+                        </button>
+                      )}
                       {currentSong.album && (currentSong.genre || currentSong.year) && <span className="text-white/15">·</span>}
                       {currentSong.year && <span className="text-[11px] text-white/30">{currentSong.year}</span>}
                       {currentSong.genre && <span className="inline-flex px-2 py-0.5 rounded-full bg-white/8 text-white/50 text-[10px] font-semibold">{currentSong.genre}</span>}

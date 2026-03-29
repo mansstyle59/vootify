@@ -116,18 +116,25 @@ const ArtistPage = () => {
 
   const coverUrl = customArtistImage || artistImageUrl || songs.find((s) => s.coverUrl)?.coverUrl || "";
 
-  const albums = useMemo(() => {
-    const map = new Map<string, { title: string; coverUrl: string; count: number }>();
+  // Separate albums (multi-track) vs singles (1 track)
+  const { albumsList, singlesList } = useMemo(() => {
+    const map = new Map<string, { title: string; coverUrl: string; count: number; year?: number }>();
     for (const s of songs) {
       if (!s.album) continue;
       if (!map.has(s.album)) {
-        map.set(s.album, { title: s.album, coverUrl: s.coverUrl, count: 1 });
+        map.set(s.album, { title: s.album, coverUrl: s.coverUrl, count: 1, year: s.year });
       } else {
         map.get(s.album)!.count++;
       }
     }
-    return Array.from(map.values());
+    const all = Array.from(map.values());
+    return {
+      albumsList: all.filter((a) => a.count > 1),
+      singlesList: all.filter((a) => a.count === 1),
+    };
   }, [songs]);
+
+  const albums = useMemo(() => [...albumsList, ...singlesList], [albumsList, singlesList]);
 
   const genres = useMemo(() => {
     const set = new Set<string>();
