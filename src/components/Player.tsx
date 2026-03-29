@@ -632,7 +632,7 @@ export function MiniPlayer() {
     if (positionSyncRef.current) clearInterval(positionSyncRef.current);
     if (!currentSong || isLive || !isPlaying) return;
     syncPositionState();
-    positionSyncRef.current = setInterval(syncPositionState, 2000);
+    positionSyncRef.current = setInterval(syncPositionState, 1000);
     return () => { if (positionSyncRef.current) clearInterval(positionSyncRef.current); };
   }, [currentSong?.id, isPlaying, isLive, syncPositionState]);
 
