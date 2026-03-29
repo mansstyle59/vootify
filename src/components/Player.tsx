@@ -360,6 +360,7 @@ export function MiniPlayer() {
     const handlePlay = () => {
       if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
       if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
+      setIsBuffering(false);
     };
     const handlePause = () => {
       // Only sync pause if user explicitly paused (not background interruption)
@@ -371,17 +372,30 @@ export function MiniPlayer() {
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
 
+    // Buffering state from AudioManager
+    const onBuffering = () => setIsBuffering(true);
+    const onReady = () => setIsBuffering(false);
+    window.addEventListener("audio-buffering", onBuffering);
+    window.addEventListener("audio-ready", onReady);
+
     // Listen for AudioManager next/prev events (from media session & ended)
     const onAudioNext = () => usePlayerStore.getState().next();
     const onAudioPrev = () => usePlayerStore.getState().previous();
     window.addEventListener("audio-next", onAudioNext);
     window.addEventListener("audio-prev", onAudioPrev);
 
-    // Network recovery
-    const handleOnline = () => {
+    // Network recovery — try cached URL first, then stream
+    const handleOnline = async () => {
       const state = usePlayerStore.getState();
       if (!state.isPlaying || !state.currentSong) return;
       if (audio.paused || audio.readyState < 2) {
+        // Try offline cache first
+        try {
+          const cachedUrl = await offlineCache.getCachedUrl(state.currentSong.id);
+          if (cachedUrl && !audio.src.startsWith("blob:")) {
+            audio.src = cachedUrl;
+          }
+        } catch {}
         audio.play().catch(console.error);
       }
     };
@@ -393,6 +407,8 @@ export function MiniPlayer() {
       audio.removeEventListener("error", handleAudioError);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
+      window.removeEventListener("audio-buffering", onBuffering);
+      window.removeEventListener("audio-ready", onReady);
       window.removeEventListener("audio-next", onAudioNext);
       window.removeEventListener("audio-prev", onAudioPrev);
       window.removeEventListener("online", handleOnline);
