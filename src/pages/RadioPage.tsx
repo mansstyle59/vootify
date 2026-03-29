@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -125,6 +125,196 @@ function StationStrip({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+/* ── Station context type for extracted components ── */
+interface StationCtx {
+  savedIds: Set<string>;
+  currentSong: any;
+  isPlaying: boolean;
+  radioMetadata: any;
+  isSearching: boolean;
+  playStation: (s: any) => void;
+  startEdit: (s: any) => void;
+  confirmDelete: (id: string, name: string) => void;
+  saveStation: (s: any) => void;
+  removeStation: (id: string) => void;
+}
+
+/* ── Extracted StationTile — memo'd to prevent flicker ── */
+const StationTileComponent = memo(function StationTileComponent({
+  station, ctx,
+}: { station: RadioBrowserStation; ctx: StationCtx }) {
+  const { savedIds, currentSong, isPlaying, radioMetadata, isSearching, playStation, startEdit, confirmDelete, saveStation, removeStation } = ctx;
+  const isSaved = savedIds.has(station.id);
+  const isActive = currentSong?.id === station.id;
+  const isActivePlaying = isActive && isPlaying;
+  const dynamicCover = isActive && radioMetadata?.coverUrl ? radioMetadata.coverUrl : null;
+  const stationLogo = getStationLogo(station.name, station.coverUrl);
+  const displayCover = dynamicCover || stationLogo || "";
+  const myRadioMeta = (station as any)._nowPlaying;
+
+  const [showActions, setShowActions] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
+  const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleTouchStart = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      setShowActions(true);
+      if (navigator.vibrate) navigator.vibrate(10);
+      hideTimer.current = setTimeout(() => setShowActions(false), 3500);
+    }, 400);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleClick = useCallback(() => {
+    if (showActions) { setShowActions(false); return; }
+    playStation(station);
+  }, [showActions, station, playStation]);
+
+  return (
+    <div
+      className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group active:scale-[0.96] transition-transform duration-150 snap-start"
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
+      <div
+        className={`relative aspect-square rounded-xl overflow-hidden mb-2 transition-shadow duration-200 ${
+          isActive ? "ring-2 ring-primary/50" : "ring-1 ring-border/5"
+        }`}
+        style={{
+          boxShadow: isActive ? "0 4px 20px hsl(var(--primary) / 0.2)" : "0 1px 6px hsl(0 0% 0% / 0.06)",
+        }}
+      >
+        <div className="absolute inset-0 bg-card" />
+        <LazyImage
+          src={displayCover}
+          alt={station.name}
+          className="relative w-full h-full object-contain p-2.5 transition-transform duration-300 group-hover:scale-105"
+          fallback
+          wrapperClassName="w-full h-full"
+        />
+
+        {/* Play overlay */}
+        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+          isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`} style={{ background: "hsl(0 0% 0% / 0.25)" }}>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ background: "hsl(var(--primary) / 0.9)", boxShadow: "0 2px 12px hsl(var(--primary) / 0.3)" }}
+          >
+            {isActivePlaying ? <Pause className="w-4 h-4 text-primary-foreground" /> : <Play className="w-4 h-4 text-primary-foreground ml-0.5" />}
+          </div>
+        </div>
+
+        {/* Live badge */}
+        {isActivePlaying && (
+          <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "hsl(var(--destructive) / 0.85)" }}>
+            <LiveEqualizer color="bg-white" />
+            <span className="text-[8px] font-bold text-white tracking-wider uppercase">Live</span>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className={`absolute top-1.5 right-1.5 flex gap-1 transition-all duration-200 ${
+          showActions ? "opacity-100 scale-100" : "opacity-0 scale-90 md:group-hover:opacity-100 md:group-hover:scale-100"
+        }`}>
+          {!isSearching ? (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
+                className="p-1.5 rounded-full text-white active:scale-90"
+                style={{ background: "hsl(0 0% 100% / 0.2)", backdropFilter: "blur(8px)" }}
+              ><Pencil className="w-3 h-3" /></button>
+              <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
+                className="p-1.5 rounded-full text-white active:scale-90"
+                style={{ background: "hsl(var(--destructive) / 0.6)", backdropFilter: "blur(8px)" }}
+              ><Trash2 className="w-3 h-3" /></button>
+            </>
+          ) : (
+            <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
+              className="p-1.5 rounded-full text-white active:scale-90"
+              style={{ background: "hsl(0 0% 100% / 0.2)", backdropFilter: "blur(8px)" }}
+            >
+              <Heart className={`w-3 h-3 ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Text */}
+      <div className="px-0.5">
+        <div className="flex items-center gap-1">
+          {isActivePlaying && <LiveEqualizer />}
+          <MarqueeText text={station.name} className={`text-[11px] font-semibold leading-tight ${isActive ? "text-primary" : "text-foreground"}`} />
+        </div>
+        {isActive && radioMetadata?.title ? (
+          <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-[10px] text-primary/80 font-medium mt-0.5" />
+        ) : myRadioMeta ? (
+          <MarqueeText text={`♪ ${myRadioMeta}`} className="text-[10px] text-primary/60 font-medium mt-0.5" />
+        ) : (
+          <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize mt-0.5" />
+        )}
+      </div>
+    </div>
+  );
+});
+
+/* ── Extracted SearchResultRow — memo'd ── */
+const SearchResultRowComponent = memo(function SearchResultRowComponent({
+  station, ctx,
+}: { station: RadioBrowserStation; ctx: StationCtx }) {
+  const { savedIds, currentSong, isPlaying, radioMetadata, playStation, saveStation, removeStation } = ctx;
+  const isSaved = savedIds.has(station.id);
+  const isActive = currentSong?.id === station.id;
+  const isActivePlaying = isActive && isPlaying;
+  const stationLogo = getStationLogo(station.name, station.coverUrl);
+  const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "";
+
+  return (
+    <div
+      onClick={() => playStation(station)}
+      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150 active:bg-foreground/[0.03] ${
+        isActive ? "bg-primary/[0.06]" : ""
+      }`}
+    >
+      <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/8">
+        <LazyImage src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" fallback wrapperClassName="w-full h-full" />
+        {isActivePlaying && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/25 rounded-xl">
+            <Volume2 className="w-4 h-4 text-white" />
+          </div>
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          {isActivePlaying && <LiveEqualizer />}
+          <MarqueeText text={station.name} className={`text-[13px] font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
+        </div>
+        {isActive && radioMetadata?.title ? (
+          <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-[11px] text-primary/70 font-medium" />
+        ) : (station as any)._nowPlaying ? (
+          <MarqueeText text={`♪ ${(station as any)._nowPlaying}`} className="text-[11px] text-primary/60" />
+        ) : (
+          <p className="text-[11px] text-muted-foreground capitalize truncate">{station.genre || "Radio"}</p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {station.countryCode && <span className="text-[9px] font-medium text-muted-foreground/50 uppercase">{station.countryCode}</span>}
+        <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
+          className="p-1.5 rounded-full active:scale-90 transition-transform"
+        >
+          <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
+        </button>
+      </div>
+    </div>
+  );
+});
 
 /* ── Section header — TuneIn style ── */
 function SectionHeader({ title, count, onSeeAll }: { title: string; count?: number; onSeeAll?: () => void }) {
@@ -440,175 +630,15 @@ const RadioPage = () => {
 
   const displayStations = showAllStations ? enrichedCustom : enrichedCustom.slice(0, 8);
 
-  /* ── Compact Station Card — TuneIn style ── */
-  function StationTile({ station }: { station: RadioBrowserStation }) {
-    const isSaved = savedIds.has(station.id);
-    const isActive = currentSong?.id === station.id;
-    const isActivePlaying = isActive && isPlaying;
-    const dynamicCover = isActive && radioMetadata?.coverUrl ? radioMetadata.coverUrl : null;
-    const stationLogo = getStationLogo(station.name, station.coverUrl);
-    const displayCover = dynamicCover || stationLogo || "";
-    const myRadioMeta = (station as any)._nowPlaying;
+  /* ── Use stable component refs to avoid flickering ── */
+  const stationTileProps = useMemo(() => ({
+    savedIds, currentSong, isPlaying, radioMetadata, isSearching,
+    playStation, startEdit, confirmDelete, saveStation, removeStation,
+  }), [savedIds, currentSong, isPlaying, radioMetadata, isSearching, playStation, startEdit, confirmDelete, saveStation, removeStation]);
 
-    const [showActions, setShowActions] = useState(false);
-    const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
-    const hideTimer = useRef<ReturnType<typeof setTimeout>>();
-
-    const handleTouchStart = useCallback(() => {
-      longPressTimer.current = setTimeout(() => {
-        setShowActions(true);
-        if (navigator.vibrate) navigator.vibrate(10);
-        hideTimer.current = setTimeout(() => setShowActions(false), 3500);
-      }, 400);
-    }, []);
-
-    const handleTouchEnd = useCallback(() => {
-      clearTimeout(longPressTimer.current);
-    }, []);
-
-    const handleClick = useCallback(() => {
-      if (showActions) { setShowActions(false); return; }
-      playStation(station);
-    }, [showActions, station]);
-
-    return (
-      <div
-        className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group active:scale-[0.96] transition-transform duration-150 snap-start"
-        onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-      >
-        <div
-          className={`relative aspect-square rounded-xl overflow-hidden mb-2 transition-all duration-200 ${
-            isActive ? "ring-2 ring-primary/50" : "ring-1 ring-border/5"
-          }`}
-          style={{
-            boxShadow: isActive ? "0 4px 20px hsl(var(--primary) / 0.2)" : "0 1px 6px hsl(0 0% 0% / 0.06)",
-          }}
-        >
-          <div className="absolute inset-0 bg-card" />
-          <LazyImage
-            src={displayCover}
-            alt={station.name}
-            className="relative w-full h-full object-contain p-2.5 transition-transform duration-300 group-hover:scale-105"
-            fallback
-            wrapperClassName="w-full h-full"
-          />
-
-          {/* Play overlay */}
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-            isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          }`} style={{ background: "hsl(0 0% 0% / 0.25)" }}>
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: "hsl(var(--primary) / 0.9)", boxShadow: "0 2px 12px hsl(var(--primary) / 0.3)" }}
-            >
-              {isActivePlaying ? <Pause className="w-4 h-4 text-primary-foreground" /> : <Play className="w-4 h-4 text-primary-foreground ml-0.5" />}
-            </div>
-          </div>
-
-          {/* Live badge */}
-          {isActivePlaying && (
-            <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "hsl(var(--destructive) / 0.85)" }}>
-              <LiveEqualizer color="bg-white" />
-              <span className="text-[8px] font-bold text-white tracking-wider uppercase">Live</span>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className={`absolute top-1.5 right-1.5 flex gap-1 transition-all duration-200 ${
-            showActions ? "opacity-100 scale-100" : "opacity-0 scale-90 md:group-hover:opacity-100 md:group-hover:scale-100"
-          }`}>
-            {!isSearching ? (
-              <>
-                <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
-                  className="p-1.5 rounded-full text-white active:scale-90"
-                  style={{ background: "hsl(0 0% 100% / 0.2)", backdropFilter: "blur(8px)" }}
-                ><Pencil className="w-3 h-3" /></button>
-                <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
-                  className="p-1.5 rounded-full text-white active:scale-90"
-                  style={{ background: "hsl(var(--destructive) / 0.6)", backdropFilter: "blur(8px)" }}
-                ><Trash2 className="w-3 h-3" /></button>
-              </>
-            ) : (
-              <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-                className="p-1.5 rounded-full text-white active:scale-90"
-                style={{ background: "hsl(0 0% 100% / 0.2)", backdropFilter: "blur(8px)" }}
-              >
-                <Heart className={`w-3 h-3 ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Text */}
-        <div className="px-0.5">
-          <div className="flex items-center gap-1">
-            {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`text-[11px] font-semibold leading-tight ${isActive ? "text-primary" : "text-foreground"}`} />
-          </div>
-          {isActive && radioMetadata?.title ? (
-            <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-[10px] text-primary/80 font-medium mt-0.5" />
-          ) : myRadioMeta ? (
-            <MarqueeText text={`♪ ${myRadioMeta}`} className="text-[10px] text-primary/60 font-medium mt-0.5" />
-          ) : (
-            <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize mt-0.5" />
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* ── Search Result Row — TuneIn list style ── */
-  function SearchResultRow({ station }: { station: RadioBrowserStation }) {
-    const isSaved = savedIds.has(station.id);
-    const isActive = currentSong?.id === station.id;
-    const isActivePlaying = isActive && isPlaying;
-    const stationLogo = getStationLogo(station.name, station.coverUrl);
-    const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "";
-
-    return (
-      <div
-        onClick={() => playStation(station)}
-        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150 active:bg-foreground/[0.03] ${
-          isActive ? "bg-primary/[0.06]" : ""
-        }`}
-      >
-        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/8">
-          <LazyImage src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" fallback wrapperClassName="w-full h-full" />
-          {isActivePlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/25 rounded-xl">
-              <Volume2 className="w-4 h-4 text-white" />
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`text-[13px] font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
-          </div>
-          {isActive && radioMetadata?.title ? (
-            <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-[11px] text-primary/70 font-medium" />
-          ) : (station as any)._nowPlaying ? (
-            <MarqueeText text={`♪ ${(station as any)._nowPlaying}`} className="text-[11px] text-primary/60" />
-          ) : (
-            <p className="text-[11px] text-muted-foreground capitalize truncate">{station.genre || "Radio"}</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {station.countryCode && <span className="text-[9px] font-medium text-muted-foreground/50 uppercase">{station.countryCode}</span>}
-          <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-            className="p-1.5 rounded-full active:scale-90 transition-transform"
-          >
-            <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const renderStationTile = useCallback((station: RadioBrowserStation) => (
+    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
+  ), [stationTileProps]);
 
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
@@ -695,7 +725,7 @@ const RadioPage = () => {
           ) : searchStations.length > 0 ? (
             <div>
               {searchStations.map((station) => (
-                <SearchResultRow key={station.id} station={station} />
+                <SearchResultRowComponent key={station.id} station={station} ctx={stationTileProps} />
               ))}
             </div>
           ) : (
@@ -723,7 +753,7 @@ const RadioPage = () => {
           {genreStations.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
               {genreStations.map((station) => (
-                <StationTile key={station.id} station={station} />
+                <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
               ))}
             </div>
           ) : (
@@ -757,13 +787,13 @@ const RadioPage = () => {
               {showAllStations ? (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
                   {enrichedCustom.map((station) => (
-                    <StationTile key={station.id} station={station} />
+                    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
                   ))}
                 </div>
               ) : (
                 <StationStrip>
                   {displayStations.map((station) => (
-                    <StationTile key={station.id} station={station} />
+                    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
                   ))}
                 </StationStrip>
               )}
