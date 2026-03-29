@@ -108,7 +108,12 @@ export function MiniPlayer() {
 
   const handleClose = useCallback(() => {
     setClosing(true);
-  }, []);
+    // Directly close since no exit animation
+    setTimeout(() => {
+      closePlayer();
+      setClosing(false);
+    }, 50);
+  }, [closePlayer]);
   const [playingFromCache, setPlayingFromCache] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
@@ -659,16 +664,10 @@ export function MiniPlayer() {
 
     return (
       <>
-        <AnimatePresence onExitComplete={onExitComplete}>
-          {!closing && (
-            <motion.div
-              key="mini-radio"
-              initial={{ y: "100%", opacity: 0 }}
-              animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
-              exit={{ y: "100%", opacity: 0, scale: 0.9, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
-              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        {!closing && (
+            <div
               className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-              style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
+              style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto", opacity: fullScreen ? 0 : 1, transform: fullScreen ? "scale(0.92) translateY(60px)" : "none", transition: "opacity 0.2s, transform 0.2s" }}
             >
               <div className="rounded-2xl overflow-hidden" style={glassStyle}>
                 <MiniPlayerProgress percent={0} isLive />
@@ -729,9 +728,8 @@ export function MiniPlayer() {
                   </div>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+        )}
         <ResumeBanner message={resumeBanner} />
       </>
     );
@@ -740,16 +738,10 @@ export function MiniPlayer() {
   // ── Standard music mini-player ──
   return (
     <>
-      <AnimatePresence onExitComplete={onExitComplete}>
         {!closing && (
-          <motion.div
-            key="mini-music"
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: fullScreen ? 60 : 0, opacity: fullScreen ? 0 : 1, scale: fullScreen ? 0.92 : 1 }}
-            exit={{ y: "100%", opacity: 0, scale: 0.9, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
-            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+          <div
             className="fixed left-0 right-0 z-50 md:bottom-0 px-3 pb-1.5"
-            style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto" }}
+            style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))", pointerEvents: fullScreen ? "none" : "auto", opacity: fullScreen ? 0 : 1, transform: fullScreen ? "scale(0.92) translateY(60px)" : "none", transition: "opacity 0.2s, transform 0.2s" }}
           >
             <div className="rounded-2xl overflow-hidden" style={glassStyle}>
               <MiniPlayerProgress percent={progressPct} isLive={false} />
@@ -808,9 +800,8 @@ export function MiniPlayer() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
       <ResumeBanner message={resumeBanner} />
     </>
   );
