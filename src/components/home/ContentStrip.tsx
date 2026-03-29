@@ -10,14 +10,18 @@ export function ContentStrip({ children }: ContentStripProps) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const childCount = Children.count(children);
 
   const updateState = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    const left = el.scrollLeft;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(left > 4);
+    setCanScrollRight(left < maxScroll - 4);
+    setScrollProgress(maxScroll > 0 ? left / maxScroll : 0);
   }, []);
 
   useEffect(() => {
@@ -39,6 +43,8 @@ export function ContentStrip({ children }: ContentStripProps) {
     el.scrollBy({ left: dir * el.clientWidth * 0.75, behavior: "smooth" });
   }, []);
 
+  const showIndicator = canScrollLeft || canScrollRight;
+
   return (
     <div
       className="relative"
@@ -46,12 +52,20 @@ export function ContentStrip({ children }: ContentStripProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Fade edges */}
-      {canScrollLeft && (
-        <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, hsl(var(--background)), transparent)" }} />
-      )}
-      {canScrollRight && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, hsl(var(--background)), transparent)" }} />
-      )}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-10 z-10 pointer-events-none transition-opacity duration-300"
+        style={{
+          opacity: canScrollLeft ? 1 : 0,
+          background: "linear-gradient(to right, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
+        }}
+      />
+      <div
+        className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none transition-opacity duration-300"
+        style={{
+          opacity: canScrollRight ? 1 : 0,
+          background: "linear-gradient(to left, hsl(var(--background)), hsl(var(--background) / 0.6), transparent)",
+        }}
+      />
 
       {/* Desktop arrows */}
       {isHovered && canScrollLeft && (
@@ -86,15 +100,37 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-2 scrollbar-hide"
+        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-3 scrollbar-hide"
         style={{
-          scrollSnapType: "x proximity",
+          scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
         }}
       >
         {children}
         <div className="flex-shrink-0 w-1" aria-hidden />
       </div>
+
+      {/* Scroll progress indicator (mobile) */}
+      {showIndicator && (
+        <div className="flex justify-center md:hidden pb-1">
+          <div
+            className="h-[2px] rounded-full overflow-hidden"
+            style={{
+              width: 40,
+              background: "hsl(var(--foreground) / 0.06)",
+            }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-150"
+              style={{
+                width: "40%",
+                transform: `translateX(${scrollProgress * 150}%)`,
+                background: "hsl(var(--primary) / 0.4)",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -103,15 +139,15 @@ export function StripSkeleton({ count = 6 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-[130px] md:w-[150px] snap-start">
+        <div key={i} className="flex-shrink-0 w-[140px] md:w-[160px] snap-start">
           <div
-            className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl mb-1.5 overflow-hidden relative"
+            className="w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl mb-2 overflow-hidden relative"
             style={{ background: "hsl(var(--foreground) / 0.04)" }}
           >
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
           </div>
-          <div className="h-2.5 w-16 rounded mb-1" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
-          <div className="h-2 w-12 rounded" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
+          <div className="h-2.5 w-20 rounded mb-1" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+          <div className="h-2 w-14 rounded" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
         </div>
       ))}
     </>
