@@ -398,13 +398,6 @@ const ArtistPage = () => {
       )}
 
       {/* Albums */}
-      {albums.length > 0 && (
-        <div className="px-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Disc3 className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Discographie</h2>
-          </div>
-      {/* Albums */}
       {albumsList.length > 0 && (
         <div className="px-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
