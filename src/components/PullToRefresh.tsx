@@ -66,6 +66,7 @@ export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(func
     <div
       ref={containerRef}
       className={`relative overflow-y-auto ${className}`}
+      style={style}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
