@@ -438,11 +438,10 @@ const ProfilePage = () => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-2.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
             style={{
-              background: "hsl(var(--primary))",
-              color: "hsl(var(--primary-foreground))",
-              boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)",
+              background: "hsl(var(--primary) / 0.12)",
+              color: "hsl(var(--primary))",
             }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
@@ -622,11 +621,10 @@ const ProfilePage = () => {
               }
             }}
             disabled={isRefreshing}
-            className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
+            className="w-full py-2.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
             style={{
-              background: "hsl(var(--primary) / 0.08)",
+              background: "hsl(var(--primary) / 0.10)",
               color: "hsl(var(--primary))",
-              border: "1px solid hsl(var(--primary) / 0.12)",
             }}
           >
             {isRefreshing ? (
@@ -653,11 +651,10 @@ const ProfilePage = () => {
               setSwCacheSize(0);
               toast.success("Tout le cache a été vidé !");
             }}
-            className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
+            className="w-full py-2.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
             style={{
-              background: "hsl(var(--destructive) / 0.06)",
+              background: "hsl(var(--destructive) / 0.08)",
               color: "hsl(var(--destructive))",
-              border: "1px solid hsl(var(--destructive) / 0.08)",
             }}
           >
             <Trash2 className="w-3.5 h-3.5" />
