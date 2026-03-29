@@ -106,7 +106,7 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "saavn-covers",
               expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           // Deezer covers — aggressive cache (both cdn-images and cdn-images subdomains)
@@ -137,7 +137,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "supabase-functions",
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 4 },
               networkTimeoutSeconds: 1.5,
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           // Supabase REST API — stale-while-revalidate for instant UX
