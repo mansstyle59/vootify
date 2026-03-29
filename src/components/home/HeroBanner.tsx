@@ -104,7 +104,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                       </span>
                     )}
                   </div>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground/60" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground/60 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_3]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
