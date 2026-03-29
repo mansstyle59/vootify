@@ -825,6 +825,7 @@ const RadioPage = () => {
                 genre={genre}
                 active={false}
                 onClick={() => setActiveGenre(genre)}
+                count={genreCounts[genre]}
               />
             ))}
           </StationStrip>
