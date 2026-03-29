@@ -599,18 +599,6 @@ const RadioPage = () => {
             <div className="flex-1">
               <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">Radio</h1>
             </div>
-            <button
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ["custom-radio-stations"] });
-                queryClient.invalidateQueries({ queryKey: ["radio-browser"] });
-                if (navigator.vibrate) navigator.vibrate(5);
-                toast.success("Stations actualisées");
-              }}
-              className="p-2.5 rounded-full text-muted-foreground/50 active:scale-90 transition-all"
-              style={{ background: "hsl(var(--foreground) / 0.05)" }}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>
