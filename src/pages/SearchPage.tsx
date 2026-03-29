@@ -697,37 +697,6 @@ const SearchPage = () => {
                 {/* Album Results */}
                 {albumCards.length > 0 && (
                   <section className="mb-6">
-                    <h2 className="text-[18px] font-bold text-foreground mb-3">Artistes</h2>
-                    <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-                      {artistCards.map((artist) => (
-                        <button
-                          key={artist.name}
-                          onClick={() => handleArtistClick(artist.name)}
-                          className="flex-shrink-0 w-[80px] group text-center active:scale-95 transition-transform"
-                        >
-                          <div
-                            className="w-[80px] h-[80px] rounded-full overflow-hidden mb-2 mx-auto"
-                            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
-                          >
-                            {artist.coverUrl ? (
-                              <img src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
-                                <User className="w-6 h-6 text-muted-foreground/20" />
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-[12px] font-semibold text-foreground truncate">{artist.name}</p>
-                          <p className="text-[10px] text-muted-foreground/45">{artist.songCount} titre{artist.songCount > 1 ? "s" : ""}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Album Results */}
-                {albumCards.length > 0 && (
-                  <section className="mb-6">
                     <h2 className="text-[18px] font-bold text-foreground mb-3">Albums</h2>
                     <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
                       {albumCards.map((album) => (
