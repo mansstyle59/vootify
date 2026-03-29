@@ -160,6 +160,16 @@ export default defineConfig(({ mode }) => ({
               rangeRequests: true,
             },
           },
+          // Any other image CDN — catch-all for covers
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|webp|avif|gif|svg)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images-generic",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
     }),
