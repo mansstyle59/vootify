@@ -37,11 +37,11 @@ const GlassCard = ({ children, className = "", delay = 0 }: { children: React.Re
     transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
     className={`rounded-2xl ${className}`}
     style={{
-      background: "hsl(var(--card) / 0.3)",
-      backdropFilter: "blur(48px) saturate(1.6)",
-      WebkitBackdropFilter: "blur(48px) saturate(1.6)",
-      border: "1px solid hsl(var(--border) / 0.08)",
-      boxShadow: "0 4px 24px hsl(0 0% 0% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
+      background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.2))",
+      backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+      WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+      border: "0.5px solid hsl(var(--foreground) / 0.07)",
+      boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), inset 0 -0.5px 0 hsl(0 0% 0% / 0.1)",
     }}
   >
     {children}
@@ -283,10 +283,10 @@ const ProfilePage = () => {
         className="sticky top-0 z-30 px-4 py-3"
         style={{
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
-          background: "hsl(var(--background) / 0.6)",
-          backdropFilter: "blur(40px) saturate(1.4)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.4)",
-          borderBottom: "1px solid hsl(var(--border) / 0.06)",
+          background: "linear-gradient(180deg, hsl(var(--background) / 0.7), hsl(var(--background) / 0.5))",
+          backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
+          borderBottom: "0.5px solid hsl(var(--foreground) / 0.06)",
         }}
       >
         <div className="max-w-lg mx-auto flex items-center">
