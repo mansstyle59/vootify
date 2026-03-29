@@ -564,7 +564,16 @@ const ProfilePage = () => {
               className="h-full"
               style={{
                 background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
-                borderRadius: offlinePercent > 0 ? "9999px 0 0 9999px" : "9999px",
+                borderRadius: (offlinePercent > 0 || coverPercent > 0) ? "9999px 0 0 9999px" : "9999px",
+              }}
+            />
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${coverPercent}%` }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              className="h-full"
+              style={{
+                background: "hsl(var(--primary) / 0.55)",
               }}
             />
             <motion.div
@@ -606,6 +615,19 @@ const ProfilePage = () => {
                 >
                   Vider
                 </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.55)" }} />
+                <span className="text-xs text-muted-foreground font-medium">Pochettes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-foreground">
+                  {coverCacheCount} image{coverCacheCount > 1 ? "s" : ""} · {coverCacheSize !== null ? formatBytes(coverCacheSize) : "…"}
+                </span>
+                <Download className="w-3.5 h-3.5 text-muted-foreground/25" />
               </div>
             </div>
 
