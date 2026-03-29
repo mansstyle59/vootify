@@ -296,25 +296,25 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
       {/* ─── Main content ─── */}
       <motion.div
         style={{ opacity, y: contentY }}
-        className="relative z-10 px-5 md:px-8 pt-3 pb-7"
+        className="relative z-10 px-5 md:px-8 pt-1 pb-5"
       >
         {/* Large greeting with subtle sound wave accent */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-end gap-3"
+          transition={{ delay: 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-end gap-2.5"
         >
-          <h1 className="text-[36px] md:text-[42px] font-black text-foreground leading-[1.02] tracking-tight">
+          <h1 className="text-[32px] md:text-[38px] font-black text-foreground leading-[1.05] tracking-tight">
             {getGreeting()}
           </h1>
-          <div className="mb-2 opacity-30">
-            <div className="flex items-end gap-[2px] h-5">
-              {Array.from({ length: 8 }).map((_, i) => (
+          <div className="mb-1.5 opacity-25">
+            <div className="flex items-end gap-[2px] h-4">
+              {Array.from({ length: 6 }).map((_, i) => (
                 <motion.div
                   key={i}
                   className="w-[2px] rounded-full bg-primary"
-                  animate={{ height: [3, 8 + Math.random() * 10, 4, 12 + Math.random() * 6, 3] }}
+                  animate={{ height: [2, 6 + Math.random() * 8, 3, 10 + Math.random() * 4, 2] }}
                   transition={{ duration: 1.8 + Math.random() * 0.8, repeat: Infinity, ease: "easeInOut", delay: i * 0.09 }}
                 />
               ))}
@@ -326,9 +326,9 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="text-[13px] mt-3 font-medium italic"
-          style={{ color: "hsl(var(--primary) / 0.55)" }}
+          transition={{ delay: 0.15, duration: 0.3 }}
+          className="text-[12px] mt-1.5 font-medium italic"
+          style={{ color: "hsl(var(--primary) / 0.5)" }}
         >
           « {customSubtitle || quote} »
         </motion.p>
