@@ -190,13 +190,14 @@ const ArtistPage = () => {
     <div className="pb-20 animate-fade-in">
       {/* Fixed header */}
       <motion.div
-        style={{ opacity: headerOpacity }}
-        className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border h-14 flex items-center px-4 gap-3"
+        style={{ opacity: headerOpacity as any }}
+        className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center px-4 gap-3"
       >
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-secondary">
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.85), hsl(var(--background) / 0.7))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", borderBottom: "0.5px solid hsl(var(--foreground) / 0.06)" }} />
+        <button onClick={() => navigate(-1)} className="relative z-10 p-2 rounded-full hover:bg-secondary">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-base font-bold truncate">{artistName}</h1>
+        <h1 className="relative z-10 text-base font-bold truncate">{artistName}</h1>
       </motion.div>
 
       {/* Hero */}
@@ -207,7 +208,7 @@ const ArtistPage = () => {
           <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/10 to-accent/20" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
-        <button onClick={() => navigate(-1)} className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 p-2 rounded-full liquid-glass z-10">
+        <button onClick={() => navigate(-1)} className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 p-2 rounded-full z-10" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2)" }}>
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="absolute bottom-6 left-4 right-4 flex items-end gap-4">
@@ -249,10 +250,10 @@ const ArtistPage = () => {
 
       {/* Actions */}
       <div className="px-4 flex gap-3 my-4 flex-wrap">
-        <button onClick={handlePlayAll} className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm shadow-lg hover:shadow-xl transition-shadow">
+        <button onClick={handlePlayAll} className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm shadow-lg transition-shadow active:scale-[0.97]" style={{ background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))", color: "hsl(var(--primary-foreground))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)" }}>
           <Play className="w-4 h-4" /> Lecture
         </button>
-        <button onClick={handleShuffle} className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors">
+        <button onClick={handleShuffle} className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-colors active:scale-[0.97]" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", color: "hsl(var(--foreground))", border: "0.5px solid hsl(var(--foreground) / 0.06)", boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)" }}>
           <Shuffle className="w-4 h-4" /> Aléatoire
         </button>
         {isAdmin && (
@@ -285,14 +286,14 @@ const ArtistPage = () => {
                 toast.success(`${updated} titre${updated > 1 ? "s" : ""} enrichi${updated > 1 ? "s" : ""} via Deezer`);
               }}
               disabled={enriching}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-colors disabled:opacity-50 active:scale-[0.97]" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", color: "hsl(var(--foreground))", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
             >
               {enriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               {enriching ? "Enrichissement…" : "Enrichir Deezer"}
             </button>
             <button
               onClick={() => { setShowImageInput(!showImageInput); setImageUrlInput(coverUrl); }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-medium text-sm border border-border hover:bg-secondary/80 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-colors active:scale-[0.97]" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", color: "hsl(var(--foreground))", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
             >
               <ImagePlus className="w-4 h-4" /> Photo
             </button>
@@ -351,14 +352,14 @@ const ArtistPage = () => {
             </h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl p-4 bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10">
+            <div className="rounded-2xl p-4 border" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", borderColor: "hsl(var(--primary) / 0.1)", boxShadow: "0 2px 12px hsl(var(--primary) / 0.08)" }}>
               <div className="flex items-center gap-2 mb-1">
                 <Headphones className="w-4 h-4 text-primary" />
                 <p className="text-xs text-muted-foreground">Écoutes</p>
               </div>
               <p className="text-2xl font-bold text-foreground">{listeningStats.totalPlays}</p>
             </div>
-            <div className="rounded-2xl p-4 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/10">
+            <div className="rounded-2xl p-4 border" style={{ background: "linear-gradient(135deg, hsl(var(--accent) / 0.12), hsl(var(--accent) / 0.04))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", borderColor: "hsl(var(--accent) / 0.1)", boxShadow: "0 2px 12px hsl(var(--accent) / 0.08)" }}>
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="w-4 h-4 text-accent-foreground" />
                 <p className="text-xs text-muted-foreground">Temps d'écoute</p>
@@ -366,7 +367,7 @@ const ArtistPage = () => {
               <p className="text-2xl font-bold text-foreground">{formatListenTime(listeningStats.totalDuration)}</p>
             </div>
             {listeningStats.topSong && (
-              <div className="rounded-2xl p-4 bg-gradient-to-br from-secondary to-secondary/60 border border-border col-span-2">
+              <div className="rounded-2xl p-4 col-span-2" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.18))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.06)", boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="w-4 h-4 text-primary" />
                   <p className="text-xs text-muted-foreground">Titre le plus écouté</p>
@@ -376,7 +377,7 @@ const ArtistPage = () => {
               </div>
             )}
             {listeningStats.firstPlayed && (
-              <div className="rounded-2xl p-3 bg-secondary/50 border border-border">
+               <div className="rounded-2xl p-3" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                   <p className="text-[10px] text-muted-foreground">Première écoute</p>
@@ -385,7 +386,7 @@ const ArtistPage = () => {
               </div>
             )}
             {listeningStats.lastPlayed && (
-              <div className="rounded-2xl p-3 bg-secondary/50 border border-border">
+              <div className="rounded-2xl p-3" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                   <p className="text-[10px] text-muted-foreground">Dernière écoute</p>
@@ -475,15 +476,17 @@ const ArtistPage = () => {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tous les titres</h2>
         </div>
         {isLoading ? (
-          <div className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
             {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
           </div>
         ) : (
-          <VirtualSongList
-            songs={songs}
-            onClickSong={(song) => handlePlay(song)}
-            className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
-          />
+          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
+            <VirtualSongList
+              songs={songs}
+              onClickSong={(song) => handlePlay(song)}
+              className=""
+            />
+          </div>
         )}
       </div>
     </div>

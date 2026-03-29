@@ -224,7 +224,7 @@ const PlaylistDetailPage = () => {
 
         {/* Navigation bar */}
         <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-          <button onClick={() => navigate("/")} className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90">
+          <button onClick={() => navigate("/")} className="p-2.5 rounded-full text-foreground transition-all active:scale-90" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}>
             <ArrowLeft className="w-5 h-5" />
           </button>
           <motion.div style={{ opacity: headerOpacity }} className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-foreground truncate max-w-[200px]">
@@ -232,7 +232,7 @@ const PlaylistDetailPage = () => {
           </motion.div>
           <div className="flex items-center gap-2">
             {true && (
-              <label className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all cursor-pointer">
+              <label className="p-2.5 rounded-full text-foreground transition-all cursor-pointer" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}>
                 <ImageIcon className="w-5 h-5" />
                 <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
               </label>
@@ -240,7 +240,7 @@ const PlaylistDetailPage = () => {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="p-2.5 rounded-full bg-background/30 backdrop-blur-xl border border-white/[0.08] text-foreground hover:bg-background/50 transition-all active:scale-90"
+                className="p-2.5 rounded-full text-foreground transition-all active:scale-90" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}
               >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
@@ -253,7 +253,8 @@ const PlaylistDetailPage = () => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: -8 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl bg-card/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/40 overflow-hidden"
+                    className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl overflow-hidden"
+                    style={{ background: "linear-gradient(160deg, hsl(var(--card) / 0.75), hsl(var(--card) / 0.5))", backdropFilter: "blur(60px) saturate(2)", WebkitBackdropFilter: "blur(60px) saturate(2)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 12px 40px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}
                   >
                     <div className="p-1.5 space-y-0.5">
                       <button
@@ -411,7 +412,7 @@ const PlaylistDetailPage = () => {
           onClick={handlePlayAll}
           disabled={displaySongs.length === 0}
           className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
-          style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
+          style={{ background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))", color: "hsl(var(--primary-foreground))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)" }}
         >
           <Play className="w-5 h-5 fill-current" />
           Lecture
@@ -420,7 +421,7 @@ const PlaylistDetailPage = () => {
           onClick={handleShufflePlay}
           disabled={displaySongs.length === 0}
           className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
-          style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
+          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", color: "hsl(var(--foreground))", border: "0.5px solid hsl(var(--foreground) / 0.06)", boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)" }}
         >
           <Shuffle className="w-4 h-4" />
           Aléatoire
@@ -495,15 +496,16 @@ const PlaylistDetailPage = () => {
       <div className="px-4 md:px-8">
         {displaySongs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="p-4 rounded-full bg-white/[0.04] mb-4"><Music className="w-8 h-8 text-muted-foreground/30" /></div>
+            <div className="p-4 rounded-full mb-4" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.2))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}><Music className="w-8 h-8 text-muted-foreground/30" /></div>
             <p className="text-muted-foreground text-sm mb-1">Playlist vide</p>
             <p className="text-muted-foreground/50 text-xs">Ajoutez des morceaux depuis la recherche</p>
           </div>
         ) : (
+          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
           <VirtualSongList
             songs={displaySongs}
             showIndex
-            className="rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] overflow-hidden"
+            className=""
             renderRow={(song, i, songCard) => (
               <div
                 draggable={true}
@@ -531,11 +533,12 @@ const PlaylistDetailPage = () => {
               </div>
             )}
           />
+          </div>
         )}
       </div>
       {/* Share to user dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-3xl" style={{ backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", background: "hsl(var(--card) / 0.85)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-primary" />
