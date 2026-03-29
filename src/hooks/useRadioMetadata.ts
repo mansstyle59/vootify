@@ -18,6 +18,7 @@ export function useRadioMetadata(
 ) {
   const [metadata, setMetadata] = useState<RadioMetadata | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevStreamRef = useRef<string | undefined>();
 
   useEffect(() => {
     if (!streamUrl || !isLive || !isPlaying) {
@@ -38,7 +39,6 @@ export function useRadioMetadata(
             if (cached) {
               coverUrl = cached;
             } else if (coverUrl) {
-              // Store new cover in cache
               radioCoverCache.set(data.artist, data.title, coverUrl);
             }
           }
@@ -63,8 +63,12 @@ export function useRadioMetadata(
     };
   }, [streamUrl, isLive, isPlaying, stationName, stationCover]);
 
+  // Only reset metadata when switching to a different stream
   useEffect(() => {
-    setMetadata(null);
+    if (prevStreamRef.current && streamUrl !== prevStreamRef.current) {
+      setMetadata(null);
+    }
+    prevStreamRef.current = streamUrl;
   }, [streamUrl]);
 
   return metadata;
