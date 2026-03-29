@@ -85,7 +85,13 @@ function CategoryCard({ genre, active, onClick }: { genre: string; active: boole
         height: 72,
         background: active
           ? `hsl(${color})`
-          : `hsl(${color} / 0.12)`,
+          : `linear-gradient(145deg, hsl(${color} / 0.15), hsl(${color} / 0.06))`,
+        backdropFilter: active ? "none" : "blur(16px) saturate(1.4)",
+        WebkitBackdropFilter: active ? "none" : "blur(16px) saturate(1.4)",
+        border: active ? "none" : `0.5px solid hsl(${color} / 0.12)`,
+        boxShadow: active
+          ? `0 4px 20px hsl(${color} / 0.3)`
+          : `0 2px 8px hsl(0 0% 0% / 0.06), inset 0 0.5px 0 hsl(${color} / 0.08)`,
       }}
     >
       <Icon
@@ -601,14 +607,13 @@ const RadioPage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
-      {/* ── Header ── */}
+      {/* ── Glass Header ── */}
       <div
         className="sticky top-0 z-20"
         style={{
-          background: "hsl(var(--background) / 0.88)",
-          backdropFilter: "blur(32px) saturate(1.5)",
-          WebkitBackdropFilter: "blur(32px) saturate(1.5)",
-          borderBottom: "1px solid hsl(var(--border) / 0.05)",
+          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 70%, hsl(var(--background) / 0) 100%)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
         <div className="px-4 md:px-8 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
@@ -616,7 +621,7 @@ const RadioPage = () => {
             Radio
           </h1>
 
-          {/* Search */}
+          {/* Glass Search */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
             <Input
@@ -624,8 +629,14 @@ const RadioPage = () => {
               placeholder="Rechercher une station..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-9 h-10 rounded-xl text-sm border-0"
-              style={{ background: "hsl(var(--foreground) / 0.05)" }}
+              className="pl-10 pr-9 h-10 rounded-2xl text-sm border-0"
+              style={{
+                background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                backdropFilter: "blur(24px) saturate(1.6)",
+                WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+              }}
             />
             {searchQuery && (
               <button
@@ -815,8 +826,14 @@ function EmptyState({ searching }: { searching?: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center px-4">
       <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-        style={{ background: "hsl(var(--foreground) / 0.04)" }}
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+        style={{
+          background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.2))",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+        }}
       >
         <Radio className="w-6 h-6 text-muted-foreground/20" />
       </div>
