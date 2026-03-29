@@ -603,7 +603,7 @@ const ProfilePage = () => {
                 const reg = await navigator.serviceWorker?.getRegistration();
                 if (reg) await reg.update();
                 // Refresh app data cache
-                if (user) await silentCacheRefresh(user.id);
+                if (user) silentCacheRefresh(user.id);
                 // Sync offline queue
                 const synced = await flushQueue();
                 setPendingActions(getPendingCount());
