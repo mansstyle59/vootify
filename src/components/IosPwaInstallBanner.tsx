@@ -18,6 +18,7 @@ function isInStandaloneMode(): boolean {
 }
 
 const DISMISSED_KEY = "pwa-install-dismissed";
+const INSTALLED_KEY = "pwa-installed";
 const VISIT_COUNT_KEY = "pwa-visit-count";
 const MIN_VISITS = 1;
 
@@ -76,7 +77,13 @@ export default function IosPwaInstallBanner() {
   const [platform, setPlatform] = useState<"ios" | "android">("ios");
 
   useEffect(() => {
-    if (isInStandaloneMode()) return;
+    // If running as installed PWA, mark as installed permanently and never show again
+    if (isInStandaloneMode()) {
+      localStorage.setItem(INSTALLED_KEY, "1");
+      return;
+    }
+    // Never show if already installed or previously dismissed
+    if (localStorage.getItem(INSTALLED_KEY)) return;
     if (!isIos() && !isAndroid()) return;
     if (localStorage.getItem(DISMISSED_KEY)) return;
 
@@ -88,6 +95,19 @@ export default function IosPwaInstallBanner() {
 
     const timer = setTimeout(() => setVisible(true), 3000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Listen for display-mode changes (user installs while page is open)
+  useEffect(() => {
+    const mq = window.matchMedia("(display-mode: standalone)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        localStorage.setItem(INSTALLED_KEY, "1");
+        setVisible(false);
+      }
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   const dismiss = () => {
