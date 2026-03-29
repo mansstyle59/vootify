@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { LazyImage } from "@/components/LazyImage";
+import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
 
 /* ── Minimal style helpers ── */
 const glassCard = {
