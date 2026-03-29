@@ -260,9 +260,10 @@ const ProfilePage = () => {
 
   if (!user) return null;
   const initials = (displayName || "U").slice(0, 2).toUpperCase();
-  const totalUsed = (swCacheSize || 0) + (offlineCacheSize || 0);
+  const totalUsed = (swCacheSize || 0) + (offlineCacheSize || 0) + (coverCacheSize || 0);
   const maxEstimate = Math.max(totalUsed * 2, 50 * 1024 * 1024);
   const swPercent = maxEstimate > 0 ? ((swCacheSize || 0) / maxEstimate) * 100 : 0;
+  const coverPercent = maxEstimate > 0 ? ((coverCacheSize || 0) / maxEstimate) * 100 : 0;
   const offlinePercent = maxEstimate > 0 ? ((offlineCacheSize || 0) / maxEstimate) * 100 : 0;
 
   const plan = isActive && subscription ? normalizePlan(subscription.plan) : "free";
