@@ -172,13 +172,13 @@ export function MobileNav() {
     >
       {/* ── Main pill ── */}
       <div
-        className="flex items-center rounded-[28px] px-1 py-1"
+        className="flex items-center rounded-[28px] px-1.5 py-1.5"
         style={{
-          background: "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
-          backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
-          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
-          boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
-          border: "0.5px solid hsl(var(--foreground) / 0.08)",
+          background: "linear-gradient(145deg, hsl(var(--card) / 0.55), hsl(var(--card) / 0.3))",
+          backdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
+          boxShadow: "0 8px 32px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
+          border: "0.5px solid hsl(var(--foreground) / 0.1)",
         }}
       >
         {pillItems.map((item) => {
@@ -190,34 +190,38 @@ export function MobileNav() {
               end={item.to === "/"}
               onTouchStart={() => handleTap(item.to)}
               className={({ isActive }) =>
-                `relative flex flex-col items-center justify-center min-w-[72px] min-h-[52px] px-4 py-1.5 rounded-[22px] text-[11px] font-semibold transition-all duration-200 active:scale-[0.88] ${
+                `relative flex flex-col items-center justify-center min-w-[74px] min-h-[54px] px-4 py-2 rounded-[20px] text-[10.5px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.9] ${
                   restricted
                     ? "text-muted-foreground/20"
                     : isActive
                     ? "text-primary"
-                    : "text-muted-foreground/60 active:text-muted-foreground/80"
+                    : "text-muted-foreground/50 active:text-muted-foreground/70"
                 }`
               }
               style={({ isActive }: { isActive: boolean }) => ({
-                background: !restricted && isActive ? "hsl(var(--primary) / 0.12)" : "transparent",
-                boxShadow: !restricted && isActive ? "0 0 16px hsl(var(--primary) / 0.15)" : "none",
+                background: !restricted && isActive
+                  ? "linear-gradient(145deg, hsl(var(--primary) / 0.18), hsl(var(--primary) / 0.08))"
+                  : "transparent",
+                boxShadow: !restricted && isActive
+                  ? "0 0 20px hsl(var(--primary) / 0.12), inset 0 0.5px 0 hsl(var(--primary) / 0.15)"
+                  : "none",
+                border: !restricted && isActive ? "0.5px solid hsl(var(--primary) / 0.15)" : "0.5px solid transparent",
               }) as React.CSSProperties}
             >
               {({ isActive }) => (
                 <>
                   {restricted ? (
-                    <Lock className="w-[22px] h-[22px] mb-0.5" strokeWidth={1.5} />
+                    <Lock className="w-[21px] h-[21px] mb-1" strokeWidth={1.6} />
                   ) : (
                     <item.icon
-                      className={`w-[22px] h-[22px] mb-0.5 transition-transform duration-200 ${isActive ? "scale-110" : ""}`}
-                      strokeWidth={isActive ? 2.2 : 1.5}
+                      className={`w-[24px] h-[24px] mb-0.5 transition-all duration-250 ${isActive ? "drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]" : ""}`}
+                      strokeWidth={isActive ? 2.4 : 1.4}
                       fill={isActive ? "currentColor" : "none"}
                     />
                   )}
-                  <span className={`transition-all duration-200 ${restricted ? "opacity-25" : isActive ? "font-bold" : ""}`}>{item.label}</span>
-                  {!restricted && isActive && (
-                    <span className="absolute -bottom-0.5 w-1 h-1 rounded-full" style={{ background: "hsl(var(--primary))" }} />
-                  )}
+                  <span className={`transition-all duration-200 ${restricted ? "opacity-25" : isActive ? "font-bold tracking-wider" : "opacity-70"}`}>
+                    {item.label}
+                  </span>
                 </>
               )}
             </RouterNavLink>
