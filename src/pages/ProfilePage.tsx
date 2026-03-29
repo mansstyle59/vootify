@@ -11,7 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3
+  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers
 } from "lucide-react";
 import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
@@ -104,6 +104,7 @@ const ProfilePage = () => {
   const [offlineCount, setOfflineCount] = useState(0);
   const [coverCacheCount, setCoverCacheCount] = useState(0);
   const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
+  const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -131,6 +132,24 @@ const ProfilePage = () => {
             }
           }
           setSwCacheSize(total);
+        } catch {}
+      })();
+      // Count cached page data (API responses for albums, artists, playlists)
+      (async () => {
+        try {
+          const cacheNames = await caches.keys();
+          let albums = 0, artists = 0, playlists = 0;
+          for (const name of cacheNames) {
+            const cache = await caches.open(name);
+            const keys = await cache.keys();
+            for (const req of keys) {
+              const url = req.url || "";
+              if (url.includes("custom_albums")) albums++;
+              else if (url.includes("custom_songs") || url.includes("artist_images")) artists++;
+              else if (url.includes("playlist_songs")) playlists++;
+            }
+          }
+          setPageCacheCount({ albums, artists, playlists });
         } catch {}
       })();
     }
@@ -467,8 +486,8 @@ const ProfilePage = () => {
               className="h-full" style={{ background: "hsl(var(--primary) / 0.3)", borderRadius: "0 9999px 9999px 0" }} />
           </div>
 
-          {/* Legend compact - 3 columns */}
-          <div className="grid grid-cols-3 gap-1">
+          {/* Legend compact - 4 columns */}
+          <div className="grid grid-cols-4 gap-1">
             <div className="text-center py-1.5">
               <div className="flex items-center justify-center gap-1 mb-0.5">
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--primary))" }} />
@@ -489,6 +508,13 @@ const ProfilePage = () => {
                 <span className="text-[9px] text-muted-foreground/60 font-medium">Hors-ligne</span>
               </div>
               <p className="text-[10px] font-semibold text-foreground">{offlineCount} titre{offlineCount > 1 ? "s" : ""}</p>
+            </div>
+            <div className="text-center py-1.5">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <Layers className="w-2.5 h-2.5 text-primary/60" />
+                <span className="text-[9px] text-muted-foreground/60 font-medium">Pages</span>
+              </div>
+              <p className="text-[10px] font-semibold text-foreground">{pageCacheCount.albums + pageCacheCount.artists + pageCacheCount.playlists}</p>
             </div>
           </div>
 
