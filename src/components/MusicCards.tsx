@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Song, formatDuration } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Play, Pause, Heart, Download, CheckCircle, Loader2, ListEnd, Music } from "lucide-react";
@@ -14,6 +15,7 @@ interface SongCardProps {
 }
 
 export const SongCard = memo(function SongCard({ song, index, showIndex }: SongCardProps) {
+  const navigate = useNavigate();
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const play = usePlayerStore((s) => s.play);
@@ -93,7 +95,23 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
           {song.title}
         </p>
         <p className="text-[10px] text-muted-foreground/50 mt-0.5 truncate font-medium">
-          {song.artist}{song.album ? ` · ${song.album}` : ""}
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`); }}
+            className="hover:text-primary hover:underline transition-colors"
+          >
+            {song.artist}
+          </button>
+          {song.album && (
+            <>
+              {" · "}
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/album/by-name?artist=${encodeURIComponent(song.artist.split(",")[0].trim())}&album=${encodeURIComponent(song.album)}`); }}
+                className="hover:text-primary hover:underline transition-colors"
+              >
+                {song.album}
+              </button>
+            </>
+          )}
         </p>
       </div>
 
