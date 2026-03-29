@@ -514,6 +514,8 @@ const SearchPage = () => {
         </div>
       </div>
 
+      {/* spacer after sticky header */}
+      <div className="h-2" />
       {/* ── Content ── */}
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
