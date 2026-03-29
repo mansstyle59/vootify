@@ -12,7 +12,7 @@ interface PullToRefreshProps {
 const THRESHOLD = 72;
 const MAX_PULL = 130;
 
-export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(function PullToRefresh({ onRefresh, children, className = "" }, ref) {
+export const PullToRefresh = forwardRef<HTMLDivElement, PullToRefreshProps>(function PullToRefresh({ onRefresh, children, className = "", style }, ref) {
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const pulling = useRef(false);
