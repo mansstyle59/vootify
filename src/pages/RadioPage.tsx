@@ -525,9 +525,9 @@ const RadioPage = () => {
             </motion.div>
           )}
 
-          {/* Action buttons — hidden by default, shown on hover/active */}
+          {/* Action buttons — long-press on mobile, hover on desktop */}
           <div className={`absolute top-2 right-2 flex gap-1.5 transition-all duration-200 ${
-            isActivePlaying ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
+            actionsVisible ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
           }`}>
             {isCustomTab ? (
               <>
