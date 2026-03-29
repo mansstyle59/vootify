@@ -5,6 +5,7 @@ import { normalizePlan, getPlanConfig } from "@/lib/subscriptionPermissions";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -111,6 +112,7 @@ const ProfilePage = () => {
   const { isAdmin } = useAdminAuth();
   const { subscription, isActive } = useSubscription(user?.id ?? null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState("");
@@ -607,9 +609,11 @@ const ProfilePage = () => {
                 // Sync offline queue
                 const synced = await flushQueue();
                 setPendingActions(getPendingCount());
+                // Invalidate ALL React Query caches so UI shows fresh data
+                await queryClient.invalidateQueries();
                 toast.success(synced > 0
                   ? `Mis à jour ! ${synced} action(s) synchronisée(s)`
-                  : "Tout est à jour !"
+                  : "Données rafraîchies !"
                 );
               } catch {
                 toast.error("Erreur lors de la mise à jour");
