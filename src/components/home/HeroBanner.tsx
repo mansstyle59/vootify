@@ -338,7 +338,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
           {/* Primary CTA — Shuffle */}
           <button
             onClick={handleShuffle}
-            className="flex items-center justify-center gap-2.5 w-full py-3 rounded-2xl text-[13px] font-bold active:scale-[0.97] transition-all duration-200"
+            className="flex items-center justify-center gap-2.5 w-full py-3 rounded-full text-[13px] font-bold active:scale-[0.97] transition-all duration-200"
             style={{
               background: "hsl(var(--primary) / 0.12)",
               color: "hsl(var(--primary))",
