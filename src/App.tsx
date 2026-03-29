@@ -143,7 +143,7 @@ function AppContent() {
   }, [user, queryClient, loadUserData]);
 
   const handlePullRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
+    await queryClient.refetchQueries({ type: "active" });
     const userId = user?.id;
     if (userId) {
       silentCacheRefresh(userId);
