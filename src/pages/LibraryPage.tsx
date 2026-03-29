@@ -661,12 +661,12 @@ const LibraryPage = () => {
       <div
         className="sticky top-0 z-20 transition-colors duration-500"
         style={{
-          background: headerColor
+          background: tab && headerColor
             ? `linear-gradient(180deg, ${headerColor}12 0%, hsl(var(--background)) 100%)`
             : "hsl(var(--background) / 0.85)",
           backdropFilter: "blur(40px) saturate(1.6)",
           WebkitBackdropFilter: "blur(40px) saturate(1.6)",
-          borderBottom: "1px solid hsl(var(--border) / 0.05)",
+          borderBottom: tab ? "1px solid hsl(var(--border) / 0.05)" : "none",
         }}
       >
         <div className="relative px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
@@ -680,32 +680,43 @@ const LibraryPage = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            {tab !== null && (
+              <button
+                onClick={() => setTab(null)}
+                className="flex items-center gap-1 text-primary text-[14px] font-medium active:opacity-70 transition-opacity -ml-1"
+              >
+                <ChevronRight className="w-4 h-4 rotate-180" />
+              </button>
+            )}
             <div className="flex-1">
               <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">
-                {isOffline ? "Hors-ligne" : "Bibliothèque"}
+                {isOffline ? "Hors-ligne" : tab !== null ? (activeTabLabel || "Bibliothèque") : "Bibliothèque"}
               </h1>
             </div>
-          </div>
-
-          {/* Tab pills */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
-            {visibleTabs.map(({ key, label, icon }) => (
-              <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Apple Music style menu */}
+      {tab === null && (
+        <div className="px-5 md:px-9 mt-1">
+          {visibleTabs.map(({ key, label, icon }) => (
+            <MenuRow key={key} icon={icon} label={label} onClick={() => setTab(key)} />
+          ))}
+        </div>
+      )}
+
+      {/* Tab Content */}
+      {tab !== null && (
       <div className="px-5 md:px-9 mt-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             {/* ── RECENT ── */}
             {tab === "recent" && (
