@@ -483,7 +483,7 @@ const RadioPage = () => {
           }}
         >
           {/* Neutral bg for logos */}
-          <div className="absolute inset-0 bg-secondary/50" />
+          <div className="absolute inset-0 bg-card" />
           <LazyImage
             src={displayCover}
             alt={station.name}
