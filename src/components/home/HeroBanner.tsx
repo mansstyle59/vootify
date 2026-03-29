@@ -335,10 +335,10 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
 
         {/* Action buttons — premium hierarchy */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.35 }}
-          className="flex flex-col gap-3 mt-7"
+          transition={{ delay: 0.2, duration: 0.3 }}
+          className="flex flex-col gap-2.5 mt-5"
         >
           {/* Primary CTA — Shuffle */}
           <button

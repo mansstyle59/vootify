@@ -76,14 +76,13 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3.5 overflow-x-auto pl-24 pr-9 md:pl-24 md:pr-14 pb-2 scrollbar-hide"
+        className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-1.5 scrollbar-hide"
         style={{
           scrollSnapType: "x proximity",
           WebkitOverflowScrolling: "touch",
         }}
       >
         {children}
-        {/* Spacer to prevent last card clipping */}
         <div className="flex-shrink-0 w-1" aria-hidden />
       </div>
     </div>
