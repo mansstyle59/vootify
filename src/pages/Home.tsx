@@ -362,24 +362,20 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
-      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
+      transition={{ delay: index * 0.03, duration: 0.25, ease: "easeOut" }}
+      className="flex-shrink-0 w-[130px] md:w-[150px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
     >
       <div
-        className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl overflow-hidden mb-2"
-        style={{
-          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15), 0 1px 4px hsl(0 0% 0% / 0.08)",
-        }}
+        className="relative w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl overflow-hidden mb-1.5"
+        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.12)" }}
       >
         {imageUrl ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
-                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
-              </div>
+              <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
             )}
             <img
               src={imageUrl}
@@ -391,24 +387,14 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
-            <User className="w-10 h-10 text-muted-foreground/20" />
+            <User className="w-8 h-8 text-muted-foreground/20" />
           </div>
         )}
-        {/* Shine / glare effect on hover */}
         <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: "linear-gradient(105deg, transparent 30%, hsl(0 0% 100% / 0.12) 45%, hsl(0 0% 100% / 0.03) 55%, transparent 70%)",
-          }}
-        />
-        {/* Bottom gradient overlay with name */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-[55%] flex items-end p-3"
-          style={{
-            background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, hsl(0 0% 0% / 0.25) 60%, transparent 100%)",
-          }}
+          className="absolute inset-x-0 bottom-0 h-[50%] flex items-end p-2.5"
+          style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, transparent 100%)" }}
         >
-          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
+          <p className="text-[12px] font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
             {artist.name}
           </p>
         </div>
