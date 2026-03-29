@@ -630,21 +630,19 @@ const LibraryPage = () => {
 
   useEffect(() => {
     if (!isAdmin && tab === "custom") {
-      setTab(isOffline ? "downloads" : "recent");
+      setTab(isOffline ? "downloads" : null);
       return;
     }
-    if (isOffline && tab !== "downloads") {
+    if (isOffline && tab !== "downloads" && tab !== null) {
       setTab("downloads");
       return;
     }
-    if (isGuest && !isOffline && tab !== "downloads") {
+    if (isGuest && !isOffline && tab !== "downloads" && tab !== null) {
       setTab("downloads");
       return;
     }
-    // If current tab is restricted by plan, switch to first allowed
-    if (!checkLibraryTab(tab) && !isOffline && !isGuest) {
-      const firstAllowed = tabs.find((t) => checkLibraryTab(t.key));
-      if (firstAllowed) setTab(firstAllowed.key);
+    if (tab && !checkLibraryTab(tab) && !isOffline && !isGuest) {
+      setTab(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGuest, isOffline, isAdmin, tab]);
@@ -654,6 +652,8 @@ const LibraryPage = () => {
     : isGuest
       ? tabs.filter((t) => t.key === "downloads")
       : tabs.filter((t) => checkLibraryTab(t.key));
+
+  const activeTabLabel = tab ? visibleTabs.find((t) => t.key === tab)?.label : null;
 
   return (
     <div className="pb-20 max-w-7xl mx-auto relative">
