@@ -114,12 +114,18 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
   const hasSongs = songs && songs.length > 0;
 
   return (
-    <section className="mb-5 md:mb-7">
-      {/* Compact header */}
-      <div className="flex items-center justify-between px-5 md:px-9 mb-2">
-        <h2 className="text-[17px] md:text-[19px] font-bold text-foreground leading-tight tracking-tight line-clamp-1 break-words">
-          {title}
-        </h2>
+    <section className="mb-6 md:mb-8">
+      {/* Header with accent dot */}
+      <div className="flex items-center justify-between px-5 md:px-9 mb-2.5">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-1 h-4 rounded-full"
+            style={{ background: "hsl(var(--primary) / 0.5)" }}
+          />
+          <h2 className="text-[17px] md:text-[19px] font-extrabold text-foreground leading-tight tracking-tight line-clamp-1 break-words">
+            {title}
+          </h2>
+        </div>
         <div className="flex items-center gap-1 relative flex-shrink-0 ml-2">
           {action}
           {hasSongs && onPlayAll && (
@@ -149,9 +155,11 @@ export function Section({ title, children, songs, onPlayAll, viewAllLink, action
           {viewAllLink && (
             <button
               onClick={() => navigate(viewAllLink)}
-              className="text-[12px] font-medium text-primary active:opacity-70 transition-opacity"
+              className="flex items-center gap-0.5 text-[11px] font-semibold active:opacity-70 transition-opacity"
+              style={{ color: "hsl(var(--primary) / 0.7)" }}
             >
-              Voir
+              Voir tout
+              <ChevronRight className="w-3 h-3" />
             </button>
           )}
         </div>

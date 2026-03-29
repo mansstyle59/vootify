@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useNavigate } from "react-router-dom";
-import { ListMusic, Play } from "lucide-react";
+import { ListMusic } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 
 export function QuickAccess() {
@@ -29,27 +29,40 @@ export function QuickAccess() {
   if (!playlists || playlists.length === 0) return null;
 
   return (
-    <div className="px-5 md:px-8 pb-2">
-      <div className="grid grid-cols-2 gap-2.5">
+    <div className="px-5 md:px-9 pb-1">
+      <h2
+        className="text-[13px] font-bold uppercase tracking-[0.06em] mb-2.5"
+        style={{ color: "hsl(var(--foreground) / 0.35)" }}
+      >
+        Accès rapide
+      </h2>
+      <div className="grid grid-cols-2 gap-2">
         {playlists.slice(0, 6).map((p) => (
           <button
             key={p.id}
             onClick={() => navigate(`/playlist/${p.id}`)}
-            className="group flex items-center gap-3 rounded-xl overflow-hidden h-[52px] active:scale-[0.97] transition-transform"
+            className="group flex items-center gap-2.5 rounded-xl overflow-hidden h-[48px] active:scale-[0.97] transition-transform duration-150"
             style={{
               background: "hsl(var(--foreground) / 0.04)",
+              border: "1px solid hsl(var(--foreground) / 0.04)",
             }}
           >
-            <div className="w-[52px] h-[52px] flex-shrink-0 overflow-hidden relative" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
+            <div
+              className="w-[48px] h-[48px] flex-shrink-0 overflow-hidden"
+              style={{ background: "hsl(var(--foreground) / 0.06)" }}
+            >
               {p.cover_url ? (
                 <LazyImage src={p.cover_url} alt={p.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.03))" }}>
-                  <ListMusic className="w-4 h-4 text-primary/25" />
+                <div
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}
+                >
+                  <ListMusic className="w-4 h-4 text-primary/30" />
                 </div>
               )}
             </div>
-            <span className="text-[12px] font-semibold text-foreground truncate pr-3 leading-tight">
+            <span className="text-[11px] font-semibold text-foreground truncate pr-3 leading-tight">
               {p.name}
             </span>
           </button>

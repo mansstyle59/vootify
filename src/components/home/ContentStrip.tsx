@@ -41,19 +41,28 @@ export function ContentStrip({ children }: ContentStripProps) {
 
   return (
     <div
-      className="relative -mx-2 px-2"
+      className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Fade edges */}
+      {canScrollLeft && (
+        <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, hsl(var(--background)), transparent)" }} />
+      )}
+      {canScrollRight && (
+        <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, hsl(var(--background)), transparent)" }} />
+      )}
+
       {/* Desktop arrows */}
       {isHovered && canScrollLeft && (
         <button
           onClick={() => scrollBy(-1)}
-          className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center text-foreground active:scale-90 transition-all"
+          className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center text-foreground active:scale-90 transition-all"
           style={{
-            background: "hsl(var(--card) / 0.8)",
+            background: "hsl(var(--card) / 0.85)",
             backdropFilter: "blur(16px)",
             boxShadow: "0 2px 12px hsl(0 0% 0% / 0.2)",
+            border: "1px solid hsl(var(--foreground) / 0.06)",
           }}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -62,11 +71,12 @@ export function ContentStrip({ children }: ContentStripProps) {
       {isHovered && canScrollRight && (
         <button
           onClick={() => scrollBy(1)}
-          className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center text-foreground active:scale-90 transition-all"
+          className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center text-foreground active:scale-90 transition-all"
           style={{
-            background: "hsl(var(--card) / 0.8)",
+            background: "hsl(var(--card) / 0.85)",
             backdropFilter: "blur(16px)",
             boxShadow: "0 2px 12px hsl(0 0% 0% / 0.2)",
+            border: "1px solid hsl(var(--foreground) / 0.06)",
           }}
         >
           <ChevronRight className="w-4 h-4" />
@@ -76,7 +86,7 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-1.5 scrollbar-hide"
+        className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-2 scrollbar-hide"
         style={{
           scrollSnapType: "x proximity",
           WebkitOverflowScrolling: "touch",
@@ -95,7 +105,7 @@ export function StripSkeleton({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="flex-shrink-0 w-[130px] md:w-[150px] snap-start">
           <div
-            className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-xl mb-1.5 overflow-hidden relative"
+            className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl mb-1.5 overflow-hidden relative"
             style={{ background: "hsl(var(--foreground) / 0.04)" }}
           >
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
