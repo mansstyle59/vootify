@@ -136,23 +136,92 @@ export async function performInitialCache(
   preCacheCovers(userId).catch(() => {});
 }
 
-/** Pre-fetch cover images so the SW caches them */
-async function preCacheCovers(userId: string) {
+/** Pre-fetch ALL song covers into IndexedDB for offline display */
+async function preCacheCovers(_userId: string) {
+  const COVERS_CACHED_KEY = "vootify-covers-cached-v1";
   try {
-    const [{ data: recent }, { data: liked }] = await Promise.all([
-      supabase.from("recently_played").select("cover_url").eq("user_id", userId).order("played_at", { ascending: false }).limit(20),
-      supabase.from("liked_songs").select("cover_url").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
-    ]);
+    // Skip if already done this session
+    if (sessionStorage.getItem(COVERS_CACHED_KEY)) return;
 
-    const urls = new Set<string>();
-    [...(recent || []), ...(liked || [])].forEach((r) => {
-      if (r.cover_url) urls.add(r.cover_url);
+    // Fetch all songs with covers
+    const { data: songs } = await supabase
+      .from("custom_songs")
+      .select("id, cover_url")
+      .not("cover_url", "is", null);
+
+    if (!songs || songs.length === 0) return;
+
+    // Open IndexedDB directly to batch-store covers
+    const DB_NAME = "music-offline-cache";
+    const DB_VERSION = 2;
+    const COVER_STORE = "covers";
+
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains("audio")) d.createObjectStore("audio");
+        if (!d.objectStoreNames.contains("meta")) d.createObjectStore("meta");
+        if (!d.objectStoreNames.contains(COVER_STORE)) d.createObjectStore(COVER_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
     });
 
-    await Promise.allSettled(
-      Array.from(urls).slice(0, 40).map((url) => fetch(url, { mode: "no-cors" }).catch(() => {}))
-    );
-  } catch {}
+    // Check which covers are already cached
+    const existingKeys = await new Promise<Set<string>>((resolve) => {
+      const tx = db.transaction(COVER_STORE, "readonly");
+      const req = tx.objectStore(COVER_STORE).getAllKeys();
+      req.onsuccess = () => resolve(new Set((req.result || []).map(String)));
+      req.onerror = () => resolve(new Set());
+    });
+
+    const missing = songs.filter((s) => s.cover_url && !existingKeys.has(s.id));
+    if (missing.length === 0) {
+      sessionStorage.setItem(COVERS_CACHED_KEY, "1");
+      return;
+    }
+
+    // Download in small batches to avoid overwhelming the network
+    const BATCH = 6;
+    for (let i = 0; i < missing.length; i += BATCH) {
+      const batch = missing.slice(i, i + BATCH);
+      const results = await Promise.allSettled(
+        batch.map(async (s) => {
+          const res = await fetch(s.cover_url!, { mode: "cors" }).catch(() => null);
+          if (!res || !res.ok) return null;
+          const blob = await res.blob();
+          if (blob.size === 0) return null;
+          return { id: s.id, blob };
+        })
+      );
+
+      // Store successful downloads
+      const toStore = results
+        .filter((r): r is PromiseFulfilledResult<{ id: string; blob: Blob } | null> => r.status === "fulfilled")
+        .map((r) => r.value)
+        .filter(Boolean) as { id: string; blob: Blob }[];
+
+      if (toStore.length > 0) {
+        await new Promise<void>((resolve) => {
+          const tx = db.transaction(COVER_STORE, "readwrite");
+          const store = tx.objectStore(COVER_STORE);
+          toStore.forEach((item) => store.put(item.blob, item.id));
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        });
+      }
+
+      // Yield to main thread between batches
+      if (i + BATCH < missing.length) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
+
+    sessionStorage.setItem(COVERS_CACHED_KEY, "1");
+  } catch (e) {
+    console.warn("[appCache] Cover pre-cache failed:", e);
+  }
 }
 
 /**
