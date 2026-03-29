@@ -110,6 +110,7 @@ export function MiniPlayer() {
     setClosing(true);
   }, []);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const errorRetryCountRef = useRef(0);
@@ -307,7 +308,7 @@ export function MiniPlayer() {
     }
   }, [next, volume]);
 
-  // ── Error handler ──
+  // ── Error handler with smart offline fallback ──
   const handleAudioError = useCallback(async () => {
     if (!currentSong) return;
     const isRadio = currentSong.duration === 0;
@@ -332,11 +333,33 @@ export function MiniPlayer() {
       return;
     }
 
-    // Music: try cache → retry → skip
+    // Music: intelligent fallback chain → cache → preloaded → stream → skip
     const cachedUrl = await offlineCache.getCachedUrl(currentSong.id);
     if (cachedUrl && !audio.src.includes("blob:")) {
+      setPlayingFromCache(true);
       audio.src = cachedUrl;
       audio.play().catch(console.error);
+      return;
+    }
+
+    // Try preloaded URL
+    const preloadedUrl = getPreloadedUrl(currentSong.id);
+    if (preloadedUrl) {
+      consumePreloaded(currentSong.id);
+      audio.src = preloadedUrl;
+      audio.play().catch(console.error);
+      return;
+    }
+
+    if (currentSong.streamUrl && !navigator.onLine) {
+      // Offline and no cache — wait for network
+      const waitOnline = () => {
+        window.removeEventListener("online", waitOnline);
+        if (usePlayerStore.getState().currentSong?.id !== currentSong.id) return;
+        audio.src = currentSong.streamUrl!;
+        audio.play().catch(() => usePlayerStore.getState().next());
+      };
+      window.addEventListener("online", waitOnline);
       return;
     }
 
@@ -359,6 +382,7 @@ export function MiniPlayer() {
     const handlePlay = () => {
       if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
       if (!usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: true });
+      setIsBuffering(false);
     };
     const handlePause = () => {
       // Only sync pause if user explicitly paused (not background interruption)
@@ -370,17 +394,30 @@ export function MiniPlayer() {
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
 
+    // Buffering state from AudioManager
+    const onBuffering = () => setIsBuffering(true);
+    const onReady = () => setIsBuffering(false);
+    window.addEventListener("audio-buffering", onBuffering);
+    window.addEventListener("audio-ready", onReady);
+
     // Listen for AudioManager next/prev events (from media session & ended)
     const onAudioNext = () => usePlayerStore.getState().next();
     const onAudioPrev = () => usePlayerStore.getState().previous();
     window.addEventListener("audio-next", onAudioNext);
     window.addEventListener("audio-prev", onAudioPrev);
 
-    // Network recovery
-    const handleOnline = () => {
+    // Network recovery — try cached URL first, then stream
+    const handleOnline = async () => {
       const state = usePlayerStore.getState();
       if (!state.isPlaying || !state.currentSong) return;
       if (audio.paused || audio.readyState < 2) {
+        // Try offline cache first
+        try {
+          const cachedUrl = await offlineCache.getCachedUrl(state.currentSong.id);
+          if (cachedUrl && !audio.src.startsWith("blob:")) {
+            audio.src = cachedUrl;
+          }
+        } catch {}
         audio.play().catch(console.error);
       }
     };
@@ -392,6 +429,8 @@ export function MiniPlayer() {
       audio.removeEventListener("error", handleAudioError);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
+      window.removeEventListener("audio-buffering", onBuffering);
+      window.removeEventListener("audio-ready", onReady);
       window.removeEventListener("audio-next", onAudioNext);
       window.removeEventListener("audio-prev", onAudioPrev);
       window.removeEventListener("online", handleOnline);
@@ -676,7 +715,7 @@ export function MiniPlayer() {
                       </button>
                     )}
                     <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
-                      {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
+                      {isBuffering ? <Loader2 className="w-4 h-4 text-background animate-spin" /> : isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
                     </button>
                     {hasMultipleStations && (
                       <button onClick={next} className="p-2 active:scale-90 transition-transform">
@@ -757,7 +796,7 @@ export function MiniPlayer() {
                     <Heart className={`w-4 h-4 transition-colors ${isLiked(currentSong.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
                   </button>
                   <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
-                    {isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
+                    {isBuffering ? <Loader2 className="w-4 h-4 text-background animate-spin" /> : isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
                   </button>
                   <button onClick={next} className="relative p-2 text-foreground active:scale-90 transition-transform">
                     <SkipForward className="w-5 h-5 fill-current" />
