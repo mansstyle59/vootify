@@ -771,7 +771,13 @@ const LibraryPage = () => {
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                       {recentMusic.length} morceau{recentMusic.length > 1 ? "x" : ""}
                     </p>
-                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{
+                      background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                      backdropFilter: "blur(24px) saturate(1.6)",
+                      WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                      border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                      boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
+                    }}>
                       {recentMusic.map((s, i) => (
                         <PremiumSongRow
                           key={`${s.id}-${i}`}
@@ -800,12 +806,19 @@ const LibraryPage = () => {
                   <>
                     <div className="relative mb-3">
                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                      <input
+                       <input
                         type="text"
                         value={likedSearch}
                         onChange={(e) => setLikedSearch(e.target.value)}
                         placeholder="Rechercher dans mes titres..."
-                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
+                        className="w-full pl-9 pr-8 py-2.5 rounded-2xl text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                          backdropFilter: "blur(24px) saturate(1.6)",
+                          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                         }}
                       />
                       {likedSearch && (
                         <button onClick={() => setLikedSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -830,7 +843,13 @@ const LibraryPage = () => {
                           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
                             {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
                           </p>
-                          <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
+                          <div className="rounded-2xl overflow-hidden" style={{
+                            background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                            backdropFilter: "blur(24px) saturate(1.6)",
+                            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                            border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                            boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
+                          }}>
                             {filtered.map((s, i) => (
                               <PremiumSongRow
                                 key={s.id}
@@ -858,8 +877,14 @@ const LibraryPage = () => {
               <div>
                 <button
                   onClick={() => setShowCreate(!showCreate)}
-                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-xl w-full text-foreground text-sm font-medium active:scale-[0.98] transition-all"
-                  style={{ background: "hsl(var(--foreground) / 0.04)" }}
+                  className="flex items-center gap-2.5 mb-4 px-4 py-3 rounded-2xl w-full text-foreground text-sm font-medium active:scale-[0.98] transition-all"
+                  style={{
+                    background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                    backdropFilter: "blur(24px) saturate(1.6)",
+                    WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                    border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                    boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
+                  }}
                 >
                   <div className="p-1.5 rounded-lg bg-primary/10">
                     <Plus className="w-4 h-4 text-primary" />
@@ -912,7 +937,13 @@ const LibraryPage = () => {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(`/playlist/${p.id}`)}
                             className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
-                            style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
+                            style={{
+                              background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                              backdropFilter: "blur(24px) saturate(1.6)",
+                              WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                              border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                              boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
+                            }}
                           >
                             {/* Cover */}
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -983,7 +1014,13 @@ const LibraryPage = () => {
                               whileTap={{ scale: 0.98 }}
                               onClick={() => navigate(`/shared-playlist/${sp.id}`)}
                               className="w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all"
-                              style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}
+                              style={{
+                                background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                                backdropFilter: "blur(24px) saturate(1.6)",
+                                WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                                border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                                boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
+                              }}
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
@@ -1039,7 +1076,14 @@ const LibraryPage = () => {
                         value={albumSearch}
                         onChange={(e) => setAlbumSearch(e.target.value)}
                         placeholder="Rechercher par artiste..."
-                        className="w-full px-3 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
+                        className="w-full px-3 py-2.5 rounded-2xl text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                          backdropFilter: "blur(24px) saturate(1.6)",
+                          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                        }}
                       />
                       {albumSearch && (
                         <button onClick={() => setAlbumSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1161,7 +1205,14 @@ const LibraryPage = () => {
                         value={artistSearch}
                         onChange={(e) => setArtistSearch(e.target.value)}
                         placeholder="Rechercher un artiste..."
-                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
+                        className="w-full pl-9 pr-8 py-2.5 rounded-2xl text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                          backdropFilter: "blur(24px) saturate(1.6)",
+                          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                        }}
                       />
                       {artistSearch && (
                         <button onClick={() => setArtistSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -1253,7 +1304,14 @@ const LibraryPage = () => {
                         value={customSearch}
                         onChange={(e) => setCustomSearch(e.target.value)}
                         placeholder="Rechercher un morceau..."
-                        className="w-full pl-9 pr-8 py-2 rounded-2xl bg-card/40 backdrop-blur-sm text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/25 border border-border/10"
+                        className="w-full pl-9 pr-8 py-2.5 rounded-2xl text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                          backdropFilter: "blur(24px) saturate(1.6)",
+                          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                        }}
                       />
                       {customSearch && (
                         <button onClick={() => setCustomSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">

@@ -794,7 +794,7 @@ const RadioPage = () => {
 
       {/* ── Edit Dialog ── */}
       <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-3xl" style={{ backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", background: "hsl(var(--card) / 0.85)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}>
           <DialogHeader>
             <DialogTitle className="font-display">Modifier la station</DialogTitle>
           </DialogHeader>

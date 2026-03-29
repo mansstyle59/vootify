@@ -712,7 +712,12 @@ const SearchPage = () => {
           /* ══════════════ RESULTS MODE ══════════════ */
           <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8">
             {isLoading ? (
-              <div className="rounded-xl overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.02)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{
+                background: "linear-gradient(145deg, hsl(var(--card) / 0.3), hsl(var(--card) / 0.12))",
+                backdropFilter: "blur(24px) saturate(1.6)",
+                WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                border: "0.5px solid hsl(var(--foreground) / 0.05)",
+              }}>
                 {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
               </div>
             ) : (
@@ -815,7 +820,12 @@ const SearchPage = () => {
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-semibold">{artistFilter}</span></>}
                     </p>
-                    <div className="rounded-xl overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.02)" }}>
+                    <div className="rounded-2xl overflow-hidden" style={{
+                      background: "linear-gradient(145deg, hsl(var(--card) / 0.3), hsl(var(--card) / 0.12))",
+                      backdropFilter: "blur(24px) saturate(1.6)",
+                      WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                      border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                    }}>
                       <VirtualSongList
                         songs={filteredResults}
                         onClickSong={(song) => handlePlayTrack(song, filteredResults)}
@@ -827,7 +837,13 @@ const SearchPage = () => {
                   <div className="text-center py-20">
                     <div
                       className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                      style={{ background: "hsl(var(--foreground) / 0.04)" }}
+                      style={{
+                        background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.2))",
+                        backdropFilter: "blur(40px) saturate(1.8)",
+                        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                        border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                        boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+                      }}
                     >
                       <Music className="w-7 h-7 text-muted-foreground/20" />
                     </div>
