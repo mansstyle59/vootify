@@ -33,10 +33,33 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         scope: "/",
         categories: ["music", "entertainment"],
+        lang: "fr",
+        dir: "ltr",
+        prefer_related_applications: false,
         icons: [
           { src: "/pwa-icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/pwa-icon-512.png", sizes: "512x512", type: "image/png" },
           { src: "/pwa-icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+        shortcuts: [
+          {
+            name: "Rechercher",
+            short_name: "Rechercher",
+            url: "/search",
+            icons: [{ src: "/pwa-icon-192.png", sizes: "192x192" }],
+          },
+          {
+            name: "Ma Bibliothèque",
+            short_name: "Bibliothèque",
+            url: "/library",
+            icons: [{ src: "/pwa-icon-192.png", sizes: "192x192" }],
+          },
+          {
+            name: "Radio",
+            short_name: "Radio",
+            url: "/radio",
+            icons: [{ src: "/pwa-icon-192.png", sizes: "192x192" }],
+          },
         ],
       },
       workbox: {

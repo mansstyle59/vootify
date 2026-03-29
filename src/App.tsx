@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { PageFade } from "@/components/PageFade";
 import { NetworkStatus } from "@/components/NetworkStatus";
+import { UpdateNotification } from "@/components/UpdateNotification";
 import IosPwaInstallBanner from "@/components/IosPwaInstallBanner";
 import { AuthGate } from "@/components/AuthGate";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
@@ -168,6 +169,7 @@ const App = () => {
             <AdminAuthProvider>
               <Sonner />
               <NetworkStatus />
+              <UpdateNotification />
               <IosPwaInstallBanner />
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
