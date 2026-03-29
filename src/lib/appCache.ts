@@ -134,6 +134,7 @@ export async function performInitialCache(
 
   // Pre-cache covers in background (non-blocking)
   preCacheCovers(userId).catch(() => {});
+  preCacheFridayCovers().catch(() => {});
 }
 
 /** Pre-fetch ALL song covers into IndexedDB for offline display */
