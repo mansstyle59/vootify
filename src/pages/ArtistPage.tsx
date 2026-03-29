@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { SongSkeleton } from "@/components/MusicCards";
-import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2, ImagePlus } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Music, User, Headphones, Clock, Disc3, TrendingUp, BarChart3, Calendar, RefreshCw, Loader2, ImagePlus, ArrowUpDown } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { formatDuration } from "@/data/mockData";
 import type { Song } from "@/data/mockData";
@@ -21,6 +21,7 @@ const ArtistPage = () => {
   const userId = usePlayerStore((s) => s.userId);
   const { isAdmin } = useAdminAuth();
   const [enriching, setEnriching] = useState(false);
+  const [songSort, setSongSort] = useState<"year-desc" | "year-asc" | "alpha" | "album">("year-desc");
   const [showImageInput, setShowImageInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
   const { scrollY } = useScroll();
@@ -464,25 +465,63 @@ const ArtistPage = () => {
       )}
 
       {/* Songs */}
-      <div className="px-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Music className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tous les titres</h2>
-        </div>
-        {isLoading ? (
-          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
-            {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
+      {(() => {
+        const sortedSongs = [...songs].sort((a, b) => {
+          switch (songSort) {
+            case "year-desc": return ((b as any).year || 0) - ((a as any).year || 0);
+            case "year-asc": return ((a as any).year || 9999) - ((b as any).year || 9999);
+            case "alpha": return a.title.localeCompare(b.title, "fr");
+            case "album": return (a.album || "").localeCompare(b.album || "", "fr");
+            default: return 0;
+          }
+        });
+
+        const sortOptions: { key: typeof songSort; label: string }[] = [
+          { key: "year-desc", label: "Plus récent" },
+          { key: "year-asc", label: "Plus ancien" },
+          { key: "alpha", label: "A → Z" },
+          { key: "album", label: "Album" },
+        ];
+
+        return (
+          <div className="px-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Music className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tous les titres</h2>
+              </div>
+              <div className="flex items-center gap-1">
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setSongSort(opt.key)}
+                    className="px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all"
+                    style={{
+                      background: songSort === opt.key ? "hsl(var(--primary) / 0.15)" : "transparent",
+                      color: songSort === opt.key ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.5)",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
+                {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
+              </div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
+                <VirtualSongList
+                  songs={sortedSongs}
+                  onClickSong={(song) => handlePlay(song)}
+                  className=""
+                />
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
-            <VirtualSongList
-              songs={songs}
-              onClickSong={(song) => handlePlay(song)}
-              className=""
-            />
-          </div>
-        )}
-      </div>
+        );
+      })()}
     </div>
   );
 };
