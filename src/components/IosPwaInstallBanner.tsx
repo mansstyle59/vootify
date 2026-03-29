@@ -18,6 +18,7 @@ function isInStandaloneMode(): boolean {
 }
 
 const DISMISSED_KEY = "pwa-install-dismissed";
+const INSTALLED_KEY = "pwa-installed";
 const VISIT_COUNT_KEY = "pwa-visit-count";
 const MIN_VISITS = 1;
 
