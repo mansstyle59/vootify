@@ -28,12 +28,12 @@ export const CoverCard = memo(function CoverCard({
     >
       <div
         className={`relative w-[130px] h-[130px] md:w-[150px] md:h-[150px] overflow-hidden mb-1.5 ${
-          rounded ? "rounded-full" : "rounded-xl"
+          rounded ? "rounded-full" : "rounded-2xl"
         }`}
         style={{
           boxShadow: isActive
             ? "0 4px 20px hsl(var(--primary) / 0.3), 0 0 0 2px hsl(var(--primary) / 0.35)"
-            : "0 2px 8px hsl(0 0% 0% / 0.08)",
+            : "0 2px 12px hsl(0 0% 0% / 0.12)",
         }}
       >
         {resolvedUrl ? (
@@ -48,7 +48,7 @@ export const CoverCard = memo(function CoverCard({
               alt={title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-105 ${
+              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-[1.06] ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
               } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
@@ -59,22 +59,22 @@ export const CoverCard = memo(function CoverCard({
           </div>
         )}
 
-        {/* Play button */}
+        {/* Play button overlay */}
         {(showPlay || isActive) && (
-          <div className={`absolute inset-0 flex items-end justify-end p-1.5 transition-opacity duration-200 ${
+          <div className={`absolute inset-0 flex items-end justify-end p-2 transition-opacity duration-200 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}>
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+              className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{
                 background: "hsl(var(--primary))",
-                boxShadow: "0 3px 12px hsl(var(--primary) / 0.4)",
+                boxShadow: "0 4px 16px hsl(var(--primary) / 0.45)",
               }}
             >
               {isActive ? (
-                <Pause className="w-3 h-3 text-primary-foreground fill-current" />
+                <Pause className="w-3.5 h-3.5 text-primary-foreground fill-current" />
               ) : (
-                <Play className="w-3 h-3 text-primary-foreground fill-current ml-0.5" />
+                <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
               )}
             </div>
           </div>
@@ -85,7 +85,7 @@ export const CoverCard = memo(function CoverCard({
         {title}
       </h3>
       {subtitle && (
-        <p className={`text-[10px] text-muted-foreground/50 truncate mt-0.5 ${rounded ? "text-center" : ""}`}>
+        <p className={`text-[10px] truncate mt-0.5 ${rounded ? "text-center" : ""}`} style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
           {subtitle}
         </p>
       )}

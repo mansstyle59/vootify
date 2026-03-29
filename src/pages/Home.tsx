@@ -19,7 +19,7 @@ import { Music, RefreshCw, Loader2, User } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
@@ -215,111 +215,117 @@ const HomePage = () => {
     <div className="pb-20 max-w-7xl mx-auto">
       <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
 
-      <div className="mt-3" />
+      {/* Quick access playlists */}
+      <div className="mt-4 mb-2">
+        <QuickAccess />
+      </div>
 
-      {visibleSections.map((section) => {
-        const isCustom = section.id.startsWith("custom_");
-        if (isCustom) {
-          const songs = getCustomSectionSongs(section.id);
-          return <div key={section.id}>{renderSection(section.title, songs, loadingCustomSongs)}</div>;
-        }
+      {/* Dynamic sections */}
+      <div className="mt-2 space-y-1">
+        {visibleSections.map((section) => {
+          const isCustom = section.id.startsWith("custom_");
+          if (isCustom) {
+            const songs = getCustomSectionSongs(section.id);
+            return <div key={section.id}>{renderSection(section.title, songs, loadingCustomSongs)}</div>;
+          }
 
-        if (section.id === "top_artists") {
-          if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
-          return (
-            <Section key={section.id} title={section.title}>
-              <div className="px-5 md:px-9">
-                {loadingTopArtists ? (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2.5 flex-shrink-0">
-                        <div className="w-[76px] h-[76px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
-                        <div className="w-14 h-2.5 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
-                    {topArtists?.map((artist, i) => (
-                      <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
-                    ))}
-                    <div className="w-1 flex-shrink-0" />
-                  </div>
-                )}
-              </div>
-            </Section>
-          );
-        }
+          if (section.id === "top_artists") {
+            if (!loadingTopArtists && (!topArtists || topArtists.length === 0)) return null;
+            return (
+              <Section key={section.id} title={section.title}>
+                <div className="px-5 md:px-9">
+                  {loadingTopArtists ? (
+                    <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2.5 flex-shrink-0">
+                          <div className="w-[76px] h-[76px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
+                          <div className="w-14 h-2.5 rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-4 pt-2 -mx-1 px-1">
+                      {topArtists?.map((artist, i) => (
+                        <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
+                      ))}
+                      <div className="w-1 flex-shrink-0" />
+                    </div>
+                  )}
+                </div>
+              </Section>
+            );
+          }
 
-        if (section.id === "artists") {
-          if (!loadingArtists && (!artists || artists.length === 0)) return null;
-          return (
-            <Section
-              key={section.id}
-              title={section.title}
-              action={isAdmin ? (
-                <button
-                  onClick={async () => {
-                    if (refreshingArtists) return;
-                    setRefreshingArtists(true);
-                    try {
-                      const { data, error } = await supabase.functions.invoke("refresh-artist-images", {
-                        body: { only_missing: false, force_refresh: true },
-                      });
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["custom-artist-image"] });
-                      queryClient.invalidateQueries({ queryKey: ["artist-image"] });
-                      queryClient.invalidateQueries({ queryKey: ["home-artists"] });
-                      toast.success(`${data.updated} photo${data.updated > 1 ? "s" : ""} mise${data.updated > 1 ? "s" : ""} à jour`);
-                    } catch {
-                      toast.error("Erreur lors du rafraîchissement");
-                    } finally {
-                      setRefreshingArtists(false);
-                    }
-                  }}
-                  disabled={refreshingArtists}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform disabled:opacity-50"
-                  style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
-                >
-                  {refreshingArtists ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  {refreshingArtists ? "Refresh…" : "Refresh"}
-                </button>
-              ) : undefined}
-            >
-              <ContentStrip>
-                {loadingArtists ? (
-                  <StripSkeleton count={6} />
-                ) : (
-                  artists?.map((artist, i) => (
-                    <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
-                  ))
-                )}
-              </ContentStrip>
-            </Section>
-          );
-        }
+          if (section.id === "artists") {
+            if (!loadingArtists && (!artists || artists.length === 0)) return null;
+            return (
+              <Section
+                key={section.id}
+                title={section.title}
+                action={isAdmin ? (
+                  <button
+                    onClick={async () => {
+                      if (refreshingArtists) return;
+                      setRefreshingArtists(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("refresh-artist-images", {
+                          body: { only_missing: false, force_refresh: true },
+                        });
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["custom-artist-image"] });
+                        queryClient.invalidateQueries({ queryKey: ["artist-image"] });
+                        queryClient.invalidateQueries({ queryKey: ["home-artists"] });
+                        toast.success(`${data.updated} photo${data.updated > 1 ? "s" : ""} mise${data.updated > 1 ? "s" : ""} à jour`);
+                      } catch {
+                        toast.error("Erreur lors du rafraîchissement");
+                      } finally {
+                        setRefreshingArtists(false);
+                      }
+                    }}
+                    disabled={refreshingArtists}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold active:scale-95 transition-transform disabled:opacity-50"
+                    style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}
+                  >
+                    {refreshingArtists ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                    {refreshingArtists ? "Refresh…" : "Refresh"}
+                  </button>
+                ) : undefined}
+              >
+                <ContentStrip>
+                  {loadingArtists ? (
+                    <StripSkeleton count={6} />
+                  ) : (
+                    artists?.map((artist, i) => (
+                      <ArtistCoverCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                    ))
+                  )}
+                </ContentStrip>
+              </Section>
+            );
+          }
 
-        if (section.id === "albums") {
-          if (!loadingAlbums && (!albums || albums.length === 0)) return null;
-          return (
-            <Section key={section.id} title={section.title}>
-              <ContentStrip>
-                {loadingAlbums ? (
-                  <StripSkeleton count={6} />
-                ) : (
-                  albums?.map((album, i) => (
-                    <AlbumOverlayCard key={album.id} album={album} index={i} navigate={navigate} />
-                  ))
-                )}
-              </ContentStrip>
-            </Section>
-          );
-        }
+          if (section.id === "albums") {
+            if (!loadingAlbums && (!albums || albums.length === 0)) return null;
+            return (
+              <Section key={section.id} title={section.title}>
+                <ContentStrip>
+                  {loadingAlbums ? (
+                    <StripSkeleton count={6} />
+                  ) : (
+                    albums?.map((album, i) => (
+                      <AlbumOverlayCard key={album.id} album={album} index={i} navigate={navigate} />
+                    ))
+                  )}
+                </ContentStrip>
+              </Section>
+            );
+          }
 
-        const data = builtinDataMap[section.id];
-        if (!data) return null;
-        return <div key={section.id}>{renderSection(section.title, data.songs, data.loading)}</div>;
-      })}
+          const data = builtinDataMap[section.id];
+          if (!data) return null;
+          return <div key={section.id}>{renderSection(section.title, data.songs, data.loading)}</div>;
+        })}
+      </div>
 
       {/* Empty state */}
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
@@ -331,16 +337,16 @@ const HomePage = () => {
             <Music className="w-7 h-7 text-muted-foreground/20" />
           </div>
           <h2 className="text-lg font-bold text-foreground mb-1">Aucune musique pour le moment</h2>
-          <p className="text-[13px] text-muted-foreground/50 max-w-xs mx-auto">
+          <p className="text-[13px] max-w-xs mx-auto" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
             L'administrateur n'a pas encore ajouté de morceaux. Revenez bientôt !
           </p>
         </div>
       )}
-
     </div>
   );
 };
 
+/* ── Artist Card ── */
 function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const { data: customImage } = useQuery({
@@ -361,16 +367,13 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
   const imageUrl = customImage || deezerImage || artist.cover;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03, duration: 0.25, ease: "easeOut" }}
+    <div
       className="flex-shrink-0 w-[130px] md:w-[150px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
     >
       <div
         className="relative w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl overflow-hidden mb-1.5"
-        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.12)" }}
+        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.15)" }}
       >
         {imageUrl ? (
           <>
@@ -382,7 +385,7 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
               alt={artist.name}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
@@ -390,6 +393,7 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
             <User className="w-8 h-8 text-muted-foreground/20" />
           </div>
         )}
+        {/* Overlay with name */}
         <div
           className="absolute inset-x-0 bottom-0 h-[50%] flex items-end p-2.5"
           style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, transparent 100%)" }}
@@ -399,10 +403,11 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
           </p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
+/* ── Top Artist Bubble ── */
 function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; count: number; cover: string }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const { data: customImage } = useQuery({
     queryKey: ["custom-artist-image", artist.name],
@@ -436,15 +441,11 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
   };
 
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.35, ease: "easeOut" }}
+    <button
       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
       className="flex flex-col items-center gap-2 flex-shrink-0 group active:scale-[0.93] transition-transform duration-200"
     >
       <div className="relative">
-        {/* Ring glow for podium */}
         {isPodium && (
           <div
             className="absolute -inset-[3px] rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
@@ -484,27 +485,25 @@ function TopArtistBubble({ artist, index, navigate }: { artist: { name: string; 
       </div>
       <div className="text-center mt-0.5" style={{ maxWidth: size + 12 }}>
         <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{artist.name}</p>
-        <p className="text-[9px] text-muted-foreground/50 mt-0.5">{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
+        <p className="text-[9px] mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>{artist.count} écoute{artist.count > 1 ? "s" : ""}</p>
       </div>
-    </motion.button>
+    </button>
   );
 }
 
+/* ── Album Card ── */
 function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; title: string; artist: string; cover_url: string | null }; index: number; navigate: ReturnType<typeof useNavigate> }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const imageUrl = album.cover_url || "";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03, duration: 0.25, ease: "easeOut" }}
+    <div
       className="flex-shrink-0 w-[130px] md:w-[150px] cursor-pointer group snap-start active:scale-[0.96] transition-transform duration-150"
       onClick={() => navigate(`/album/${album.id}`)}
     >
       <div
         className="relative w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-2xl overflow-hidden mb-1.5"
-        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.12)" }}
+        style={{ boxShadow: "0 3px 16px hsl(0 0% 0% / 0.15)" }}
       >
         {imageUrl ? (
           <>
@@ -516,7 +515,7 @@ function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; tit
               alt={album.title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
         ) : (
@@ -536,7 +535,7 @@ function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; tit
           </p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
