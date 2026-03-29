@@ -34,4 +34,12 @@ export const radioBrowserApi = {
   getByTag: (tag: string, limit = 30) => invoke({ action: "by_tag", tag, limit }),
   getByCountry: (country: string, limit = 30) => invoke({ action: "by_country", country, limit }),
   search: (query: string, limit = 30) => invoke({ action: "search", query, limit }),
+  getTagCounts: async (tags: string[]): Promise<Record<string, number>> => {
+    const { data, error } = await supabase.functions.invoke("radio-browser", {
+      body: { action: "tag_counts", tags },
+    });
+    if (error) throw new Error(error.message);
+    if (!data?.success) throw new Error(data?.error || "Tag counts error");
+    return data.counts || {};
+  },
 };
