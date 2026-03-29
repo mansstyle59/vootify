@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getStationLogoAsync } from "@/lib/radioLogos";
+import { getStationLogo } from "@/lib/radioLogos";
 
 export interface RadioBrowserStation {
   id: string;
@@ -21,12 +21,11 @@ async function invoke(body: Record<string, unknown>): Promise<RadioBrowserStatio
   if (!data?.success) throw new Error(data?.error || "Radio browser error");
   const stations: RadioBrowserStation[] = data.stations || [];
 
-  // Return stations immediately with basic covers, enrich asynchronously won't block
-  // Use synchronous local logo matching only — skip slow Deezer lookups at fetch time
-  return stations.map((s) => {
-    const { getStationLogo } = require("@/lib/radioLogos");
-    return { ...s, coverUrl: getStationLogo(s.name, s.coverUrl) };
-  });
+  // Use synchronous local logo matching — no slow Deezer lookups blocking display
+  return stations.map((s) => ({
+    ...s,
+    coverUrl: getStationLogo(s.name, s.coverUrl),
+  }));
 }
 
 export const radioBrowserApi = {
