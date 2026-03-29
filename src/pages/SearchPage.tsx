@@ -611,62 +611,6 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* Friday Releases */}
-            {newReleases.length > 0 && (
-              <section>
-                <h2 className="text-[18px] font-bold text-foreground mb-3">Nouveautés du vendredi 🇫🇷</h2>
-                <div className="flex gap-3.5 overflow-x-auto scrollbar-hide pb-2">
-                  {newReleases.map((release) => (
-                    <div key={release.id} className="flex-shrink-0 w-[140px] snap-start group">
-                      <div
-                        className="relative w-[140px] h-[140px] rounded-xl overflow-hidden mb-2"
-                        style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.08)" }}
-                      >
-                        <button onClick={() => playFridayRelease(release)} className="w-full h-full">
-                          {release.coverUrl ? (
-                            <LazyImage src={release.coverUrl} alt={release.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" fallback wrapperClassName="w-full h-full" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
-                              <Music className="w-6 h-6 text-muted-foreground/15" />
-                            </div>
-                          )}
-                        </button>
-                        {/* Play button */}
-                        <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <button
-                            onClick={() => playFridayRelease(release)}
-                            className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                            style={{ background: "hsl(var(--primary))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)" }}
-                          >
-                            <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
-                          </button>
-                        </div>
-                        {availableReleases.has(release.albumId) && (
-                          <div
-                            className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
-                            style={{ background: "hsl(var(--primary) / 0.85)" }}
-                          >
-                            <Check className="w-2 h-2 text-primary-foreground" />
-                            <span className="text-[8px] font-bold text-primary-foreground">DISPO</span>
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openAddToPlaylist(release); }}
-                          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all active:scale-90"
-                          style={{ background: "hsl(0 0% 0% / 0.5)" }}
-                        >
-                          <PlusCircle className="w-3.5 h-3.5 text-white" />
-                        </button>
-                      </div>
-                      <button onClick={() => playFridayRelease(release)} className="text-left w-full">
-                        <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{release.title}</p>
-                        <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{release.artist}</p>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {/* Genre Cards */}
             {genreCards.length > 0 && (
