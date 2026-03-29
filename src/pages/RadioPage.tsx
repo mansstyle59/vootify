@@ -640,56 +640,6 @@ const RadioPage = () => {
     <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
   ), [stationTileProps]);
 
-  /* ── Search Result Row — TuneIn list style ── */
-  function SearchResultRow({ station }: { station: RadioBrowserStation }) {
-    const isSaved = savedIds.has(station.id);
-    const isActive = currentSong?.id === station.id;
-    const isActivePlaying = isActive && isPlaying;
-    const stationLogo = getStationLogo(station.name, station.coverUrl);
-    const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "";
-
-    return (
-      <div
-        onClick={() => playStation(station)}
-        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150 active:bg-foreground/[0.03] ${
-          isActive ? "bg-primary/[0.06]" : ""
-        }`}
-      >
-        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/8">
-          <LazyImage src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" fallback wrapperClassName="w-full h-full" />
-          {isActivePlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/25 rounded-xl">
-              <Volume2 className="w-4 h-4 text-white" />
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`text-[13px] font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
-          </div>
-          {isActive && radioMetadata?.title ? (
-            <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-[11px] text-primary/70 font-medium" />
-          ) : (station as any)._nowPlaying ? (
-            <MarqueeText text={`♪ ${(station as any)._nowPlaying}`} className="text-[11px] text-primary/60" />
-          ) : (
-            <p className="text-[11px] text-muted-foreground capitalize truncate">{station.genre || "Radio"}</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {station.countryCode && <span className="text-[9px] font-medium text-muted-foreground/50 uppercase">{station.countryCode}</span>}
-          <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-            className="p-1.5 rounded-full active:scale-90 transition-transform"
-          >
-            <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
