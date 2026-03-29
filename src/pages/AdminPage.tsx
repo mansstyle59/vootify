@@ -1980,6 +1980,17 @@ function HomeTab() {
   );
 }
 
+/** Parse a Deezer URL to extract type and ID */
+function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist"; id: string } | null {
+  try {
+    const m = url.match(/deezer\.com\/(?:\w+\/)?(album|playlist|artist)\/(\d+)/i);
+    if (m) return { type: m[1] as any, id: m[2] };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Modal to pick songs for a custom section */
 function SongPickerModal({
   sectionId,
@@ -1996,6 +2007,13 @@ function SongPickerModal({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+
+  // Deezer import state
+  const [mode, setMode] = useState<"library" | "deezer">("library");
+  const [deezerUrl, setDeezerUrl] = useState("");
+  const [deezerLoading, setDeezerLoading] = useState(false);
+  const [deezerTracks, setDeezerTracks] = useState<{ id: number; title: string; artist: string; cover_url: string; album: string; existsInDb: boolean; dbSongId?: string }[]>([]);
+  const [deezerError, setDeezerError] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -2041,6 +2059,75 @@ function SongPickerModal({
     onClose();
   };
 
+  /** Fetch tracks from a Deezer link */
+  const fetchDeezer = async () => {
+    const parsed = parseDeezerUrl(deezerUrl);
+    if (!parsed) {
+      setDeezerError("Lien Deezer invalide. Formats acceptés : album, playlist ou artiste.");
+      return;
+    }
+    setDeezerError("");
+    setDeezerLoading(true);
+    setDeezerTracks([]);
+
+    try {
+      let tracks: { id: number; title: string; artist: { name: string }; album: { title: string; cover_medium: string } }[] = [];
+
+      if (parsed.type === "album") {
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/album/${parsed.id}` },
+        });
+        tracks = (data?.tracks?.data || []).map((t: any) => ({
+          ...t,
+          album: { title: data.title || "", cover_medium: data.cover_medium || "" },
+        }));
+      } else if (parsed.type === "playlist") {
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/playlist/${parsed.id}` },
+        });
+        tracks = (data?.tracks?.data || []).map((t: any) => ({
+          ...t,
+          album: { title: t.album?.title || "", cover_medium: t.album?.cover_medium || "" },
+        }));
+      } else if (parsed.type === "artist") {
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/artist/${parsed.id}/top?limit=50` },
+        });
+        tracks = (data?.data || []).map((t: any) => ({
+          ...t,
+          album: { title: t.album?.title || "", cover_medium: t.album?.cover_medium || "" },
+        }));
+      }
+
+      // Match against existing DB songs (fuzzy by normalized artist+title)
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+      const dbIndex = new Map<string, string>();
+      for (const s of allSongs) {
+        dbIndex.set(normalize(s.artist) + "||" + normalize(s.title), s.id);
+      }
+
+      const result = tracks.map((t) => {
+        const key = normalize(t.artist?.name || "") + "||" + normalize(t.title || "");
+        const dbId = dbIndex.get(key);
+        return {
+          id: t.id,
+          title: t.title,
+          artist: t.artist?.name || "Inconnu",
+          cover_url: t.album?.cover_medium || "",
+          album: t.album?.title || "",
+          existsInDb: !!dbId,
+          dbSongId: dbId,
+        };
+      });
+
+      setDeezerTracks(result);
+    } catch (e) {
+      setDeezerError("Erreur lors de la récupération des morceaux Deezer.");
+    } finally {
+      setDeezerLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
@@ -2062,62 +2149,171 @@ function SongPickerModal({
           </button>
         </div>
 
-        {/* Search */}
-        <div className="p-3 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un morceau..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-              autoFocus
-            />
-          </div>
+        {/* Mode toggle */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setMode("library")}
+            className={`flex-1 py-2 text-xs font-semibold text-center transition-colors ${
+              mode === "library" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Music className="w-3.5 h-3.5 inline mr-1" />
+            Bibliothèque
+          </button>
+          <button
+            onClick={() => setMode("deezer")}
+            className={`flex-1 py-2 text-xs font-semibold text-center transition-colors ${
+              mode === "deezer" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 inline mr-1" />
+            Lien Deezer
+          </button>
         </div>
 
-        {/* Song list */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        {mode === "library" ? (
+          <>
+            {/* Search */}
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher un morceau..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
             </div>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-8">Aucun morceau trouvé</p>
-          ) : (
-            filtered.map((song) => {
-              const isSelected = selected.has(song.id);
-              return (
+
+            {/* Song list */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">Aucun morceau trouvé</p>
+              ) : (
+                filtered.map((song) => {
+                  const isSelected = selected.has(song.id);
+                  return (
+                    <button
+                      key={song.id}
+                      onClick={() => toggle(song.id)}
+                      className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors ${
+                        isSelected
+                          ? "bg-primary/10 border border-primary/20"
+                          : "hover:bg-secondary/60 border border-transparent"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                        isSelected ? "bg-primary border-primary" : "border-border"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      {song.cover_url ? (
+                        <img src={song.cover_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <Music className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{song.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Deezer URL input */}
+            <div className="p-3 border-b border-border space-y-2">
+              <div className="relative flex gap-2">
+                <input
+                  value={deezerUrl}
+                  onChange={(e) => setDeezerUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && fetchDeezer()}
+                  placeholder="https://www.deezer.com/album/..."
+                  className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
                 <button
-                  key={song.id}
-                  onClick={() => toggle(song.id)}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors ${
-                    isSelected
-                      ? "bg-primary/10 border border-primary/20"
-                      : "hover:bg-secondary/60 border border-transparent"
-                  }`}
+                  onClick={fetchDeezer}
+                  disabled={deezerLoading || !deezerUrl.trim()}
+                  className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 flex items-center gap-1"
                 >
-                  <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                    isSelected ? "bg-primary border-primary" : "border-border"
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                  </div>
-                  {song.cover_url ? (
-                    <img src={song.cover_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                      <Music className="w-3.5 h-3.5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{song.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
-                  </div>
+                  {deezerLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
                 </button>
-              );
-            })
-          )}
-        </div>
+              </div>
+              {deezerError && <p className="text-xs text-destructive">{deezerError}</p>}
+              <p className="text-[10px] text-muted-foreground">Album, playlist ou artiste Deezer</p>
+            </div>
+
+            {/* Deezer tracks list */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+              {deezerLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              ) : deezerTracks.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  {deezerUrl.trim() ? "Collez un lien Deezer et appuyez sur Rechercher" : "Collez un lien Deezer pour importer des morceaux"}
+                </p>
+              ) : (
+                deezerTracks.map((track) => {
+                  const dbId = track.dbSongId;
+                  const isSelected = dbId ? selected.has(dbId) : false;
+                  return (
+                    <button
+                      key={track.id}
+                      onClick={() => {
+                        if (dbId) toggle(dbId);
+                        else toast.info("Ce morceau n'existe pas dans votre bibliothèque");
+                      }}
+                      className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-left transition-colors ${
+                        isSelected
+                          ? "bg-primary/10 border border-primary/20"
+                          : dbId
+                          ? "hover:bg-secondary/60 border border-transparent"
+                          : "border border-transparent opacity-60"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                        isSelected ? "bg-primary border-primary" : dbId ? "border-border" : "border-border/30"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      {track.cover_url ? (
+                        <img src={track.cover_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <Music className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-foreground truncate">{track.title}</p>
+                          {track.existsInDb && (
+                            <span className="flex-shrink-0 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[9px] font-bold uppercase tracking-wide">
+                              Local
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{track.artist} · {track.album}</p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
 
         {/* Footer */}
         <div className="p-3 border-t border-border flex items-center justify-between gap-3">
