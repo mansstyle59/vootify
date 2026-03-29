@@ -122,6 +122,8 @@ const ProfilePage = () => {
   const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
   const [offlineCacheSize, setOfflineCacheSize] = useState<number | null>(null);
   const [offlineCount, setOfflineCount] = useState(0);
+  const [coverCacheCount, setCoverCacheCount] = useState(0);
+  const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
   const biometricSupported = isBiometricAvailable();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -157,6 +159,32 @@ const ProfilePage = () => {
     }
     offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
     offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
+
+    // Count pre-cached covers
+    (async () => {
+      try {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open("music-offline-cache", 2);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        const tx = db.transaction("covers", "readonly");
+        const store = tx.objectStore("covers");
+        const allKeys = await new Promise<IDBValidKey[]>((resolve) => {
+          const r = store.getAllKeys();
+          r.onsuccess = () => resolve(r.result || []);
+          r.onerror = () => resolve([]);
+        });
+        setCoverCacheCount(allKeys.length);
+        const allBlobs = await new Promise<Blob[]>((resolve) => {
+          const r = store.getAll();
+          r.onsuccess = () => resolve(r.result || []);
+          r.onerror = () => resolve([]);
+        });
+        const total = allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0);
+        setCoverCacheSize(total);
+      } catch {}
+    })();
   }, []);
 
   useEffect(() => {
