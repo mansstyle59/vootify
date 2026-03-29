@@ -913,10 +913,11 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
             onClick={togglePlay}
             className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
             style={{
-              background: "hsl(var(--foreground) / 0.12)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid hsl(var(--foreground) / 0.15)",
+              background: "linear-gradient(135deg, hsl(var(--foreground) / 0.15), hsl(var(--foreground) / 0.06))",
+              backdropFilter: "blur(80px) saturate(2.2)",
+              WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+              border: "0.5px solid hsl(var(--foreground) / 0.12)",
+              boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1)",
             }}
           >
             {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-current" /> : <Play className="w-8 h-8 text-foreground fill-current ml-1" />}
