@@ -7,7 +7,7 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { myRadioApi, buildMyRadioLogoMap, findMyRadioLogo } from "@/lib/myRadioApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, Check, LayoutGrid, List, Volume2, RefreshCw } from "lucide-react";
+import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, Check, LayoutGrid, List, Volume2 } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { Input } from "@/components/ui/input";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
@@ -356,7 +356,7 @@ const RadioPage = () => {
   const showNowPlaying = isLiveRadio && currentSong;
 
   /* ── Station List Item ── */
-  const StationListItem = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
+  function StationListItem({ station, index }: { station: RadioBrowserStation; index: number }) {
     const isSaved = savedIds.has(station.id);
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
@@ -364,21 +364,15 @@ const RadioPage = () => {
     const displayCover = (isActive && radioMetadata?.coverUrl) || stationLogo || "";
 
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.03 }}
+      <div
         onClick={() => playStation(station)}
         className={`group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
           isActive
             ? "bg-primary/10 ring-1 ring-primary/20"
             : "hover:bg-card/60"
         }`}
-        style={{
-          backdropFilter: isActive ? "blur(20px) saturate(1.5)" : undefined,
-        }}
       >
-        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-secondary/40 ring-1 ring-border/10">
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/10">
           <LazyImage src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" fallback wrapperClassName="w-full h-full" />
           <div className={`absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity ${isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
             {isActivePlaying ? <Volume2 className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
@@ -416,12 +410,12 @@ const RadioPage = () => {
             </button>
           )}
         </div>
-      </motion.div>
+      </div>
     );
-  }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
+  }
 
-  /* ── Station Grid Card ── */
-  const StationCard = useCallback(({ station, index }: { station: RadioBrowserStation; index: number }) => {
+  /* ── Station Grid Card (proper component for hooks) ── */
+  function StationCard({ station, index }: { station: RadioBrowserStation; index: number }) {
     const isSaved = savedIds.has(station.id);
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
@@ -460,10 +454,7 @@ const RadioPage = () => {
     const actionsVisible = showCardActions || isActivePlaying;
 
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: index * 0.04, type: "spring", stiffness: 300, damping: 25 }}
+      <div
         className="group cursor-pointer active:scale-[0.97] transition-transform duration-150"
         onClick={handleCardClick}
         onTouchStart={handleTouchStart}
@@ -493,7 +484,9 @@ const RadioPage = () => {
           />
 
           {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent transition-opacity duration-300 ${
+            actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`} />
 
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -512,17 +505,12 @@ const RadioPage = () => {
 
           {/* Live badge */}
           {isActivePlaying && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{
-                background: "hsl(var(--destructive) / 0.9)",
-              }}
+            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{ background: "hsl(var(--destructive) / 0.9)" }}
             >
               <LiveEqualizer color="bg-white" />
               <span className="text-[9px] font-bold text-white tracking-[0.15em] uppercase">Live</span>
-            </motion.div>
+            </div>
           )}
 
           {/* Action buttons — long-press on mobile, hover on desktop */}
@@ -532,21 +520,19 @@ const RadioPage = () => {
             {isCustomTab ? (
               <>
                 <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
-                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150"
                   style={{
-                    background: "hsl(0 0% 100% / 0.15)",
+                    background: "hsl(0 0% 100% / 0.18)",
                     backdropFilter: "blur(12px) saturate(1.5)",
-                    boxShadow: "0 2px 8px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
                   }}
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
-                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150"
                   style={{
-                    background: "hsl(var(--destructive) / 0.6)",
+                    background: "hsl(var(--destructive) / 0.65)",
                     backdropFilter: "blur(12px) saturate(1.5)",
-                    boxShadow: "0 2px 8px hsl(var(--destructive) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.1)",
                   }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -554,11 +540,10 @@ const RadioPage = () => {
               </>
             ) : (
               <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-                className="p-2 rounded-full text-white active:scale-90 transition-all duration-150 hover:brightness-125"
+                className="p-2 rounded-full text-white active:scale-90 transition-all duration-150"
                 style={{
-                  background: "hsl(0 0% 100% / 0.15)",
+                  background: "hsl(0 0% 100% / 0.18)",
                   backdropFilter: "blur(12px) saturate(1.5)",
-                  boxShadow: "0 2px 8px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
                 }}
               >
                 <Heart className={`w-3.5 h-3.5 transition-colors ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
@@ -567,7 +552,9 @@ const RadioPage = () => {
           </div>
 
           {/* Bottom badges */}
-          <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className={`absolute bottom-2 left-2 right-2 flex items-end justify-between transition-opacity ${
+            actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}>
             {station.countryCode && (
               <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium text-white/90 uppercase"
                 style={{ background: "hsl(0 0% 0% / 0.35)" }}>
@@ -605,9 +592,9 @@ const RadioPage = () => {
             <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize" />
           )}
         </div>
-      </motion.div>
+      </div>
     );
-  }, [savedIds, currentSong?.id, isPlaying, radioMetadata, isCustomTab]);
+  }
 
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
