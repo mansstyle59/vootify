@@ -438,6 +438,33 @@ const ProfilePage = () => {
               </div>
             </>
           )}
+          {/* Auto-download Wi-Fi toggle */}
+          <Divider />
+          <div className="px-4 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--primary) / 0.1)" }}>
+              <Wifi className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-foreground">Téléchargement auto</p>
+              <p className="text-[10px] text-muted-foreground/50 font-medium">En Wi-Fi, cache favoris & récents</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !isAutoDownloadEnabled();
+                setAutoDownloadEnabled(next);
+                setAutoDownloadOn(next);
+                toast.success(next ? "Téléchargement auto activé" : "Téléchargement auto désactivé");
+              }}
+              className="relative w-11 h-6 rounded-full transition-colors"
+              style={{ background: autoDownloadOn ? "hsl(var(--primary))" : "hsl(var(--muted))" }}
+            >
+              <motion.div
+                animate={{ x: autoDownloadOn ? 20 : 3 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+              />
+            </button>
+          </div>
         </GlassCard>
 
         {/* ─── STOCKAGE COMPACT ─── */}
