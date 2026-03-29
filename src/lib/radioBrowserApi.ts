@@ -21,15 +21,12 @@ async function invoke(body: Record<string, unknown>): Promise<RadioBrowserStatio
   if (!data?.success) throw new Error(data?.error || "Radio browser error");
   const stations: RadioBrowserStation[] = data.stations || [];
 
-  // Enrich covers in parallel via Deezer search for stations with poor/missing covers
-  const enriched = await Promise.all(
-    stations.map(async (s) => {
-      const betterCover = await getStationLogoAsync(s.name, s.coverUrl);
-      return { ...s, coverUrl: betterCover };
-    })
-  );
-
-  return enriched;
+  // Return stations immediately with basic covers, enrich asynchronously won't block
+  // Use synchronous local logo matching only — skip slow Deezer lookups at fetch time
+  return stations.map((s) => {
+    const { getStationLogo } = require("@/lib/radioLogos");
+    return { ...s, coverUrl: getStationLogo(s.name, s.coverUrl) };
+  });
 }
 
 export const radioBrowserApi = {
