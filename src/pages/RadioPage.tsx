@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +6,7 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { radioBrowserApi, type RadioBrowserStation } from "@/lib/radioBrowserApi";
 import { myRadioApi, buildMyRadioLogoMap, findMyRadioLogo } from "@/lib/myRadioApi";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, Check, LayoutGrid, List, Volume2 } from "lucide-react";
+import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, Check, Volume2, ChevronRight, X, Headphones, Globe, Music2 } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { Input } from "@/components/ui/input";
 import { useRadioMetadata } from "@/hooks/useRadioMetadata";
@@ -43,10 +42,6 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
   );
 }
 
-type ViewMode = "grid" | "list";
-
-const GENRE_TAGS = ["all", "pop", "rock", "jazz", "classical", "hip hop", "electronic", "news"];
-
 /* ── Live Equalizer ── */
 const LiveEqualizer = ({ color = "bg-primary" }: { color?: string }) => (
   <div className="flex items-end gap-[2px] h-4">
@@ -56,30 +51,104 @@ const LiveEqualizer = ({ color = "bg-primary" }: { color?: string }) => (
   </div>
 );
 
-/* ── Genre Pill ── */
-function GenrePill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+/* ── TuneIn-style Category Card ── */
+const CATEGORY_ICONS: Record<string, typeof Radio> = {
+  pop: Music2,
+  rock: Headphones,
+  jazz: Music2,
+  classical: Music2,
+  "hip hop": Headphones,
+  electronic: Headphones,
+  news: Globe,
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  pop: "220 70% 55%",
+  rock: "0 65% 50%",
+  jazz: "35 80% 50%",
+  classical: "270 50% 55%",
+  "hip hop": "160 60% 40%",
+  electronic: "280 70% 55%",
+  news: "200 60% 45%",
+};
+
+function CategoryCard({ genre, active, onClick }: { genre: string; active: boolean; onClick: () => void }) {
+  const Icon = CATEGORY_ICONS[genre] || Radio;
+  const color = CATEGORY_COLORS[genre] || "var(--primary)";
+
   return (
     <button
       onClick={onClick}
-      className="relative px-4 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition-all duration-200 active:scale-95"
+      className="flex-shrink-0 relative overflow-hidden rounded-2xl active:scale-[0.95] transition-transform duration-150"
       style={{
-        color: active ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-        background: !active ? "hsl(var(--foreground) / 0.04)" : undefined,
+        width: 120,
+        height: 72,
+        background: active
+          ? `hsl(${color})`
+          : `hsl(${color} / 0.12)`,
       }}
     >
+      <Icon
+        className="absolute -bottom-1 -right-1 opacity-15"
+        style={{ width: 48, height: 48, color: active ? "white" : `hsl(${color})` }}
+      />
+      <div className="relative z-10 h-full flex flex-col justify-end p-3">
+        <span
+          className="text-[12px] font-bold capitalize leading-tight"
+          style={{ color: active ? "white" : `hsl(${color})` }}
+        >
+          {genre}
+        </span>
+      </div>
       {active && (
-        <motion.div
-          layoutId="radioGenrePill"
-          className="absolute inset-0 rounded-full bg-primary"
-          transition={{ type: "spring", stiffness: 500, damping: 32 }}
-        />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-white/80" />
       )}
-      <span className="relative z-10">{label === "all" ? "Toutes" : label}</span>
     </button>
   );
 }
 
-/* ── Now Playing Hero ── */
+/* ── Horizontal station strip ── */
+function StationStrip({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex gap-3 overflow-x-auto pl-4 pr-4 md:pl-8 md:pr-8 pb-1 scrollbar-hide"
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
+      {children}
+      <div className="flex-shrink-0 w-1" aria-hidden />
+    </div>
+  );
+}
+
+/* ── Section header — TuneIn style ── */
+function SectionHeader({ title, count, onSeeAll }: { title: string; count?: number; onSeeAll?: () => void }) {
+  return (
+    <div className="flex items-end justify-between px-4 md:px-8 mb-2.5 mt-6">
+      <div>
+        <h2 className="text-[18px] md:text-[20px] font-extrabold text-foreground leading-tight tracking-tight">
+          {title}
+        </h2>
+        {count !== undefined && count > 0 && (
+          <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.45)" }}>
+            {count} station{count > 1 ? "s" : ""}
+          </p>
+        )}
+      </div>
+      {onSeeAll && (
+        <button
+          onClick={onSeeAll}
+          className="flex items-center gap-0.5 text-[13px] font-semibold active:opacity-70 transition-opacity"
+          style={{ color: "hsl(var(--primary))" }}
+        >
+          Voir tout
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ── Now Playing Hero — TuneIn style ── */
 function NowPlayingHero({
   station,
   radioMetadata,
@@ -96,54 +165,53 @@ function NowPlayingHero({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative rounded-3xl overflow-hidden mx-4 md:mx-8 mb-6"
-      style={{ minHeight: 150 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="relative overflow-hidden mx-4 md:mx-8 mb-4 rounded-2xl"
+      style={{ minHeight: 120 }}
     >
-      {/* Layered BG */}
+      {/* BG */}
       <div className="absolute inset-0 transition-colors duration-1000" style={{ background: dominantColor || "hsl(var(--secondary))" }} />
-      <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 blur-[80px] scale-[2.5]" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-      <div className="absolute inset-0" style={{ backdropFilter: "blur(2px) saturate(1.4)" }} />
+      <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[60px] scale-[2]" />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(0 0% 0% / 0.5), hsl(0 0% 0% / 0.3))" }} />
 
-      <div className="relative z-10 flex items-center gap-5 p-5 md:p-6">
-        {/* Cover with glow */}
+      <div className="relative z-10 flex items-center gap-4 p-4">
+        {/* Cover */}
         <button onClick={onTogglePlay} className="relative flex-shrink-0 active:scale-95 transition-transform">
-          <div className="absolute -inset-2 rounded-2xl opacity-40 blur-xl" style={{ background: dominantColor || "hsl(var(--primary))" }} />
           <img
             src={coverUrl}
             alt={station.name}
-            className="relative w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover ring-1 ring-white/10"
-            style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }}
+            className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover ring-1 ring-white/10"
+            style={{ boxShadow: "0 6px 24px rgba(0,0,0,0.4)" }}
           />
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/20">
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/20">
             {isPlaying ? (
-              <Pause className="w-9 h-9 text-white drop-shadow-lg" />
+              <Pause className="w-8 h-8 text-white drop-shadow-lg" />
             ) : (
-              <Play className="w-9 h-9 text-white drop-shadow-lg ml-0.5" />
+              <Play className="w-8 h-8 text-white drop-shadow-lg ml-0.5" />
             )}
           </div>
         </button>
 
         {/* Info */}
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/90 backdrop-blur-md shadow-lg shadow-destructive/30">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: "hsl(var(--destructive) / 0.85)" }}>
               <LiveEqualizer color="bg-white" />
-              <span className="text-[9px] font-bold text-white tracking-[0.15em] uppercase">EN DIRECT</span>
+              <span className="text-[8px] font-bold text-white tracking-[0.12em] uppercase">EN DIRECT</span>
             </span>
           </div>
-          <MarqueeText text={station.name} className="text-lg md:text-xl font-bold text-white leading-tight" />
+          <MarqueeText text={station.name} className="text-base md:text-lg font-bold text-white leading-tight" />
           {radioMetadata?.title ? (
             <div className="space-y-0.5">
-              <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-sm font-semibold text-white/90" />
+              <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-[12px] font-semibold text-white/85" />
               {radioMetadata.artist && (
-                <MarqueeText text={radioMetadata.artist} className="text-xs text-white/60" />
+                <MarqueeText text={radioMetadata.artist} className="text-[11px] text-white/55" />
               )}
             </div>
           ) : (
-            <p className="text-sm text-white/50 truncate">{station.artist}</p>
+            <p className="text-[12px] text-white/45 truncate">{station.artist}</p>
           )}
         </div>
       </div>
@@ -153,16 +221,19 @@ function NowPlayingHero({
 
 /* ═══════════════════════════════════════════════════════════════ */
 
+const GENRE_LIST = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news"];
+
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [activeGenre, setActiveGenre] = useState("all");
+  const [activeGenre, setActiveGenre] = useState<string | null>(null);
+  const [showAllStations, setShowAllStations] = useState(false);
   const [deletingStation, setDeletingStation] = useState<{ id: string; name: string } | null>(null);
   const queryClient = useQueryClient();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = useRadioMetadata(
@@ -294,69 +365,190 @@ const RadioPage = () => {
     enabled: searchQuery.length >= 2,
   });
 
-  const isLoading = searchQuery.length >= 2 ? loadingSearch : loadingCustom;
+  const isSearching = searchQuery.length >= 2;
+  const isLoading = isSearching ? loadingSearch : loadingCustom;
 
-  const stations = useMemo(() => {
-    let result: RadioBrowserStation[];
+  // Enriched custom stations
+  const enrichedCustom = useMemo(() => {
+    if (!myRadioLogoMap) return customStations;
+    return customStations.map(s => {
+      const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+      if (hdLogo && (!s.coverUrl || s.coverUrl.length < 10)) return { ...s, coverUrl: hdLogo };
+      return s;
+    });
+  }, [customStations, myRadioLogoMap]);
 
-    if (searchQuery.length >= 2) {
-      const enrichedBrowser = searchResults.map(s => {
-        if (myRadioLogoMap) {
-          const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
-          if (hdLogo) return { ...s, coverUrl: hdLogo };
-        }
-        return s;
-      });
-      const seenNames = new Set<string>();
-      const merged: RadioBrowserStation[] = [];
-      for (const mr of myRadioResults) {
-        const nameLower = mr.name.toLowerCase().trim();
-        const browserMatch = enrichedBrowser.find(b =>
-          b.name.toLowerCase().trim() === nameLower ||
-          b.name.toLowerCase().includes(nameLower) ||
-          nameLower.includes(b.name.toLowerCase().trim())
-        );
-        if (browserMatch) {
-          merged.push({ ...browserMatch, coverUrl: mr.coverUrl || browserMatch.coverUrl });
-          seenNames.add(nameLower);
-          seenNames.add(browserMatch.name.toLowerCase().trim());
-        } else {
-          merged.push(mr);
-          seenNames.add(nameLower);
-        }
+  // Merge search results
+  const searchStations = useMemo(() => {
+    if (!isSearching) return [];
+    const enrichedBrowser = searchResults.map(s => {
+      if (myRadioLogoMap) {
+        const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+        if (hdLogo) return { ...s, coverUrl: hdLogo };
       }
-      for (const s of enrichedBrowser) {
-        if (!seenNames.has(s.name.toLowerCase().trim())) {
-          merged.push(s);
-          seenNames.add(s.name.toLowerCase().trim());
-        }
-      }
-      result = merged;
-    } else {
-      result = myRadioLogoMap
-        ? customStations.map(s => {
-            const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
-            if (hdLogo && (!s.coverUrl || s.coverUrl.length < 10)) return { ...s, coverUrl: hdLogo };
-            return s;
-          })
-        : customStations;
-    }
-
-    // Apply genre filter
-    if (activeGenre !== "all") {
-      result = result.filter(s =>
-        s.genre?.toLowerCase().includes(activeGenre.toLowerCase())
+      return s;
+    });
+    const seenNames = new Set<string>();
+    const merged: RadioBrowserStation[] = [];
+    for (const mr of myRadioResults) {
+      const nameLower = mr.name.toLowerCase().trim();
+      const browserMatch = enrichedBrowser.find(b =>
+        b.name.toLowerCase().trim() === nameLower ||
+        b.name.toLowerCase().includes(nameLower) ||
+        nameLower.includes(b.name.toLowerCase().trim())
       );
+      if (browserMatch) {
+        merged.push({ ...browserMatch, coverUrl: mr.coverUrl || browserMatch.coverUrl });
+        seenNames.add(nameLower);
+        seenNames.add(browserMatch.name.toLowerCase().trim());
+      } else {
+        merged.push(mr);
+        seenNames.add(nameLower);
+      }
     }
+    for (const s of enrichedBrowser) {
+      if (!seenNames.has(s.name.toLowerCase().trim())) {
+        merged.push(s);
+        seenNames.add(s.name.toLowerCase().trim());
+      }
+    }
+    return merged;
+  }, [isSearching, searchResults, myRadioResults, myRadioLogoMap]);
 
-    return result;
-  }, [searchQuery, searchResults, myRadioResults, customStations, myRadioLogoMap, activeGenre]);
+  // Genre-filtered stations from saved
+  const genreStations = useMemo(() => {
+    if (!activeGenre) return [];
+    return enrichedCustom.filter(s =>
+      s.genre?.toLowerCase().includes(activeGenre.toLowerCase())
+    );
+  }, [enrichedCustom, activeGenre]);
 
-  const isCustomTab = searchQuery.length < 2;
   const showNowPlaying = isLiveRadio && currentSong;
 
-  /* ── Station List Item ── */
-  function StationListItem({ station, index }: { station: RadioBrowserStation; index: number }) {
+  const displayStations = showAllStations ? enrichedCustom : enrichedCustom.slice(0, 8);
+
+  /* ── Compact Station Card — TuneIn style ── */
+  function StationTile({ station }: { station: RadioBrowserStation }) {
+    const isSaved = savedIds.has(station.id);
+    const isActive = currentSong?.id === station.id;
+    const isActivePlaying = isActive && isPlaying;
+    const dynamicCover = isActive && radioMetadata?.coverUrl ? radioMetadata.coverUrl : null;
+    const stationLogo = getStationLogo(station.name, station.coverUrl);
+    const displayCover = dynamicCover || stationLogo || "";
+    const myRadioMeta = (station as any)._nowPlaying;
+
+    const [showActions, setShowActions] = useState(false);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
+    const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+
+    const handleTouchStart = useCallback(() => {
+      longPressTimer.current = setTimeout(() => {
+        setShowActions(true);
+        if (navigator.vibrate) navigator.vibrate(10);
+        hideTimer.current = setTimeout(() => setShowActions(false), 3500);
+      }, 400);
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+      clearTimeout(longPressTimer.current);
+    }, []);
+
+    const handleClick = useCallback(() => {
+      if (showActions) { setShowActions(false); return; }
+      playStation(station);
+    }, [showActions, station]);
+
+    return (
+      <div
+        className="flex-shrink-0 w-[120px] md:w-[140px] cursor-pointer group active:scale-[0.96] transition-transform duration-150 snap-start"
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      >
+        <div
+          className={`relative aspect-square rounded-xl overflow-hidden mb-2 transition-all duration-200 ${
+            isActive ? "ring-2 ring-primary/50" : "ring-1 ring-border/5"
+          }`}
+          style={{
+            boxShadow: isActive ? "0 4px 20px hsl(var(--primary) / 0.2)" : "0 1px 6px hsl(0 0% 0% / 0.06)",
+          }}
+        >
+          <div className="absolute inset-0 bg-card" />
+          <LazyImage
+            src={displayCover}
+            alt={station.name}
+            className="relative w-full h-full object-contain p-2.5 transition-transform duration-300 group-hover:scale-105"
+            fallback
+            wrapperClassName="w-full h-full"
+          />
+
+          {/* Play overlay */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+            isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`} style={{ background: "hsl(0 0% 0% / 0.25)" }}>
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: "hsl(var(--primary) / 0.9)", boxShadow: "0 2px 12px hsl(var(--primary) / 0.3)" }}
+            >
+              {isActivePlaying ? <Pause className="w-4 h-4 text-primary-foreground" /> : <Play className="w-4 h-4 text-primary-foreground ml-0.5" />}
+            </div>
+          </div>
+
+          {/* Live badge */}
+          {isActivePlaying && (
+            <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "hsl(var(--destructive) / 0.85)" }}>
+              <LiveEqualizer color="bg-white" />
+              <span className="text-[8px] font-bold text-white tracking-wider uppercase">Live</span>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className={`absolute top-1.5 right-1.5 flex gap-1 transition-all duration-200 ${
+            showActions ? "opacity-100 scale-100" : "opacity-0 scale-90 md:group-hover:opacity-100 md:group-hover:scale-100"
+          }`}>
+            {!isSearching ? (
+              <>
+                <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
+                  className="p-1.5 rounded-full text-white active:scale-90"
+                  style={{ background: "hsl(0 0% 100% / 0.2)", backdropFilter: "blur(8px)" }}
+                ><Pencil className="w-3 h-3" /></button>
+                <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
+                  className="p-1.5 rounded-full text-white active:scale-90"
+                  style={{ background: "hsl(var(--destructive) / 0.6)", backdropFilter: "blur(8px)" }}
+                ><Trash2 className="w-3 h-3" /></button>
+              </>
+            ) : (
+              <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
+                className="p-1.5 rounded-full text-white active:scale-90"
+                style={{ background: "hsl(0 0% 100% / 0.2)", backdropFilter: "blur(8px)" }}
+              >
+                <Heart className={`w-3 h-3 ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="px-0.5">
+          <div className="flex items-center gap-1">
+            {isActivePlaying && <LiveEqualizer />}
+            <MarqueeText text={station.name} className={`text-[11px] font-semibold leading-tight ${isActive ? "text-primary" : "text-foreground"}`} />
+          </div>
+          {isActive && radioMetadata?.title ? (
+            <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-[10px] text-primary/80 font-medium mt-0.5" />
+          ) : myRadioMeta ? (
+            <MarqueeText text={`♪ ${myRadioMeta}`} className="text-[10px] text-primary/60 font-medium mt-0.5" />
+          ) : (
+            <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize mt-0.5" />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Search Result Row — TuneIn list style ── */
+  function SearchResultRow({ station }: { station: RadioBrowserStation }) {
     const isSaved = savedIds.has(station.id);
     const isActive = currentSong?.id === station.id;
     const isActivePlaying = isActive && isPlaying;
@@ -366,231 +558,40 @@ const RadioPage = () => {
     return (
       <div
         onClick={() => playStation(station)}
-        className={`group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
-          isActive
-            ? "bg-primary/10 ring-1 ring-primary/20"
-            : "hover:bg-card/60"
+        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150 active:bg-foreground/[0.03] ${
+          isActive ? "bg-primary/[0.06]" : ""
         }`}
       >
-        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/10">
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/8">
           <LazyImage src={displayCover} alt={station.name} className="w-full h-full object-contain p-1" fallback wrapperClassName="w-full h-full" />
-          <div className={`absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity ${isActivePlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-            {isActivePlaying ? <Volume2 className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
-          </div>
+          {isActivePlaying && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/25 rounded-xl">
+              <Volume2 className="w-4 h-4 text-white" />
+            </div>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
+            <MarqueeText text={station.name} className={`text-[13px] font-semibold ${isActive ? "text-primary" : "text-foreground"}`} />
           </div>
           {isActive && radioMetadata?.title ? (
-            <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-xs text-primary/80 font-medium" />
+            <MarqueeText text={`♪ ${radioMetadata.artist ? `${radioMetadata.artist} — ` : ""}${radioMetadata.title}`} className="text-[11px] text-primary/70 font-medium" />
           ) : (station as any)._nowPlaying ? (
-            <MarqueeText text={`♪ ${(station as any)._nowPlaying}`} className="text-xs text-primary/60 font-medium" />
+            <MarqueeText text={`♪ ${(station as any)._nowPlaying}`} className="text-[11px] text-primary/60" />
           ) : (
-            <MarqueeText text={station.genre || "Radio"} className="text-xs text-muted-foreground capitalize" />
+            <p className="text-[11px] text-muted-foreground capitalize truncate">{station.genre || "Radio"}</p>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {station.countryCode && <span className="text-[10px] font-medium text-muted-foreground uppercase">{station.countryCode}</span>}
-          {station.bitrate > 0 && <span className="text-[10px] text-muted-foreground">{station.bitrate}k</span>}
-        </div>
-
-        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
-          {isCustomTab ? (
-            <>
-              <button onClick={(e) => { e.stopPropagation(); startEdit(station); }} className="p-1.5 rounded-full hover:bg-secondary transition-colors"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-              <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }} className="p-1.5 rounded-full hover:bg-destructive/20 transition-colors"><Trash2 className="w-3.5 h-3.5 text-destructive" /></button>
-            </>
-          ) : (
-            <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }} className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-              <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* ── Station Grid Card (proper component for hooks) ── */
-  function StationCard({ station, index }: { station: RadioBrowserStation; index: number }) {
-    const isSaved = savedIds.has(station.id);
-    const isActive = currentSong?.id === station.id;
-    const isActivePlaying = isActive && isPlaying;
-    const dynamicCover = isActive && radioMetadata?.coverUrl ? radioMetadata.coverUrl : null;
-    const stationLogo = getStationLogo(station.name, station.coverUrl);
-    const displayCover = dynamicCover || stationLogo || "";
-    const myRadioMeta = (station as any)._nowPlaying;
-    const nowPlayingText = isActive && radioMetadata?.artist && radioMetadata?.title
-      ? `${radioMetadata.artist} — ${radioMetadata.title}`
-      : (!isActive && myRadioMeta) ? myRadioMeta : null;
-
-    const [showCardActions, setShowCardActions] = useState(false);
-    const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
-    const hideTimer = useRef<ReturnType<typeof setTimeout>>();
-
-    const handleTouchStart = useCallback(() => {
-      longPressTimer.current = setTimeout(() => {
-        setShowCardActions(true);
-        if (navigator.vibrate) navigator.vibrate(10);
-        hideTimer.current = setTimeout(() => setShowCardActions(false), 3500);
-      }, 400);
-    }, []);
-
-    const handleTouchEnd = useCallback(() => {
-      clearTimeout(longPressTimer.current);
-    }, []);
-
-    const handleCardClick = useCallback(() => {
-      if (showCardActions) {
-        setShowCardActions(false);
-        return;
-      }
-      playStation(station);
-    }, [showCardActions, station]);
-
-    const actionsVisible = showCardActions || isActivePlaying;
-
-    return (
-      <div
-        className="group cursor-pointer active:scale-[0.97] transition-transform duration-150"
-        onClick={handleCardClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-      >
-        <div
-          className={`relative aspect-square rounded-2xl overflow-hidden mb-2.5 transition-all duration-300 ${
-            isActive
-              ? "ring-2 ring-primary/60"
-              : "ring-1 ring-border/5 hover:ring-border/20"
-          }`}
-          style={{
-            boxShadow: isActive
-              ? "0 8px 32px hsl(var(--primary) / 0.2)"
-              : "0 2px 8px hsl(0 0% 0% / 0.06)",
-          }}
-        >
-          {/* Neutral bg for logos */}
-          <div className="absolute inset-0 bg-card" />
-          <LazyImage
-            src={displayCover}
-            alt={station.name}
-            className="relative w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-110"
-            fallback
-            wrapperClassName="w-full h-full"
-          />
-
-          {/* Overlay */}
-          <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent transition-opacity duration-300 ${
-            actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          }`} />
-
-          {/* Play button */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                isActivePlaying ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
-              }`}
-              style={{
-                background: "hsl(var(--primary) / 0.9)",
-                boxShadow: "0 4px 20px hsl(var(--primary) / 0.3)",
-              }}
-            >
-              {isActivePlaying ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
-            </div>
-          </div>
-
-          {/* Live badge */}
-          {isActivePlaying && (
-            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{ background: "hsl(var(--destructive) / 0.9)" }}
-            >
-              <LiveEqualizer color="bg-white" />
-              <span className="text-[9px] font-bold text-white tracking-[0.15em] uppercase">Live</span>
-            </div>
-          )}
-
-          {/* Action buttons — long-press on mobile, hover on desktop */}
-          <div className={`absolute top-2 right-2 flex gap-1.5 transition-all duration-200 ${
-            actionsVisible ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
-          }`}>
-            {isCustomTab ? (
-              <>
-                <button onClick={(e) => { e.stopPropagation(); startEdit(station); }}
-                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150"
-                  style={{
-                    background: "hsl(0 0% 100% / 0.18)",
-                    backdropFilter: "blur(12px) saturate(1.5)",
-                  }}
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); confirmDelete(station.id, station.name); }}
-                  className="p-2 rounded-full text-white active:scale-90 transition-all duration-150"
-                  style={{
-                    background: "hsl(var(--destructive) / 0.65)",
-                    backdropFilter: "blur(12px) saturate(1.5)",
-                  }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </>
-            ) : (
-              <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
-                className="p-2 rounded-full text-white active:scale-90 transition-all duration-150"
-                style={{
-                  background: "hsl(0 0% 100% / 0.18)",
-                  backdropFilter: "blur(12px) saturate(1.5)",
-                }}
-              >
-                <Heart className={`w-3.5 h-3.5 transition-colors ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
-              </button>
-            )}
-          </div>
-
-          {/* Bottom badges */}
-          <div className={`absolute bottom-2 left-2 right-2 flex items-end justify-between transition-opacity ${
-            actionsVisible ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          }`}>
-            {station.countryCode && (
-              <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium text-white/90 uppercase"
-                style={{ background: "hsl(0 0% 0% / 0.35)" }}>
-                {station.countryCode}
-              </span>
-            )}
-            {station.bitrate > 0 && (
-              <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold text-white/90 ml-auto"
-                style={{ background: "hsl(0 0% 0% / 0.35)" }}>
-                {station.bitrate}kbps
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Text */}
-        <div className="px-0.5 space-y-0.5">
-          <div className="flex items-center gap-1.5">
-            {isActive && !isActivePlaying && <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
-            {isActivePlaying && <LiveEqualizer />}
-            <MarqueeText text={station.name} className={`font-semibold text-xs leading-tight ${isActive ? "text-primary" : "text-foreground"}`} />
-          </div>
-          {nowPlayingText ? (
-            <div>
-              {isActive && radioMetadata?.title ? (
-                <>
-                  <MarqueeText text={`♪ ${radioMetadata.title}`} className="text-[10px] text-primary/90 font-semibold" />
-                  {radioMetadata?.artist && <MarqueeText text={radioMetadata.artist} className="text-[10px] text-muted-foreground" />}
-                </>
-              ) : (
-                <MarqueeText text={`♪ ${nowPlayingText}`} className="text-[10px] text-primary/70 font-medium" />
-              )}
-            </div>
-          ) : (
-            <MarqueeText text={station.genre || "Radio"} className="text-[10px] text-muted-foreground capitalize" />
-          )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {station.countryCode && <span className="text-[9px] font-medium text-muted-foreground/50 uppercase">{station.countryCode}</span>}
+          <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
+            className="p-1.5 rounded-full active:scale-90 transition-transform"
+          >
+            <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
+          </button>
         </div>
       </div>
     );
@@ -599,146 +600,179 @@ const RadioPage = () => {
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
-    <div className="pb-20 max-w-7xl mx-auto animate-fade-in">
+    <div className="pb-20 max-w-7xl mx-auto">
       {/* ── Header ── */}
       <div
         className="sticky top-0 z-20"
         style={{
-          background: "hsl(var(--background) / 0.85)",
-          backdropFilter: "blur(40px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+          background: "hsl(var(--background) / 0.88)",
+          backdropFilter: "blur(32px) saturate(1.5)",
+          WebkitBackdropFilter: "blur(32px) saturate(1.5)",
           borderBottom: "1px solid hsl(var(--border) / 0.05)",
         }}
       >
-        <div className="px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex-1">
-              <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">Radio</h1>
-            </div>
+        <div className="px-4 md:px-8 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
+          <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight mb-3">
+            Radio
+          </h1>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+            <Input
+              ref={searchInputRef}
+              placeholder="Rechercher une station..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-9 h-10 rounded-xl text-sm border-0"
+              style={{ background: "hsl(var(--foreground) / 0.05)" }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full active:scale-90"
+                style={{ background: "hsl(var(--foreground) / 0.08)" }}
+              >
+                <X className="w-3 h-3 text-muted-foreground" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Now Playing Hero ── */}
+      {/* ── Now Playing ── */}
       <AnimatePresence>
         {showNowPlaying && (
-          <NowPlayingHero
-            station={{ id: currentSong.id, name: currentSong.title, coverUrl: getStationLogo(currentSong.title, currentSong.coverUrl), artist: currentSong.artist }}
-            radioMetadata={radioMetadata}
-            isPlaying={isPlaying}
-            onTogglePlay={togglePlay}
-          />
+          <div className="mt-4">
+            <NowPlayingHero
+              station={{ id: currentSong.id, name: currentSong.title, coverUrl: getStationLogo(currentSong.title, currentSong.coverUrl), artist: currentSong.artist }}
+              radioMetadata={radioMetadata}
+              isPlaying={isPlaying}
+              onTogglePlay={togglePlay}
+            />
+          </div>
         )}
       </AnimatePresence>
 
-      <div className="px-4 md:px-8">
-        {/* ── Search + View Toggle ── */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-            <Input
-              placeholder="Rechercher une station..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 rounded-full text-sm border-0"
-              style={{
-                background: "hsl(var(--foreground) / 0.05)",
-              }}
-            />
+      {/* ── SEARCH MODE ── */}
+      {isSearching ? (
+        <div>
+          <div className="px-4 md:px-8 py-3">
+            <p className="text-[12px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
+              {loadingSearch ? "Recherche..." : `${searchStations.length} résultat${searchStations.length > 1 ? "s" : ""}`}
+            </p>
           </div>
-
-          {/* View mode */}
-          <div className="flex items-center rounded-full p-0.5 flex-shrink-0"
-            style={{ background: "hsl(var(--foreground) / 0.05)" }}
-          >
-            {(["grid", "list"] as ViewMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`p-2 rounded-full transition-all duration-200 ${
-                  viewMode === mode
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {mode === "grid" ? <LayoutGrid className="w-3.5 h-3.5" /> : <List className="w-3.5 h-3.5" />}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Genre Filters ── */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-4 -mx-1 px-1">
-          {GENRE_TAGS.map(tag => (
-            <GenrePill key={tag} label={tag} active={activeGenre === tag} onClick={() => setActiveGenre(tag)} />
-          ))}
-        </div>
-
-        {/* ── Station Count ── */}
-        {!isLoading && stations.length > 0 && (
-          <p className="text-[11px] text-muted-foreground/60 font-medium mb-3">
-            {stations.length} station{stations.length > 1 ? "s" : ""}
-          </p>
-        )}
-
-        {/* ── Content ── */}
-        {isLoading ? (
-          viewMode === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i}>
-                  <div className="aspect-square rounded-2xl bg-secondary/40 mb-2.5 animate-pulse" />
-                  <div className="h-3.5 w-3/4 bg-secondary/40 rounded-lg mb-1.5 animate-pulse" />
-                  <div className="h-2.5 w-1/2 bg-secondary/30 rounded-lg animate-pulse" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-1.5">
+          {loadingSearch ? (
+            <div className="space-y-1">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
-                  <div className="w-12 h-12 rounded-xl bg-secondary/40" />
+                <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
+                  <div className="w-12 h-12 rounded-xl" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3.5 w-2/3 bg-secondary/40 rounded-lg" />
-                    <div className="h-2.5 w-1/3 bg-secondary/30 rounded-lg" />
+                    <div className="h-3 w-2/3 rounded-lg" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                    <div className="h-2.5 w-1/3 rounded-lg" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
                   </div>
                 </div>
               ))}
             </div>
-          )
-        ) : stations.length > 0 ? (
-          viewMode === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {stations.map((station, i) => (
-                <StationCard key={station.id} station={station} index={i} />
+          ) : searchStations.length > 0 ? (
+            <div>
+              {searchStations.map((station) => (
+                <SearchResultRow key={station.id} station={station} />
               ))}
             </div>
           ) : (
-            <div className="space-y-1">
-              {stations.map((station, i) => (
-                <StationListItem key={station.id} station={station} index={i} />
+            <EmptyState searching />
+          )}
+        </div>
+      ) : activeGenre ? (
+        /* ── GENRE MODE ── */
+        <div>
+          <div className="px-4 md:px-8 mt-5 mb-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveGenre(null)}
+                className="p-1.5 rounded-full active:scale-90 transition-transform"
+                style={{ background: "hsl(var(--foreground) / 0.06)" }}
+              >
+                <X className="w-4 h-4 text-foreground" />
+              </button>
+              <h2 className="text-[20px] font-extrabold text-foreground capitalize">{activeGenre}</h2>
+              <span className="text-[11px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.45)" }}>
+                {genreStations.length} station{genreStations.length > 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+          {genreStations.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
+              {genreStations.map((station) => (
+                <StationTile key={station.id} station={station} />
               ))}
             </div>
-          )
-        ) : (
-          /* ── Empty State ── */
-          <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
-              style={{ background: "hsl(var(--foreground) / 0.04)" }}
-            >
-              <Radio className="w-7 h-7 text-muted-foreground/25" />
+          ) : (
+            <EmptyState />
+          )}
+        </div>
+      ) : (
+        /* ── BROWSE MODE (TuneIn home) ── */
+        <div>
+          {/* Categories */}
+          <SectionHeader title="Parcourir" />
+          <StationStrip>
+            {GENRE_LIST.map(genre => (
+              <CategoryCard
+                key={genre}
+                genre={genre}
+                active={false}
+                onClick={() => setActiveGenre(genre)}
+              />
+            ))}
+          </StationStrip>
+
+          {/* My stations */}
+          {enrichedCustom.length > 0 && (
+            <>
+              <SectionHeader
+                title="Mes stations"
+                count={enrichedCustom.length}
+                onSeeAll={enrichedCustom.length > 8 ? () => setShowAllStations(!showAllStations) : undefined}
+              />
+              {showAllStations ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
+                  {enrichedCustom.map((station) => (
+                    <StationTile key={station.id} station={station} />
+                  ))}
+                </div>
+              ) : (
+                <StationStrip>
+                  {displayStations.map((station) => (
+                    <StationTile key={station.id} station={station} />
+                  ))}
+                </StationStrip>
+              )}
+            </>
+          )}
+
+          {/* Empty state if no stations */}
+          {!loadingCustom && enrichedCustom.length === 0 && (
+            <EmptyState />
+          )}
+
+          {/* Loading */}
+          {loadingCustom && (
+            <div className="px-4 md:px-8 mt-4">
+              <div className="flex gap-3 overflow-hidden">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-[120px]">
+                    <div className="aspect-square rounded-xl mb-2 animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                    <div className="h-2.5 w-3/4 rounded mb-1 animate-pulse" style={{ background: "hsl(var(--foreground) / 0.04)" }} />
+                    <div className="h-2 w-1/2 rounded animate-pulse" style={{ background: "hsl(var(--foreground) / 0.03)" }} />
+                  </div>
+                ))}
+              </div>
             </div>
-            <h2 className="text-base font-bold text-foreground mb-1">
-              {searchQuery.length < 2 ? "Recherchez une station" : "Aucune station trouvée"}
-            </h2>
-            <p className="text-[12px] text-muted-foreground/45 max-w-[240px]">
-              {searchQuery.length < 2
-                ? "Utilisez la barre de recherche pour trouver et ajouter des stations radio"
-                : "Essayez un autre terme de recherche."}
-            </p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* ── Edit Dialog ── */}
       <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
@@ -775,5 +809,27 @@ const RadioPage = () => {
     </div>
   );
 };
+
+/* ── Empty State ── */
+function EmptyState({ searching }: { searching?: boolean }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+        style={{ background: "hsl(var(--foreground) / 0.04)" }}
+      >
+        <Radio className="w-6 h-6 text-muted-foreground/20" />
+      </div>
+      <h2 className="text-[15px] font-bold text-foreground mb-1">
+        {searching ? "Aucune station trouvée" : "Recherchez une station"}
+      </h2>
+      <p className="text-[12px] max-w-[220px]" style={{ color: "hsl(var(--muted-foreground) / 0.4)" }}>
+        {searching
+          ? "Essayez un autre terme de recherche."
+          : "Utilisez la barre de recherche pour trouver et ajouter vos stations préférées."}
+      </p>
+    </div>
+  );
+}
 
 export default RadioPage;
