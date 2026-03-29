@@ -234,28 +234,28 @@ export function MobileNav() {
         to="/search"
         onTouchStart={() => handleTap("/search")}
         className={({ isActive }) =>
-          `flex items-center justify-center w-[52px] h-[52px] rounded-full transition-all duration-200 active:scale-[0.85] ${
+          `flex items-center justify-center w-[54px] h-[54px] rounded-full transition-all duration-200 active:scale-[0.87] ${
             isActive
               ? "text-primary"
-              : "text-muted-foreground/60 active:text-muted-foreground/80"
+              : "text-muted-foreground/50 active:text-muted-foreground/70"
           }`
         }
         style={({ isActive }: { isActive: boolean }) => ({
           background: isActive
-            ? "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.06))"
-            : "linear-gradient(135deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.25))",
-          backdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
-          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.1)",
+            ? "linear-gradient(145deg, hsl(var(--primary) / 0.18), hsl(var(--primary) / 0.08))"
+            : "linear-gradient(145deg, hsl(var(--card) / 0.55), hsl(var(--card) / 0.3))",
+          backdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
+          WebkitBackdropFilter: "blur(80px) saturate(2.4) brightness(1.08)",
           boxShadow: isActive
-            ? "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), 0 0 20px hsl(var(--primary) / 0.12)"
-            : "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.15)",
-          border: "0.5px solid hsl(var(--foreground) / 0.08)",
+            ? "0 8px 32px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.1), 0 0 24px hsl(var(--primary) / 0.1)"
+            : "0 8px 32px hsl(0 0% 0% / 0.35), inset 0 1px 0 hsl(var(--foreground) / 0.1), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
+          border: isActive ? "0.5px solid hsl(var(--primary) / 0.15)" : "0.5px solid hsl(var(--foreground) / 0.1)",
         }) as React.CSSProperties}
       >
         {({ isActive }) => (
           <Search
-            className={`w-[22px] h-[22px] transition-transform duration-200 ${isActive ? "scale-110" : ""}`}
-            strokeWidth={isActive ? 2.4 : 1.8}
+            className={`w-[24px] h-[24px] transition-all duration-250 ${isActive ? "drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]" : ""}`}
+            strokeWidth={isActive ? 2.6 : 1.6}
             fill={isActive ? "currentColor" : "none"}
           />
         )}
