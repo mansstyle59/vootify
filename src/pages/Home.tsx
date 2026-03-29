@@ -515,12 +515,13 @@ const HomePage = () => {
                   style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.15), 0 1px 3px hsl(0 0% 0% / 0.08)" }}
                 >
                   {release.coverUrl ? (
-                    <LazyImage
+                    <img
                       src={release.coverUrl}
                       alt={release.title}
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      fallback
-                      wrapperClassName="w-full h-full"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
