@@ -430,13 +430,20 @@ const HomePage = () => {
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <div className="px-5 md:px-8 py-24 text-center">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "hsl(var(--foreground) / 0.04)" }}
+            className="w-18 h-18 rounded-3xl flex items-center justify-center mx-auto mb-5"
+            style={{
+              width: 72, height: 72,
+              background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))",
+              backdropFilter: "blur(40px) saturate(1.8)",
+              WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+              border: "0.5px solid hsl(var(--foreground) / 0.06)",
+              boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15)",
+            }}
           >
             <Music className="w-7 h-7 text-muted-foreground/20" />
           </div>
           <h2 className="text-lg font-bold text-foreground mb-1">Aucune musique pour le moment</h2>
-          <p className="text-[13px] max-w-xs mx-auto" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
+          <p className="text-[13px] max-w-xs mx-auto" style={{ color: "hsl(var(--muted-foreground) / 0.45)" }}>
             L'administrateur n'a pas encore ajouté de morceaux. Revenez bientôt !
           </p>
         </div>
