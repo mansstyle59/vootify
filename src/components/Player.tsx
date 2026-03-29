@@ -110,6 +110,7 @@ export function MiniPlayer() {
     setClosing(true);
   }, []);
   const [playingFromCache, setPlayingFromCache] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const audioDuration = usePlayerStore((s) => s.audioDuration);
   const nextPreloaded = usePlayerStore((s) => s.nextPreloaded);
   const errorRetryCountRef = useRef(0);
