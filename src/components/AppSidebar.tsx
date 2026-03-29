@@ -189,14 +189,18 @@ export function MobileNav() {
               end={item.to === "/"}
               onTouchStart={() => handleTap(item.to)}
               className={({ isActive }) =>
-                `relative flex flex-col items-center justify-center min-w-[72px] min-h-[52px] px-4 py-1.5 rounded-[22px] text-[11px] font-semibold transition-all duration-200 ${
+                `relative flex flex-col items-center justify-center min-w-[72px] min-h-[52px] px-4 py-1.5 rounded-[22px] text-[11px] font-semibold transition-all duration-200 active:scale-[0.88] ${
                   restricted
                     ? "text-muted-foreground/20"
                     : isActive
-                    ? "bg-secondary/80 text-primary"
+                    ? "text-primary"
                     : "text-muted-foreground/60 active:text-muted-foreground/80"
                 }`
               }
+              style={({ isActive }: { isActive: boolean }) => ({
+                background: !restricted && isActive ? "hsl(var(--primary) / 0.12)" : "transparent",
+                boxShadow: !restricted && isActive ? "0 0 16px hsl(var(--primary) / 0.15)" : "none",
+              }) as React.CSSProperties}
             >
               {({ isActive }) => (
                 <>
@@ -204,12 +208,15 @@ export function MobileNav() {
                     <Lock className="w-[22px] h-[22px] mb-0.5" strokeWidth={1.5} />
                   ) : (
                     <item.icon
-                      className="w-[22px] h-[22px] mb-0.5"
-                      strokeWidth={isActive ? 2 : 1.5}
+                      className={`w-[22px] h-[22px] mb-0.5 transition-transform duration-200 ${isActive ? "scale-110" : ""}`}
+                      strokeWidth={isActive ? 2.2 : 1.5}
                       fill={isActive ? "currentColor" : "none"}
                     />
                   )}
-                  <span className={restricted ? "opacity-25" : ""}>{item.label}</span>
+                  <span className={`transition-all duration-200 ${restricted ? "opacity-25" : isActive ? "font-bold" : ""}`}>{item.label}</span>
+                  {!restricted && isActive && (
+                    <span className="absolute -bottom-0.5 w-1 h-1 rounded-full" style={{ background: "hsl(var(--primary))" }} />
+                  )}
                 </>
               )}
             </RouterNavLink>
@@ -222,22 +229,24 @@ export function MobileNav() {
         to="/search"
         onTouchStart={() => handleTap("/search")}
         className={({ isActive }) =>
-          `flex items-center justify-center w-[52px] h-[52px] rounded-full transition-all duration-200 ${
+          `flex items-center justify-center w-[52px] h-[52px] rounded-full transition-all duration-200 active:scale-[0.85] ${
             isActive
               ? "text-primary"
               : "text-muted-foreground/60 active:text-muted-foreground/80"
           }`
         }
-        style={{
-          background: "hsl(var(--card) / 0.85)",
+        style={({ isActive }: { isActive: boolean }) => ({
+          background: isActive ? "hsl(var(--primary) / 0.12)" : "hsl(var(--card) / 0.85)",
           backdropFilter: "blur(40px) saturate(1.8)",
           WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-          boxShadow: "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
-        }}
+          boxShadow: isActive
+            ? "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), 0 0 16px hsl(var(--primary) / 0.15)"
+            : "0 2px 20px hsl(0 0% 0% / 0.35), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)",
+        }) as React.CSSProperties}
       >
         {({ isActive }) => (
           <Search
-            className="w-[22px] h-[22px]"
+            className={`w-[22px] h-[22px] transition-transform duration-200 ${isActive ? "scale-110" : ""}`}
             strokeWidth={isActive ? 2.4 : 1.8}
             fill={isActive ? "currentColor" : "none"}
           />
@@ -261,14 +270,18 @@ export function MobileNav() {
               to={item.to}
               onTouchStart={() => handleTap(item.to)}
               className={({ isActive }) =>
-                `flex items-center justify-center w-[40px] h-[40px] rounded-full transition-all duration-200 ${
-                  isActive ? "bg-secondary/80 text-primary" : "text-muted-foreground/60"
+                `flex items-center justify-center w-[40px] h-[40px] rounded-full transition-all duration-200 active:scale-[0.85] ${
+                  isActive ? "text-primary" : "text-muted-foreground/60"
                 }`
               }
+              style={({ isActive }: { isActive: boolean }) => ({
+                background: isActive ? "hsl(var(--primary) / 0.12)" : "transparent",
+                boxShadow: isActive ? "0 0 12px hsl(var(--primary) / 0.15)" : "none",
+              }) as React.CSSProperties}
             >
               {({ isActive }) => (
                 <item.icon
-                  className="w-[18px] h-[18px]"
+                  className={`w-[18px] h-[18px] transition-transform duration-200 ${isActive ? "scale-110" : ""}`}
                   strokeWidth={isActive ? 2.2 : 1.5}
                   fill={isActive ? "currentColor" : "none"}
                 />
