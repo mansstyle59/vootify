@@ -194,7 +194,6 @@ const ArtistPage = () => {
         className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center px-4 gap-3"
       >
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.85), hsl(var(--background) / 0.7))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", borderBottom: "0.5px solid hsl(var(--foreground) / 0.06)" }} />
-      >
         <button onClick={() => navigate(-1)} className="relative z-10 p-2 rounded-full hover:bg-secondary">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -479,7 +478,6 @@ const ArtistPage = () => {
         {isLoading ? (
           <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
             {Array.from({ length: 6 }).map((_, i) => <SongSkeleton key={i} />)}
-          </div>
           </div>
         ) : (
           <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.05)", boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)" }}>
