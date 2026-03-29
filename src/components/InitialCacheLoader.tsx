@@ -23,13 +23,15 @@ export function InitialCacheLoader({ children }: Props) {
     setProgress(p);
   }, []);
 
+  const userId = user?.id ?? null;
+
   useEffect(() => {
     if (authLoading) return;
     if (cacheReady) {
       setShowLoader(false);
       return;
     }
-    if (!user?.id) {
+    if (!userId) {
       // No user — skip cache, let them see auth
       setCacheReady(true);
       setShowLoader(false);
@@ -37,7 +39,7 @@ export function InitialCacheLoader({ children }: Props) {
     }
 
     let cancelled = false;
-    performInitialCache(user.id, handleProgress).then(() => {
+    performInitialCache(userId, handleProgress).then(() => {
       if (cancelled) return;
       setFadeOut(true);
       setTimeout(() => {
@@ -47,7 +49,7 @@ export function InitialCacheLoader({ children }: Props) {
     });
 
     return () => { cancelled = true; };
-  }, [user, authLoading, cacheReady, handleProgress]);
+  }, [userId, authLoading, cacheReady, handleProgress]);
 
   if (cacheReady && !showLoader) return <>{children}</>;
 
