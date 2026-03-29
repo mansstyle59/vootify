@@ -102,14 +102,15 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-3 scrollbar-hide"
+        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-4 scrollbar-hide -mx-0"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
+          scrollPaddingLeft: "20px",
         }}
       >
         {children}
-        <div className="flex-shrink-0 w-1" aria-hidden />
+        <div className="flex-shrink-0 w-3" aria-hidden />
       </div>
 
       {/* Scroll progress indicator (mobile) */}
