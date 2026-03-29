@@ -213,7 +213,7 @@ const HomePage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
-      <HeroBanner customSubtitle={homeConfig?.heroSubtitle} bgColor={homeConfig?.heroBgColor} bgImage={homeConfig?.heroBgImage} />
+      {/* Hero banner removed */}
 
       {/* Quick access playlists */}
       <div className="mb-2">
