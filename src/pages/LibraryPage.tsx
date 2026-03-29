@@ -23,7 +23,7 @@ import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
 
-type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists";
+type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | null;
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
@@ -166,30 +166,19 @@ function PremiumSongRow({
   );
 }
 
-/* ── Animated Tab Pill ── */
-function TabPill({ tab, activeTab, label, icon: Icon, onClick }: {
-  tab: Tab; activeTab: Tab; label: string; icon: React.ElementType; onClick: () => void;
+/* ── Apple Music style menu row ── */
+function MenuRow({ icon: Icon, label, onClick, iconColor }: {
+  icon: React.ElementType; label: string; onClick: () => void; iconColor?: string;
 }) {
-  const isActive = tab === activeTab;
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
-        isActive ? "text-primary-foreground" : "text-muted-foreground/60 active:scale-95"
-      }`}
-      style={!isActive ? { background: "hsl(var(--foreground) / 0.04)" } : undefined}
+      className="w-full flex items-center gap-3.5 py-3.5 active:scale-[0.98] transition-transform duration-150"
+      style={{ borderBottom: "1px solid hsl(var(--border) / 0.06)" }}
     >
-      {isActive && (
-        <motion.div
-          layoutId="libraryTab"
-          className="absolute inset-0 rounded-full bg-primary"
-          transition={{ type: "spring", stiffness: 500, damping: 32 }}
-        />
-      )}
-      <span className="relative z-10 flex items-center gap-1.5">
-        <Icon className="w-3 h-3" />
-        {label}
-      </span>
+      <Icon className="w-5 h-5 flex-shrink-0" style={{ color: iconColor || "hsl(var(--primary))" }} />
+      <span className="flex-1 text-left text-[16px] font-semibold text-foreground">{label}</span>
+      <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
     </button>
   );
 }
@@ -237,7 +226,7 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; 
 }
 
 const LibraryPage = () => {
-  const [tab, setTab] = useState<Tab>("recent");
+  const [tab, setTab] = useState<Tab>(null);
   const [customSort, setCustomSort] = useState<SortOption>("recent");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -641,21 +630,19 @@ const LibraryPage = () => {
 
   useEffect(() => {
     if (!isAdmin && tab === "custom") {
-      setTab(isOffline ? "downloads" : "recent");
+      setTab(isOffline ? "downloads" : null);
       return;
     }
-    if (isOffline && tab !== "downloads") {
+    if (isOffline && tab !== "downloads" && tab !== null) {
       setTab("downloads");
       return;
     }
-    if (isGuest && !isOffline && tab !== "downloads") {
+    if (isGuest && !isOffline && tab !== "downloads" && tab !== null) {
       setTab("downloads");
       return;
     }
-    // If current tab is restricted by plan, switch to first allowed
-    if (!checkLibraryTab(tab) && !isOffline && !isGuest) {
-      const firstAllowed = tabs.find((t) => checkLibraryTab(t.key));
-      if (firstAllowed) setTab(firstAllowed.key);
+    if (tab && !checkLibraryTab(tab) && !isOffline && !isGuest) {
+      setTab(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGuest, isOffline, isAdmin, tab]);
@@ -666,18 +653,20 @@ const LibraryPage = () => {
       ? tabs.filter((t) => t.key === "downloads")
       : tabs.filter((t) => checkLibraryTab(t.key));
 
+  const activeTabLabel = tab ? visibleTabs.find((t) => t.key === tab)?.label : null;
+
   return (
     <div className="pb-20 max-w-7xl mx-auto relative">
       {/* Header */}
       <div
         className="sticky top-0 z-20 transition-colors duration-500"
         style={{
-          background: headerColor
+          background: tab && headerColor
             ? `linear-gradient(180deg, ${headerColor}12 0%, hsl(var(--background)) 100%)`
             : "hsl(var(--background) / 0.85)",
           backdropFilter: "blur(40px) saturate(1.6)",
           WebkitBackdropFilter: "blur(40px) saturate(1.6)",
-          borderBottom: "1px solid hsl(var(--border) / 0.05)",
+          borderBottom: tab ? "1px solid hsl(var(--border) / 0.05)" : "none",
         }}
       >
         <div className="relative px-5 md:px-9 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
@@ -691,32 +680,43 @@ const LibraryPage = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            {tab !== null && (
+              <button
+                onClick={() => setTab(null)}
+                className="flex items-center gap-1 text-primary text-[14px] font-medium active:opacity-70 transition-opacity -ml-1"
+              >
+                <ChevronRight className="w-4 h-4 rotate-180" />
+              </button>
+            )}
             <div className="flex-1">
               <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">
-                {isOffline ? "Hors-ligne" : "Bibliothèque"}
+                {isOffline ? "Hors-ligne" : tab !== null ? (activeTabLabel || "Bibliothèque") : "Bibliothèque"}
               </h1>
             </div>
-          </div>
-
-          {/* Tab pills */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1.5">
-            {visibleTabs.map(({ key, label, icon }) => (
-              <TabPill key={key} tab={key} activeTab={tab} label={label} icon={icon} onClick={() => setTab(key)} />
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Apple Music style menu */}
+      {tab === null && (
+        <div className="px-5 md:px-9 mt-1">
+          {visibleTabs.map(({ key, label, icon }) => (
+            <MenuRow key={key} icon={icon} label={label} onClick={() => setTab(key)} />
+          ))}
+        </div>
+      )}
+
+      {/* Tab Content */}
+      {tab !== null && (
       <div className="px-5 md:px-9 mt-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             {/* ── RECENT ── */}
             {tab === "recent" && (
@@ -1628,6 +1628,7 @@ const LibraryPage = () => {
           </motion.div>
         </AnimatePresence>
       </div>
+      )}
     </div>
   );
 };

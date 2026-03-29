@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { notifyUser } from "@/lib/notifyUser";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs";
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | null;
 
 interface UserProfile {
   user_id: string;
@@ -28,7 +28,7 @@ interface UserProfile {
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("stats");
+  const [tab, setTab] = useState<Tab>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) navigate("/", { replace: true });
@@ -58,65 +58,56 @@ const AdminPage = () => {
     { key: "notifs", label: "Notifs", icon: Bell },
   ];
 
+  const activeTabLabel = tab ? tabs.find((t) => t.key === tab)?.label : null;
+
   return (
     <div className="min-h-screen pb-20 animate-fade-in">
-      <div className="relative overflow-hidden">
-        {/* Decorative gradient orbs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-[0.06]"
-            style={{ background: "radial-gradient(circle, hsl(0 72% 51%), transparent 70%)" }} />
-          <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full opacity-[0.04]"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }} />
-        </div>
-        <div className="relative px-4 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-5">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-muted-foreground/60 hover:text-foreground transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{
-              background: "linear-gradient(135deg, hsl(0 72% 51% / 0.2), hsl(0 72% 51% / 0.05))",
-              border: "1px solid hsl(0 72% 51% / 0.12)",
-              boxShadow: "0 4px 24px hsl(0 72% 51% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
-              backdropFilter: "blur(20px)",
-            }}>
-              <Shield className="w-5.5 h-5.5 text-destructive" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground tracking-tight">Administration</h1>
-              <p className="text-[11px] text-muted-foreground/60 font-medium">Gérez votre application</p>
-            </div>
+      {/* Header */}
+      <div className="relative px-5 md:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-4">
+        <div className="flex items-center gap-3">
+          {tab !== null ? (
+            <button
+              onClick={() => setTab(null)}
+              className="flex items-center gap-1 text-primary text-[14px] font-medium active:opacity-70 transition-opacity -ml-1"
+            >
+              <ChevronRight className="w-4 h-4 rotate-180" />
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-primary text-[14px] font-medium active:opacity-70 transition-opacity -ml-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div className="flex-1">
+            <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight">
+              {tab !== null ? (activeTabLabel || "Administration") : "Administration"}
+            </h1>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-1.5 px-4 md:px-8 mb-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 pt-1">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0"
-            style={{ color: tab === key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))" }}
-          >
-            {tab === key && (
-              <motion.div
-                layoutId="adminTab"
-                className="absolute inset-0 bg-primary rounded-2xl"
-                style={{ boxShadow: "0 2px 12px hsl(var(--primary) / 0.35)" }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            )}
-            <span className="relative z-10 flex items-center gap-1.5">
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Apple Music style menu */}
+      {tab === null && (
+        <div className="px-5 md:px-8">
+          {tabs.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className="w-full flex items-center gap-3.5 py-3.5 active:scale-[0.98] transition-transform duration-150"
+              style={{ borderBottom: "1px solid hsl(var(--border) / 0.06)" }}
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" style={{ color: "hsl(var(--primary))" }} />
+              <span className="flex-1 text-left text-[16px] font-semibold text-foreground">{label}</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
 
+      {/* Tab content */}
+      {tab !== null && (
       <div className="px-4 md:px-8 max-w-4xl mx-auto">
         {tab === "stats" && <StatsTab />}
         {tab === "home" && <HomeTab />}
@@ -130,6 +121,7 @@ const AdminPage = () => {
         {tab === "logs" && <LogsTab />}
         {tab === "notifs" && <NotificationsTab />}
       </div>
+      )}
     </div>
   );
 };
