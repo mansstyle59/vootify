@@ -59,6 +59,12 @@ const CATEGORY_ICONS: Record<string, typeof Radio> = {
   classical: Music2,
   "hip hop": Headphones,
   electronic: Headphones,
+  reggae: Music2,
+  country: Music2,
+  rnb: Headphones,
+  latin: Music2,
+  ambient: Music2,
+  talk: Globe,
   news: Globe,
 };
 
@@ -69,6 +75,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   classical: "270 50% 55%",
   "hip hop": "160 60% 40%",
   electronic: "280 70% 55%",
+  reggae: "45 75% 45%",
+  country: "25 70% 50%",
+  rnb: "320 60% 50%",
+  latin: "10 80% 55%",
+  ambient: "190 50% 50%",
+  talk: "170 45% 45%",
   news: "200 60% 45%",
 };
 
@@ -432,7 +444,7 @@ function NowPlayingHero({
 
 /* ═══════════════════════════════════════════════════════════════ */
 
-const GENRE_LIST = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "news"];
+const GENRE_LIST = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "reggae", "country", "rnb", "latin", "ambient", "talk", "news"];
 
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
