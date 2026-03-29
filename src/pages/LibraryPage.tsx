@@ -818,7 +818,7 @@ const LibraryPage = () => {
                           WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                           border: "0.5px solid hsl(var(--foreground) / 0.06)",
                           boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
-                        }
+                         }}
                       />
                       {likedSearch && (
                         <button onClick={() => setLikedSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
