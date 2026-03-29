@@ -116,9 +116,9 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
             {/* Mesh gradient background */}
             <div className="absolute inset-0" style={{
               background: `
-                radial-gradient(ellipse 80% 50% at 20% 10%, hsl(var(--primary) / 0.15) 0%, transparent 55%),
-                radial-gradient(ellipse 60% 40% at 80% 30%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse 40% 60% at 50% 80%, hsl(var(--primary) / 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 50% at 20% 10%, hsl(var(--primary) / 0.20) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 80% 30%, hsl(var(--primary) / 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 60% at 50% 80%, hsl(var(--primary) / 0.06) 0%, transparent 60%),
                 hsl(var(--background))
               `,
             }} />
