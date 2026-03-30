@@ -11,7 +11,7 @@ import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
-import { useRadioMetadata } from "@/hooks/useRadioMetadata";
+import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
