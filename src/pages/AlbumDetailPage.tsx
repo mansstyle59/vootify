@@ -10,6 +10,7 @@ import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2 } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
+import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ const AlbumDetailPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [downloading, setDownloading] = useState(false);
+  const { isDownloading: downloading, completed: dlCompleted, skipped: dlSkipped, failed: dlFailed, total: dlTotal, overallProgress, downloadPlaylist, cancel: cancelDownload, songs: dlSongs } = usePlaylistDownload();
   const { isAdmin } = useAdminAuth();
 
   const { scrollY } = useScroll();
