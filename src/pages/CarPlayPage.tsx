@@ -50,6 +50,7 @@ const CarPlayPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [artistFilter, setArtistFilter] = useState<string | null>(null);
 
   const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = useRadioMetadata(
