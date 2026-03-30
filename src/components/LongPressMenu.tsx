@@ -99,6 +99,25 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
         setOpen(false);
       },
     },
+    ...(song.streamUrl && song.duration > 0 && !isCached ? [{
+      icon: Download,
+      label: isDownloading ? "Téléchargement en cours…" : "Télécharger hors-ligne",
+      action: () => {
+        if (!isDownloading) {
+          download(song);
+          if (navigator.vibrate) navigator.vibrate(10);
+        }
+        setOpen(false);
+      },
+    }] : []),
+    {
+      icon: User,
+      label: `Voir ${song.artist.split(",")[0].trim()}`,
+      action: () => {
+        navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`);
+        setOpen(false);
+      },
+    },
   ];
 
   return (
