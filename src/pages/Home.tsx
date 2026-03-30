@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
 import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play, WifiOff, Download } from "lucide-react";
+import { getPendingCount } from "@/lib/offlineQueue";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
