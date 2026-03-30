@@ -245,7 +245,7 @@ const ProfilePage = () => {
   if (!user) return null;
   const initials = (displayName || "U").slice(0, 2).toUpperCase();
   const totalUsed = (swCacheSize || 0) + (offlineCacheSize || 0) + (coverCacheSize || 0);
-  const MAX_OFFLINE = 500 * 1024 * 1024; // 500 MB
+  const MAX_OFFLINE = 1024 * 1024 * 1024; // 1 GB
   const usedPercent = MAX_OFFLINE > 0 ? (totalUsed / MAX_OFFLINE) * 100 : 0;
   const swPercent = MAX_OFFLINE > 0 ? ((swCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
   const coverPercent = MAX_OFFLINE > 0 ? ((coverCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
@@ -484,7 +484,7 @@ const ProfilePage = () => {
               <div>
                 <h3 className="text-[13px] font-bold text-foreground">Stockage hors-ligne</h3>
                 <p className="text-[10px] text-muted-foreground/50 font-medium">
-                  {totalUsed > 0 ? `${formatBytes(totalUsed)} / 500 Mo` : "Calcul…"} · {offlineCount}/300 titres
+                  {totalUsed > 0 ? `${formatBytes(totalUsed)} / 1 Go` : "Calcul…"} · {offlineCount}/300 titres
                 </p>
               </div>
             </div>
