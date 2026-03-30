@@ -291,7 +291,7 @@ const ProfilePage = () => {
         transition={{ duration: 0.3 }}
         className="sticky top-0 z-30 px-4 py-3"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)",
           background: "linear-gradient(180deg, hsl(var(--background) / 0.7), hsl(var(--background) / 0.5))",
           backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
           WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
