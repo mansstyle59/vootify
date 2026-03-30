@@ -49,8 +49,8 @@ const glassCardStrong = {
 /* ── Section Header (editorial style) ── */
 function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-[20px] font-extrabold text-foreground tracking-tight">{title}</h2>
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="text-[17px] font-extrabold text-foreground tracking-tight">{title}</h2>
       {action && (
         <button onClick={onAction} className="flex items-center gap-0.5 text-[12px] font-semibold text-primary active:opacity-70 transition-opacity">
           {action}
@@ -450,15 +450,15 @@ const SearchPage = () => {
     <div className="pb-20 max-w-7xl mx-auto">
       {/* ── Sticky Header ── */}
       <div
-        className="sticky top-0 z-20 px-5 md:px-8 pb-3"
+        className="sticky top-0 z-20 px-5 md:px-8 pb-4"
         style={{
           paddingTop: "calc(max(1.5rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px))",
-          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.95) 80%, hsl(var(--background) / 0) 100%)",
+          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.97) 75%, hsl(var(--background) / 0) 100%)",
           backdropFilter: "blur(40px) saturate(1.8)",
           WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
-        <h1 className="text-[34px] font-black text-foreground tracking-tight mb-3 leading-none">Rechercher</h1>
+        <h1 className="text-[32px] font-black text-foreground tracking-tight mb-3 leading-none">Rechercher</h1>
 
         {/* ── Search Bar ── */}
         <div ref={searchRef} className="relative">
@@ -474,10 +474,11 @@ const SearchPage = () => {
               if (e.key === "Escape") setShowSuggestions(false);
             }}
             placeholder="Artistes, titres, albums..."
-            className="w-full pl-11 pr-10 py-3.5 rounded-2xl text-foreground placeholder:text-muted-foreground/30 focus:outline-none text-[15px] font-medium transition-all"
+            className="w-full pl-11 pr-10 py-3 rounded-2xl text-foreground placeholder:text-muted-foreground/30 focus:outline-none text-[15px] font-medium transition-all"
             style={{
-              background: "hsl(var(--foreground) / 0.04)",
-              border: "0.5px solid hsl(var(--foreground) / 0.06)",
+              background: "hsl(var(--foreground) / 0.05)",
+              border: "0.5px solid hsl(var(--foreground) / 0.08)",
+              boxShadow: "inset 0 1px 2px hsl(0 0% 0% / 0.1)",
             }}
           />
           {query && (
@@ -533,30 +534,37 @@ const SearchPage = () => {
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
           /* ══════════════ EXPLORE MODE (Qobuz style) ══════════════ */
-          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-5">
+          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-6">
 
-            {/* ── Library Overview (compact inline) ── */}
+            {/* ── Library Overview (glass card) ── */}
             {libraryStats && (
               <section>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {[
-                    { value: libraryStats.songs, label: "titres" },
-                    { value: libraryStats.artists, label: "artistes" },
-                    { value: libraryStats.albums, label: "albums" },
-                    { value: libraryStats.duration, label: "" },
-                  ].map((stat) => (
-                    <span
-                      key={stat.label || "dur"}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold text-foreground/80"
-                      style={{
-                        background: "hsl(var(--primary) / 0.06)",
-                        border: "0.5px solid hsl(var(--primary) / 0.10)",
-                      }}
-                    >
-                      <span className="font-black text-foreground tabular-nums">{stat.value}</span>
-                      {stat.label && <span className="text-muted-foreground/50">{stat.label}</span>}
-                    </span>
-                  ))}
+                <div
+                  className="rounded-2xl px-5 py-4 relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(160deg, hsl(var(--card) / 0.8), hsl(var(--card) / 0.4))",
+                    border: "0.5px solid hsl(var(--primary) / 0.12)",
+                    backdropFilter: "blur(40px) saturate(1.6)",
+                    WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+                    boxShadow: "0 4px 24px hsl(0 0% 0% / 0.15), inset 0 0.5px 0 hsl(var(--primary) / 0.08)",
+                  }}
+                >
+                  {/* Decorative glow */}
+                  <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.4), transparent 70%)" }} />
+                  <div className="relative z-10 flex items-center justify-between">
+                    {[
+                      { value: libraryStats.songs, label: "Titres", icon: Music },
+                      { value: libraryStats.artists, label: "Artistes", icon: User },
+                      { value: libraryStats.albums, label: "Albums", icon: Disc3 },
+                      { value: libraryStats.duration, label: "Durée", icon: Clock },
+                    ].map((stat) => (
+                      <div key={stat.label} className="flex flex-col items-center gap-1">
+                        <stat.icon className="w-3.5 h-3.5 text-primary/40 mb-0.5" />
+                        <span className="text-[17px] font-black text-foreground tabular-nums leading-none">{stat.value}</span>
+                        <span className="text-[9px] text-muted-foreground/50 font-semibold uppercase tracking-wider">{stat.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
             )}
@@ -564,7 +572,7 @@ const SearchPage = () => {
             {/* ── Recent Searches ── */}
             {recentSearches.length > 0 && (
               <section>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2.5">
                   <h2 className="text-[15px] font-bold text-foreground">Récents</h2>
                   <button onClick={clearAllRecent} className="text-[11px] text-primary/70 font-medium">Effacer</button>
                 </div>
@@ -573,7 +581,7 @@ const SearchPage = () => {
                     <div key={term} className="group flex items-center">
                       <button
                         onClick={() => commitSearch(term)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium text-foreground active:scale-95 transition-transform"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12px] font-medium text-foreground active:scale-95 transition-transform"
                         style={{
                           background: "hsl(var(--foreground) / 0.04)",
                           border: "0.5px solid hsl(var(--foreground) / 0.06)",
@@ -591,23 +599,23 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Trending Artists ── */}
+            {/* ── Trending Artists (premium circles) ── */}
             {trendingArtists.length > 0 && (
               <section>
                 <SectionHeader title="Artistes populaires" />
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {trendingArtists.slice(0, 10).map((artist) => (
                     <button
                       key={artist.name}
                       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[68px] group active:scale-95 transition-transform"
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] group active:scale-95 transition-transform"
                     >
                       <div
-                        className="w-[64px] h-[64px] rounded-full overflow-hidden relative"
+                        className="w-[68px] h-[68px] rounded-full overflow-hidden relative"
                         style={{
-                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)",
-                          background: `linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))`,
-                          padding: "1.5px",
+                          boxShadow: "0 4px 16px hsl(0 0% 0% / 0.15), inset 0 0 0 1.5px hsl(var(--primary) / 0.15)",
+                          padding: "2px",
+                          background: `linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--accent) / 0.15))`,
                         }}
                       >
                         <div className="w-full h-full rounded-full overflow-hidden bg-background">
@@ -620,29 +628,29 @@ const SearchPage = () => {
                           )}
                         </div>
                       </div>
-                      <span className="text-[10px] text-foreground font-bold truncate block leading-tight w-full text-center">{artist.name}</span>
+                      <span className="text-[11px] text-foreground font-bold truncate block leading-tight w-full text-center">{artist.name}</span>
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
-            {/* ── New Releases ── */}
+            {/* ── New Releases (premium overlay cards) ── */}
             {newReleases.length > 0 && (
               <section>
                 <SectionHeader title="Nouveautés" />
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {newReleases.slice(0, 8).map((release) => {
                     const isAvailable = availableReleases.has(release.albumId);
                     return (
                       <button
                         key={release.albumId}
                         onClick={() => isAvailable ? playFridayRelease(release) : undefined}
-                        className="flex-shrink-0 w-[120px] group text-left active:scale-[0.97] transition-transform"
+                        className="flex-shrink-0 w-[130px] group text-left active:scale-[0.97] transition-transform"
                       >
                         <div
-                          className="w-[120px] h-[120px] rounded-xl overflow-hidden mb-2 relative"
-                          style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)" }}
+                          className="w-[130px] h-[130px] rounded-2xl overflow-hidden mb-2 relative"
+                          style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15)" }}
                         >
                           {release.coverUrl ? (
                             <img src={release.coverUrl} alt={release.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -651,9 +659,11 @@ const SearchPage = () => {
                               <Disc3 className="w-8 h-8 text-muted-foreground/10" />
                             </div>
                           )}
+                          {/* Premium gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                           {isAvailable && (
                             <div
-                              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                              className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
                               style={{
                                 background: "hsl(var(--primary))",
                                 boxShadow: "0 2px 10px hsl(var(--primary) / 0.4)",
@@ -665,9 +675,12 @@ const SearchPage = () => {
                           {!isAvailable && (
                             <div className="absolute inset-0 bg-background/30" />
                           )}
+                          {/* Title overlay */}
+                          <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                            <p className="text-[11px] font-bold text-white truncate leading-tight drop-shadow-lg">{release.title}</p>
+                            <p className="text-[9px] text-white/60 truncate mt-0.5">{release.artist}</p>
+                          </div>
                         </div>
-                        <p className="text-[12px] font-bold text-foreground truncate leading-tight">{release.title}</p>
-                        <p className="text-[10px] text-muted-foreground/40 truncate mt-0.5">{release.artist}</p>
                       </button>
                     );
                   })}
@@ -675,7 +688,7 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Genre Cards ── */}
+            {/* ── Genre Cards (premium glass) ── */}
             {genreCards.length > 0 && (
               <section>
                 <SectionHeader title="Explorer par genre" />
@@ -686,18 +699,18 @@ const SearchPage = () => {
                       <button
                         key={g.genre}
                         onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
-                        className="relative h-[72px] rounded-xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
+                        className="relative h-[76px] rounded-2xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
                         style={{
                           background: `linear-gradient(155deg, ${def.from}, ${def.to})`,
-                          boxShadow: `0 2px 16px ${def.from}10`,
+                          boxShadow: `0 4px 20px ${def.from}18`,
                         }}
                       >
-                        <span className="absolute -right-2 -bottom-2 text-[40px] rotate-[15deg] opacity-10 select-none leading-none">{def.emoji}</span>
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.15))" }} />
-                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm leading-none">{def.emoji}</span>
-                            <h3 className="text-[13px] font-extrabold text-white leading-tight">{g.genre}</h3>
+                        <span className="absolute -right-1 -bottom-1 text-[44px] rotate-[15deg] opacity-[0.08] select-none leading-none">{def.emoji}</span>
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(0 0% 100% / 0.05) 0%, transparent 40%, hsl(0 0% 0% / 0.2) 100%)" }} />
+                        <div className="relative z-10 p-3.5 h-full flex flex-col justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base leading-none">{def.emoji}</span>
+                            <h3 className="text-[13px] font-extrabold text-white leading-tight drop-shadow-sm">{g.genre}</h3>
                           </div>
                           {g.count > 0 && (
                             <p className="text-[9px] text-white/50 font-semibold">{g.count} titres</p>
@@ -714,24 +727,25 @@ const SearchPage = () => {
             {recentlyPlayed.length > 0 && (
               <section>
                 <SectionHeader title="Écoutés récemment" />
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {recentlyPlayed.slice(0, 6).map((song) => (
                     <button
                       key={song.id}
                       onClick={() => handlePlayTrack(song, recentlyPlayed)}
-                      className="flex-shrink-0 w-[100px] group text-left active:scale-[0.97] transition-transform"
+                      className="flex-shrink-0 w-[110px] group text-left active:scale-[0.97] transition-transform"
                     >
                       <div
-                        className="w-[100px] h-[100px] rounded-xl overflow-hidden mb-1.5 relative"
-                        style={{ boxShadow: "0 2px 10px hsl(0 0% 0% / 0.08)" }}
+                        className="w-[110px] h-[110px] rounded-2xl overflow-hidden mb-1.5 relative"
+                        style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.12)" }}
                       >
                         {song.coverUrl ? (
-                          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
+                          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
                             <Music className="w-5 h-5 text-muted-foreground/10" />
                           </div>
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                       </div>
                       <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{song.title}</p>
                       <p className="text-[9px] text-muted-foreground/40 truncate">{song.artist}</p>
