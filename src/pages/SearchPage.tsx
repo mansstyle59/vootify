@@ -561,15 +561,15 @@ const SearchPage = () => {
                     ].map((stat) => (
                       <div key={stat.label} className="flex flex-col items-center">
                         <div
-                          className="w-[68px] h-[68px] rounded-full flex flex-col items-center justify-center mb-1.5"
+                          className="w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center"
                           style={{
                             background: "linear-gradient(145deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
                             border: "1px solid hsl(var(--primary) / 0.15)",
                             boxShadow: "inset 0 1px 0 hsl(var(--primary) / 0.08), 0 2px 8px hsl(var(--primary) / 0.06)",
                           }}
                         >
-                          <p className={`font-black text-foreground leading-none tabular-nums tracking-tight ${String(stat.value).length > 3 ? "text-[13px]" : "text-[18px]"}`}>{stat.value}</p>
-                          <p className="text-[8px] text-primary/50 font-semibold uppercase tracking-wider mt-1">{stat.label}</p>
+                          <p className="text-[15px] font-black text-foreground leading-tight tabular-nums tracking-tight text-center">{stat.value}</p>
+                          <p className="text-[8px] text-primary/50 font-semibold uppercase tracking-wider mt-0.5">{stat.label}</p>
                         </div>
                       </div>
                     ))}
