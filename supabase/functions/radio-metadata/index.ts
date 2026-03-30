@@ -60,7 +60,10 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       }
     }
 
-    if (!current) return null;
+    if (!current) {
+      console.log("RF: no current step found for now=", Date.now() / 1000);
+      return null;
+    }
 
     const title = current.title || "";
     const artist = current.authors || current.highlightedArtists?.[0] || "";
