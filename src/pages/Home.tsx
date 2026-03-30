@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { LazyImage } from "@/components/LazyImage";
 import { QuickAccess } from "@/components/home/QuickAccess";
 import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
+import { HomeSkeleton } from "@/components/home/HomeSkeleton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -155,6 +156,9 @@ const HomePage = () => {
     [currentSong?.id, togglePlay, setQueue, play]
   );
 
+  // Show skeleton while core data is loading
+  const coreLoading = loadingAdded && loadingArtists && loadingTopArtists;
+  
   const builtinDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
     recently_added: { songs: recentlyAdded, loading: loadingAdded },
     recently_listened: { songs: recentlyListened, loading: loadingListened },
@@ -220,6 +224,8 @@ const HomePage = () => {
       </Section>
     );
   };
+
+  if (coreLoading) return <HomeSkeleton />;
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">

@@ -2,6 +2,9 @@ import { Song } from "@/data/mockData";
 
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
+
+/** Maximum offline cache size: ~1 TB (smart limit for large libraries) */
+const MAX_CACHE_BYTES = 1024 * 1024 * 1024 * 1024; // 1 TB
 const AUDIO_STORE = "audio";
 const META_STORE = "meta";
 const COVER_STORE = "covers";
@@ -58,6 +61,16 @@ export const offlineCache = {
   /** Download and cache a song's audio + metadata + cover art */
   async cacheSong(song: Song, onProgress?: (pct: number) => void): Promise<void> {
     if (!song.streamUrl) throw new Error("No stream URL");
+
+    // Check cache size limit
+    try {
+      const currentSize = await this.getCacheSize();
+      if (currentSize >= MAX_CACHE_BYTES) {
+        throw new Error("Cache limit reached (1 TB)");
+      }
+    } catch (e: any) {
+      if (e.message?.includes("Cache limit")) throw e;
+    }
 
     const response = await fetch(song.streamUrl);
     if (!response.ok) throw new Error("Failed to fetch audio");
