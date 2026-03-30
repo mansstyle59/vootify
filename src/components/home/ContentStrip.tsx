@@ -102,7 +102,7 @@ export function ContentStrip({ children }: ContentStripProps) {
       {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pb-4 scrollbar-hide -mx-0"
+        className="flex gap-3.5 overflow-x-auto pl-5 pr-5 md:pl-9 md:pr-9 pt-2 pb-4 scrollbar-hide -mx-0"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
