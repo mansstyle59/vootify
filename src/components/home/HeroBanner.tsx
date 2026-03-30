@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, User } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, User, Car } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import {
   DropdownMenu,
@@ -151,7 +151,10 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   <span className="font-semibold text-[13px]">Paramètres audio</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
+                <DropdownMenuItem onClick={() => navigate("/carplay")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer transition-all duration-150">
+                  <Car className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-semibold text-[13px]">Mode CarPlay</span>
+                </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer text-destructive focus:text-destructive transition-all duration-150">
                   <LogOut className="w-4 h-4" />
