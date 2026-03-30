@@ -1705,6 +1705,8 @@ function HomeTab() {
   const [songPickerOpen, setSongPickerOpen] = useState(false);
   const [editingAlbumSection, setEditingAlbumSection] = useState<string | null>(null);
   const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
+  const [editingPlaylistSection, setEditingPlaylistSection] = useState<string | null>(null);
+  const [playlistPickerOpen, setPlaylistPickerOpen] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -1737,26 +1739,32 @@ function HomeTab() {
     setSections(updated.map((s, i) => ({ ...s, order: i })));
   };
 
-  const addCustomSection = (type: "songs" | "albums" = "songs") => {
+  const addCustomSection = (type: "songs" | "albums" | "playlists" = "songs") => {
     const id = `custom_${Date.now()}`;
+    const labels = { songs: "Nouvelle section", albums: "Nouvelle section Albums", playlists: "Nouvelle section Playlists" };
+    const emojis = { songs: "⭐", albums: "💿", playlists: "📋" };
     const newCustom: CustomSection = {
       id,
-      title: type === "albums" ? "Nouvelle section Albums" : "Nouvelle section",
+      title: labels[type],
       songIds: [],
       type,
       albumIds: [],
+      playlistIds: [],
     };
     setCustomSections((prev) => [...prev, newCustom]);
     setSections((prev) => [
       ...prev,
-      { id, title: type === "albums" ? "Nouvelle section Albums 💿" : "Nouvelle section ⭐", visible: true, order: prev.length },
+      { id, title: `${labels[type]} ${emojis[type]}`, visible: true, order: prev.length },
     ]);
     if (type === "songs") {
       setEditingCustom(id);
       setSongPickerOpen(true);
-    } else {
+    } else if (type === "albums") {
       setEditingAlbumSection(id);
       setAlbumPickerOpen(true);
+    } else {
+      setEditingPlaylistSection(id);
+      setPlaylistPickerOpen(true);
     }
   };
 
