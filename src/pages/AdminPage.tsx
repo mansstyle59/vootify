@@ -16,7 +16,7 @@ import { notifyUser } from "@/lib/notifyUser";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | null;
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | null;
 
 interface UserProfile {
   user_id: string;
@@ -52,7 +52,8 @@ const AdminPage = () => {
     { key: "shared", label: "Partages", icon: Share2 },
     { key: "users", label: "Utilisateurs", icon: Users },
     { key: "subscriptions", label: "Abos", icon: CreditCard },
-    { key: "requests", label: "Demandes", icon: Inbox },
+    { key: "requests", label: "Demandes accès", icon: Inbox },
+    { key: "music_requests", label: "Demandes musiques", icon: Disc3 },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
     { key: "logs", label: "Logs", icon: ScrollText },
@@ -117,6 +118,7 @@ const AdminPage = () => {
         {tab === "users" && <UsersTab />}
         {tab === "subscriptions" && <SubscriptionsTab />}
         {tab === "requests" && <RequestsTab />}
+        {tab === "music_requests" && <MusicRequestsTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
@@ -4556,6 +4558,120 @@ function NotificationsTab() {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function MusicRequestsTab() {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "done" | "rejected">("all");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("music_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setRequests(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const updateStatus = async (id: string, status: string, admin_response?: string) => {
+    const { error } = await supabase
+      .from("music_requests")
+      .update({ status, admin_response: admin_response || null, resolved_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) { toast.error("Erreur"); return; }
+    toast.success(status === "done" ? "Marqué comme ajouté" : "Demande rejetée");
+    load();
+  };
+
+  const filtered = filter === "all" ? requests : requests.filter((r) => r.status === filter);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-foreground">Demandes de musiques</h2>
+        <span className="text-xs text-muted-foreground">{requests.filter(r => r.status === "pending").length} en attente</span>
+      </div>
+
+      <div className="flex gap-2">
+        {(["all", "pending", "done", "rejected"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            }`}
+            style={filter !== f ? { background: "hsl(var(--foreground) / 0.05)" } : {}}
+          >
+            {f === "all" ? "Toutes" : f === "pending" ? "En attente" : f === "done" ? "Ajoutées" : "Rejetées"}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12">
+          <Disc3 className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Aucune demande</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((r) => (
+            <div
+              key={r.id}
+              className="rounded-2xl p-4 space-y-2"
+              style={{
+                background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                border: "0.5px solid hsl(var(--foreground) / 0.05)",
+              }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[14px] font-bold text-foreground truncate">{r.title}</p>
+                  <p className="text-[12px] text-muted-foreground">{r.artist}</p>
+                  {r.notes && <p className="text-[11px] text-muted-foreground/60 mt-1">{r.notes}</p>}
+                </div>
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                  style={{
+                    background: r.status === "pending" ? "hsl(var(--primary) / 0.1)" : r.status === "done" ? "hsl(142 71% 45% / 0.1)" : "hsl(0 84% 60% / 0.1)",
+                    color: r.status === "pending" ? "hsl(var(--primary))" : r.status === "done" ? "hsl(142 71% 45%)" : "hsl(0 84% 60%)",
+                  }}
+                >
+                  {r.status === "pending" ? "En attente" : r.status === "done" ? "Ajouté" : "Rejeté"}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground/40">
+                {new Date(r.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </p>
+              {r.status === "pending" && (
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => updateStatus(r.id, "done")}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
+                    style={{ background: "hsl(142 71% 45% / 0.1)", color: "hsl(142 71% 45%)" }}
+                  >
+                    <CheckCircle className="w-3 h-3" /> Ajouté
+                  </button>
+                  <button
+                    onClick={() => updateStatus(r.id, "rejected")}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
+                    style={{ background: "hsl(0 84% 60% / 0.1)", color: "hsl(0 84% 60%)" }}
+                  >
+                    <XCircle className="w-3 h-3" /> Rejeter
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

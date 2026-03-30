@@ -356,6 +356,42 @@ export type Database = {
         }
         Relationships: []
       }
+      music_requests: {
+        Row: {
+          admin_response: string | null
+          artist: string
+          created_at: string
+          id: string
+          notes: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          artist: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          artist?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_prices: {
         Row: {
           period: string
