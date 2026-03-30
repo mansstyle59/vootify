@@ -1789,7 +1789,24 @@ const LibraryPage = () => {
                   <p className="text-[10px] text-muted-foreground/40 mt-1 text-right">{cachedSongs.length} / 300 titres</p>
                 </div>
 
-
+                {/* Search filter for offline songs */}
+                {cachedSongs.length > 0 && (
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                    <input
+                      value={offlineSearch}
+                      onChange={(e) => setOfflineSearch(e.target.value)}
+                      placeholder="Rechercher dans les titres hors-ligne…"
+                      className="w-full pl-9 pr-8 py-2.5 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      style={{ background: "hsl(var(--card) / 0.4)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
+                    />
+                    {offlineSearch && (
+                      <button onClick={() => setOfflineSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted/50">
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                )}
                 {cachedSongs.length === 0 ? (
                   <div className="flex flex-col items-center gap-4 py-12">
                     <div className="p-4 rounded-full" style={{ background: "hsl(var(--primary) / 0.1)" }}>
