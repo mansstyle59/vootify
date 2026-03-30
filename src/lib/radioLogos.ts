@@ -11,7 +11,6 @@ const STATION_LOGO_MAP: { pattern: RegExp; logo: string }[] = [
   { pattern: /\bfip\b/i, logo: "/radio-logos/fip.png" },
   { pattern: /france\s*musique/i, logo: "/radio-logos/france-musique.png" },
   { pattern: /france\s*culture/i, logo: "/radio-logos/france-culture.png" },
-  { pattern: /\bmouv/i, logo: "/radio-logos/mouv.png" },
 ];
 
 // In-memory cache to avoid repeated Deezer lookups
@@ -59,9 +58,10 @@ export async function getStationLogoAsync(stationName: string, fallbackUrl: stri
     if (!error && data?.data?.length > 0) {
       // Find best match by name similarity
       const nameNorm = cacheKey;
-      const best = data.data.find((r: any) =>
-        r.title?.toLowerCase().includes(nameNorm) || nameNorm.includes(r.title?.toLowerCase())
-      ) || data.data[0];
+      const best =
+        data.data.find(
+          (r: any) => r.title?.toLowerCase().includes(nameNorm) || nameNorm.includes(r.title?.toLowerCase()),
+        ) || data.data[0];
 
       const coverUrl = best.picture_big || best.picture_medium || best.picture || "";
       if (coverUrl) {
