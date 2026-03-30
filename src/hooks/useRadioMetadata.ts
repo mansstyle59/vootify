@@ -62,6 +62,7 @@ export function useRadioMetadata(
               title: data.title,
               artist: data.artist,
               coverUrl,
+              album: data.album || undefined,
             };
           });
         }
