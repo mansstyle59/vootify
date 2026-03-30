@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LogIn, LogOut, Headphones, Shuffle, User } from "lucide-react";
+import { LogIn, LogOut, Headphones, Shuffle, User, Car } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import {
   DropdownMenu,
@@ -94,10 +94,10 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                     <Avatar className="w-7 h-7">
                       <AvatarImage src={avatarUrl} alt={displayName || "User"} />
                       <AvatarFallback
-                        className="text-[9px] font-bold"
+                        className="flex items-center justify-center"
                         style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
                       >
-                        {(displayName || "U").slice(0, 2).toUpperCase()}
+                        <User className="w-3.5 h-3.5" />
                       </AvatarFallback>
                     </Avatar>
                     {getPendingCount() > 0 && (
@@ -129,8 +129,8 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                 <div className="flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={avatarUrl} alt={displayName || "User"} />
-                    <AvatarFallback className="text-[11px] font-bold" style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}>
-                      {(displayName || "U").slice(0, 2).toUpperCase()}
+                    <AvatarFallback className="flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}>
+                      <User className="w-5 h-5" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
@@ -149,6 +149,11 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                 <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer transition-all duration-150">
                   <Headphones className="w-4 h-4 text-muted-foreground" />
                   <span className="font-semibold text-[13px]">Paramètres audio</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => navigate("/carplay")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer transition-all duration-150">
+                  <Car className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-semibold text-[13px]">Mode CarPlay</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
