@@ -4,16 +4,17 @@ import { Bot, X, Send, Sparkles, Music2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/music-assistant`;
 
 const SUGGESTIONS = [
-  "Recommande-moi du jazz pour une soirée calme",
-  "Quels sont les meilleurs albums rap français ?",
-  "Crée une playlist pour faire du sport",
-  "Raconte-moi l'histoire du reggae",
+  "J'aimerais que vous ajoutiez un morceau",
+  "Il manque un album sur Vootify",
+  "Pouvez-vous ajouter cet artiste ?",
+  "Je cherche une chanson introuvable",
 ];
 
 async function streamChat({
@@ -75,7 +76,6 @@ async function streamChat({
       }
     }
 
-    // flush
     if (buffer.trim()) {
       for (let raw of buffer.split("\n")) {
         if (!raw || !raw.startsWith("data: ")) continue;
@@ -94,6 +94,42 @@ async function streamChat({
   }
 }
 
+/** Extract music_request JSON blocks from assistant text and save to DB */
+async function extractAndSaveRequests(text: string) {
+  const regex = /```music_request\s*\n([\s\S]*?)\n```/g;
+  let match;
+  const requests: Array<{ title: string; artist: string; notes?: string }> = [];
+
+  while ((match = regex.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (parsed.title && parsed.artist) {
+        requests.push(parsed);
+      }
+    } catch {}
+  }
+
+  if (requests.length === 0) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  for (const req of requests) {
+    const { error } = await supabase.from("music_requests").insert({
+      user_id: user.id,
+      title: req.title,
+      artist: req.artist,
+      notes: req.notes || null,
+    });
+    if (error) {
+      console.error("Failed to save music request:", error);
+      toast.error("Erreur lors de l'envoi de la demande");
+    } else {
+      toast.success(`Demande envoyée : "${req.title}" de ${req.artist}`);
+    }
+  }
+}
+
 export function MusicAssistantFAB() {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -107,7 +143,6 @@ export function MusicAssistantFAB() {
       else if (y < lastY.current - 8) setVisible(true);
       lastY.current = y;
     };
-    // also listen on scrollable containers
     const scrollEls = document.querySelectorAll(".scrollbar-hide");
     const handlers: Array<() => void> = [];
     scrollEls.forEach((el) => {
@@ -129,7 +164,6 @@ export function MusicAssistantFAB() {
 
   return (
     <>
-      {/* Slim top banner */}
       <AnimatePresence>
         {!open && visible && (
           <motion.button
@@ -150,12 +184,11 @@ export function MusicAssistantFAB() {
             }}
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[11px] font-semibold text-primary tracking-wide">Assistant AI</span>
+            <span className="text-[11px] font-semibold text-primary tracking-wide">Demander une musique</span>
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -164,9 +197,7 @@ export function MusicAssistantFAB() {
             exit={{ opacity: 0, y: 100, scale: 0.9 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed inset-0 z-50 flex flex-col"
-            style={{
-              background: "hsl(var(--background))",
-            }}
+            style={{ background: "hsl(var(--background))" }}
           >
             <ChatPanel onClose={() => setOpen(false)} />
           </motion.div>
@@ -181,7 +212,6 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -209,7 +239,11 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
     await streamChat({
       messages: [...messages, userMsg],
       onDelta: upsert,
-      onDone: () => setIsLoading(false),
+      onDone: async () => {
+        setIsLoading(false);
+        // Check for music_request blocks and save to DB
+        await extractAndSaveRequests(assistantSoFar);
+      },
       onError: (err) => {
         setIsLoading(false);
         toast.error(err);
@@ -220,6 +254,16 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     send(input);
+  };
+
+  /** Render assistant content, hiding the raw JSON blocks */
+  const renderAssistantContent = (content: string) => {
+    const cleaned = content.replace(/```music_request\s*\n[\s\S]*?\n```/g, "").trim();
+    return (
+      <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground [&_code]:text-[12px] [&_code]:bg-foreground/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
+        <ReactMarkdown>{cleaned}</ReactMarkdown>
+      </div>
+    );
   };
 
   return (
@@ -241,16 +285,11 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           <Bot className="w-5 h-5 text-primary-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-[15px] font-bold text-foreground">Vootify AI</h2>
-          <p className="text-[11px] text-muted-foreground">Assistant musical intelligent</p>
+          <h2 className="text-[15px] font-bold text-foreground">Demander une musique</h2>
+          <p className="text-[11px] text-muted-foreground">Dis-moi ce qui manque sur Vootify</p>
         </div>
         {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMessages([])}
-            className="text-muted-foreground"
-          >
+          <Button variant="ghost" size="icon" onClick={() => setMessages([])} className="text-muted-foreground">
             <Trash2 className="w-4 h-4" />
           </Button>
         )}
@@ -265,16 +304,14 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
             <div
               className="w-20 h-20 rounded-3xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05))",
-              }}
+              style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05))" }}
             >
               <Music2 className="w-10 h-10 text-primary" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-bold text-foreground mb-1">Salut ! 🎵</h3>
+              <h3 className="text-lg font-bold text-foreground mb-1">Un morceau manque ? 🎵</h3>
               <p className="text-sm text-muted-foreground max-w-[260px]">
-                Je suis ton assistant musical. Demande-moi des recommandations, des infos sur un artiste ou de créer une playlist !
+                Dis-moi quel artiste, album ou morceau tu aimerais retrouver sur Vootify et je transmettrai ta demande à l'admin !
               </p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center max-w-sm">
@@ -318,13 +355,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
                       }
                 }
               >
-                {msg.role === "user" ? (
-                  msg.content
-                ) : (
-                  <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground [&_code]:text-[12px] [&_code]:bg-foreground/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                )}
+                {msg.role === "user" ? msg.content : renderAssistantContent(msg.content)}
                 {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
                   <span className="inline-block w-1.5 h-4 ml-0.5 rounded-full bg-primary animate-pulse" />
                 )}
@@ -335,16 +366,9 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-            <div
-              className="px-4 py-3 rounded-2xl flex gap-1"
-              style={{ background: "hsl(var(--foreground) / 0.05)" }}
-            >
+            <div className="px-4 py-3 rounded-2xl flex gap-1" style={{ background: "hsl(var(--foreground) / 0.05)" }}>
               {[0, 1, 2].map(i => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
+                <div key={i} className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           </motion.div>
@@ -363,10 +387,9 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         }}
       >
         <input
-          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pose une question sur la musique…"
+          placeholder="Ex: « Bohemian Rhapsody de Queen »"
           disabled={isLoading}
           className="flex-1 h-11 px-4 rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/40 outline-none"
           style={{
@@ -374,12 +397,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
             border: "0.5px solid hsl(var(--foreground) / 0.06)",
           }}
         />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!input.trim() || isLoading}
-          className="w-11 h-11 rounded-2xl flex-shrink-0"
-        >
+        <Button type="submit" size="icon" disabled={!input.trim() || isLoading} className="w-11 h-11 rounded-2xl flex-shrink-0">
           <Send className="w-4 h-4" />
         </Button>
       </form>
