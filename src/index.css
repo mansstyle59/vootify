@@ -8,6 +8,7 @@
   :root,
   .dark {
     --ai-banner-h: 28px;
+    --pwa-top-offset: 0px;
     --background: 220 16% 5%;
     --foreground: 210 20% 94%;
 
