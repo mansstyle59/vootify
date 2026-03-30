@@ -157,7 +157,7 @@ const SharedPlaylistDetailPage = () => {
         {...{
           style: {
             opacity: headerOpacity as any,
-            paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)",
+            paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.75rem)",
             background: "hsl(var(--background) / 0.85)",
             backdropFilter: "blur(30px)",
             WebkitBackdropFilter: "blur(30px)",
