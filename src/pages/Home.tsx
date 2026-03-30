@@ -127,12 +127,17 @@ const HomePage = () => {
 
   const allCustomSongIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
-    return [...new Set(homeConfig.customSections.filter((c) => c.type !== "albums").flatMap((c) => c.songIds))];
+    return [...new Set(homeConfig.customSections.filter((c) => c.type !== "albums" && c.type !== "playlists").flatMap((c) => c.songIds))];
   }, [homeConfig?.customSections]);
 
   const allCustomAlbumIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
     return [...new Set(homeConfig.customSections.filter((c) => c.type === "albums").flatMap((c) => c.albumIds || []))];
+  }, [homeConfig?.customSections]);
+
+  const allCustomPlaylistIds = useMemo(() => {
+    if (!homeConfig?.customSections) return [];
+    return [...new Set(homeConfig.customSections.filter((c) => c.type === "playlists").flatMap((c) => c.playlistIds || []))];
   }, [homeConfig?.customSections]);
 
   const { data: customSongsData, isLoading: loadingCustomSongs } = useQuery({
@@ -201,6 +206,22 @@ const HomePage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  const { data: customPlaylistsData, isLoading: loadingCustomPlaylists } = useQuery({
+    queryKey: ["all-custom-section-playlists", allCustomPlaylistIds],
+    queryFn: async () => {
+      if (allCustomPlaylistIds.length === 0) return new Map<string, { id: string; name: string; cover_url: string | null }>();
+      const { data } = await supabase
+        .from("playlists")
+        .select("id, name, cover_url")
+        .in("id", allCustomPlaylistIds);
+      const map = new Map<string, { id: string; name: string; cover_url: string | null }>();
+      for (const p of data || []) map.set(p.id, p);
+      return map;
+    },
+    enabled: allCustomPlaylistIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
   const handlePlayTrack = useCallback(
     (song: Song, allSongs: Song[]) => {
       if (currentSong?.id === song.id) {
@@ -242,7 +263,7 @@ const HomePage = () => {
   const getCustomSectionSongs = useCallback((sectionId: string): Song[] => {
     if (!homeConfig?.customSections || !customSongsData) return [];
     const cs = homeConfig.customSections.find((c) => c.id === sectionId);
-    if (!cs || cs.type === "albums") return [];
+    if (!cs || cs.type === "albums" || cs.type === "playlists") return [];
     return cs.songIds
       .map((id) => customSongsData.get(id))
       .filter(Boolean) as Song[];
@@ -256,6 +277,15 @@ const HomePage = () => {
       .map((id) => customAlbumsData.get(id))
       .filter(Boolean) as { id: string; title: string; artist: string; cover_url: string | null }[];
   }, [homeConfig?.customSections, customAlbumsData]);
+
+  const getCustomSectionPlaylists = useCallback((sectionId: string) => {
+    if (!homeConfig?.customSections || !customPlaylistsData) return [];
+    const cs = homeConfig.customSections.find((c) => c.id === sectionId);
+    if (!cs || cs.type !== "playlists") return [];
+    return (cs.playlistIds || [])
+      .map((id) => customPlaylistsData.get(id))
+      .filter(Boolean) as { id: string; name: string; cover_url: string | null }[];
+  }, [homeConfig?.customSections, customPlaylistsData]);
 
   const renderSection = (title: string, songs: Song[] | undefined, loading: boolean) => {
     if (!loading && (!songs || songs.length === 0)) return null;
@@ -439,6 +469,29 @@ const HomePage = () => {
                     ) : (
                       sectionAlbums.map((album, i) => (
                         <AlbumOverlayCard key={album.id} album={album} index={i} navigate={navigate} />
+                      ))
+                    )}
+                  </ContentStrip>
+                </Section>
+              );
+            }
+            if (cs?.type === "playlists") {
+              const sectionPlaylists = getCustomSectionPlaylists(section.id);
+              if (!loadingCustomPlaylists && sectionPlaylists.length === 0) return null;
+              return (
+                <Section key={section.id} title={section.title}>
+                  <ContentStrip>
+                    {loadingCustomPlaylists ? (
+                      <StripSkeleton count={6} />
+                    ) : (
+                      sectionPlaylists.map((pl) => (
+                        <CoverCard
+                          key={pl.id}
+                          title={pl.name}
+                          subtitle=""
+                          imageUrl={pl.cover_url || ""}
+                          onClick={() => navigate(`/playlist/${pl.id}`)}
+                        />
                       ))
                     )}
                   </ContentStrip>

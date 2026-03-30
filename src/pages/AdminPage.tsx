@@ -1705,6 +1705,8 @@ function HomeTab() {
   const [songPickerOpen, setSongPickerOpen] = useState(false);
   const [editingAlbumSection, setEditingAlbumSection] = useState<string | null>(null);
   const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
+  const [editingPlaylistSection, setEditingPlaylistSection] = useState<string | null>(null);
+  const [playlistPickerOpen, setPlaylistPickerOpen] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -1737,26 +1739,32 @@ function HomeTab() {
     setSections(updated.map((s, i) => ({ ...s, order: i })));
   };
 
-  const addCustomSection = (type: "songs" | "albums" = "songs") => {
+  const addCustomSection = (type: "songs" | "albums" | "playlists" = "songs") => {
     const id = `custom_${Date.now()}`;
+    const labels = { songs: "Nouvelle section", albums: "Nouvelle section Albums", playlists: "Nouvelle section Playlists" };
+    const emojis = { songs: "⭐", albums: "💿", playlists: "📋" };
     const newCustom: CustomSection = {
       id,
-      title: type === "albums" ? "Nouvelle section Albums" : "Nouvelle section",
+      title: labels[type],
       songIds: [],
       type,
       albumIds: [],
+      playlistIds: [],
     };
     setCustomSections((prev) => [...prev, newCustom]);
     setSections((prev) => [
       ...prev,
-      { id, title: type === "albums" ? "Nouvelle section Albums 💿" : "Nouvelle section ⭐", visible: true, order: prev.length },
+      { id, title: `${labels[type]} ${emojis[type]}`, visible: true, order: prev.length },
     ]);
     if (type === "songs") {
       setEditingCustom(id);
       setSongPickerOpen(true);
-    } else {
+    } else if (type === "albums") {
       setEditingAlbumSection(id);
       setAlbumPickerOpen(true);
+    } else {
+      setEditingPlaylistSection(id);
+      setPlaylistPickerOpen(true);
     }
   };
 
@@ -1969,6 +1977,7 @@ function HomeTab() {
                     {(() => {
                       const cs = customSections.find((c) => c.id === section.id);
                       const isAlbumType = cs?.type === "albums";
+                      const isPlaylistType = cs?.type === "playlists";
                       return (
                         <>
                           <button
@@ -1976,18 +1985,21 @@ function HomeTab() {
                               if (isAlbumType) {
                                 setEditingAlbumSection(section.id);
                                 setAlbumPickerOpen(true);
+                              } else if (isPlaylistType) {
+                                setEditingPlaylistSection(section.id);
+                                setPlaylistPickerOpen(true);
                               } else {
                                 setEditingCustom(section.id);
                                 setSongPickerOpen(true);
                               }
                             }}
                             className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
-                            title={isAlbumType ? "Gérer les albums" : "Gérer les morceaux"}
+                            title={isAlbumType ? "Gérer les albums" : isPlaylistType ? "Gérer les playlists" : "Gérer les morceaux"}
                           >
-                            {isAlbumType ? <Disc3 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
+                            {isAlbumType ? <Disc3 className="w-4 h-4" /> : isPlaylistType ? <ListMusic className="w-4 h-4" /> : <Music className="w-4 h-4" />}
                           </button>
                           <span className="text-[10px] text-muted-foreground tabular-nums">
-                            {isAlbumType ? (cs?.albumIds?.length || 0) : (cs?.songIds.length || 0)}
+                            {isAlbumType ? (cs?.albumIds?.length || 0) : isPlaylistType ? (cs?.playlistIds?.length || 0) : (cs?.songIds.length || 0)}
                           </span>
                         </>
                       );
@@ -2018,7 +2030,7 @@ function HomeTab() {
           })}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => addCustomSection("songs")}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
@@ -2032,6 +2044,13 @@ function HomeTab() {
           >
             <Disc3 className="w-3.5 h-3.5" />
             Section Albums
+          </button>
+          <button
+            onClick={() => addCustomSection("playlists")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
+          >
+            <ListMusic className="w-3.5 h-3.5" />
+            Section Playlists
           </button>
         </div>
       </div>
@@ -2056,6 +2075,19 @@ function HomeTab() {
             );
           }}
           onClose={() => { setAlbumPickerOpen(false); setEditingAlbumSection(null); }}
+        />
+      )}
+
+      {/* Playlist picker modal */}
+      {playlistPickerOpen && editingPlaylistSection && (
+        <PlaylistPickerModal
+          selectedIds={customSections.find((c) => c.id === editingPlaylistSection)?.playlistIds || []}
+          onUpdate={(ids) => {
+            setCustomSections((prev) =>
+              prev.map((c) => (c.id === editingPlaylistSection ? { ...c, playlistIds: ids } : c))
+            );
+          }}
+          onClose={() => { setPlaylistPickerOpen(false); setEditingPlaylistSection(null); }}
         />
       )}
 
@@ -2835,6 +2867,354 @@ function AlbumPickerModal({
                         <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
                       </div>
                       {album.existsLocally ? (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary">Local</span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground">Absent</span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Modal to pick playlists for a custom playlist section */
+function PlaylistPickerModal({
+  selectedIds,
+  onUpdate,
+  onClose,
+}: {
+  selectedIds: string[];
+  onUpdate: (ids: string[]) => void;
+  onClose: () => void;
+}) {
+  const [allPlaylists, setAllPlaylists] = useState<{ id: string; name: string; cover_url: string | null; songCount?: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+
+  // Deezer import
+  const [mode, setMode] = useState<"library" | "deezer">("library");
+  const [deezerUrl, setDeezerUrl] = useState("");
+  const [deezerLoading, setDeezerLoading] = useState(false);
+  const [deezerPlaylists, setDeezerPlaylists] = useState<{ id: number; title: string; cover_url: string; trackCount: number; existsLocally: boolean; localId?: string }[]>([]);
+  const [deezerError, setDeezerError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data: playlists } = await supabase
+        .from("playlists")
+        .select("id, name, cover_url")
+        .order("name");
+
+      // Count songs per playlist
+      const ids = (playlists || []).map((p) => p.id);
+      const { data: songCounts } = ids.length > 0
+        ? await supabase
+            .from("playlist_songs")
+            .select("playlist_id")
+            .in("playlist_id", ids)
+        : { data: [] };
+
+      const countMap = new Map<string, number>();
+      for (const s of songCounts || []) {
+        countMap.set(s.playlist_id, (countMap.get(s.playlist_id) || 0) + 1);
+      }
+
+      setAllPlaylists(
+        (playlists || []).map((p) => ({
+          ...p,
+          songCount: countMap.get(p.id) || 0,
+        }))
+      );
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = search.trim()
+    ? allPlaylists.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+      )
+    : allPlaylists;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDone = () => {
+    onUpdate(Array.from(selected));
+    onClose();
+  };
+
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+
+  /** Fetch playlists from a Deezer link */
+  const fetchDeezer = async () => {
+    let urlToUse = deezerUrl.trim();
+
+    if (isDeezerShortLink(urlToUse)) {
+      setDeezerError("");
+      setDeezerLoading(true);
+      setDeezerPlaylists([]);
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("deezer-proxy", {
+          body: { resolveUrl: urlToUse },
+        });
+        if (resolveData?.resolvedUrl) {
+          urlToUse = resolveData.resolvedUrl;
+        } else {
+          setDeezerError("Impossible de résoudre ce lien court Deezer.");
+          setDeezerLoading(false);
+          return;
+        }
+      } catch {
+        setDeezerError("Erreur lors de la résolution du lien court.");
+        setDeezerLoading(false);
+        return;
+      }
+    }
+
+    const parsed = parseDeezerUrl(urlToUse);
+    if (!parsed) {
+      setDeezerError("Lien Deezer invalide. Collez un lien de playlist Deezer.");
+      setDeezerLoading(false);
+      return;
+    }
+    setDeezerError("");
+    setDeezerLoading(true);
+    setDeezerPlaylists([]);
+
+    try {
+      let playlists: { id: number; title: string; cover_url: string; trackCount: number }[] = [];
+
+      if (parsed.type === "playlist") {
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/playlist/${parsed.id}` },
+        });
+        if (data) {
+          playlists = [{
+            id: data.id,
+            title: data.title || "",
+            cover_url: data.picture_medium || data.picture || "",
+            trackCount: data.nb_tracks || 0,
+          }];
+        }
+      } else if (parsed.type === "artist") {
+        // Get artist's playlists containing their tracks
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/search/playlist?q=${encodeURIComponent(parsed.id)}&limit=25` },
+        });
+        playlists = (data?.data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title || "",
+          cover_url: p.picture_medium || "",
+          trackCount: p.nb_tracks || 0,
+        }));
+      } else {
+        setDeezerError("Utilisez un lien de playlist Deezer.");
+        setDeezerLoading(false);
+        return;
+      }
+
+      // Match against local playlists
+      const localIndex = new Map<string, string>();
+      for (const p of allPlaylists) {
+        localIndex.set(normalize(p.name), p.id);
+      }
+
+      const result = playlists.map((p) => {
+        const localId = localIndex.get(normalize(p.title));
+        return { ...p, existsLocally: !!localId, localId };
+      });
+
+      setDeezerPlaylists(result);
+    } catch {
+      setDeezerError("Erreur lors de la récupération Deezer.");
+    } finally {
+      setDeezerLoading(false);
+    }
+  };
+
+  const localCount = deezerPlaylists.filter((p) => p.existsLocally).length;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <ListMusic className="w-4 h-4 text-primary" />
+            Sélectionner des playlists
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</span>
+            <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+              OK
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mode tabs */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setMode("library")}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${mode === "library" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            Bibliothèque
+          </button>
+          <button
+            onClick={() => setMode("deezer")}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${mode === "deezer" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            🎵 Deezer URL
+          </button>
+        </div>
+
+        {mode === "library" ? (
+          <>
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher une playlist..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-12">Aucune playlist trouvée</p>
+              ) : (
+                filtered.map((playlist) => {
+                  const isSelected = selected.has(playlist.id);
+                  return (
+                    <button
+                      key={playlist.id}
+                      onClick={() => toggle(playlist.id)}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                        isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                        isSelected ? "bg-primary border-primary" : "border-border"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      {playlist.cover_url ? (
+                        <img src={playlist.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <ListMusic className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-foreground truncate">{playlist.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{playlist.songCount} titre{(playlist.songCount || 0) > 1 ? "s" : ""}</p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="p-3 border-b border-border space-y-2">
+              <div className="relative flex gap-2">
+                <input
+                  value={deezerUrl}
+                  onChange={(e) => setDeezerUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && fetchDeezer()}
+                  placeholder="https://www.deezer.com/playlist/..."
+                  className="flex-1 pl-3 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
+                <button
+                  onClick={fetchDeezer}
+                  disabled={deezerLoading || !deezerUrl.trim()}
+                  className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 flex items-center gap-1"
+                >
+                  {deezerLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                  Chercher
+                </button>
+              </div>
+              {deezerError && <p className="text-xs text-destructive">{deezerError}</p>}
+              {deezerPlaylists.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground">
+                    {deezerPlaylists.length} playlist{deezerPlaylists.length > 1 ? "s" : ""} · <span className="text-primary font-semibold">{localCount} local</span>
+                  </p>
+                  {localCount > 0 && (
+                    <button
+                      onClick={() => {
+                        const localIds = deezerPlaylists.filter((p) => p.localId).map((p) => p.localId!);
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          localIds.forEach((id) => next.add(id));
+                          return next;
+                        });
+                      }}
+                      className="text-[10px] text-primary font-semibold"
+                    >
+                      Tout sélectionner (local)
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {deezerLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : deezerPlaylists.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  Collez un lien de playlist Deezer
+                </p>
+              ) : (
+                deezerPlaylists.map((pl) => {
+                  const isSelected = pl.localId ? selected.has(pl.localId) : false;
+                  return (
+                    <button
+                      key={pl.id}
+                      onClick={() => { if (pl.localId) toggle(pl.localId); }}
+                      disabled={!pl.existsLocally}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                        !pl.existsLocally ? "opacity-40" : isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                        isSelected ? "bg-primary border-primary" : "border-border"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <img src={pl.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-foreground truncate">{pl.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{pl.trackCount} titre{pl.trackCount > 1 ? "s" : ""}</p>
+                      </div>
+                      {pl.existsLocally ? (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary">Local</span>
                       ) : (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground">Absent</span>
