@@ -168,14 +168,6 @@ function AppContent() {
   );
 }
 
-/** Detects route changes to /carplay */
-function CarPlayRouteDetector({ onCarPlay }: { onCarPlay: (v: boolean) => void }) {
-  const location = window.location;
-  useEffect(() => {
-    onCarPlay(location.pathname === "/carplay");
-  });
-  return null;
-}
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
