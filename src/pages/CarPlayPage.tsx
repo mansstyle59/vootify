@@ -254,30 +254,31 @@ const CarPlayPage = () => {
           <motion.div
             className="absolute top-0 bottom-0 rounded-xl"
             style={{
-              width: "50%",
+              width: "calc(33.333% - 3px)",
               background: "hsl(var(--primary)/0.2)",
               backdropFilter: "blur(20px)",
               border: "0.5px solid hsl(var(--primary)/0.3)",
               boxShadow: "inset 0 0.5px 0 hsl(var(--primary)/0.15), 0 4px 16px hsl(var(--primary)/0.1)",
             }}
-            animate={{ x: tab === "music" ? 0 : "calc(100% + 4px)" }}
+            animate={{ x: tab === "music" ? 0 : tab === "recent" ? "calc(100% + 4px)" : "calc(200% + 8px)" }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
           {([
             { key: "music" as CarPlayTab, icon: Music, label: "Musique" },
+            { key: "recent" as CarPlayTab, icon: Clock, label: "Récents" },
             { key: "radio" as CarPlayTab, icon: Radio, label: "Radio" },
           ]).map(({ key, icon: Icon, label }) => (
             <button
               key={key}
               onClick={() => { setTab(key); setSearchQuery(""); setArtistFilter(null); }}
-              className="relative z-10 flex-1 flex items-center justify-center gap-2.5 rounded-xl text-base font-bold transition-colors active:scale-[0.96]"
+              className="relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl text-[14px] font-bold transition-colors active:scale-[0.96]"
               style={{
                 color: tab === key ? "hsl(var(--primary))" : "hsl(0 0% 100%/0.5)",
-                minHeight: 52,
-                padding: "12px 0",
+                minHeight: 50,
+                padding: "10px 0",
               }}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4.5 h-4.5" />
               {label}
             </button>
           ))}
