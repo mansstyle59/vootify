@@ -960,7 +960,7 @@ const RadioPage = () => {
             </div>
           ) : searchStations.length > 0 ? (
             <div>
-              {searchStations.map((station) => (
+              {(countryFilter ? searchStations.filter(s => s.countryCode === countryFilter) : searchStations).map((station) => (
                 <SearchResultRowComponent key={station.id} station={station} ctx={stationTileProps} />
               ))}
             </div>
