@@ -54,7 +54,7 @@ const AlbumDetailPage = () => {
         const firstSong = songs[0];
         return {
           album: { id: `derived-${paramArtist}|||${paramAlbum}`, title: paramAlbum, artist: paramArtist, coverUrl: firstSong.cover_url || "", year: firstSong.year || null, songs: [] },
-          tracks: songs.map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || firstSong.cover_url || "", streamUrl: s.stream_url || "", liked: false })),
+          tracks: songs.map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || firstSong.cover_url || "", streamUrl: s.stream_url || "", liked: false, genre: s.genre || undefined, year: s.year || undefined })),
         };
       }
       // Explicit album from custom_albums
@@ -63,7 +63,7 @@ const AlbumDetailPage = () => {
       const { data: songs } = await supabase.from("custom_songs").select("*").eq("album", album.title).eq("artist", album.artist);
       return {
         album: { id: album.id, title: album.title, artist: album.artist, coverUrl: album.cover_url || "", year: album.year || null, songs: [] },
-        tracks: (songs || []).map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || album.cover_url || "", streamUrl: s.stream_url || "", liked: false })),
+        tracks: (songs || []).map((s: any) => ({ id: `custom-${s.id}`, title: s.title, artist: s.artist, album: s.album || "", duration: s.duration || 0, coverUrl: s.cover_url || album.cover_url || "", streamUrl: s.stream_url || "", liked: false, genre: s.genre || undefined, year: s.year || undefined })),
       };
     },
     enabled: !!id,
