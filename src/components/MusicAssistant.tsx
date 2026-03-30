@@ -285,8 +285,8 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           <Bot className="w-5 h-5 text-primary-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-[15px] font-bold text-foreground">Demander une musique</h2>
-          <p className="text-[11px] text-muted-foreground">Dis-moi ce qui manque sur Vootify</p>
+          <h2 className="text-[15px] font-bold text-foreground">Assistant Vootify</h2>
+          <p className="text-[11px] text-muted-foreground">Découvre, explore, demande 🎵</p>
         </div>
         {messages.length > 0 && (
           <Button variant="ghost" size="icon" onClick={() => setMessages([])} className="text-muted-foreground">
