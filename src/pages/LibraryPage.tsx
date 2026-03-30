@@ -1573,7 +1573,102 @@ const LibraryPage = () => {
               </div>
             )}
 
-            {/* ── CUSTOM ── */}
+            {/* ── SONGS (all users) ── */}
+            {tab === "songs" && (
+              <div>
+                {customSongs.length === 0 ? (
+                  <EmptyState icon={Music} title="Aucun morceau" subtitle="Les morceaux du catalogue apparaîtront ici" />
+                ) : (
+                  <>
+                    {/* Search */}
+                    <div className="relative mb-3">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                      <input
+                        type="text"
+                        value={songsSearch}
+                        onChange={(e) => setSongsSearch(e.target.value)}
+                        placeholder="Rechercher un morceau..."
+                        className="w-full pl-9 pr-8 py-2.5 rounded-2xl text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+                        style={{
+                          background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                        }}
+                      />
+                      {songsSearch && (
+                        <button onClick={() => setSongsSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <ActionButtons
+                      onPlayAll={() => { setQueue(sortedAllSongs); play(sortedAllSongs[0]); }}
+                      onShuffle={() => { const s = [...sortedAllSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
+                    />
+
+                    {/* Sort */}
+                    <div className="relative flex items-center justify-between px-1 mb-3">
+                      <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
+                        {sortedAllSongs.length} morceau{sortedAllSongs.length > 1 ? "x" : ""}{songsSearch.trim() ? ` sur ${customSongs.length}` : ""}
+                      </p>
+                      <button
+                        onClick={() => setShowSongsSortMenu(!showSongsSortMenu)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground rounded-2xl bg-card/40 border border-border/10 transition-colors"
+                      >
+                        <ArrowUpDown className="w-3 h-3" />
+                        {songsSort === "recent" ? "Récent" : songsSort === "alpha" ? "A→Z" : songsSort === "artist" ? "Artiste" : "Durée"}
+                      </button>
+                      <AnimatePresence>
+                        {showSongsSortMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                            className="absolute right-0 top-8 z-20 bg-card border border-border rounded-2xl shadow-xl py-1.5 min-w-[150px] overflow-hidden"
+                          >
+                            {([
+                              { key: "alpha" as SortOption, label: "Titre A→Z" },
+                              { key: "artist" as SortOption, label: "Artiste A→Z" },
+                              { key: "recent" as SortOption, label: "Plus récent" },
+                              { key: "duration" as SortOption, label: "Durée" },
+                            ]).map((opt) => (
+                              <button
+                                key={opt.key}
+                                onClick={() => { setSongsSort(opt.key); setShowSongsSortMenu(false); }}
+                                className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${
+                                  songsSort === opt.key ? "text-primary font-semibold bg-primary/5" : "text-foreground hover:bg-secondary"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
+                      {sortedAllSongs.map((s, i) => (
+                        <PremiumSongRow
+                          key={s.id}
+                          song={s}
+                          index={i}
+                          showIndex
+                          cached={libraryCachedIds.has(s.id)}
+                          isActive={currentSong?.id === s.id}
+                          isPlaying={currentSong?.id === s.id && isPlaying}
+                          onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(sortedAllSongs); play(s); } }}
+                          onSwipeRight={() => toggleLike(s)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── CUSTOM (admin) ── */}
             {tab === "custom" && (
               <div>
                 {customSongs.length === 0 ? (
