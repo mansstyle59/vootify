@@ -357,7 +357,7 @@ const LibraryPage = () => {
   const playlistIds = useMemo(() => playlists.map((p) => p.id).join(","), [playlists]);
 
   useEffect(() => {
-    if (tab === "playlists") {
+    if (tab === "playlists" || tab === "downloads") {
       playlists.forEach((p) => { if (!playlistSongs[p.id]) loadPlaylistSongs(p.id); });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1816,6 +1816,135 @@ const LibraryPage = () => {
                   </div>
                 ) : (
                   <>
+                    {/* ── Offline Playlists ── */}
+                    {(() => {
+                      // Build offline playlists: playlists where at least 1 song is cached
+                      const offlinePlaylists = playlists.filter((p) => {
+                        const songs = playlistSongs[p.id] || [];
+                        return songs.some((s) => cachedSongs.some((c) => c.id === s.id));
+                      });
+                      if (offlinePlaylists.length === 0) return null;
+                      return (
+                        <div className="mb-6">
+                          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
+                            <ListMusic className="w-3.5 h-3.5" />
+                            Playlists hors-ligne ({offlinePlaylists.length})
+                          </p>
+                          <div className="space-y-2">
+                            {offlinePlaylists.map((pl) => {
+                              const songs = playlistSongs[pl.id] || [];
+                              const offlineSongs = songs.filter((s) => cachedSongs.some((c) => c.id === s.id));
+                              const coverUrl = pl.cover_url || offlineSongs[0]?.coverUrl || "";
+                              return (
+                                <motion.button
+                                  key={pl.id}
+                                  whileTap={{ scale: 0.97 }}
+                                  onClick={() => navigate(`/playlist/${pl.id}`)}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all"
+                                  style={{
+                                    background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
+                                    border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                                  }}
+                                >
+                                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1)" }}>
+                                    {coverUrl ? (
+                                      <img src={coverUrl} alt={pl.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-secondary">
+                                        <ListMusic className="w-5 h-5 text-muted-foreground/25" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-left">
+                                    <p className="text-[13px] font-bold text-foreground truncate">{pl.name}</p>
+                                    <p className="text-[10px] text-muted-foreground/50 font-medium">
+                                      {offlineSongs.length}/{songs.length} titre{songs.length > 1 ? "s" : ""} hors-ligne
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium" style={{ background: "hsl(142 71% 45% / 0.12)", color: "hsl(142 71% 45%)" }}>
+                                      <Download className="w-2.5 h-2.5 mr-0.5" />
+                                      {offlineSongs.length}
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground/25" />
+                                  </div>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* ── Offline Albums ── */}
+                    {(() => {
+                      // Group cached songs by album
+                      const albumMap = new Map<string, { title: string; artist: string; coverUrl: string; songs: (Song & { cachedAt: number })[] }>();
+                      for (const s of cachedSongs) {
+                        if (!s.album || s.album.trim() === "") continue;
+                        const key = `${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`;
+                        const existing = albumMap.get(key);
+                        if (existing) {
+                          existing.songs.push(s);
+                          if (!existing.coverUrl && s.coverUrl) existing.coverUrl = s.coverUrl;
+                        } else {
+                          albumMap.set(key, { title: s.album, artist: s.artist, coverUrl: s.coverUrl || "", songs: [s] });
+                        }
+                      }
+                      const offlineAlbums = Array.from(albumMap.values()).filter((a) => a.songs.length > 0).sort((a, b) => a.title.localeCompare(b.title, "fr"));
+                      if (offlineAlbums.length === 0) return null;
+                      return (
+                        <div className="mb-6">
+                          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
+                            <Disc3 className="w-3.5 h-3.5" />
+                            Albums hors-ligne ({offlineAlbums.length})
+                          </p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {offlineAlbums.map((album) => (
+                              <motion.button
+                                key={`${album.artist}-${album.title}`}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => {
+                                  setQueue(album.songs);
+                                  play(album.songs[0]);
+                                }}
+                                className="flex flex-col rounded-2xl overflow-hidden text-left transition-all"
+                                style={{
+                                  background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.15))",
+                                  border: "0.5px solid hsl(var(--foreground) / 0.05)",
+                                }}
+                              >
+                                <div className="aspect-square w-full overflow-hidden">
+                                  {album.coverUrl ? (
+                                    <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-secondary">
+                                      <Disc3 className="w-8 h-8 text-muted-foreground/20" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2.5">
+                                  <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
+                                  <p className="text-[9px] text-muted-foreground/50 truncate">{album.artist}</p>
+                                  <p className="text-[9px] text-muted-foreground/40 mt-0.5 flex items-center gap-0.5">
+                                    <Download className="w-2.5 h-2.5" style={{ color: "hsl(142 71% 45%)" }} />
+                                    {album.songs.length} titre{album.songs.length > 1 ? "s" : ""}
+                                  </p>
+                                </div>
+                              </motion.button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* ── All offline songs ── */}
+                    <div className="mb-2">
+                      <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
+                        <Music className="w-3.5 h-3.5" />
+                        Tous les titres ({cachedSongs.length})
+                      </p>
+                    </div>
                     <ActionButtons
                       onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
                       onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
