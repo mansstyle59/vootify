@@ -1,6 +1,6 @@
 /**
  * Maps known radio station name patterns to local logo files.
- * Falls back to Deezer radio search for cover art when no local logo matches.
+ * Falls back to TuneIn → Deezer radio search for cover art when no local logo matches.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -13,8 +13,8 @@ const STATION_LOGO_MAP: { pattern: RegExp; logo: string }[] = [
   { pattern: /france\s*culture/i, logo: "/radio-logos/france-culture.png" },
 ];
 
-// In-memory cache to avoid repeated Deezer lookups
-const deezerLogoCache = new Map<string, string>();
+// In-memory cache to avoid repeated lookups
+const logoCache = new Map<string, string>();
 
 export function getStationLogo(stationName: string, fallbackUrl: string): string {
   // 1. If we have a user-uploaded cover (not empty, not a generic placeholder), always use it
@@ -29,7 +29,7 @@ export function getStationLogo(stationName: string, fallbackUrl: string): string
 }
 
 /**
- * Async version: tries local logos first, then searches Deezer for a radio cover.
+ * Async version: tries local logos first, then TuneIn, then Deezer for a radio cover.
  * Returns the best cover URL found, or the fallback.
  */
 export async function getStationLogoAsync(stationName: string, fallbackUrl: string): Promise<string> {
@@ -45,18 +45,40 @@ export async function getStationLogoAsync(stationName: string, fallbackUrl: stri
 
   // 3. Check in-memory cache
   const cacheKey = stationName.toLowerCase().trim();
-  if (deezerLogoCache.has(cacheKey)) {
-    return deezerLogoCache.get(cacheKey)!;
+  if (logoCache.has(cacheKey)) {
+    return logoCache.get(cacheKey)!;
   }
 
-  // 4. Search Deezer for the station
+  // 4. Search TuneIn for a station logo (preferred — HD quality)
+  try {
+    const { data, error } = await supabase.functions.invoke("tunein-proxy", {
+      body: { action: "logo_search", query: stationName, limit: 3 },
+    });
+
+    if (!error && data?.logos?.length > 0) {
+      const nameNorm = cacheKey;
+      const best =
+        data.logos.find(
+          (r: any) => r.name?.toLowerCase().includes(nameNorm) || nameNorm.includes(r.name?.toLowerCase()),
+        ) || data.logos[0];
+
+      const coverUrl = best.logoHd || best.logo || "";
+      if (coverUrl) {
+        logoCache.set(cacheKey, coverUrl);
+        return coverUrl;
+      }
+    }
+  } catch {
+    // silent fail — try Deezer next
+  }
+
+  // 5. Fallback to Deezer radio search
   try {
     const { data, error } = await supabase.functions.invoke("deezer-proxy", {
       body: { action: "search_radio", query: stationName, limit: 3 },
     });
 
     if (!error && data?.data?.length > 0) {
-      // Find best match by name similarity
       const nameNorm = cacheKey;
       const best =
         data.data.find(
@@ -65,7 +87,7 @@ export async function getStationLogoAsync(stationName: string, fallbackUrl: stri
 
       const coverUrl = best.picture_big || best.picture_medium || best.picture || "";
       if (coverUrl) {
-        deezerLogoCache.set(cacheKey, coverUrl);
+        logoCache.set(cacheKey, coverUrl);
         return coverUrl;
       }
     }

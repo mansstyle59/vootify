@@ -6,6 +6,8 @@ const corsHeaders = {
 };
 
 const API_BASE = "https://de1.api.radio-browser.info/json";
+const TUNEIN_API = "https://opml.radiotime.com";
+const TUNEIN_CDN = "https://cdn-profiles.tunein.com";
 
 interface RBStation {
   stationuuid: string;
@@ -109,6 +111,30 @@ serve(async (req) => {
     const stations = raw
       .filter((s) => s.url_resolved && s.name)
       .map(mapStation);
+
+    // Enrich stations that have no favicon with TuneIn logos (batch, top 10 only to limit latency)
+    const noLogo = stations.filter(s => !s.coverUrl || s.coverUrl.length < 5).slice(0, 10);
+    if (noLogo.length > 0) {
+      await Promise.all(noLogo.map(async (s) => {
+        try {
+          const tuneInResp = await fetch(
+            `${TUNEIN_API}/Search.ashx?query=${encodeURIComponent(s.name)}&render=json&types=station`,
+            { headers: { "User-Agent": "Vootify/1.0" } }
+          );
+          if (tuneInResp.ok) {
+            const tuneInData = await tuneInResp.json();
+            const match = (tuneInData.body || []).find((item: any) => item.item === "station");
+            if (match?.guide_id) {
+              s.coverUrl = `${TUNEIN_CDN}/${match.guide_id}/images/logog.png`;
+            } else if (match?.image) {
+              s.coverUrl = match.image;
+            }
+          }
+        } catch {
+          // silent — keep empty favicon
+        }
+      }));
+    }
 
     return new Response(
       JSON.stringify({ success: true, stations }),
