@@ -100,7 +100,8 @@ function AppContent() {
   const setUserId = usePlayerStore((s) => s.setUserId);
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-  const [isCarPlay, setIsCarPlay] = useState(false);
+  const location = useLocation();
+  const isCarPlay = location.pathname === "/carplay";
 
   // Track usage time
   useUsageTracking();
@@ -118,14 +119,6 @@ function AppContent() {
       initAutoDownload(() => user?.id || null);
     }
   }, [user, loading, loadUserData, setUserId]);
-
-  // Detect CarPlay route to hide global player/nav
-  useEffect(() => {
-    const check = () => setIsCarPlay(window.location.pathname === "/carplay");
-    check();
-    window.addEventListener("popstate", check);
-    return () => window.removeEventListener("popstate", check);
-  }, []);
 
   // Refresh all data when PWA returns to foreground (reopen, tab switch)
   useEffect(() => {
