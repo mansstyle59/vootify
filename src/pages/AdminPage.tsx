@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff, ChevronRight, Disc3 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -2893,10 +2894,12 @@ function PlaylistPickerModal({
   onUpdate: (ids: string[]) => void;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const [allPlaylists, setAllPlaylists] = useState<{ id: string; name: string; cover_url: string | null; songCount?: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+  const [creatingPlaylist, setCreatingPlaylist] = useState<number | null>(null);
 
   // Deezer import
   const [mode, setMode] = useState<"library" | "deezer">("library");
@@ -2904,6 +2907,79 @@ function PlaylistPickerModal({
   const [deezerLoading, setDeezerLoading] = useState(false);
   const [deezerPlaylists, setDeezerPlaylists] = useState<{ id: number; title: string; cover_url: string; trackCount: number; existsLocally: boolean; localId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
+
+  /** Create a local playlist from a Deezer playlist */
+  const createFromDeezer = async (pl: { id: number; title: string; cover_url: string; trackCount: number }) => {
+    if (!user?.id) return;
+    setCreatingPlaylist(pl.id);
+    try {
+      // 1. Fetch tracks from Deezer
+      const { data: deezerData } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/playlist/${pl.id}/tracks?limit=200` },
+      });
+      const tracks: any[] = deezerData?.data || [];
+
+      // 2. Create local playlist
+      const { data: newPlaylist, error: plErr } = await supabase
+        .from("playlists")
+        .insert({ name: pl.title, cover_url: pl.cover_url, user_id: user.id })
+        .select("id")
+        .single();
+      if (plErr || !newPlaylist) throw plErr;
+
+      // 3. Match tracks to local custom_songs
+      const { data: allSongs } = await supabase
+        .from("custom_songs")
+        .select("id, title, artist, album, cover_url, stream_url, duration")
+        .not("stream_url", "is", null);
+
+      const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+      const songIndex = new Map<string, any>();
+      for (const s of allSongs || []) {
+        songIndex.set(norm(s.title) + "|" + norm(s.artist), s);
+      }
+
+      const playlistSongs: any[] = [];
+      for (let i = 0; i < tracks.length; i++) {
+        const t = tracks[i];
+        const key = norm(t.title || "") + "|" + norm(t.artist?.name || "");
+        const local = songIndex.get(key);
+        if (local) {
+          playlistSongs.push({
+            playlist_id: newPlaylist.id,
+            song_id: `custom-${local.id}`,
+            title: local.title,
+            artist: local.artist,
+            album: local.album || "",
+            cover_url: local.cover_url || t.album?.cover_medium || "",
+            stream_url: local.stream_url,
+            duration: local.duration || t.duration || 0,
+            position: i,
+          });
+        }
+      }
+
+      // 4. Insert matched songs
+      if (playlistSongs.length > 0) {
+        await supabase.from("playlist_songs").insert(playlistSongs);
+      }
+
+      // 5. Update local state
+      const newEntry = { id: newPlaylist.id, name: pl.title, cover_url: pl.cover_url, songCount: playlistSongs.length };
+      setAllPlaylists((prev) => [...prev, newEntry]);
+      setSelected((prev) => new Set([...prev, newPlaylist.id]));
+      setDeezerPlaylists((prev) =>
+        prev.map((p) => p.id === pl.id ? { ...p, existsLocally: true, localId: newPlaylist.id } : p)
+      );
+
+      toast.success(`Playlist "${pl.title}" créée avec ${playlistSongs.length} titre${playlistSongs.length > 1 ? "s" : ""} matchés`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la création de la playlist");
+    } finally {
+      setCreatingPlaylist(null);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -3195,31 +3271,43 @@ function PlaylistPickerModal({
               ) : (
                 deezerPlaylists.map((pl) => {
                   const isSelected = pl.localId ? selected.has(pl.localId) : false;
+                  const isCreating = creatingPlaylist === pl.id;
                   return (
-                    <button
+                    <div
                       key={pl.id}
-                      onClick={() => { if (pl.localId) toggle(pl.localId); }}
-                      disabled={!pl.existsLocally}
                       className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                        !pl.existsLocally ? "opacity-40" : isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                        !pl.existsLocally ? "opacity-70" : isSelected ? "bg-primary/10" : "hover:bg-muted/50"
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                        isSelected ? "bg-primary border-primary" : "border-border"
-                      }`}>
-                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                      </div>
-                      <img src={pl.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="text-sm font-medium text-foreground truncate">{pl.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{pl.trackCount} titre{pl.trackCount > 1 ? "s" : ""}</p>
-                      </div>
+                      <button
+                        onClick={() => { if (pl.localId) toggle(pl.localId); }}
+                        disabled={!pl.existsLocally}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                          isSelected ? "bg-primary border-primary" : "border-border"
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                        </div>
+                        <img src={pl.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-sm font-medium text-foreground truncate">{pl.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pl.trackCount} titre{pl.trackCount > 1 ? "s" : ""}</p>
+                        </div>
+                      </button>
                       {pl.existsLocally ? (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary">Local</span>
                       ) : (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground">Absent</span>
+                        <button
+                          onClick={() => createFromDeezer(pl)}
+                          disabled={isCreating}
+                          className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary text-primary-foreground flex items-center gap-1 flex-shrink-0 disabled:opacity-50"
+                        >
+                          {isCreating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                          Créer
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })
               )}
