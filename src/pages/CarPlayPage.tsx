@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStationLogo } from "@/lib/radioLogos";
 import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
 import {
-  Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3,
+  Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User,
 } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,6 +50,7 @@ const CarPlayPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [artistFilter, setArtistFilter] = useState<string | null>(null);
 
   const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = useRadioMetadata(
@@ -69,6 +70,54 @@ const CarPlayPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  // Recently played
+  const { data: recentlyPlayed = [] } = useQuery({
+    queryKey: ["carplay-recent", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("recently_played").select("*").eq("user_id", user.id).order("played_at", { ascending: false }).limit(20);
+      return (data || []).map(s => ({
+        id: s.song_id, title: s.title, artist: s.artist, album: s.album || "",
+        duration: s.duration, coverUrl: s.cover_url || "", streamUrl: s.stream_url || "", liked: false,
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Liked songs
+  const { data: likedSongs = [] } = useQuery({
+    queryKey: ["carplay-liked", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("liked_songs").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50);
+      return (data || []).map(s => ({
+        id: s.song_id, title: s.title, artist: s.artist, album: s.album || "",
+        duration: s.duration, coverUrl: s.cover_url || "", streamUrl: s.stream_url || "", liked: true,
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Extract popular artists from songs
+  const topArtists = useMemo(() => {
+    const map = new Map<string, { count: number; coverUrl: string }>();
+    for (const s of songs) {
+      s.artist.split(",").forEach(a => {
+        const name = a.trim();
+        if (!name) return;
+        const existing = map.get(name);
+        if (existing) existing.count++;
+        else map.set(name, { count: 1, coverUrl: s.coverUrl });
+      });
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([name, { coverUrl }]) => ({ name, coverUrl }));
+  }, [songs]);
 
   const { data: stations = [] } = useQuery({
     queryKey: ["carplay-radios"],
@@ -92,11 +141,16 @@ const CarPlayPage = () => {
   }, [currentSong, togglePlay, play]);
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return tab === "music" ? songs : stations as any[];
-    const q = searchQuery.toLowerCase();
-    if (tab === "music") return songs.filter(s => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
-    return stations.filter(s => s.name.toLowerCase().includes(q));
-  }, [searchQuery, tab, songs, stations]);
+    const q = searchQuery.toLowerCase().trim();
+    if (tab === "music") {
+      let list = songs;
+      if (artistFilter) list = list.filter(s => s.artist.toLowerCase().includes(artistFilter.toLowerCase()));
+      if (q) list = list.filter(s => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
+      return list;
+    }
+    if (q) return stations.filter(s => s.name.toLowerCase().includes(q));
+    return stations as any[];
+  }, [searchQuery, tab, songs, stations, artistFilter]);
 
   const playSong = useCallback((song: typeof songs[0]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
@@ -215,7 +269,7 @@ const CarPlayPage = () => {
           ]).map(({ key, icon: Icon, label }) => (
             <button
               key={key}
-              onClick={() => { setTab(key); setSearchQuery(""); }}
+              onClick={() => { setTab(key); setSearchQuery(""); setArtistFilter(null); }}
               className="relative z-10 flex-1 flex items-center justify-center gap-2.5 rounded-xl text-base font-bold transition-colors active:scale-[0.96]"
               style={{
                 color: tab === key ? "hsl(var(--primary))" : "hsl(0 0% 100%/0.5)",
@@ -266,11 +320,101 @@ const CarPlayPage = () => {
         </div>
       </motion.div>
 
+      {/* ── Quick Access: Artists + Favorites (music tab only, no search) ── */}
+      {tab === "music" && !searchQuery && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="relative z-10 px-3 mb-2"
+        >
+          {/* Artist filter bubbles */}
+          {topArtists.length > 0 && (
+            <div className="mb-3">
+              <p className="text-[11px] font-semibold text-white/30 uppercase tracking-wider mb-2 px-1">Artistes</p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {artistFilter && (
+                  <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    onClick={() => setArtistFilter(null)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full flex-shrink-0 active:scale-90 transition-transform"
+                    style={{ background: "hsl(0 0% 100%/0.1)", border: "0.5px solid hsl(0 0% 100%/0.15)" }}
+                  >
+                    <X className="w-3.5 h-3.5 text-white/60" />
+                    <span className="text-[12px] text-white/60 font-medium">Tous</span>
+                  </motion.button>
+                )}
+                {topArtists.map((artist, i) => {
+                  const isActive = artistFilter === artist.name;
+                  return (
+                    <motion.button
+                      key={artist.name}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => setArtistFilter(isActive ? null : artist.name)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0 active:scale-90 transition-transform"
+                      style={isActive ? GLASS_ACTIVE : GLASS_BUTTON}
+                    >
+                      <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100%/0.08)" }}>
+                        {artist.coverUrl ? (
+                          <LazyImage src={artist.coverUrl} alt="" className="w-full h-full object-cover" fallback wrapperClassName="w-full h-full" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><User className="w-3.5 h-3.5 text-white/30" /></div>
+                        )}
+                      </div>
+                      <span className={`text-[12px] font-semibold truncate max-w-[80px] ${isActive ? "text-primary" : "text-white/70"}`}>{artist.name}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quick access: Liked + Recent */}
+          <div className="flex gap-2 mb-2">
+            {likedSongs.length > 0 && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setQueue(likedSongs); play(likedSongs[0]); }}
+                className="flex-1 flex items-center gap-2.5 px-3 py-3 rounded-2xl active:scale-95 transition-transform"
+                style={GLASS_BG}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 80% 55%/0.15)" }}>
+                  <Heart className="w-5 h-5 text-red-400 fill-red-400" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-[13px] font-bold text-white">Favoris</p>
+                  <p className="text-[10px] text-white/30">{likedSongs.length} titres</p>
+                </div>
+              </motion.button>
+            )}
+            {recentlyPlayed.length > 0 && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setQueue(recentlyPlayed); play(recentlyPlayed[0]); }}
+                className="flex-1 flex items-center gap-2.5 px-3 py-3 rounded-2xl active:scale-95 transition-transform"
+                style={GLASS_BG}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary)/0.15)" }}>
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-[13px] font-bold text-white">Récents</p>
+                  <p className="text-[10px] text-white/30">{recentlyPlayed.length} titres</p>
+                </div>
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Content list ── */}
       <div className="relative z-10 flex-1 overflow-y-auto px-3 pb-36 scrollbar-hide">
         <AnimatePresence mode="wait">
           <motion.div
-            key={tab}
+            key={`${tab}-${artistFilter || ''}`}
             initial={{ opacity: 0, x: tab === "radio" ? 40 : -40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: tab === "radio" ? -40 : 40 }}
