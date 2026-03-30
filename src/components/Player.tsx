@@ -1,5 +1,7 @@
 import { usePlayerStore } from "@/stores/playerStore";
 import { formatDuration } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Heart, ChevronDown, ListMusic, X, Disc3,
