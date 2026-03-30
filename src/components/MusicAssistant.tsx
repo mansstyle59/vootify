@@ -11,10 +11,10 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/music-assistant`;
 
 const SUGGESTIONS = [
-  "J'aimerais que vous ajoutiez un morceau",
-  "Il manque un album sur Vootify",
-  "Pouvez-vous ajouter cet artiste ?",
-  "Je cherche une chanson introuvable",
+  "Suggère-moi de la musique chill 🎧",
+  "Quelles radios pour du jazz ?",
+  "Artistes similaires à Daft Punk",
+  "C'est quoi le dernier album de...",
 ];
 
 async function streamChat({
