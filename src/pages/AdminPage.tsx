@@ -2111,9 +2111,9 @@ function HomeTab() {
 }
 
 /** Parse a Deezer URL to extract type and ID */
-function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist"; id: string } | null {
+function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist" | "profile"; id: string } | null {
   try {
-    const m = url.match(/deezer\.com\/(?:\w+\/)?(album|playlist|artist)\/(\d+)/i);
+    const m = url.match(/deezer\.com\/(?:\w+\/)?(album|playlist|artist|profile)\/(\d+)/i);
     if (m) return { type: m[1] as any, id: m[2] };
     return null;
   } catch {
@@ -3062,7 +3062,7 @@ function PlaylistPickerModal({
 
     const parsed = parseDeezerUrl(urlToUse);
     if (!parsed) {
-      setDeezerError("Lien Deezer invalide. Collez un lien de playlist Deezer.");
+      setDeezerError("Lien Deezer invalide. Collez un lien de playlist, artiste ou profil Deezer.");
       setDeezerLoading(false);
       return;
     }
@@ -3086,7 +3086,6 @@ function PlaylistPickerModal({
           }];
         }
       } else if (parsed.type === "artist") {
-        // Get artist's playlists containing their tracks
         const { data } = await supabase.functions.invoke("deezer-proxy", {
           body: { path: `/search/playlist?q=${encodeURIComponent(parsed.id)}&limit=25` },
         });
@@ -3096,8 +3095,19 @@ function PlaylistPickerModal({
           cover_url: p.picture_medium || "",
           trackCount: p.nb_tracks || 0,
         }));
+      } else if (parsed.type === "profile") {
+        // Fetch all playlists from a Deezer user profile
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/user/${parsed.id}/playlists?limit=100` },
+        });
+        playlists = (data?.data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title || "",
+          cover_url: p.picture_medium || p.picture || "",
+          trackCount: p.nb_tracks || 0,
+        }));
       } else {
-        setDeezerError("Utilisez un lien de playlist Deezer.");
+        setDeezerError("Utilisez un lien de playlist, artiste ou profil Deezer.");
         setDeezerLoading(false);
         return;
       }
@@ -3221,7 +3231,7 @@ function PlaylistPickerModal({
                   value={deezerUrl}
                   onChange={(e) => setDeezerUrl(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && fetchDeezer()}
-                  placeholder="https://www.deezer.com/playlist/..."
+                  placeholder="https://www.deezer.com/playlist/... ou /profile/..."
                   className="flex-1 pl-3 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
                   autoFocus
                 />
@@ -3236,25 +3246,41 @@ function PlaylistPickerModal({
               </div>
               {deezerError && <p className="text-xs text-destructive">{deezerError}</p>}
               {deezerPlaylists.length > 0 && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <p className="text-[10px] text-muted-foreground">
                     {deezerPlaylists.length} playlist{deezerPlaylists.length > 1 ? "s" : ""} · <span className="text-primary font-semibold">{localCount} local</span>
                   </p>
-                  {localCount > 0 && (
-                    <button
-                      onClick={() => {
-                        const localIds = deezerPlaylists.filter((p) => p.localId).map((p) => p.localId!);
-                        setSelected((prev) => {
-                          const next = new Set(prev);
-                          localIds.forEach((id) => next.add(id));
-                          return next;
-                        });
-                      }}
-                      className="text-[10px] text-primary font-semibold"
-                    >
-                      Tout sélectionner (local)
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {deezerPlaylists.some((p) => !p.existsLocally) && (
+                      <button
+                        onClick={async () => {
+                          const toCreate = deezerPlaylists.filter((p) => !p.existsLocally);
+                          for (const pl of toCreate) {
+                            await createFromDeezer(pl);
+                          }
+                        }}
+                        disabled={creatingPlaylist !== null}
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/15 text-primary disabled:opacity-50"
+                      >
+                        {creatingPlaylist !== null ? "Création..." : `Créer toutes (${deezerPlaylists.filter((p) => !p.existsLocally).length})`}
+                      </button>
+                    )}
+                    {localCount > 0 && (
+                      <button
+                        onClick={() => {
+                          const localIds = deezerPlaylists.filter((p) => p.localId).map((p) => p.localId!);
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            localIds.forEach((id) => next.add(id));
+                            return next;
+                          });
+                        }}
+                        className="text-[10px] text-primary font-semibold"
+                      >
+                        Tout sélectionner (local)
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -3266,7 +3292,7 @@ function PlaylistPickerModal({
                 </div>
               ) : deezerPlaylists.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">
-                  Collez un lien de playlist Deezer
+                  Collez un lien de playlist, profil ou artiste Deezer
                 </p>
               ) : (
                 deezerPlaylists.map((pl) => {
