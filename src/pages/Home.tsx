@@ -15,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play, WifiOff, Download } from "lucide-react";
+import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play, WifiOff, Download, Car } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -432,6 +432,10 @@ const HomePage = () => {
                   <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
                     <Headphones className="w-4 h-4 text-muted-foreground" />
                     <span className="font-semibold text-[13px]">Paramètres audio</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/carplay")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
+                    <Car className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-semibold text-[13px]">Mode CarPlay</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
                   <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer text-destructive focus:text-destructive">
