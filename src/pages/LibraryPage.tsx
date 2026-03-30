@@ -2179,7 +2179,7 @@ const LibraryPage = () => {
 
 /** Artist card with Deezer photo for library */
 function ArtistLibraryCard({ artist, index, navigate }: {
-  artist: { name: string; cover: string; count: number };
+  artist: { name: string; cover: string; count: number; albumCount?: number };
   index: number;
   navigate: ReturnType<typeof import("react-router-dom").useNavigate>;
 }) {
