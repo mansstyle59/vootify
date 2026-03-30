@@ -1916,7 +1916,7 @@ const LibraryPage = () => {
                     })()}
 
                     {/* ── Offline Albums ── */}
-                    {(() => {
+                    {!q && (() => {
                       // Group cached songs by album
                       const albumMap = new Map<string, { title: string; artist: string; coverUrl: string; songs: (Song & { cachedAt: number })[] }>();
                       for (const s of cachedSongs) {
