@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStationLogo } from "@/lib/radioLogos";
 import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
 import {
-  Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User,
+  Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User, Play,
 } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,7 +15,7 @@ import { CarPlayNowPlaying } from "@/components/carplay/CarPlayNowPlaying";
 import { CarPlayMiniBar } from "@/components/carplay/CarPlayMiniBar";
 import { CarPlayRadioHistory } from "@/components/carplay/CarPlayRadioHistory";
 
-type CarPlayTab = "music" | "radio";
+type CarPlayTab = "music" | "radio" | "recent";
 
 /* ── Liquid Glass shared styles ── */
 const GLASS_BG = {
@@ -254,30 +254,31 @@ const CarPlayPage = () => {
           <motion.div
             className="absolute top-0 bottom-0 rounded-xl"
             style={{
-              width: "50%",
+              width: "calc(33.333% - 3px)",
               background: "hsl(var(--primary)/0.2)",
               backdropFilter: "blur(20px)",
               border: "0.5px solid hsl(var(--primary)/0.3)",
               boxShadow: "inset 0 0.5px 0 hsl(var(--primary)/0.15), 0 4px 16px hsl(var(--primary)/0.1)",
             }}
-            animate={{ x: tab === "music" ? 0 : "calc(100% + 4px)" }}
+            animate={{ x: tab === "music" ? 0 : tab === "recent" ? "calc(100% + 4px)" : "calc(200% + 8px)" }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
           {([
             { key: "music" as CarPlayTab, icon: Music, label: "Musique" },
+            { key: "recent" as CarPlayTab, icon: Clock, label: "Récents" },
             { key: "radio" as CarPlayTab, icon: Radio, label: "Radio" },
           ]).map(({ key, icon: Icon, label }) => (
             <button
               key={key}
               onClick={() => { setTab(key); setSearchQuery(""); setArtistFilter(null); }}
-              className="relative z-10 flex-1 flex items-center justify-center gap-2.5 rounded-xl text-base font-bold transition-colors active:scale-[0.96]"
+              className="relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl text-[14px] font-bold transition-colors active:scale-[0.96]"
               style={{
                 color: tab === key ? "hsl(var(--primary))" : "hsl(0 0% 100%/0.5)",
-                minHeight: 52,
-                padding: "12px 0",
+                minHeight: 50,
+                padding: "10px 0",
               }}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4.5 h-4.5" />
               {label}
             </button>
           ))}
@@ -422,7 +423,7 @@ const CarPlayPage = () => {
           >
             {tab === "music" ? (
               <div className="space-y-1.5">
-                {(searchQuery ? filtered : songs).map((song: any, i: number) => {
+                {(searchQuery || artistFilter ? filtered : songs).map((song: any, i: number) => {
                   const isActive = currentSong?.id === song.id;
                   return (
                     <motion.button
@@ -463,6 +464,69 @@ const CarPlayPage = () => {
                   <div className="flex flex-col items-center justify-center h-48 text-white/25">
                     <Disc3 className="w-12 h-12 mb-3" />
                     <p className="text-base font-medium">Aucun morceau</p>
+                  </div>
+                )}
+              </div>
+            ) : tab === "recent" ? (
+              <div className="space-y-1.5">
+                {recentlyPlayed.length > 0 && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => { setQueue(recentlyPlayed); play(recentlyPlayed[0]); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl mb-3 active:scale-95 transition-transform"
+                    style={{
+                      background: "hsl(var(--primary)/0.1)",
+                      border: "0.5px solid hsl(var(--primary)/0.2)",
+                      boxShadow: "0 4px 16px hsl(var(--primary)/0.1)",
+                    }}
+                  >
+                    <Play className="w-5 h-5 text-primary" />
+                    <span className="text-[14px] font-bold text-primary">Tout lire</span>
+                    <span className="ml-auto text-[11px] text-white/30">{recentlyPlayed.length} titres</span>
+                  </motion.button>
+                )}
+                {recentlyPlayed.map((song: any, i: number) => {
+                  const isActive = currentSong?.id === song.id;
+                  return (
+                    <motion.button
+                      key={`${song.id}-${i}`}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: Math.min(i * 0.025, 0.3) }}
+                      onClick={() => { setQueue(recentlyPlayed); play(song); }}
+                      className="w-full flex items-center gap-3.5 rounded-2xl text-left transition-all active:scale-[0.97]"
+                      style={{
+                        ...(isActive ? GLASS_ACTIVE : { background: "transparent" }),
+                        minHeight: 72,
+                        padding: "10px 12px",
+                      }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative" style={{ background: "hsl(0 0% 100%/0.06)" }}>
+                        <LazyImage src={song.coverUrl} alt="" className="w-full h-full object-cover" fallback wrapperClassName="w-full h-full" />
+                        {isActive && isPlaying && (
+                          <div className="absolute inset-0 flex items-center justify-center" style={{ background: "hsl(0 0% 0%/0.5)" }}>
+                            <Volume2 className="w-5 h-5 text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[15px] font-semibold truncate ${isActive ? "text-primary" : "text-white"}`}>{song.title}</p>
+                        <p className="text-[13px] text-white/35 truncate">{song.artist}</p>
+                      </div>
+                      {song.duration > 0 && (
+                        <span className="text-[11px] text-white/20 flex-shrink-0 tabular-nums">
+                          {Math.floor(song.duration / 60)}:{String(Math.floor(song.duration % 60)).padStart(2, "0")}
+                        </span>
+                      )}
+                    </motion.button>
+                  );
+                })}
+                {recentlyPlayed.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-48 text-white/25">
+                    <Clock className="w-12 h-12 mb-3" />
+                    <p className="text-base font-medium">Aucun titre récent</p>
+                    <p className="text-[12px] text-white/15 mt-1">Les morceaux écoutés apparaîtront ici</p>
                   </div>
                 )}
               </div>
