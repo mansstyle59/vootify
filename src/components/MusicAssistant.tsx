@@ -184,7 +184,7 @@ export function MusicAssistantFAB() {
             }}
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[11px] font-semibold text-primary tracking-wide">Demander une musique</span>
+            <span className="text-[11px] font-semibold text-primary tracking-wide">Assistant musical IA</span>
           </motion.button>
         )}
       </AnimatePresence>
