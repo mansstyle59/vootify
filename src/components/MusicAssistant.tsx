@@ -96,16 +96,47 @@ async function streamChat({
 
 export function MusicAssistantFAB() {
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const lastY = useRef(0);
+
+  useEffect(() => {
+    if (open) return;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > lastY.current + 8) setVisible(false);
+      else if (y < lastY.current - 8) setVisible(true);
+      lastY.current = y;
+    };
+    // also listen on scrollable containers
+    const scrollEls = document.querySelectorAll(".scrollbar-hide");
+    const handlers: Array<() => void> = [];
+    scrollEls.forEach((el) => {
+      const h = () => {
+        const t = (el as HTMLElement).scrollTop;
+        if (t > lastY.current + 8) setVisible(false);
+        else if (t < lastY.current - 8) setVisible(true);
+        lastY.current = t;
+      };
+      el.addEventListener("scroll", h, { passive: true });
+      handlers.push(() => el.removeEventListener("scroll", h));
+    });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      handlers.forEach((h) => h());
+    };
+  }, [open]);
 
   return (
     <>
       {/* Slim top banner */}
       <AnimatePresence>
-        {!open && (
+        {!open && visible && (
           <motion.button
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setOpen(true)}
             className="fixed z-50 top-0 left-0 right-0 flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
             style={{
