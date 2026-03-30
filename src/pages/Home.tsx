@@ -206,7 +206,22 @@ const HomePage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const handlePlayTrack = useCallback(
+  const { data: customPlaylistsData, isLoading: loadingCustomPlaylists } = useQuery({
+    queryKey: ["all-custom-section-playlists", allCustomPlaylistIds],
+    queryFn: async () => {
+      if (allCustomPlaylistIds.length === 0) return new Map<string, { id: string; name: string; cover_url: string | null }>();
+      const { data } = await supabase
+        .from("playlists")
+        .select("id, name, cover_url")
+        .in("id", allCustomPlaylistIds);
+      const map = new Map<string, { id: string; name: string; cover_url: string | null }>();
+      for (const p of data || []) map.set(p.id, p);
+      return map;
+    },
+    enabled: allCustomPlaylistIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
     (song: Song, allSongs: Song[]) => {
       if (currentSong?.id === song.id) {
         togglePlay();
