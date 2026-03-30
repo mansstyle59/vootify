@@ -713,11 +713,12 @@ function PlaylistForm() {
         if (local) {
           matched++;
           setSongs(prev => [...prev, {
-            file: null as any,
+            file: null as unknown as File,
             title: local.title,
             artist: local.artist,
             album: local.album || "",
             coverUrl: local.cover_url || t.album?.cover_medium || "",
+            streamUrl: local.stream_url || "",
             duration: local.duration || t.duration || 0,
             genre: local.genre || "",
             year: local.year || undefined,
@@ -725,7 +726,6 @@ function PlaylistForm() {
             uploaded: false,
             uploading: false,
             skipped: false,
-            existingStreamUrl: local.stream_url,
           }]);
         }
       }
