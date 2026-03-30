@@ -726,7 +726,7 @@ const SearchPage = () => {
             {/* ── Recently Played ── */}
             {recentlyPlayed.length > 0 && (
               <section>
-                <SectionHeader title="Écoutés récemment" />
+                <SectionHeader title="Écoutés récemment" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {recentlyPlayed.slice(0, 6).map((song) => (
                     <button
