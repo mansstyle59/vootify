@@ -357,7 +357,7 @@ const LibraryPage = () => {
   const playlistIds = useMemo(() => playlists.map((p) => p.id).join(","), [playlists]);
 
   useEffect(() => {
-    if (tab === "playlists") {
+    if (tab === "playlists" || tab === "downloads") {
       playlists.forEach((p) => { if (!playlistSongs[p.id]) loadPlaylistSongs(p.id); });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
