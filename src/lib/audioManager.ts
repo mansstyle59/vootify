@@ -53,6 +53,8 @@ class AudioManager {
     });
     this.audio.addEventListener("ended", () => this.next());
 
+    // ── Sync lock screen position state periodically ──
+    this.audio.addEventListener("timeupdate", () => this._updatePositionState());
     // ── Buffering / Stalled recovery ──
     this.audio.addEventListener("waiting", () => {
       this.isBuffering = true;
