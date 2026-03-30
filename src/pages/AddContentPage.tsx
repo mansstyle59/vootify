@@ -1080,8 +1080,9 @@ const AddContentPage = () => {
               className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl text-center transition-all ${
                 tab === key
                   ? "bg-primary/10 ring-1 ring-primary/25 text-primary"
-                  : "liquid-glass text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
+              style={tab !== key ? { background: "hsl(var(--card))", border: "0.5px solid hsl(var(--border) / 0.2)" } : {}}
             >
               <Icon className="w-5 h-5" />
               <span className="text-xs font-semibold">{label}</span>
