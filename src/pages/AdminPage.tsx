@@ -65,7 +65,7 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen pb-20 animate-fade-in">
       {/* Header */}
-      <div className="relative px-5 md:px-8 pt-[calc(max(1.5rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px))] pb-4">
+      <div className="relative px-5 md:px-8 pb-4" style={{ paddingTop: "calc(max(1.5rem, env(safe-area-inset-top, 0px)) + var(--ai-banner-h, 0px))" }}>
         <div className="flex items-center gap-3">
           {tab !== null ? (
             <button
