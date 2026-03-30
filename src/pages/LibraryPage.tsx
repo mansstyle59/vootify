@@ -1383,6 +1383,28 @@ const LibraryPage = () => {
                       const sorted = [...filtered].sort((a, b) =>
                         artistSort === "count" ? b.count - a.count : a.name.localeCompare(b.name, "fr")
                       );
+                      const letters = artistSort === "alpha"
+                        ? Array.from(new Set(sorted.map((a) => {
+                            const first = a.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toUpperCase();
+                            return /[A-Z]/.test(first) ? first : "#";
+                          }))).sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b))
+                        : [];
+
+                      const scrollToLetter = (letter: string) => {
+                        const el = document.getElementById(`artist-letter-${letter}`);
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      };
+
+                      // Group by letter for section headers
+                      const grouped = artistSort === "alpha"
+                        ? sorted.reduce<Record<string, typeof sorted>>((acc, a) => {
+                            const first = a.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toUpperCase();
+                            const key = /[A-Z]/.test(first) ? first : "#";
+                            (acc[key] = acc[key] || []).push(a);
+                            return acc;
+                          }, {})
+                        : {};
+
                       return (
                         <>
                           <div className="flex items-center justify-between mb-3 px-1">
@@ -1405,10 +1427,57 @@ const LibraryPage = () => {
                               ))}
                             </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-4">
-                            {sorted.map((artist, i) => (
-                              <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
-                            ))}
+
+                          <div className="relative">
+                            {/* Artist grid */}
+                            <div className={artistSort === "alpha" && letters.length > 1 ? "pr-5" : ""}>
+                              {artistSort === "alpha" && letters.length > 1 ? (
+                                Object.entries(grouped)
+                                  .sort(([a], [b]) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b))
+                                  .map(([letter, artists]) => (
+                                    <div key={letter} id={`artist-letter-${letter}`}>
+                                      <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-2 mt-4 first:mt-0 px-1">{letter}</p>
+                                      <div className="grid grid-cols-3 gap-4">
+                                        {artists.map((artist, i) => (
+                                          <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))
+                              ) : (
+                                <div className="grid grid-cols-3 gap-4">
+                                  {sorted.map((artist, i) => (
+                                    <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Alphabet sidebar */}
+                            {artistSort === "alpha" && letters.length > 1 && (
+                              <div
+                                className="fixed right-1 flex flex-col items-center gap-[1px] z-40"
+                                style={{ top: "50%", transform: "translateY(-50%)" }}
+                                onTouchMove={(e) => {
+                                  e.preventDefault();
+                                  const touch = e.touches[0];
+                                  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                                  const l = el?.getAttribute("data-letter");
+                                  if (l) scrollToLetter(l);
+                                }}
+                              >
+                                {letters.map((l) => (
+                                  <button
+                                    key={l}
+                                    data-letter={l}
+                                    onClick={() => scrollToLetter(l)}
+                                    className="w-4 h-4 flex items-center justify-center text-[8px] font-bold text-primary/70 active:text-primary active:scale-125 transition-transform"
+                                  >
+                                    {l}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </>
                       );
