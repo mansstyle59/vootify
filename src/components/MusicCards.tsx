@@ -39,7 +39,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
 
   return (
     <div
-      className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98]"
+      className="group flex items-center gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98]"
       style={{
         background: isCurrentSong ? "hsl(var(--primary) / 0.05)" : "transparent",
         boxShadow: isCurrentSong ? "inset 0 0 0 1px hsl(var(--primary) / 0.12)" : "none",
@@ -47,7 +47,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
       onClick={handleClick}
     >
       {showIndex && (
-        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+        <div className="w-5 flex-shrink-0 flex items-center justify-center">
           {isCurrentSong && isPlaying ? (
             <div className="flex items-end gap-[2px] h-3.5">
               <div className="w-[2px] rounded-full bg-primary animate-equalizer-1" />
@@ -89,10 +89,10 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
         )}
       </div>
 
-      {/* Info */}
+      {/* Info — takes priority */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
-          <p className={`text-[12px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
+          <p className={`text-[13px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
             {song.title}
           </p>
           {isCached && (
@@ -101,7 +101,7 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
             </span>
           )}
         </div>
-        <p className="text-[10px] text-muted-foreground/50 mt-0.5 truncate font-medium">
+        <p className="text-[11px] text-muted-foreground/50 mt-0.5 truncate font-medium">
           <button
             onClick={(e) => { e.stopPropagation(); navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`); }}
             className="hover:text-primary hover:underline transition-colors"
@@ -122,8 +122,8 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-0.5 flex-shrink-0">
+      {/* Compact actions */}
+      <div className="flex items-center gap-0 flex-shrink-0">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -134,21 +134,6 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
         >
           <Heart className={`w-3.5 h-3.5 transition-all ${liked ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
         </button>
-
-        {song.duration > 0 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              const newQueue = [...queue.filter((s) => s.id !== song.id), song];
-              setQueue(newQueue);
-              toast.success(`"${song.title}" ajouté à la file`);
-              if (navigator.vibrate) navigator.vibrate(8);
-            }}
-            className="p-1.5 rounded-full transition-transform active:scale-90"
-          >
-            <ListEnd className="w-3.5 h-3.5 text-muted-foreground/30" />
-          </button>
-        )}
 
         {song.streamUrl && song.duration > 0 && (
           <button
