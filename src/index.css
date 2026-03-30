@@ -295,3 +295,11 @@
     opacity: 0.8;
   }
 }
+
+/* PWA standalone: push content down slightly for status bar comfort */
+@media (display-mode: standalone) {
+  :root, .dark {
+    --pwa-top-extra: 8px;
+  }
+}
+}
