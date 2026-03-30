@@ -157,7 +157,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex w-full">
       {!isCarPlay && <AppSidebar />}
-      <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 scrollbar-hide" style={{ paddingBottom: !isCarPlay && currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
+      <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 scrollbar-hide" style={{ paddingBottom: !isCarPlay && currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined, paddingTop: !isCarPlay ? "calc(env(safe-area-inset-top, 0px) + 28px)" : undefined }}>
         <AnimatedRoutes />
       </PullToRefresh>
       {isCarPlay ? <div className="hidden"><MiniPlayer /></div> : <MiniPlayer />}
