@@ -291,7 +291,6 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
                 {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
                   <span className="inline-block w-1.5 h-4 ml-0.5 rounded-full bg-primary animate-pulse" />
                 )}
-                )}
               </div>
             </motion.div>
           ))
