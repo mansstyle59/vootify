@@ -1708,7 +1708,7 @@ const LibraryPage = () => {
                             {cachedSongs.length} titre{cachedSongs.length > 1 ? "s" : ""} hors-ligne
                           </p>
                           <p className="text-[11px] text-muted-foreground/60">
-                            {formatSize(cacheSize)} utilisé{cachedSongs.length > 0 ? ` · ~${formatSize(Math.round(cacheSize / cachedSongs.length))}/titre` : ""}
+                            {formatSize(cacheSize)} utilisé · {cachedSongs.length}/300 titres
                           </p>
                         </div>
                       </div>
@@ -1761,15 +1761,28 @@ const LibraryPage = () => {
                         </button>
                       </div>
                     </div>
+                    {/* Storage bar */}
                     <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                       <motion.div
                         className="bg-primary rounded-full h-1.5"
                         initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((cacheSize / (500 * 1024 * 1024)) * 100, 100)}%` }}
+                        animate={{ width: `${Math.min((cacheSize / (1024 * 1024 * 1024)) * 100, 100)}%` }}
                         transition={{ duration: 0.5 }}
                       />
                     </div>
-                    <p className="text-[10px] text-muted-foreground/40 mt-1.5 text-right">{formatSize(cacheSize)} / 500 Mo</p>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1 text-right">{formatSize(cacheSize)} / 1 Go</p>
+
+                    {/* Song count bar */}
+                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden mt-2">
+                      <motion.div
+                        className="rounded-full h-1.5"
+                        style={{ background: cachedSongs.length >= 280 ? "hsl(var(--destructive))" : "hsl(var(--primary) / 0.6)" }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((cachedSongs.length / 300) * 100, 100)}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1 text-right">{cachedSongs.length} / 300 titres</p>
                   </div>
                 )}
 
