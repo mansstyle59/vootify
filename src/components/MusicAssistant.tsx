@@ -102,6 +102,14 @@ export function MusicAssistantFAB() {
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-[11px] font-semibold text-primary tracking-wide">Demander du contenu</span>
+            {unreadCount > 0 && (
+              <span
+                className="min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                style={{ background: "hsl(0 84% 60%)", color: "white" }}
+              >
+                {unreadCount}
+              </span>
+            )}
           </motion.button>
         )}
       </AnimatePresence>
