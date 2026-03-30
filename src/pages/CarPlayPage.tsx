@@ -71,6 +71,54 @@ const CarPlayPage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Recently played
+  const { data: recentlyPlayed = [] } = useQuery({
+    queryKey: ["carplay-recent", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("recently_played").select("*").eq("user_id", user.id).order("played_at", { ascending: false }).limit(20);
+      return (data || []).map(s => ({
+        id: s.song_id, title: s.title, artist: s.artist, album: s.album || "",
+        duration: s.duration, coverUrl: s.cover_url || "", streamUrl: s.stream_url || "", liked: false,
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Liked songs
+  const { data: likedSongs = [] } = useQuery({
+    queryKey: ["carplay-liked", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("liked_songs").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50);
+      return (data || []).map(s => ({
+        id: s.song_id, title: s.title, artist: s.artist, album: s.album || "",
+        duration: s.duration, coverUrl: s.cover_url || "", streamUrl: s.stream_url || "", liked: true,
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Extract popular artists from songs
+  const topArtists = useMemo(() => {
+    const map = new Map<string, { count: number; coverUrl: string }>();
+    for (const s of songs) {
+      s.artist.split(",").forEach(a => {
+        const name = a.trim();
+        if (!name) return;
+        const existing = map.get(name);
+        if (existing) existing.count++;
+        else map.set(name, { count: 1, coverUrl: s.coverUrl });
+      });
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([name, { coverUrl }]) => ({ name, coverUrl }));
+  }, [songs]);
+
   const { data: stations = [] } = useQuery({
     queryKey: ["carplay-radios"],
     queryFn: async () => {
@@ -93,11 +141,16 @@ const CarPlayPage = () => {
   }, [currentSong, togglePlay, play]);
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return tab === "music" ? songs : stations as any[];
-    const q = searchQuery.toLowerCase();
-    if (tab === "music") return songs.filter(s => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
-    return stations.filter(s => s.name.toLowerCase().includes(q));
-  }, [searchQuery, tab, songs, stations]);
+    const q = searchQuery.toLowerCase().trim();
+    if (tab === "music") {
+      let list = songs;
+      if (artistFilter) list = list.filter(s => s.artist.toLowerCase().includes(artistFilter.toLowerCase()));
+      if (q) list = list.filter(s => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
+      return list;
+    }
+    if (q) return stations.filter(s => s.name.toLowerCase().includes(q));
+    return stations as any[];
+  }, [searchQuery, tab, songs, stations, artistFilter]);
 
   const playSong = useCallback((song: typeof songs[0]) => {
     if (currentSong?.id === song.id) { togglePlay(); return; }
