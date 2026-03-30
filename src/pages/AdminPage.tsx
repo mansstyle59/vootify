@@ -2028,7 +2028,13 @@ function HomeTab() {
               </motion.div>
             );
           })}
-        </div>
+          <button
+            onClick={() => addCustomSection("playlists")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
+          >
+            <ListMusic className="w-3.5 h-3.5" />
+            Section Playlists
+          </button>
 
         <div className="flex gap-2">
           <button
