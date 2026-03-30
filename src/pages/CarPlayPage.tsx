@@ -269,7 +269,7 @@ const CarPlayPage = () => {
           ]).map(({ key, icon: Icon, label }) => (
             <button
               key={key}
-              onClick={() => { setTab(key); setSearchQuery(""); }}
+              onClick={() => { setTab(key); setSearchQuery(""); setArtistFilter(null); }}
               className="relative z-10 flex-1 flex items-center justify-center gap-2.5 rounded-xl text-base font-bold transition-colors active:scale-[0.96]"
               style={{
                 color: tab === key ? "hsl(var(--primary))" : "hsl(0 0% 100%/0.5)",
