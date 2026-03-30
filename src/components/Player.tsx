@@ -803,6 +803,26 @@ export function MiniPlayer() {
   );
 }
 
+/* ── Source reliability badge ── */
+const SOURCE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  official:  { label: "Officielle", color: "text-green-400", bg: "bg-green-400/15 border-green-400/30" },
+  stream:    { label: "Flux",       color: "text-blue-400",  bg: "bg-blue-400/15 border-blue-400/30" },
+  radio_fr:  { label: "radio.fr",   color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/30" },
+  tunein:    { label: "TuneIn",     color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/30" },
+};
+
+function SourceBadge({ source }: { source?: RadioSource }) {
+  if (!source || source === "none") return null;
+  const cfg = SOURCE_CONFIG[source];
+  if (!cfg) return null;
+  return (
+    <span className={`shrink-0 inline-flex items-center gap-1 text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.bg} ${cfg.color} uppercase tracking-wider`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${source === "official" ? "bg-green-400" : source === "stream" ? "bg-blue-400" : "bg-amber-400"}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
 /* ─────────────────────────────────────────────
    Radio Fullscreen Player
    ───────────────────────────────────────────── */
