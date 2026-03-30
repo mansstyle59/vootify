@@ -49,8 +49,8 @@ const glassCardStrong = {
 /* ── Section Header (editorial style) ── */
 function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-[20px] font-extrabold text-foreground tracking-tight">{title}</h2>
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="text-[17px] font-extrabold text-foreground tracking-tight">{title}</h2>
       {action && (
         <button onClick={onAction} className="flex items-center gap-0.5 text-[12px] font-semibold text-primary active:opacity-70 transition-opacity">
           {action}
