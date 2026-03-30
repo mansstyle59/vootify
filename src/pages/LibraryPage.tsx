@@ -775,7 +775,7 @@ const LibraryPage = () => {
           WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
-        <div className="relative px-5 md:px-9 pb-3" style={{ paddingTop: "calc(max(1.5rem, env(safe-area-inset-top, 0px)) + var(--ai-banner-h, 0px))" }}>
+        <div className="relative px-5 md:px-9 pb-3" style={{ paddingTop: "calc(max(2rem, env(safe-area-inset-top, 0px)) + var(--ai-banner-h, 0px))" }}>
           {isOffline && (
             <div
               className="flex items-center gap-2 px-3 py-2 mb-3 rounded-2xl"
