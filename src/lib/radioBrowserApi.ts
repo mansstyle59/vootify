@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getStationLogo } from "@/lib/radioLogos";
 
 export interface RadioBrowserStation {
   id: string;
