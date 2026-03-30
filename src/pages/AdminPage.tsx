@@ -3231,7 +3231,7 @@ function PlaylistPickerModal({
                   value={deezerUrl}
                   onChange={(e) => setDeezerUrl(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && fetchDeezer()}
-                  placeholder="https://www.deezer.com/playlist/..."
+                  placeholder="https://www.deezer.com/playlist/... ou /profile/..."
                   className="flex-1 pl-3 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
                   autoFocus
                 />
