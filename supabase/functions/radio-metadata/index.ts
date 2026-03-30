@@ -390,28 +390,7 @@ serve(async (req) => {
       console.log(`RF livemeta unavailable for ${rfStation.name}, fallback chain enabled`);
     }
 
-    // ── Step 2: Try ICY metadata from the stream ──
-    const icyRaw = await fetchIcyMetadata(streamUrl);
-    if (icyRaw) {
-      const parsed = cleanIcyTitle(icyRaw);
-      artist = parsed.artist;
-      title = parsed.title;
-      nowPlaying = icyRaw;
-      source = "stream";
-
-      if (artist && title) {
-        const deezer = await searchDeezerCover(artist, title);
-        if (deezer) {
-          coverUrl = deezer.coverUrl;
-          album = deezer.deezerAlbum;
-          if (deezer.deezerArtist) artist = deezer.deezerArtist;
-          if (deezer.deezerTitle) title = deezer.deezerTitle;
-          nowPlaying = `${artist} - ${title}`;
-        }
-      }
-    }
-
-    // ── Step 3: Fallback — try radio.fr API ──
+    // ── Step 2: Try radio.fr API (official metadata) ──
     if (!nowPlaying && resolvedStationName) {
       const radioFr = await fetchRadioFrMetadata(resolvedStationName);
       if (radioFr && (radioFr.title || radioFr.artist)) {
@@ -431,7 +410,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Step 4: Fallback — TuneIn for now playing + logo ──
+    // ── Step 3: Fallback — TuneIn (official metadata) ──
     if (!nowPlaying && resolvedStationName) {
       const tuneInData = await fetchTuneInMetadata(resolvedStationName);
       if (tuneInData && tuneInData.nowPlaying) {
@@ -441,11 +420,31 @@ serve(async (req) => {
         coverUrl = tuneInData.coverUrl || stationCover || "";
         source = "tunein";
       } else if (tuneInData?.logoHd) {
-        nowPlaying = `En direct sur ${resolvedStationName}`;
-        title = "En direct";
-        artist = resolvedStationName;
+        // Keep logo for later use but don't set nowPlaying yet
         coverUrl = tuneInData.logoHd;
-        source = "tunein";
+      }
+    }
+
+    // ── Step 4: Fallback — ICY metadata from stream ──
+    if (!nowPlaying) {
+      const icyRaw = await fetchIcyMetadata(streamUrl);
+      if (icyRaw) {
+        const parsed = cleanIcyTitle(icyRaw);
+        artist = parsed.artist;
+        title = parsed.title;
+        nowPlaying = icyRaw;
+        source = "stream";
+
+        if (artist && title) {
+          const deezer = await searchDeezerCover(artist, title);
+          if (deezer) {
+            coverUrl = deezer.coverUrl;
+            album = deezer.deezerAlbum;
+            if (deezer.deezerArtist) artist = deezer.deezerArtist;
+            if (deezer.deezerTitle) title = deezer.deezerTitle;
+            nowPlaying = `${artist} - ${title}`;
+          }
+        }
       }
     }
 
