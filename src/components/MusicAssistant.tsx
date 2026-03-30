@@ -300,7 +300,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-hide">
-        {messages.length === 0 ? (
+        {true ? (
           <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
             <div
               className="w-20 h-20 rounded-3xl flex items-center justify-center"
@@ -309,26 +309,19 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
               <Music2 className="w-10 h-10 text-primary" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-bold text-foreground mb-1">Un morceau manque ? 🎵</h3>
-              <p className="text-sm text-muted-foreground max-w-[260px]">
-                Dis-moi quel artiste, album ou morceau tu aimerais retrouver sur Vootify et je transmettrai ta demande à l'admin !
+              <h3 className="text-lg font-bold text-foreground mb-1">🚧 En construction</h3>
+              <p className="text-sm text-muted-foreground max-w-[280px]">
+                L'assistant musical arrive bientôt ! Tu pourras demander l'ajout de morceaux manquants directement ici.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 justify-center max-w-sm">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="px-3 py-2 rounded-2xl text-[12px] font-medium text-left active:scale-95 transition-transform"
-                  style={{
-                    background: "hsl(var(--foreground) / 0.04)",
-                    border: "0.5px solid hsl(var(--foreground) / 0.06)",
-                    color: "hsl(var(--foreground) / 0.7)",
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
+            <div
+              className="px-5 py-2.5 rounded-2xl text-[13px] font-semibold"
+              style={{
+                background: "hsl(var(--primary) / 0.1)",
+                color: "hsl(var(--primary))",
+              }}
+            >
+              Prochainement
             </div>
           </div>
         ) : (
