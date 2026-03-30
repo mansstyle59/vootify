@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
