@@ -238,6 +238,7 @@ const LibraryPage = () => {
   const [artistSearch, setArtistSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [albumSearch, setAlbumSearch] = useState("");
+  const [artistSort, setArtistSort] = useState<"alpha" | "count">("alpha");
   const [likedSearch, setLikedSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
   const [offlineSearch, setOfflineSearch] = useState("");
@@ -1379,13 +1380,33 @@ const LibraryPage = () => {
                       const filtered = artistSearch.trim()
                         ? libraryArtists.filter((a) => a.name.toLowerCase().includes(artistSearch.toLowerCase().trim()))
                         : libraryArtists;
+                      const sorted = [...filtered].sort((a, b) =>
+                        artistSort === "count" ? b.count - a.count : a.name.localeCompare(b.name, "fr")
+                      );
                       return (
                         <>
-                          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1">
-                            {filtered.length} artiste{filtered.length > 1 ? "s" : ""}{artistSearch.trim() ? ` sur ${libraryArtists.length}` : ""}
-                          </p>
+                          <div className="flex items-center justify-between mb-3 px-1">
+                            <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
+                              {filtered.length} artiste{filtered.length > 1 ? "s" : ""}{artistSearch.trim() ? ` sur ${libraryArtists.length}` : ""}
+                            </p>
+                            <div className="flex gap-1.5">
+                              {(["alpha", "count"] as const).map((opt) => (
+                                <button
+                                  key={opt}
+                                  onClick={() => setArtistSort(opt)}
+                                  className="px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all"
+                                  style={{
+                                    background: artistSort === opt ? "hsl(var(--primary))" : "hsl(var(--secondary))",
+                                    color: artistSort === opt ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                                  }}
+                                >
+                                  {opt === "alpha" ? "A-Z" : "Titres"}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                           <div className="grid grid-cols-3 gap-4">
-                            {filtered.map((artist, i) => (
+                            {sorted.map((artist, i) => (
                               <ArtistLibraryCard key={artist.name} artist={artist} index={i} navigate={navigate} />
                             ))}
                           </div>
