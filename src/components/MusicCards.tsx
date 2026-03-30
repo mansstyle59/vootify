@@ -8,9 +8,6 @@ import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
 import { toast } from "sonner";
 import { LongPressMenu } from "./LongPressMenu";
-import { useOfflineCache } from "@/hooks/useOfflineCache";
-import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
-import { toast } from "sonner";
 
 interface SongCardProps {
   song: Song;
