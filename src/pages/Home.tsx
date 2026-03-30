@@ -426,6 +426,25 @@ const HomePage = () => {
         {visibleSections.map((section) => {
           const isCustom = section.id.startsWith("custom_");
           if (isCustom) {
+            // Check if it's an album-type section
+            const cs = homeConfig?.customSections?.find((c) => c.id === section.id);
+            if (cs?.type === "albums") {
+              const sectionAlbums = getCustomSectionAlbums(section.id);
+              if (!loadingCustomAlbums && sectionAlbums.length === 0) return null;
+              return (
+                <Section key={section.id} title={section.title}>
+                  <ContentStrip>
+                    {loadingCustomAlbums ? (
+                      <StripSkeleton count={6} />
+                    ) : (
+                      sectionAlbums.map((album, i) => (
+                        <AlbumOverlayCard key={album.id} album={album} index={i} navigate={navigate} />
+                      ))
+                    )}
+                  </ContentStrip>
+                </Section>
+              );
+            }
             const songs = getCustomSectionSongs(section.id);
             return <div key={section.id}>{renderSection(section.title, songs, loadingCustomSongs)}</div>;
           }
