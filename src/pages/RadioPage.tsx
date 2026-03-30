@@ -940,7 +940,7 @@ const RadioPage = () => {
           ) : (
             <EmptyState searching />
           )}
-        </div>
+        </motion.div>
       ) : activeGenre ? (
         /* ── GENRE MODE ── */
         <div>
