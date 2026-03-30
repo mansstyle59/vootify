@@ -415,11 +415,10 @@ const LibraryPage = () => {
     enabled: tab === "custom",
   });
 
-  // Albums query — derived from custom_songs + custom_albums
+  // Albums query — derived from custom_songs + custom_albums, grouped by artist
   const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
     queryKey: ["library-albums"],
     queryFn: async () => {
-      // Fetch albums from songs
       const { data: songs, error: songsErr } = await supabase
         .from("custom_songs")
         .select("album, artist, cover_url, year")
@@ -427,14 +426,12 @@ const LibraryPage = () => {
         .not("album", "is", null);
       if (songsErr) throw songsErr;
 
-      // Fetch explicit custom_albums
       const { data: explicit, error: expErr } = await supabase
         .from("custom_albums")
         .select("*")
         .order("created_at", { ascending: false });
       if (expErr) throw expErr;
 
-      // Build album map from songs
       const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
       for (const row of songs || []) {
         if (!row.album || row.album.trim() === "") continue;
@@ -456,7 +453,6 @@ const LibraryPage = () => {
         }
       }
 
-      // Merge explicit custom_albums (override derived ones)
       for (const album of explicit || []) {
         const key = `${album.artist.toLowerCase()}|||${album.title.toLowerCase()}`;
         albumMap.set(key, {
@@ -469,7 +465,15 @@ const LibraryPage = () => {
         });
       }
 
-      return Array.from(albumMap.values()).sort((a, b) => a.title.localeCompare(b.title, "fr"));
+      // Sort: by artist name (A-Z), then by year (newest first), then by title
+      return Array.from(albumMap.values()).sort((a, b) => {
+        const artistCmp = a.artist.localeCompare(b.artist, "fr");
+        if (artistCmp !== 0) return artistCmp;
+        if (a.year && b.year) return b.year - a.year;
+        if (a.year) return -1;
+        if (b.year) return 1;
+        return a.title.localeCompare(b.title, "fr");
+      });
     },
     staleTime: 2 * 60 * 1000,
     enabled: tab === "albums",
@@ -481,16 +485,25 @@ const LibraryPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custom_songs")
-        .select("artist, cover_url")
+        .select("artist, album, cover_url")
         .not("stream_url", "is", null);
       if (error) throw error;
-      const artistMap = new Map<string, { name: string; cover: string; count: number }>();
+      const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
       for (const row of data || []) {
         const existing = artistMap.get(row.artist);
-        if (existing) { existing.count++; if (!existing.cover && row.cover_url) existing.cover = row.cover_url; }
-        else artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1 });
+        if (existing) {
+          existing.count++;
+          if (!existing.cover && row.cover_url) existing.cover = row.cover_url;
+          if (row.album && row.album.trim()) existing.albums.add(row.album.toLowerCase());
+        } else {
+          const albums = new Set<string>();
+          if (row.album && row.album.trim()) albums.add(row.album.toLowerCase());
+          artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1, albums });
+        }
       }
-      return Array.from(artistMap.values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+      return Array.from(artistMap.values())
+        .map((a) => ({ name: a.name, cover: a.cover, count: a.count, albumCount: a.albums.size }))
+        .sort((a, b) => a.name.localeCompare(b.name, "fr"));
     },
     staleTime: 2 * 60 * 1000,
     enabled: tab === "artists",
@@ -1241,43 +1254,84 @@ const LibraryPage = () => {
                         )}
                       </motion.button>
                     )}
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {libraryAlbums
-                        .filter((album) => {
-                          if (!albumSearch.trim()) return true;
-                          const q = albumSearch.toLowerCase().trim();
-                          return album.artist.toLowerCase().includes(q) || album.title.toLowerCase().includes(q);
-                        })
-                        .map((album, i) => (
-                        <motion.button
-                          key={album.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => {
-                            if (album.id.startsWith("derived-")) {
-                              navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
-                            } else {
-                              navigate(`/album/${album.id}`);
-                            }
-                          }}
-                          className="text-left group"
-                        >
-                          <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
-                            {album.cover_url ? (
-                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
-                                <Disc3 className="w-8 h-8 text-primary/25" />
+                    {/* Albums grouped by artist */}
+                    {(() => {
+                      const filtered = albumSearch.trim()
+                        ? libraryAlbums.filter((a) => {
+                            const q = albumSearch.toLowerCase().trim();
+                            return a.artist.toLowerCase().includes(q) || a.title.toLowerCase().includes(q);
+                          })
+                        : libraryAlbums;
+
+                      // Group by artist (already sorted by artist then year)
+                      const groups: { artist: string; albums: typeof filtered }[] = [];
+                      let currentArtist = "";
+                      let currentGroup: typeof filtered = [];
+                      for (const album of filtered) {
+                        if (album.artist.toLowerCase() !== currentArtist.toLowerCase()) {
+                          if (currentGroup.length > 0) groups.push({ artist: currentArtist, albums: currentGroup });
+                          currentArtist = album.artist;
+                          currentGroup = [album];
+                        } else {
+                          currentGroup.push(album);
+                        }
+                      }
+                      if (currentGroup.length > 0) groups.push({ artist: currentArtist, albums: currentGroup });
+
+                      return (
+                        <div className="space-y-6">
+                          {groups.map((group) => (
+                            <div key={group.artist}>
+                              <button
+                                onClick={() => navigate(`/artist/${encodeURIComponent(group.artist)}`)}
+                                className="flex items-center gap-2 mb-2.5 px-1 group/artist active:opacity-70 transition-opacity"
+                              >
+                                <User className="w-3.5 h-3.5 text-muted-foreground/40" />
+                                <span className="text-[13px] font-bold text-foreground group-hover/artist:text-primary transition-colors">
+                                  {group.artist}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground/40 font-medium">
+                                  {group.albums.length} album{group.albums.length > 1 ? "s" : ""}
+                                </span>
+                              </button>
+                              <div className="grid grid-cols-3 gap-2.5">
+                                {group.albums.map((album, i) => (
+                                  <motion.button
+                                    key={album.id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.02 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => {
+                                      if (album.id.startsWith("derived-")) {
+                                        navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
+                                      } else {
+                                        navigate(`/album/${album.id}`);
+                                      }
+                                    }}
+                                    className="text-left group"
+                                  >
+                                    <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
+                                      {album.cover_url ? (
+                                        <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
+                                          <Disc3 className="w-8 h-8 text-primary/25" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
+                                    <p className="text-[9px] text-muted-foreground/45 truncate font-medium">
+                                      {album.year ? album.year : ""}{album.count > 0 ? `${album.year ? " · " : ""}${album.count} titre${album.count > 1 ? "s" : ""}` : ""}
+                                    </p>
+                                  </motion.button>
+                                ))}
                               </div>
-                            )}
-                          </div>
-                          <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
-                          <p className="text-[9px] text-muted-foreground/45 truncate font-medium">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
-                        </motion.button>
-                      ))}
-                    </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
               </div>
@@ -2125,7 +2179,7 @@ const LibraryPage = () => {
 
 /** Artist card with Deezer photo for library */
 function ArtistLibraryCard({ artist, index, navigate }: {
-  artist: { name: string; cover: string; count: number };
+  artist: { name: string; cover: string; count: number; albumCount?: number };
   index: number;
   navigate: ReturnType<typeof import("react-router-dom").useNavigate>;
 }) {
@@ -2170,7 +2224,10 @@ function ArtistLibraryCard({ artist, index, navigate }: {
         )}
       </div>
       <p className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{artist.name}</p>
-      <p className="text-[9px] text-muted-foreground/40 font-medium">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+      <p className="text-[9px] text-muted-foreground/40 font-medium">
+        {artist.count} titre{artist.count > 1 ? "s" : ""}
+        {artist.albumCount ? ` · ${artist.albumCount} album${artist.albumCount > 1 ? "s" : ""}` : ""}
+      </p>
     </motion.button>
   );
 }
