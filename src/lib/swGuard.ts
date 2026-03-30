@@ -77,7 +77,8 @@ function installStaleModuleRecovery() {
       console.error("[SW Guard] Cache cleanup error:", e);
     }
 
-    // 3. Hard reload — bypasses any remaining cache
+    // 3. Flag for post-reload toast, then hard reload
+    sessionStorage.setItem(RECOVERY_DONE_KEY, "1");
     window.location.reload();
   };
 
