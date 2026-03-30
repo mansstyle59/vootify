@@ -36,12 +36,16 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
   title: string; artist: string; coverUrl: string; album: string;
 } | null> {
   try {
-    const resp = await fetch(`${RF_LIVEMETA}/${stationId}`, {
+    const url = `${RF_LIVEMETA}/${stationId}`;
+    console.log("RF livemeta fetch:", url);
+    const resp = await fetch(url, {
       headers: { "User-Agent": "Vootify/1.0" },
       signal: AbortSignal.timeout(5000),
     });
+    console.log("RF livemeta status:", resp.status);
     if (!resp.ok) return null;
     const data = await resp.json();
+    console.log("RF livemeta steps count:", Object.keys(data.steps || {}).length);
     const steps = data.steps || {};
     const now = Date.now() / 1000;
 
@@ -56,7 +60,10 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       }
     }
 
-    if (!current) return null;
+    if (!current) {
+      console.log("RF: no current step found for now=", Date.now() / 1000);
+      return null;
+    }
 
     const title = current.title || "";
     const artist = current.authors || current.highlightedArtists?.[0] || "";
@@ -73,7 +80,8 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       return { title, artist, coverUrl, album };
     }
     return null;
-  } catch {
+  } catch (e) {
+    console.error("RF livemeta error:", (e as Error).message);
     return null;
   }
 }
