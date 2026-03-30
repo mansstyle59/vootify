@@ -4,7 +4,7 @@ import { Song } from "@/data/mockData";
 import { toast } from "sonner";
 
 const WARN_SONGS = 280;
-const WARN_BYTES = 900 * 1024 * 1024; // 900 MB
+const WARN_BYTES = 900 * 1024 * 1024; // 900 MB (90% of 1 GB)
 
 export function useOfflineCache(songId: string | undefined) {
   const [isCached, setIsCached] = useState(false);
@@ -33,7 +33,7 @@ export function useOfflineCache(songId: string | undefined) {
         toast.warning(`⚠️ ${count}/300 titres hors-ligne — limite bientôt atteinte`);
       } else if (size >= WARN_BYTES) {
         const mb = Math.round(size / (1024 * 1024));
-        toast.warning(`⚠️ ${mb} Mo / 500 Mo utilisés — espace limité`);
+        toast.warning(`⚠️ ${mb} Mo / 1 Go utilisés — espace limité`);
       }
     } catch (e: any) {
       if (e.message?.includes("Limite")) {

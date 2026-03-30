@@ -3,8 +3,8 @@ import { Song } from "@/data/mockData";
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
 
-/** Maximum offline cache: 500 MB / 300 songs */
-const MAX_CACHE_BYTES = 500 * 1024 * 1024; // 500 MB
+/** Maximum offline cache: 1 GB / 300 songs */
+const MAX_CACHE_BYTES = 1024 * 1024 * 1024; // 1 GB
 const MAX_CACHE_SONGS = 300;
 const AUDIO_STORE = "audio";
 const META_STORE = "meta";
@@ -81,7 +81,7 @@ export const offlineCache = {
         this.getAllCachedCount(),
       ]);
       if (currentSize >= MAX_CACHE_BYTES) {
-        throw new Error("Limite de stockage atteinte (500 Mo)");
+        throw new Error("Limite de stockage atteinte (1 Go)");
       }
       if (allCached >= MAX_CACHE_SONGS) {
         throw new Error("Limite de 300 titres hors-ligne atteinte");
