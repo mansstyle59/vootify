@@ -51,10 +51,10 @@ export function ContentStrip({ children }: ContentStripProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Fade edges — offset to avoid clipping content */}
+      {/* Fade edges — offset to match padded content */}
       {canScrollLeft && (
         <div
-          className="absolute left-0 top-0 bottom-0 w-6 z-10 pointer-events-none"
+          className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
           style={{
             background: "linear-gradient(to right, hsl(var(--background)), transparent)",
           }}
@@ -62,7 +62,7 @@ export function ContentStrip({ children }: ContentStripProps) {
       )}
       {canScrollRight && (
         <div
-          className="absolute right-0 top-0 bottom-0 w-6 z-10 pointer-events-none"
+          className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
           style={{
             background: "linear-gradient(to left, hsl(var(--background)), transparent)",
           }}
