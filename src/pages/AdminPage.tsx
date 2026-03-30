@@ -1971,13 +1971,22 @@ function HomeTab() {
           })}
         </div>
 
-        <button
-          onClick={addCustomSection}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors w-full justify-center"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Ajouter une section personnalisée
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => addCustomSection("songs")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Section Morceaux
+          </button>
+          <button
+            onClick={() => addCustomSection("albums")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
+          >
+            <Disc3 className="w-3.5 h-3.5" />
+            Section Albums
+          </button>
+        </div>
       </div>
 
       {/* Song picker modal */}
@@ -1987,6 +1996,19 @@ function HomeTab() {
           selectedIds={customSections.find((c) => c.id === editingCustom)?.songIds || []}
           onUpdate={(ids) => updateCustomSongs(editingCustom, ids)}
           onClose={() => { setSongPickerOpen(false); setEditingCustom(null); }}
+        />
+      )}
+
+      {/* Album picker modal */}
+      {albumPickerOpen && editingAlbumSection && (
+        <AlbumPickerModal
+          selectedIds={customSections.find((c) => c.id === editingAlbumSection)?.albumIds || []}
+          onUpdate={(ids) => {
+            setCustomSections((prev) =>
+              prev.map((c) => (c.id === editingAlbumSection ? { ...c, albumIds: ids } : c))
+            );
+          }}
+          onClose={() => { setAlbumPickerOpen(false); setEditingAlbumSection(null); }}
         />
       )}
 
