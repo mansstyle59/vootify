@@ -397,7 +397,11 @@ function SongForm() {
       {songs.length > 0 && (
         <div className="space-y-2">
           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider px-1">
-            {songs.length} fichier{songs.length > 1 ? "s" : ""} • {songs.filter(s => s.uploaded).length} importé{songs.filter(s => s.uploaded).length > 1 ? "s" : ""}
+            {songs.length} fichier{songs.length > 1 ? "s" : ""}
+            {songs.filter(s => s.uploaded).length > 0 && ` • ${songs.filter(s => s.uploaded).length} importé${songs.filter(s => s.uploaded).length > 1 ? "s" : ""}`}
+            {songs.filter(s => s.duplicateOf && s.skipped).length > 0 && (
+              <span className="text-amber-400"> • {songs.filter(s => s.duplicateOf && s.skipped).length} doublon{songs.filter(s => s.duplicateOf && s.skipped).length > 1 ? "s" : ""}</span>
+            )}
           </p>
           {songs.map((song, idx) => (
             <motion.div
