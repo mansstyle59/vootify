@@ -24,7 +24,7 @@ import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
 
-type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | null;
+type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs" | null;
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
