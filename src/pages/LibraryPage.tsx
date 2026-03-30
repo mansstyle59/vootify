@@ -1456,8 +1456,15 @@ const LibraryPage = () => {
                             {/* Alphabet sidebar */}
                             {artistSort === "alpha" && letters.length > 1 && (
                               <div
-                                className="fixed right-1 flex flex-col items-center gap-[1px] z-40"
-                                style={{ top: "50%", transform: "translateY(-50%)" }}
+                                className="fixed right-0 flex flex-col items-center z-50 py-1 px-[3px] rounded-l-lg"
+                                style={{
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  background: "hsl(var(--card) / 0.6)",
+                                  backdropFilter: "blur(12px)",
+                                  WebkitBackdropFilter: "blur(12px)",
+                                  boxShadow: "-2px 0 8px hsl(0 0% 0% / 0.15)",
+                                }}
                                 onTouchMove={(e) => {
                                   e.preventDefault();
                                   const touch = e.touches[0];
@@ -1471,7 +1478,7 @@ const LibraryPage = () => {
                                     key={l}
                                     data-letter={l}
                                     onClick={() => scrollToLetter(l)}
-                                    className="w-4 h-4 flex items-center justify-center text-[8px] font-bold text-primary/70 active:text-primary active:scale-125 transition-transform"
+                                    className="w-5 h-[14px] flex items-center justify-center text-[9px] font-extrabold text-primary active:text-primary-foreground active:bg-primary active:rounded-full transition-all"
                                   >
                                     {l}
                                   </button>
