@@ -325,6 +325,19 @@ const HomePage = () => {
 
   return (
     <div className="pb-20 max-w-7xl mx-auto">
+      {/* ── Hero Background (from admin config) ── */}
+      {(homeConfig?.heroBgColor || homeConfig?.heroBgImage) && (
+        <div className="relative w-full overflow-hidden" style={{ height: 120 }}>
+          {homeConfig?.heroBgImage ? (
+            <img src={homeConfig.heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          ) : null}
+          {homeConfig?.heroBgColor && !homeConfig?.heroBgImage ? (
+            <div className="absolute inset-0" style={{ background: homeConfig.heroBgColor }} />
+          ) : null}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 0%, hsl(var(--background)) 100%)" }} />
+        </div>
+      )}
+
       {/* ── Qobuz-style Glass Header ── */}
       <div
         className="sticky top-0 z-30 flex items-center justify-between px-5 md:px-8 pb-3"
@@ -335,9 +348,16 @@ const HomePage = () => {
           WebkitBackdropFilter: "blur(40px) saturate(1.6)",
         }}
       >
-        <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-none tracking-tight">
-          {(() => { const h = new Date().getHours(); return h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; })()}
-        </h1>
+        <div>
+          <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-none tracking-tight">
+            {homeConfig?.heroTitle || (() => { const h = new Date().getHours(); return h < 6 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; })()}
+          </h1>
+          {homeConfig?.heroSubtitle && (
+            <p className="text-[12px] font-medium mt-1" style={{ color: "hsl(var(--muted-foreground) / 0.6)" }}>
+              {homeConfig.heroSubtitle}
+            </p>
+          )}
+        </div>
 
         <div className="flex items-center gap-2.5">
           <NotificationBell />
