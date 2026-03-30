@@ -2,8 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Music, Headphones, Disc3 } from "lucide-react";
+import { ArrowLeft, Music, Disc3 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useCallback } from "react";
 
 const EQ_PRESETS = [
   { label: "Normal", emoji: "🎵", bass: 0, treble: 0 },
@@ -16,6 +17,12 @@ const EQ_PRESETS = [
   { label: "Électro", emoji: "🎧", bass: 8, treble: 5 },
 ];
 
+const cardStyle = {
+  background: "hsl(var(--card))",
+  border: "0.5px solid hsl(var(--border) / 0.3)",
+  boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15)",
+};
+
 const AudioSettingsPage = () => {
   const navigate = useNavigate();
   const {
@@ -23,25 +30,19 @@ const AudioSettingsPage = () => {
     bassBoost, trebleBoost, setBassBoost, setTrebleBoost,
   } = usePlayerStore();
 
-  return (
-    <div className="min-h-screen pb-20 animate-fade-in">
-      {/* Ambient background */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <div
-          className="absolute top-[-10%] right-[-10%] w-[500px] h-[400px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.07) 0%, transparent 70%)", filter: "blur(80px)" }}
-        />
-      </div>
+  const handleBass = useCallback(([val]: number[]) => setBassBoost(val), [setBassBoost]);
+  const handleTreble = useCallback(([val]: number[]) => setTrebleBoost(val), [setTrebleBoost]);
+  const handleCrossfade = useCallback(([val]: number[]) => setCrossfadeDuration(val), [setCrossfadeDuration]);
 
-      {/* Header */}
+  return (
+    <div className="min-h-screen pb-20">
+      {/* Header — solid background, no blur */}
       <div
         className="sticky top-0 z-30 px-4 py-3"
         style={{
           paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)",
-          background: "linear-gradient(180deg, hsl(var(--background) / 0.7), hsl(var(--background) / 0.5))",
-          backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-          WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-          borderBottom: "0.5px solid hsl(var(--foreground) / 0.06)",
+          background: "hsl(var(--background))",
+          borderBottom: "0.5px solid hsl(var(--border) / 0.3)",
         }}
       >
         <div className="max-w-lg mx-auto flex items-center">
@@ -58,15 +59,9 @@ const AudioSettingsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.05 }}
           className="p-5 rounded-2xl space-y-5"
-          style={{
-            background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.2))",
-            backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-            border: "0.5px solid hsl(var(--foreground) / 0.07)",
-            boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), inset 0 -0.5px 0 hsl(0 0% 0% / 0.1)",
-          }}
+          style={cardStyle}
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.12)" }}>
@@ -91,7 +86,7 @@ const AudioSettingsPage = () => {
               </div>
               <Slider
                 value={[crossfadeDuration]}
-                onValueChange={([val]) => setCrossfadeDuration(val)}
+                onValueChange={handleCrossfade}
                 min={1}
                 max={12}
                 step={1}
@@ -110,15 +105,9 @@ const AudioSettingsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.1 }}
           className="p-5 rounded-2xl space-y-5"
-          style={{
-            background: "linear-gradient(145deg, hsl(var(--card) / 0.4), hsl(var(--card) / 0.2))",
-            backdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-            WebkitBackdropFilter: "blur(80px) saturate(2.2) brightness(1.05)",
-            border: "0.5px solid hsl(var(--foreground) / 0.07)",
-            boxShadow: "0 8px 40px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06), inset 0 -0.5px 0 hsl(0 0% 0% / 0.1)",
-          }}
+          style={cardStyle}
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.12)" }}>
@@ -137,24 +126,19 @@ const AudioSettingsPage = () => {
               {EQ_PRESETS.map((preset) => {
                 const active = bassBoost === preset.bass && trebleBoost === preset.treble;
                 return (
-                  <motion.button
+                  <button
                     key={preset.label}
-                    whileTap={{ scale: 0.93 }}
                     onClick={() => { setBassBoost(preset.bass); setTrebleBoost(preset.treble); }}
-                    className="flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-xs font-medium transition-all"
+                    className="flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-xs font-medium transition-colors active:scale-95"
                     style={{
-                      background: active
-                        ? "hsl(var(--primary) / 0.15)"
-                        : "hsl(var(--foreground) / 0.03)",
-                      border: active
-                        ? "0.5px solid hsl(var(--primary) / 0.25)"
-                        : "0.5px solid hsl(var(--foreground) / 0.05)",
+                      background: active ? "hsl(var(--primary) / 0.15)" : "hsl(var(--secondary))",
+                      border: active ? "0.5px solid hsl(var(--primary) / 0.25)" : "0.5px solid transparent",
                       color: active ? "hsl(var(--primary))" : undefined,
                     }}
                   >
                     <span className="text-lg">{preset.emoji}</span>
                     <span className="text-[10px] leading-tight">{preset.label}</span>
-                  </motion.button>
+                  </button>
                 );
               })}
             </div>
@@ -170,7 +154,7 @@ const AudioSettingsPage = () => {
             </div>
             <Slider
               value={[bassBoost]}
-              onValueChange={([val]) => setBassBoost(val)}
+              onValueChange={handleBass}
               min={-12}
               max={12}
               step={1}
@@ -193,7 +177,7 @@ const AudioSettingsPage = () => {
             </div>
             <Slider
               value={[trebleBoost]}
-              onValueChange={([val]) => setTrebleBoost(val)}
+              onValueChange={handleTreble}
               min={-12}
               max={12}
               step={1}
@@ -206,7 +190,6 @@ const AudioSettingsPage = () => {
             </div>
           </div>
 
-          {/* Visual indicator */}
           <div className="pt-3" style={{ borderTop: "0.5px solid hsl(var(--foreground) / 0.05)" }}>
             <p className="text-[11px] text-muted-foreground/50 text-center">
               Les changements sont appliqués en temps réel et sauvegardés automatiquement
