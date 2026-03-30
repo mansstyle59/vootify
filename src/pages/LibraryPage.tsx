@@ -13,6 +13,7 @@ import {
   RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles, Check,
   Disc3, User, Search as SearchIcon
 } from "lucide-react";
+import { ActionBar } from "@/components/ActionBar";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { offlineCache } from "@/lib/offlineCache";

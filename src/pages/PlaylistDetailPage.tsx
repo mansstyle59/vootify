@@ -6,6 +6,7 @@ import { VirtualSongList } from "@/components/VirtualSongList";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link, Send, Users } from "lucide-react";
+import { ActionBar } from "@/components/ActionBar";
 import { notifyUser } from "@/lib/notifyUser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

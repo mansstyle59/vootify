@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
 import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2, X } from "lucide-react";
+import { ActionBar } from "@/components/ActionBar";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
