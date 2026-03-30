@@ -107,7 +107,7 @@ export function MusicAssistantFAB() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setOpen(true)}
-            className="fixed z-50 left-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform md:left-auto md:right-6 md:bottom-6 md:w-14 md:h-14"
+            className="fixed z-50 right-4 top-[calc(3.5rem+env(safe-area-inset-top,0px))] w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform md:right-6 md:top-auto md:bottom-6 md:w-14 md:h-14"
             style={{
               background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))",
               boxShadow: "0 4px 24px hsl(var(--primary) / 0.35)",
