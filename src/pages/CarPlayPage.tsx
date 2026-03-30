@@ -320,11 +320,101 @@ const CarPlayPage = () => {
         </div>
       </motion.div>
 
+      {/* ── Quick Access: Artists + Favorites (music tab only, no search) ── */}
+      {tab === "music" && !searchQuery && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="relative z-10 px-3 mb-2"
+        >
+          {/* Artist filter bubbles */}
+          {topArtists.length > 0 && (
+            <div className="mb-3">
+              <p className="text-[11px] font-semibold text-white/30 uppercase tracking-wider mb-2 px-1">Artistes</p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {artistFilter && (
+                  <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    onClick={() => setArtistFilter(null)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full flex-shrink-0 active:scale-90 transition-transform"
+                    style={{ background: "hsl(0 0% 100%/0.1)", border: "0.5px solid hsl(0 0% 100%/0.15)" }}
+                  >
+                    <X className="w-3.5 h-3.5 text-white/60" />
+                    <span className="text-[12px] text-white/60 font-medium">Tous</span>
+                  </motion.button>
+                )}
+                {topArtists.map((artist, i) => {
+                  const isActive = artistFilter === artist.name;
+                  return (
+                    <motion.button
+                      key={artist.name}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => setArtistFilter(isActive ? null : artist.name)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0 active:scale-90 transition-transform"
+                      style={isActive ? GLASS_ACTIVE : GLASS_BUTTON}
+                    >
+                      <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100%/0.08)" }}>
+                        {artist.coverUrl ? (
+                          <LazyImage src={artist.coverUrl} alt="" className="w-full h-full object-cover" fallback wrapperClassName="w-full h-full" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><User className="w-3.5 h-3.5 text-white/30" /></div>
+                        )}
+                      </div>
+                      <span className={`text-[12px] font-semibold truncate max-w-[80px] ${isActive ? "text-primary" : "text-white/70"}`}>{artist.name}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quick access: Liked + Recent */}
+          <div className="flex gap-2 mb-2">
+            {likedSongs.length > 0 && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setQueue(likedSongs); play(likedSongs[0]); }}
+                className="flex-1 flex items-center gap-2.5 px-3 py-3 rounded-2xl active:scale-95 transition-transform"
+                style={GLASS_BG}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 80% 55%/0.15)" }}>
+                  <Heart className="w-5 h-5 text-red-400 fill-red-400" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-[13px] font-bold text-white">Favoris</p>
+                  <p className="text-[10px] text-white/30">{likedSongs.length} titres</p>
+                </div>
+              </motion.button>
+            )}
+            {recentlyPlayed.length > 0 && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setQueue(recentlyPlayed); play(recentlyPlayed[0]); }}
+                className="flex-1 flex items-center gap-2.5 px-3 py-3 rounded-2xl active:scale-95 transition-transform"
+                style={GLASS_BG}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary)/0.15)" }}>
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-[13px] font-bold text-white">Récents</p>
+                  <p className="text-[10px] text-white/30">{recentlyPlayed.length} titres</p>
+                </div>
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Content list ── */}
       <div className="relative z-10 flex-1 overflow-y-auto px-3 pb-36 scrollbar-hide">
         <AnimatePresence mode="wait">
           <motion.div
-            key={tab}
+            key={`${tab}-${artistFilter || ''}`}
             initial={{ opacity: 0, x: tab === "radio" ? 40 : -40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: tab === "radio" ? -40 : 40 }}
