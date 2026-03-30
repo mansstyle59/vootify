@@ -245,10 +245,16 @@ const ProfilePage = () => {
   if (!user) return null;
   const initials = (displayName || "U").slice(0, 2).toUpperCase();
   const totalUsed = (swCacheSize || 0) + (offlineCacheSize || 0) + (coverCacheSize || 0);
-  const maxEstimate = Math.max(totalUsed * 2, 50 * 1024 * 1024);
-  const swPercent = maxEstimate > 0 ? ((swCacheSize || 0) / maxEstimate) * 100 : 0;
-  const coverPercent = maxEstimate > 0 ? ((coverCacheSize || 0) / maxEstimate) * 100 : 0;
-  const offlinePercent = maxEstimate > 0 ? ((offlineCacheSize || 0) / maxEstimate) * 100 : 0;
+  const MAX_OFFLINE = 1024 * 1024 * 1024 * 1024; // 1 TB
+  const usedPercent = MAX_OFFLINE > 0 ? (totalUsed / MAX_OFFLINE) * 100 : 0;
+  const swPercent = MAX_OFFLINE > 0 ? ((swCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
+  const coverPercent = MAX_OFFLINE > 0 ? ((coverCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
+  const offlinePercent = MAX_OFFLINE > 0 ? ((offlineCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
+  // Scale segments visually so they're visible even at small sizes
+  const minVisiblePct = 2;
+  const scaledSw = totalUsed > 0 ? Math.max(swPercent / usedPercent * Math.max(usedPercent, minVisiblePct * 3), minVisiblePct) : 0;
+  const scaledCover = totalUsed > 0 ? Math.max(coverPercent / usedPercent * Math.max(usedPercent, minVisiblePct * 3), minVisiblePct) : 0;
+  const scaledOffline = totalUsed > 0 ? Math.max(offlinePercent / usedPercent * Math.max(usedPercent, minVisiblePct * 3), minVisiblePct) : 0;
 
   const plan = isActive && subscription ? normalizePlan(subscription.plan) : "free";
   const planBadge: Record<string, { bg: string; border: string; text: string }> = {
