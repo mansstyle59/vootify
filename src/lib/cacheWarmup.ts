@@ -24,6 +24,10 @@ async function warmApiData(userId: string) {
     fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers }),
     fetch(`${base}/profiles?user_id=eq.${userId}&limit=1`, { headers }),
     fetch(`${base}/home_config?limit=1`, { headers }),
+    // Pre-cache for offline navigation
+    fetch(`${base}/custom_songs?select=id,title,artist,album,cover_url,stream_url,duration,genre,year&order=created_at.desc&limit=500`, { headers }),
+    fetch(`${base}/custom_albums?order=created_at.desc&limit=50`, { headers }),
+    fetch(`${base}/artist_images?limit=100`, { headers }),
   ];
 
   await Promise.allSettled(queries);

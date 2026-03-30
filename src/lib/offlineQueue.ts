@@ -143,15 +143,20 @@ export function initOfflineSync() {
     const count = await flushQueue();
     if (count > 0) {
       console.log(`[offlineQueue] Synced ${count} queued action(s)`);
+      // Notify UI
+      window.dispatchEvent(new CustomEvent("offline-sync-done", { detail: { count } }));
     }
   };
 
-  window.addEventListener("online", sync);
+  window.addEventListener("online", () => {
+    // Small delay to let connection stabilize
+    setTimeout(sync, 1500);
+  });
 
   // Also try on visibility change (PWA comes back to foreground)
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && navigator.onLine) {
-      sync();
+      setTimeout(sync, 1000);
     }
   });
 
