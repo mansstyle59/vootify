@@ -11,7 +11,7 @@ import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
-import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
+import { useRadioMetadata, useRadioHistory, type RadioSource } from "@/hooks/useRadioMetadata";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
@@ -974,6 +974,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
+                    <SourceBadge source={radioMeta?.source} />
                   </div>
                 </div>
                 <button
