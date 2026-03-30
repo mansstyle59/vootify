@@ -155,7 +155,7 @@ function PremiumSongRow({
           )}
         </div>
         <p className="text-[10px] text-muted-foreground/45 leading-tight truncate font-medium mt-0.5">
-          {song.artist}{song.album ? ` · ${song.album}` : ""}
+          {song.artist}{song.album ? ` · ${song.album}` : ""}{song.year ? ` · ${song.year}` : ""}{song.genre ? ` · ${song.genre}` : ""}
         </p>
       </div>
 
