@@ -396,13 +396,24 @@ function SongForm() {
 
       {songs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider px-1">
-            {songs.length} fichier{songs.length > 1 ? "s" : ""}
-            {songs.filter(s => s.uploaded).length > 0 && ` • ${songs.filter(s => s.uploaded).length} importé${songs.filter(s => s.uploaded).length > 1 ? "s" : ""}`}
+          <div className="flex items-center justify-between px-1">
+            <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
+              {songs.length} fichier{songs.length > 1 ? "s" : ""}
+              {songs.filter(s => s.uploaded).length > 0 && ` • ${songs.filter(s => s.uploaded).length} importé${songs.filter(s => s.uploaded).length > 1 ? "s" : ""}`}
+              {songs.filter(s => s.duplicateOf && s.skipped).length > 0 && (
+                <span className="text-amber-400"> • {songs.filter(s => s.duplicateOf && s.skipped).length} doublon{songs.filter(s => s.duplicateOf && s.skipped).length > 1 ? "s" : ""}</span>
+              )}
+            </p>
             {songs.filter(s => s.duplicateOf && s.skipped).length > 0 && (
-              <span className="text-amber-400"> • {songs.filter(s => s.duplicateOf && s.skipped).length} doublon{songs.filter(s => s.duplicateOf && s.skipped).length > 1 ? "s" : ""}</span>
+              <button
+                type="button"
+                onClick={() => setSongs(prev => prev.map(s => s.duplicateOf && s.skipped ? { ...s, skipped: false } : s))}
+                className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 active:scale-95 transition-all"
+              >
+                Tout remplacer ({songs.filter(s => s.duplicateOf && s.skipped).length})
+              </button>
             )}
-          </p>
+          </div>
           {songs.map((song, idx) => (
             <motion.div
               key={idx}
