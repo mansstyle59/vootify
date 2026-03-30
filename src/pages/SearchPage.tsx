@@ -533,47 +533,30 @@ const SearchPage = () => {
       <AnimatePresence mode="wait">
         {!debouncedQuery ? (
           /* ══════════════ EXPLORE MODE (Qobuz style) ══════════════ */
-          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-7">
+          <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-5">
 
-            {/* ── Library Overview Card ── */}
+            {/* ── Library Overview (compact inline) ── */}
             {libraryStats && (
               <section>
-                <div
-                  className="rounded-2xl px-4 py-3.5 relative overflow-hidden"
-                  style={{
-                    background: "linear-gradient(160deg, hsl(var(--primary) / 0.10) 0%, hsl(var(--primary) / 0.03) 100%)",
-                    border: "0.5px solid hsl(var(--primary) / 0.10)",
-                    boxShadow: "0 2px 12px -4px hsl(var(--primary) / 0.06), inset 0 0.5px 0 hsl(var(--primary) / 0.05)",
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
-                      <Headphones className="w-3.5 h-3.5 text-primary" />
-                    </div>
-                    <h3 className="text-[11px] font-extrabold text-primary uppercase tracking-[0.12em]">Ma bibliothèque</h3>
-                  </div>
-                  <div className="flex items-center justify-around">
-                    {[
-                      { value: libraryStats.songs, label: "Titres" },
-                      { value: libraryStats.artists, label: "Artistes" },
-                      { value: libraryStats.albums, label: "Albums" },
-                      { value: libraryStats.duration, label: "Durée" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="flex flex-col items-center">
-                        <div
-                          className="w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center"
-                          style={{
-                            background: "linear-gradient(145deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
-                            border: "1px solid hsl(var(--primary) / 0.15)",
-                            boxShadow: "inset 0 1px 0 hsl(var(--primary) / 0.08), 0 2px 8px hsl(var(--primary) / 0.06)",
-                          }}
-                        >
-                          <p className="text-[15px] font-black text-foreground leading-tight tabular-nums tracking-tight text-center">{stat.value}</p>
-                          <p className="text-[8px] text-primary/50 font-semibold uppercase tracking-wider mt-0.5">{stat.label}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { value: libraryStats.songs, label: "titres" },
+                    { value: libraryStats.artists, label: "artistes" },
+                    { value: libraryStats.albums, label: "albums" },
+                    { value: libraryStats.duration, label: "" },
+                  ].map((stat) => (
+                    <span
+                      key={stat.label || "dur"}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold text-foreground/80"
+                      style={{
+                        background: "hsl(var(--primary) / 0.06)",
+                        border: "0.5px solid hsl(var(--primary) / 0.10)",
+                      }}
+                    >
+                      <span className="font-black text-foreground tabular-nums">{stat.value}</span>
+                      {stat.label && <span className="text-muted-foreground/50">{stat.label}</span>}
+                    </span>
+                  ))}
                 </div>
               </section>
             )}
@@ -581,8 +564,8 @@ const SearchPage = () => {
             {/* ── Recent Searches ── */}
             {recentSearches.length > 0 && (
               <section>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[16px] font-bold text-foreground">Recherches récentes</h2>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-[15px] font-bold text-foreground">Récents</h2>
                   <button onClick={clearAllRecent} className="text-[11px] text-primary/70 font-medium">Effacer</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -590,7 +573,7 @@ const SearchPage = () => {
                     <div key={term} className="group flex items-center">
                       <button
                         onClick={() => commitSearch(term)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium text-foreground active:scale-95 transition-transform"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium text-foreground active:scale-95 transition-transform"
                         style={{
                           background: "hsl(var(--foreground) / 0.04)",
                           border: "0.5px solid hsl(var(--foreground) / 0.06)",
@@ -608,23 +591,23 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Trending Artists (Qobuz editorial style) ── */}
+            {/* ── Trending Artists ── */}
             {trendingArtists.length > 0 && (
               <section>
                 <SectionHeader title="Artistes populaires" />
-                <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {trendingArtists.map((artist, i) => (
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                  {trendingArtists.slice(0, 10).map((artist) => (
                     <button
                       key={artist.name}
                       onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                      className="flex flex-col items-center gap-2 flex-shrink-0 w-[80px] group active:scale-95 transition-transform"
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[68px] group active:scale-95 transition-transform"
                     >
                       <div
-                        className="w-[76px] h-[76px] rounded-full overflow-hidden relative"
+                        className="w-[64px] h-[64px] rounded-full overflow-hidden relative"
                         style={{
-                          boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)",
+                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)",
                           background: `linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))`,
-                          padding: "2px",
+                          padding: "1.5px",
                         }}
                       >
                         <div className="w-full h-full rounded-full overflow-hidden bg-background">
@@ -632,62 +615,59 @@ const SearchPage = () => {
                             <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-                              <User className="w-6 h-6 text-muted-foreground/15" />
+                              <User className="w-5 h-5 text-muted-foreground/15" />
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="text-center w-full">
-                        <span className="text-[11px] text-foreground font-bold truncate block leading-tight">{artist.name}</span>
-                        <span className="text-[9px] text-muted-foreground/40 font-medium">{artist.count} titres</span>
-                      </div>
+                      <span className="text-[10px] text-foreground font-bold truncate block leading-tight w-full text-center">{artist.name}</span>
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
-            {/* ── New Releases (Qobuz editorial card style) ── */}
+            {/* ── New Releases ── */}
             {newReleases.length > 0 && (
               <section>
                 <SectionHeader title="Nouveautés" />
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {newReleases.slice(0, 12).map((release) => {
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                  {newReleases.slice(0, 8).map((release) => {
                     const isAvailable = availableReleases.has(release.albumId);
                     return (
                       <button
                         key={release.albumId}
                         onClick={() => isAvailable ? playFridayRelease(release) : undefined}
-                        className="flex-shrink-0 w-[150px] group text-left active:scale-[0.97] transition-transform"
+                        className="flex-shrink-0 w-[120px] group text-left active:scale-[0.97] transition-transform"
                       >
                         <div
-                          className="w-[150px] h-[150px] rounded-2xl overflow-hidden mb-2.5 relative"
-                          style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.12)" }}
+                          className="w-[120px] h-[120px] rounded-xl overflow-hidden mb-2 relative"
+                          style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1)" }}
                         >
                           {release.coverUrl ? (
                             <img src={release.coverUrl} alt={release.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-                              <Disc3 className="w-10 h-10 text-muted-foreground/10" />
+                              <Disc3 className="w-8 h-8 text-muted-foreground/10" />
                             </div>
                           )}
                           {isAvailable && (
                             <div
-                              className="absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
                               style={{
                                 background: "hsl(var(--primary))",
-                                boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)",
+                                boxShadow: "0 2px 10px hsl(var(--primary) / 0.4)",
                               }}
                             >
-                              <Play className="w-4 h-4 text-primary-foreground fill-current ml-0.5" />
+                              <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
                             </div>
                           )}
                           {!isAvailable && (
                             <div className="absolute inset-0 bg-background/30" />
                           )}
                         </div>
-                        <p className="text-[13px] font-bold text-foreground truncate leading-tight">{release.title}</p>
-                        <p className="text-[11px] text-muted-foreground/45 truncate mt-0.5">{release.artist}</p>
+                        <p className="text-[12px] font-bold text-foreground truncate leading-tight">{release.title}</p>
+                        <p className="text-[10px] text-muted-foreground/40 truncate mt-0.5">{release.artist}</p>
                       </button>
                     );
                   })}
@@ -695,34 +675,32 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Genre Cards (Qobuz editorial blocks) ── */}
+            {/* ── Genre Cards ── */}
             {genreCards.length > 0 && (
               <section>
                 <SectionHeader title="Explorer par genre" />
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {genreCards.map((g) => {
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                  {genreCards.slice(0, 8).map((g) => {
                     const def = genreDefs[g.genre] || defaultGenreColor;
                     return (
                       <button
                         key={g.genre}
                         onClick={() => navigate(`/genre/${encodeURIComponent(g.genre)}`)}
-                        className="relative h-[88px] rounded-2xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
+                        className="relative h-[72px] rounded-xl overflow-hidden text-left group active:scale-[0.97] transition-transform"
                         style={{
                           background: `linear-gradient(155deg, ${def.from}, ${def.to})`,
-                          boxShadow: `0 4px 24px ${def.from}15`,
+                          boxShadow: `0 2px 16px ${def.from}10`,
                         }}
                       >
-                        {/* Decorative emoji */}
-                        <span className="absolute -right-2 -bottom-2 text-[52px] rotate-[15deg] opacity-10 select-none leading-none">{def.emoji}</span>
-                        {/* Subtle glass overlay */}
+                        <span className="absolute -right-2 -bottom-2 text-[40px] rotate-[15deg] opacity-10 select-none leading-none">{def.emoji}</span>
                         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.15))" }} />
-                        <div className="relative z-10 p-4 h-full flex flex-col justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg leading-none">{def.emoji}</span>
-                            <h3 className="text-[15px] font-extrabold text-white leading-tight">{g.genre}</h3>
+                        <div className="relative z-10 p-3 h-full flex flex-col justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm leading-none">{def.emoji}</span>
+                            <h3 className="text-[13px] font-extrabold text-white leading-tight">{g.genre}</h3>
                           </div>
                           {g.count > 0 && (
-                            <p className="text-[10px] text-white/50 font-semibold">{g.count} titres</p>
+                            <p className="text-[9px] text-white/50 font-semibold">{g.count} titres</p>
                           )}
                         </div>
                       </button>
@@ -732,32 +710,31 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Recently Played (editorial strip) ── */}
+            {/* ── Recently Played ── */}
             {recentlyPlayed.length > 0 && (
               <section>
                 <SectionHeader title="Écoutés récemment" />
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {recentlyPlayed.slice(0, 10).map((song) => (
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                  {recentlyPlayed.slice(0, 6).map((song) => (
                     <button
                       key={song.id}
                       onClick={() => handlePlayTrack(song, recentlyPlayed)}
-                      className="flex-shrink-0 w-[120px] group text-left active:scale-[0.97] transition-transform"
+                      className="flex-shrink-0 w-[100px] group text-left active:scale-[0.97] transition-transform"
                     >
                       <div
-                        className="w-[120px] h-[120px] rounded-xl overflow-hidden mb-2 relative"
-                        style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.08)" }}
+                        className="w-[100px] h-[100px] rounded-xl overflow-hidden mb-1.5 relative"
+                        style={{ boxShadow: "0 2px 10px hsl(0 0% 0% / 0.08)" }}
                       >
                         {song.coverUrl ? (
                           <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-                            <Music className="w-6 h-6 text-muted-foreground/10" />
+                            <Music className="w-5 h-5 text-muted-foreground/10" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      <p className="text-[12px] font-semibold text-foreground truncate leading-tight">{song.title}</p>
-                      <p className="text-[10px] text-muted-foreground/40 truncate">{song.artist}</p>
+                      <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{song.title}</p>
+                      <p className="text-[9px] text-muted-foreground/40 truncate">{song.artist}</p>
                     </button>
                   ))}
                 </div>
