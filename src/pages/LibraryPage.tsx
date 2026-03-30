@@ -1981,15 +1981,15 @@ const LibraryPage = () => {
                     <div className="mb-2">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
                         <Music className="w-3.5 h-3.5" />
-                        Tous les titres ({cachedSongs.length})
+                        {q ? `Résultats (${filteredCached.length})` : `Tous les titres (${cachedSongs.length})`}
                       </p>
                     </div>
                     <ActionButtons
-                      onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
-                      onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
+                      onPlayAll={() => { setQueue(filteredCached); play(filteredCached[0]); }}
+                      onShuffle={() => { const s = [...filteredCached].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
                     <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
-                      {cachedSongs.map((s, i) => (
+                      {filteredCached.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
                           song={s}
@@ -1997,11 +1997,14 @@ const LibraryPage = () => {
                           cached
                           isActive={currentSong?.id === s.id}
                           isPlaying={currentSong?.id === s.id && isPlaying}
-                          onClick={() => { setQueue(cachedSongs); play(s); }}
+                          onClick={() => { setQueue(filteredCached); play(s); }}
                           onSwipeLeft={() => removeCached(s.id)}
                         />
                       ))}
                     </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
 
