@@ -57,10 +57,10 @@ export function PageFade({ children }: { children: ReactNode }) {
     // Force reflow then animate in
     void el.offsetHeight;
 
-    // Re-enable transition for smooth "enter"
+    // Re-enable transition — fast & snappy
     el.style.transition = isTabNav
-      ? "opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 260ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease-out"
-      : "opacity 280ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 250ms ease-out";
+      ? "opacity 140ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1), filter 140ms ease-out"
+      : "opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 240ms cubic-bezier(0.22, 1, 0.36, 1), filter 180ms ease-out";
 
     el.style.opacity = "1";
     el.style.transform = "translateX(0) translateY(0) scale(1)";

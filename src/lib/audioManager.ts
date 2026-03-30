@@ -53,6 +53,8 @@ class AudioManager {
     });
     this.audio.addEventListener("ended", () => this.next());
 
+    // ── Sync lock screen position state periodically ──
+    this.audio.addEventListener("timeupdate", () => this._updatePositionState());
     // ── Buffering / Stalled recovery ──
     this.audio.addEventListener("waiting", () => {
       this.isBuffering = true;
@@ -306,13 +308,16 @@ class AudioManager {
     ms.setActionHandler("nexttrack", () => this.next());
     ms.setActionHandler("previoustrack", () => this.prev());
 
-    // ── Enable seek on lock screen for non-live tracks ──
-    if (!track.isLive) {
+    // ── Seek on lock screen: disabled for all tracks on iOS for clean UX ──
+    // iOS shows a scrubber that can cause sync issues — disable it.
+    // On other platforms, enable seek for non-live tracks.
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (!track.isLive && !isIos) {
       try {
         ms.setActionHandler("seekto", (details) => {
           if (details.seekTime != null && isFinite(details.seekTime)) {
             this.audio.currentTime = details.seekTime;
-            // Dispatch event so Player component can sync progress
             window.dispatchEvent(new CustomEvent("audio-seeked", { detail: details.seekTime }));
           }
         });
@@ -326,13 +331,30 @@ class AudioManager {
         });
       } catch { /* unsupported */ }
     } else {
-      // Disable seek for live/radio
+      // Disable seek for live/radio or iOS
       try {
         ms.setActionHandler("seekforward", null);
         ms.setActionHandler("seekbackward", null);
         ms.setActionHandler("seekto", null);
       } catch { /* unsupported */ }
     }
+
+    // ── Update position state for lock screen progress bar (non-iOS) ──
+    if (!track.isLive && !isIos) {
+      this._updatePositionState();
+    }
+  }
+
+  /** Sync lock screen progress bar position */
+  private _updatePositionState() {
+    if (!("mediaSession" in navigator) || !this.audio.duration || !isFinite(this.audio.duration)) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: this.audio.duration,
+        playbackRate: this.audio.playbackRate,
+        position: Math.min(this.audio.currentTime, this.audio.duration),
+      });
+    } catch {}
   }
 
   updateMetadata(partial: Partial<TrackInfo>) {

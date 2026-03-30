@@ -17,12 +17,16 @@ export function setAutoDownloadEnabled(enabled: boolean) {
   localStorage.setItem(STORAGE_KEY, enabled ? "true" : "false");
 }
 
-/** Returns true if the device is on Wi-Fi (or wired). */
-function isOnWifi(): boolean {
+/** Returns true if the device is on a fast connection (Wi-Fi, ethernet, 4G, 5G). */
+function isOnFastConnection(): boolean {
   const nav = navigator as any;
   const conn = nav.connection || nav.mozConnection || nav.webkitConnection;
   if (!conn) return navigator.onLine; // fallback: assume yes if online
-  return conn.type === "wifi" || conn.type === "ethernet" || conn.effectiveType === "4g";
+  const type = conn.type;
+  const effective = conn.effectiveType;
+  // Allow Wi-Fi, ethernet, and cellular 4G/5G
+  return type === "wifi" || type === "ethernet" || type === "cellular"
+    || effective === "4g" || effective === "5g";
 }
 
 let running = false;
@@ -32,7 +36,7 @@ let running = false;
  * Safe to call multiple times — will no-op if already running.
  */
 export async function runAutoDownload(userId: string) {
-  if (running || !isAutoDownloadEnabled() || !isOnWifi()) return;
+  if (running || !isAutoDownloadEnabled() || !isOnFastConnection()) return;
   running = true;
 
   try {
@@ -82,7 +86,7 @@ export async function runAutoDownload(userId: string) {
     const queue = [...uncached];
     const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
       while (queue.length > 0) {
-        if (!isOnWifi()) return; // stop if we lose Wi-Fi
+        if (!isOnFastConnection()) return; // stop if connection degrades
         const song = queue.shift()!;
         try {
           await offlineCache.cacheSong(song);
@@ -107,7 +111,7 @@ export function initAutoDownload(getUserId: () => string | null) {
 
   const check = () => {
     const uid = getUserId();
-    if (uid && isAutoDownloadEnabled() && isOnWifi()) {
+    if (uid && isAutoDownloadEnabled() && isOnFastConnection()) {
       // Delay to not compete with app startup
       setTimeout(() => runAutoDownload(uid), 5000);
     }
