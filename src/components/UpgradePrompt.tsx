@@ -212,7 +212,7 @@ export function UpgradePrompt({ feature = "Cette fonctionnalité", inline = fals
       </div>
 
       {/* Header */}
-      <div className="px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
+      <div className="px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--pwa-top-extra, 0px) + 1rem)" }}>
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
