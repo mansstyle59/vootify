@@ -7,6 +7,7 @@ export interface RadioMetadata {
   title: string;
   artist: string;
   coverUrl: string;
+  album?: string;
 }
 
 export function useRadioMetadata(
@@ -61,6 +62,7 @@ export function useRadioMetadata(
               title: data.title,
               artist: data.artist,
               coverUrl,
+              album: data.album || undefined,
             };
           });
         }
