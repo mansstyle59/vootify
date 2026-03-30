@@ -4580,12 +4580,32 @@ function MusicRequestsTab() {
   useEffect(() => { load(); }, [load]);
 
   const updateStatus = async (id: string, status: string, admin_response?: string) => {
+    const request = requests.find(r => r.id === id);
     const { error } = await supabase
       .from("music_requests")
       .update({ status, admin_response: admin_response || null, resolved_at: new Date().toISOString() })
       .eq("id", id);
     if (error) { toast.error("Erreur"); return; }
     toast.success(status === "done" ? "Marqué comme ajouté" : "Demande rejetée");
+    
+    // Send push notification to the user
+    if (request?.user_id) {
+      const statusLabel = status === "done" ? "ajoutée ✅" : "mise à jour";
+      const notifTitle = "Demande de contenu " + statusLabel;
+      const notifBody = admin_response 
+        ? `"${request.title}" — ${admin_response}`
+        : `"${request.title}" de ${request.artist}`;
+      
+      supabase.functions.invoke("send-push-to-user", {
+        body: {
+          target_user_id: request.user_id,
+          title: notifTitle,
+          body: notifBody,
+          action_url: "/",
+        },
+      }).catch(() => {});
+    }
+    
     load();
   };
 
