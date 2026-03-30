@@ -80,7 +80,8 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       return { title, artist, coverUrl, album };
     }
     return null;
-  } catch {
+  } catch (e) {
+    console.error("RF livemeta error:", (e as Error).message);
     return null;
   }
 }
