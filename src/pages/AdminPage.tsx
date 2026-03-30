@@ -118,6 +118,7 @@ const AdminPage = () => {
         {tab === "users" && <UsersTab />}
         {tab === "subscriptions" && <SubscriptionsTab />}
         {tab === "requests" && <RequestsTab />}
+        {tab === "music_requests" && <MusicRequestsTab />}
         {tab === "songs" && <SongsTab />}
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
