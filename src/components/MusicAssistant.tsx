@@ -99,21 +99,26 @@ export function MusicAssistantFAB() {
 
   return (
     <>
-      {/* FAB */}
+      {/* Slim top banner */}
       <AnimatePresence>
         {!open && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             onClick={() => setOpen(true)}
-            className="fixed z-50 right-4 top-[calc(3.5rem+env(safe-area-inset-top,0px))] w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform md:right-6 md:top-auto md:bottom-6 md:w-14 md:h-14"
+            className="fixed z-50 top-0 left-0 right-0 flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
             style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))",
-              boxShadow: "0 4px 24px hsl(var(--primary) / 0.35)",
+              paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)",
+              paddingBottom: "6px",
+              background: "linear-gradient(90deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.08))",
+              backdropFilter: "blur(20px) saturate(1.5)",
+              WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+              borderBottom: "0.5px solid hsl(var(--primary) / 0.15)",
             }}
           >
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[11px] font-semibold text-primary tracking-wide">Assistant AI</span>
           </motion.button>
         )}
       </AnimatePresence>
