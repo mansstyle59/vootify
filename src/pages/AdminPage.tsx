@@ -1735,17 +1735,27 @@ function HomeTab() {
     setSections(updated.map((s, i) => ({ ...s, order: i })));
   };
 
-  const addCustomSection = () => {
+  const addCustomSection = (type: "songs" | "albums" = "songs") => {
     const id = `custom_${Date.now()}`;
-    const newCustom: CustomSection = { id, title: "Nouvelle section", songIds: [] };
+    const newCustom: CustomSection = {
+      id,
+      title: type === "albums" ? "Nouvelle section Albums" : "Nouvelle section",
+      songIds: [],
+      type,
+      albumIds: [],
+    };
     setCustomSections((prev) => [...prev, newCustom]);
-    // Add to sections list
     setSections((prev) => [
       ...prev,
-      { id, title: "Nouvelle section ⭐", visible: true, order: prev.length },
+      { id, title: type === "albums" ? "Nouvelle section Albums 💿" : "Nouvelle section ⭐", visible: true, order: prev.length },
     ]);
-    setEditingCustom(id);
-    setSongPickerOpen(true);
+    if (type === "songs") {
+      setEditingCustom(id);
+      setSongPickerOpen(true);
+    } else {
+      setEditingAlbumSection(id);
+      setAlbumPickerOpen(true);
+    }
   };
 
   const removeCustomSection = (id: string) => {
