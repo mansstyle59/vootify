@@ -116,6 +116,7 @@ export function useRadioMetadata(
               artist: data.artist,
               coverUrl,
               album: data.album || undefined,
+              source: data.source || "none",
             };
           });
         }
