@@ -10,7 +10,7 @@ import { formatDuration } from "@/data/mockData";
 import {
   Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download,
   HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown,
-  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles,
+  RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles, Check,
   Disc3, User, Search as SearchIcon
 } from "lucide-react";
 import { toast } from "sonner";
@@ -266,6 +266,8 @@ const LibraryPage = () => {
   const [likedSearch, setLikedSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
   const [offlineSearch, setOfflineSearch] = useState("");
+  const [offlineSelectMode, setOfflineSelectMode] = useState(false);
+  const [offlineSelected, setOfflineSelected] = useState<Set<string>>(new Set());
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [deezerUrl, setDeezerUrl] = useState("");
@@ -1978,30 +1980,143 @@ const LibraryPage = () => {
                     })()}
 
                     {/* ── All offline songs ── */}
-                    <div className="mb-2">
-                      <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider px-1 flex items-center gap-1.5">
                         <Music className="w-3.5 h-3.5" />
                         {q ? `Résultats (${filteredCached.length})` : `Tous les titres (${cachedSongs.length})`}
                       </p>
+                      {filteredCached.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setOfflineSelectMode((v) => !v);
+                            setOfflineSelected(new Set());
+                          }}
+                          className="px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors"
+                          style={{
+                            background: offlineSelectMode ? "hsl(var(--primary) / 0.15)" : "hsl(var(--foreground) / 0.05)",
+                            color: offlineSelectMode ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                          }}
+                        >
+                          {offlineSelectMode ? "Annuler" : "Sélectionner"}
+                        </button>
+                      )}
                     </div>
+                    {offlineSelectMode && filteredCached.length > 0 && (
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <button
+                          onClick={() => {
+                            if (offlineSelected.size === filteredCached.length) {
+                              setOfflineSelected(new Set());
+                            } else {
+                              setOfflineSelected(new Set(filteredCached.map((s) => s.id)));
+                            }
+                          }}
+                          className="text-[11px] font-medium text-primary"
+                        >
+                          {offlineSelected.size === filteredCached.length ? "Tout désélectionner" : "Tout sélectionner"}
+                        </button>
+                        <span className="text-[10px] text-muted-foreground/50">{offlineSelected.size} sélectionné{offlineSelected.size > 1 ? "s" : ""}</span>
+                      </div>
+                    )}
+                    {!offlineSelectMode && (
                     <ActionButtons
                       onPlayAll={() => { setQueue(filteredCached); play(filteredCached[0]); }}
                       onShuffle={() => { const s = [...filteredCached].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
+                    )}
                     <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
                       {filteredCached.map((s, i) => (
-                        <PremiumSongRow
-                          key={s.id}
-                          song={s}
-                          index={i}
-                          cached
-                          isActive={currentSong?.id === s.id}
-                          isPlaying={currentSong?.id === s.id && isPlaying}
-                          onClick={() => { setQueue(filteredCached); play(s); }}
-                          onSwipeLeft={() => removeCached(s.id)}
-                        />
+                        <div key={s.id} className="flex items-center">
+                          {offlineSelectMode && (
+                            <button
+                              onClick={() => {
+                                setOfflineSelected((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(s.id)) next.delete(s.id);
+                                  else next.add(s.id);
+                                  return next;
+                                });
+                              }}
+                              className="pl-3 pr-1 py-3 flex-shrink-0"
+                            >
+                              <div
+                                className="w-5 h-5 rounded-full flex items-center justify-center border transition-colors"
+                                style={{
+                                  background: offlineSelected.has(s.id) ? "hsl(var(--primary))" : "transparent",
+                                  borderColor: offlineSelected.has(s.id) ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.15)",
+                                }}
+                              >
+                                {offlineSelected.has(s.id) && <Check className="w-3 h-3 text-primary-foreground" />}
+                              </div>
+                            </button>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <PremiumSongRow
+                              song={s}
+                              index={i}
+                              cached
+                              isActive={currentSong?.id === s.id}
+                              isPlaying={currentSong?.id === s.id && isPlaying}
+                              onClick={() => {
+                                if (offlineSelectMode) {
+                                  setOfflineSelected((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(s.id)) next.delete(s.id);
+                                    else next.add(s.id);
+                                    return next;
+                                  });
+                                } else {
+                                  setQueue(filteredCached); play(s);
+                                }
+                              }}
+                              onSwipeLeft={offlineSelectMode ? undefined : () => removeCached(s.id)}
+                            />
+                          </div>
+                        </div>
                       ))}
                     </div>
+
+                    {/* Floating delete bar */}
+                    <AnimatePresence>
+                      {offlineSelectMode && offlineSelected.size > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 40 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 40 }}
+                          className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between px-4 py-3 rounded-2xl"
+                          style={{
+                            background: "linear-gradient(145deg, hsl(var(--card) / 0.85), hsl(var(--card) / 0.65))",
+                            backdropFilter: "blur(40px) saturate(2)",
+                            WebkitBackdropFilter: "blur(40px) saturate(2)",
+                            border: "0.5px solid hsl(var(--foreground) / 0.08)",
+                            boxShadow: "0 8px 32px hsl(0 0% 0% / 0.3)",
+                          }}
+                        >
+                          <span className="text-sm font-semibold text-foreground">
+                            {offlineSelected.size} titre{offlineSelected.size > 1 ? "s" : ""}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              const ids = Array.from(offlineSelected);
+                              for (const id of ids) {
+                                await offlineCache.removeCached(id);
+                              }
+                              setCachedSongs((prev) => prev.filter((s) => !offlineSelected.has(s.id)));
+                              const size = await offlineCache.getCacheSize();
+                              setCacheSize(size);
+                              setOfflineSelected(new Set());
+                              setOfflineSelectMode(false);
+                              toast.success(`${ids.length} titre${ids.length > 1 ? "s" : ""} supprimé${ids.length > 1 ? "s" : ""}`);
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
+                            style={{ background: "hsl(var(--destructive) / 0.12)", color: "hsl(var(--destructive))" }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Supprimer
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                         </>
                       );
                     })()}
