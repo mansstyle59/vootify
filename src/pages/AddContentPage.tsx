@@ -967,7 +967,8 @@ function PlaylistForm() {
                 key={idx}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`p-2.5 rounded-xl space-y-2 transition-all ${song.uploaded || song.skipped ? "opacity-50" : "liquid-glass"}`}
+                className={`p-2.5 rounded-xl space-y-2 transition-all ${song.uploaded || song.skipped ? "opacity-50" : ""}`}
+                style={!(song.uploaded || song.skipped) ? { background: "hsl(var(--foreground) / 0.03)", border: "0.5px solid hsl(var(--border) / 0.15)" } : {}}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
