@@ -159,21 +159,7 @@ export function CarPlayNowPlaying({
               aspectRatio: "1/1",
             }}
           >
-            {isLiveRadio && isPlaying ? (
-              <motion.div
-                className="w-full h-full"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-              >
-                {coverUrl ? (
-                  <img src={coverUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.04)" }}>
-                    <Disc3 className="w-24 h-24 text-white/15" />
-                  </div>
-                )}
-              </motion.div>
-            ) : coverUrl ? (
+            {coverUrl ? (
               <img src={coverUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.04)" }}>
