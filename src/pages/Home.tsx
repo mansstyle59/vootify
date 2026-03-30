@@ -489,7 +489,7 @@ const HomePage = () => {
                           key={pl.id}
                           title={pl.name}
                           subtitle=""
-                          coverUrl={pl.cover_url || ""}
+                          imageUrl={pl.cover_url || ""}
                           onClick={() => navigate(`/playlist/${pl.id}`)}
                         />
                       ))
