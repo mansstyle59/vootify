@@ -173,7 +173,7 @@ const SharedPlaylistDetailPage = () => {
 
       {/* Back button (visible before sticky header) */}
       <div className="absolute top-0 left-0 z-30 px-4"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)" }}
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.75rem)" }}
       >
         <button onClick={() => navigate(-1)} className="active:scale-90 transition-transform p-1 rounded-full"
           style={{ background: "hsl(0 0% 0% / 0.3)", backdropFilter: "blur(20px)" }}
