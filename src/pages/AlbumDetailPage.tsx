@@ -8,8 +8,9 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2, X } from "lucide-react";
 import { offlineCache } from "@/lib/offlineCache";
+import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ const AlbumDetailPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [downloading, setDownloading] = useState(false);
+  const { isDownloading: downloading, completed: dlCompleted, skipped: dlSkipped, failed: dlFailed, total: dlTotal, overallProgress, downloadPlaylist, cancel: cancelDownload, songs: dlSongs } = usePlaylistDownload();
   const { isAdmin } = useAdminAuth();
 
   const { scrollY } = useScroll();
@@ -107,38 +108,9 @@ const AlbumDetailPage = () => {
   const playAll = () => { if (tracks.length > 0) { setQueue(tracks); handlePlay(tracks[0]); } };
   const playShuffle = () => { if (tracks.length > 0) { const s = [...tracks].sort(() => Math.random() - 0.5); setQueue(s); handlePlay(s[0]); } };
 
-  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
-
-  const handleDownloadAll = async () => {
+  const handleDownloadAll = () => {
     if (downloading || tracks.length === 0) return;
-    setDownloading(true);
-    const toDownload = tracks.filter((s) => s.streamUrl);
-    // Filter already cached
-    const uncached: Song[] = [];
-    for (const s of toDownload) {
-      if (!(await offlineCache.isCached(s.id))) uncached.push(s);
-    }
-    if (uncached.length === 0) {
-      toast.success("Tout est déjà téléchargé !");
-      setDownloading(false);
-      return;
-    }
-    setDownloadProgress({ current: 0, total: uncached.length });
-    let done = 0;
-    const queue = [...uncached];
-    const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
-      while (queue.length > 0) {
-        const song = queue.shift()!;
-        try {
-          await offlineCache.cacheSong(song);
-        } catch { /* skip */ }
-        done++;
-        setDownloadProgress({ current: done, total: uncached.length });
-      }
-    });
-    await Promise.all(workers);
-    setDownloading(false);
-    toast.success(`${done} titre${done > 1 ? "s" : ""} téléchargé${done > 1 ? "s" : ""}`);
+    downloadPlaylist(tracks);
   };
 
   if (isLoading) {
@@ -336,6 +308,14 @@ const AlbumDetailPage = () => {
           <Shuffle className="w-4 h-4" />
           Aléatoire
         </button>
+        <button
+          onClick={handleDownloadAll}
+          disabled={downloading || tracks.length === 0}
+          className="p-3.5 rounded-full transition-all active:scale-[0.95] text-muted-foreground hover:text-primary disabled:opacity-40"
+          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
+        >
+          {downloading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Download className="w-5 h-5" />}
+        </button>
         {user && (
           <button
             onClick={() => toggleSave.mutate()}
@@ -351,6 +331,29 @@ const AlbumDetailPage = () => {
           </button>
         )}
       </motion.div>
+
+      {/* Download progress */}
+      {downloading && (
+        <div className="px-4 md:px-8 pb-3 space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${overallProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {dlCompleted + dlSkipped}/{dlTotal}
+            </span>
+            <button onClick={cancelDownload} className="p-1 rounded-full text-muted-foreground hover:text-destructive transition-colors active:scale-90">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── TRACK LIST ─── */}
       <div className="px-4 md:px-8">
