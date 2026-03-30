@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStationLogo } from "@/lib/radioLogos";
 import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
 import {
-  Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User,
+  Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User, Play,
 } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 import { motion, AnimatePresence } from "framer-motion";
