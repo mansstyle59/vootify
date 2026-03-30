@@ -11,10 +11,10 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/music-assistant`;
 
 const SUGGESTIONS = [
-  "J'aimerais que vous ajoutiez un morceau",
-  "Il manque un album sur Vootify",
-  "Pouvez-vous ajouter cet artiste ?",
-  "Je cherche une chanson introuvable",
+  "Suggère-moi de la musique chill 🎧",
+  "Quelles radios pour du jazz ?",
+  "Artistes similaires à Daft Punk",
+  "C'est quoi le dernier album de...",
 ];
 
 async function streamChat({
@@ -184,7 +184,7 @@ export function MusicAssistantFAB() {
             }}
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[11px] font-semibold text-primary tracking-wide">Demander une musique</span>
+            <span className="text-[11px] font-semibold text-primary tracking-wide">Assistant musical IA</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -285,8 +285,8 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           <Bot className="w-5 h-5 text-primary-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-[15px] font-bold text-foreground">Demander une musique</h2>
-          <p className="text-[11px] text-muted-foreground">Dis-moi ce qui manque sur Vootify</p>
+          <h2 className="text-[15px] font-bold text-foreground">Assistant Vootify</h2>
+          <p className="text-[11px] text-muted-foreground">Découvre, explore, demande 🎵</p>
         </div>
         {messages.length > 0 && (
           <Button variant="ghost" size="icon" onClick={() => setMessages([])} className="text-muted-foreground">
@@ -300,7 +300,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-hide">
-        {true ? (
+        {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
             <div
               className="w-20 h-20 rounded-3xl flex items-center justify-center"
@@ -309,19 +309,25 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
               <Music2 className="w-10 h-10 text-primary" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-bold text-foreground mb-1">🚧 En construction</h3>
+              <h3 className="text-lg font-bold text-foreground mb-1">Salut ! 🎧</h3>
               <p className="text-sm text-muted-foreground max-w-[280px]">
-                L'assistant musical arrive bientôt ! Tu pourras demander l'ajout de morceaux manquants directement ici.
+                Je suis ton assistant musical. Demande-moi des suggestions, infos artistes ou radios !
               </p>
             </div>
-            <div
-              className="px-5 py-2.5 rounded-2xl text-[13px] font-semibold"
-              style={{
-                background: "hsl(var(--primary) / 0.1)",
-                color: "hsl(var(--primary))",
-              }}
-            >
-              Prochainement
+            <div className="flex flex-wrap justify-center gap-2 px-4">
+              {SUGGESTIONS.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => send(s)}
+                  className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+                  style={{
+                    background: "hsl(var(--primary) / 0.1)",
+                    color: "hsl(var(--primary))",
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
           </div>
         ) : (
@@ -368,7 +374,36 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      {/* Input hidden — under construction */}
+      {/* Input */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+        style={{
+          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+          borderTop: "0.5px solid hsl(var(--border) / 0.3)",
+          background: "hsl(var(--background) / 0.95)",
+          backdropFilter: "blur(20px)",
+        }}
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Pose ta question..."
+          className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none px-3 py-2 rounded-xl"
+          style={{ background: "hsl(var(--foreground) / 0.05)" }}
+          disabled={isLoading}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={!input.trim() || isLoading}
+          className="rounded-xl shrink-0"
+          style={{ background: "hsl(var(--primary))" }}
+        >
+          <Send className="w-4 h-4 text-primary-foreground" />
+        </Button>
+      </form>
     </>
   );
 }
