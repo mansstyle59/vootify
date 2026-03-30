@@ -2078,6 +2078,19 @@ function HomeTab() {
         />
       )}
 
+      {/* Playlist picker modal */}
+      {playlistPickerOpen && editingPlaylistSection && (
+        <PlaylistPickerModal
+          selectedIds={customSections.find((c) => c.id === editingPlaylistSection)?.playlistIds || []}
+          onUpdate={(ids) => {
+            setCustomSections((prev) =>
+              prev.map((c) => (c.id === editingPlaylistSection ? { ...c, playlistIds: ids } : c))
+            );
+          }}
+          onClose={() => { setPlaylistPickerOpen(false); setEditingPlaylistSection(null); }}
+        />
+      )}
+
       {/* Save button */}
       <motion.button
         whileTap={{ scale: 0.97 }}
