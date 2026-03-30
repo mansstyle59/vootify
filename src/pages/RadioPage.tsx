@@ -478,6 +478,7 @@ const RadioPage = () => {
   const [deletingStation, setDeletingStation] = useState<{ id: string; name: string } | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>(loadRecentSearches);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
