@@ -242,11 +242,20 @@ const HomePage = () => {
   const getCustomSectionSongs = useCallback((sectionId: string): Song[] => {
     if (!homeConfig?.customSections || !customSongsData) return [];
     const cs = homeConfig.customSections.find((c) => c.id === sectionId);
-    if (!cs) return [];
+    if (!cs || cs.type === "albums") return [];
     return cs.songIds
       .map((id) => customSongsData.get(id))
       .filter(Boolean) as Song[];
   }, [homeConfig?.customSections, customSongsData]);
+
+  const getCustomSectionAlbums = useCallback((sectionId: string) => {
+    if (!homeConfig?.customSections || !customAlbumsData) return [];
+    const cs = homeConfig.customSections.find((c) => c.id === sectionId);
+    if (!cs || cs.type !== "albums") return [];
+    return (cs.albumIds || [])
+      .map((id) => customAlbumsData.get(id))
+      .filter(Boolean) as { id: string; title: string; artist: string; cover_url: string | null }[];
+  }, [homeConfig?.customSections, customAlbumsData]);
 
   const renderSection = (title: string, songs: Song[] | undefined, loading: boolean) => {
     if (!loading && (!songs || songs.length === 0)) return null;
