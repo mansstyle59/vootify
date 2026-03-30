@@ -129,45 +129,49 @@ async function searchDeezerCover(artist: string, title: string): Promise<{
 async function fetchRadioFranceLive(stationId: number): Promise<{
   title: string; artist: string; coverUrl: string; album: string;
 } | null> {
-  try {
-    const resp = await fetch(`${RF_LIVEMETA}/${stationId}`, {
-      headers: { "User-Agent": "Vootify/1.0" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const steps = data.steps || {};
-    const now = Date.now() / 1000;
+  const timeouts = [6000, 10000];
 
-    let current: any = null;
-    for (const step of Object.values(steps) as any[]) {
-      if (step.start <= now && step.end >= now) {
-        if (!current || step.embedType === "song") {
-          current = step;
-        }
+  for (const timeoutMs of timeouts) {
+    try {
+      const resp = await fetch(`${RF_LIVEMETA}/${stationId}`, {
+        headers: { "User-Agent": "Vootify/1.0" },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!resp.ok) continue;
+
+      const data = await resp.json();
+      const steps = data.steps || {};
+      const now = Date.now() / 1000;
+      const allSteps = Object.values(steps) as any[];
+      const songSteps = allSteps.filter((step) => step?.embedType === "song");
+
+      let current: any = songSteps.find((step) => step.start <= now && step.end >= now);
+
+      // Fallback for slight clock drift / missing window alignment
+      if (!current) {
+        current = songSteps
+          .filter((step) => step.start <= now)
+          .sort((a, b) => b.start - a.start)[0] || songSteps[0] || null;
       }
+
+      if (!current) continue;
+
+      const title = current.title || "";
+      const artist = current.authors || current.highlightedArtists?.[0] || "";
+      const album = current.titreAlbum || "";
+
+      let coverUrl = current.visual || "";
+      if (coverUrl && !coverUrl.startsWith("http")) {
+        coverUrl = `https://www.radiofrance.fr/s3/cruiser-production-eu3/${coverUrl}`;
+      }
+
+      if (title || artist) return { title, artist, coverUrl, album };
+    } catch (e) {
+      console.error(`RF livemeta error (timeout ${timeoutMs}ms):`, (e as Error).message);
     }
-
-    if (!current) {
-      console.log("RF: no current step for now=", now);
-      return null;
-    }
-
-    const title = current.title || "";
-    const artist = current.authors || current.highlightedArtists?.[0] || "";
-    const album = current.titreAlbum || "";
-
-    let coverUrl = current.visual || "";
-    if (coverUrl && !coverUrl.startsWith("http")) {
-      coverUrl = `https://www.radiofrance.fr/s3/cruiser-production-eu3/${coverUrl}`;
-    }
-
-    if (title || artist) return { title, artist, coverUrl, album };
-    return null;
-  } catch (e) {
-    console.error("RF livemeta error:", (e as Error).message);
-    return null;
   }
+
+  return null;
 }
 
 // ─── radio.fr API (prod.radio-api.net) ───
@@ -356,8 +360,10 @@ serve(async (req) => {
     let coverUrl = "";
     let album = "";
 
-    // ── Step 1: Radio France → livemeta API (best source for RF stations) ──
     const rfStation = detectRadioFranceStation(streamUrl);
+    const resolvedStationName = stationName || rfStation?.name || "";
+
+    // ── Step 1: Radio France → livemeta API (best source for RF stations) ──
     if (rfStation) {
       const rfLive = await fetchRadioFranceLive(rfStation.stationId);
       if (rfLive && (rfLive.title || rfLive.artist)) {
@@ -373,17 +379,14 @@ serve(async (req) => {
           if (deezer) coverUrl = deezer.coverUrl;
         }
         if (!coverUrl) coverUrl = stationCover || "";
-      } else {
-        nowPlaying = `En direct sur ${rfStation.name}`;
-        title = "En direct";
-        artist = rfStation.name;
-        coverUrl = stationCover || "";
+
+        return new Response(
+          JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl, album }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      return new Response(
-        JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl, album }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log(`RF livemeta unavailable for ${rfStation.name}, fallback chain enabled`);
     }
 
     // ── Step 2: Try ICY metadata from the stream ──
@@ -409,8 +412,8 @@ serve(async (req) => {
     }
 
     // ── Step 3: Fallback — try radio.fr API ──
-    if (!nowPlaying && stationName) {
-      const radioFr = await fetchRadioFrMetadata(stationName);
+    if (!nowPlaying && resolvedStationName) {
+      const radioFr = await fetchRadioFrMetadata(resolvedStationName);
       if (radioFr && (radioFr.title || radioFr.artist)) {
         nowPlaying = radioFr.nowPlaying;
         title = radioFr.title;
@@ -429,34 +432,34 @@ serve(async (req) => {
     }
 
     // ── Step 4: Fallback — TuneIn for now playing + logo ──
-    if (!nowPlaying && stationName) {
-      const tuneInData = await fetchTuneInMetadata(stationName);
+    if (!nowPlaying && resolvedStationName) {
+      const tuneInData = await fetchTuneInMetadata(resolvedStationName);
       if (tuneInData && tuneInData.nowPlaying) {
         nowPlaying = tuneInData.nowPlaying;
         title = tuneInData.title;
         artist = tuneInData.artist;
         coverUrl = tuneInData.coverUrl || stationCover || "";
       } else if (tuneInData?.logoHd) {
-        nowPlaying = `En direct sur ${stationName}`;
+        nowPlaying = `En direct sur ${resolvedStationName}`;
         title = "En direct";
-        artist = stationName;
+        artist = resolvedStationName;
         coverUrl = tuneInData.logoHd;
       }
     }
 
     // ── Step 5: If we have metadata but no cover, try TuneIn logo ──
-    if (!coverUrl && stationName) {
+    if (!coverUrl && resolvedStationName) {
       try {
-        const tuneInData = await fetchTuneInMetadata(stationName);
+        const tuneInData = await fetchTuneInMetadata(resolvedStationName);
         if (tuneInData?.logoHd) coverUrl = tuneInData.logoHd;
       } catch { /* silent */ }
     }
 
     // ── Step 6: Generic fallback ──
-    if (!nowPlaying && stationName) {
-      nowPlaying = `En direct sur ${stationName}`;
+    if (!nowPlaying && resolvedStationName) {
+      nowPlaying = `En direct sur ${resolvedStationName}`;
       title = "En direct";
-      artist = stationName;
+      artist = resolvedStationName;
       coverUrl = stationCover || "";
     }
 
