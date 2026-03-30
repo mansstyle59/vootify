@@ -7,6 +7,7 @@ export interface RadioMetadata {
   title: string;
   artist: string;
   coverUrl: string;
+  album?: string;
 }
 
 export function useRadioMetadata(
