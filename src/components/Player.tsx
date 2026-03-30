@@ -814,6 +814,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
   const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
+  const history = useRadioHistory(currentSong?.streamUrl);
+  const [showHistory, setShowHistory] = useState(false);
 
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
@@ -881,77 +883,160 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col px-7 pb-8">
-        <div className="flex-1 flex items-center justify-center py-4">
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={coverUrl}
-              src={coverUrl}
-              alt={stationName}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.92 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="w-full max-w-[340px] aspect-square rounded-xl object-cover"
-              style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
-            />
-          </AnimatePresence>
-        </div>
+      <div className="relative z-10 flex-1 flex flex-col px-7 pb-8 overflow-hidden">
+        <AnimatePresence mode="wait">
+          {showHistory ? (
+            <motion.div
+              key="history"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Historique</h3>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  className="text-xs font-semibold text-primary px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+                  style={{ background: "hsl(var(--primary) / 0.15)" }}
+                >
+                  Pochette
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto -mx-1 px-1 scrollbar-hide space-y-1">
+                {history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
+                    <ListMusic className="w-10 h-10 text-foreground/15" />
+                    <p className="text-sm text-foreground/30">L'historique apparaîtra ici</p>
+                  </div>
+                ) : (
+                  history.map((entry, i) => (
+                    <motion.div
+                      key={`${entry.title}-${entry.playedAt.getTime()}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.3 }}
+                      className="flex items-center gap-3 p-2.5 rounded-xl"
+                      style={{ background: i === 0 ? "hsl(var(--primary) / 0.1)" : "hsl(var(--foreground) / 0.04)" }}
+                    >
+                      <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(var(--foreground) / 0.08)" }}>
+                        {entry.coverUrl ? (
+                          <img src={entry.coverUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Music className="w-5 h-5 text-foreground/20" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[13px] font-semibold truncate ${i === 0 ? "text-primary" : "text-foreground"}`}>{entry.title}</p>
+                        <p className="text-[11px] text-foreground/40 truncate">{entry.artist}</p>
+                      </div>
+                      <span className="text-[10px] text-foreground/25 flex-shrink-0">
+                        {i === 0 ? "En cours" : formatTimeAgo(entry.playedAt)}
+                      </span>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="cover"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 30 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 flex flex-col"
+            >
+              <div className="flex-1 flex items-center justify-center py-4">
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={coverUrl}
+                    src={coverUrl}
+                    alt={stationName}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.92 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="w-full max-w-[340px] aspect-square rounded-xl object-cover"
+                    style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+                  />
+                </AnimatePresence>
+              </div>
 
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
-              {radioMeta?.title || stationName}
-            </h2>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
-              <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
-            </div>
-          </div>
-          <button
-            onClick={() => { if (!currentSong) return; toggleLike(currentSong); if (navigator.vibrate) navigator.vibrate(10); }}
-            className="p-1 active:scale-90 transition-transform"
-          >
-            <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
-          </button>
-        </div>
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
+                    {radioMeta?.title || stationName}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
+                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { if (!currentSong) return; toggleLike(currentSong); if (navigator.vibrate) navigator.vibrate(10); }}
+                  className="p-1 active:scale-90 transition-transform"
+                >
+                  <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
+                </button>
+              </div>
 
-        <div className="flex items-center justify-center gap-8 w-full mb-6">
-          {queue.length > 1 && (
-            <motion.button whileTap={{ scale: 0.75 }} onClick={previous} className="p-1">
-              <SkipBack className="w-8 h-8 text-foreground/70 fill-current" />
-            </motion.button>
+              <div className="flex items-center justify-center gap-8 w-full mb-6">
+                {queue.length > 1 && (
+                  <motion.button whileTap={{ scale: 0.75 }} onClick={previous} className="p-1">
+                    <SkipBack className="w-8 h-8 text-foreground/70 fill-current" />
+                  </motion.button>
+                )}
+                <button
+                  onClick={togglePlay}
+                  className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--foreground) / 0.15), hsl(var(--foreground) / 0.06))",
+                    backdropFilter: "blur(80px) saturate(2.2)",
+                    WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+                    border: "0.5px solid hsl(var(--foreground) / 0.12)",
+                    boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1)",
+                  }}
+                >
+                  {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-current" /> : <Play className="w-8 h-8 text-foreground fill-current ml-1" />}
+                </button>
+                {queue.length > 1 && (
+                  <motion.button whileTap={{ scale: 0.75 }} onClick={next} className="p-1">
+                    <SkipForward className="w-8 h-8 text-foreground/70 fill-current" />
+                  </motion.button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button className="p-1 active:scale-90 transition-transform">
+                  <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} onClick={() => toggleLike(currentSong)} />
+                </button>
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+                  style={{ background: "hsl(var(--foreground) / 0.08)" }}
+                >
+                  <ListMusic className="w-4 h-4 text-foreground/60" />
+                  <span className="text-[11px] font-semibold text-foreground/60">Historique{history.length > 0 ? ` (${history.length})` : ""}</span>
+                </button>
+                <div />
+              </div>
+            </motion.div>
           )}
-          <button
-            onClick={togglePlay}
-            className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--foreground) / 0.15), hsl(var(--foreground) / 0.06))",
-              backdropFilter: "blur(80px) saturate(2.2)",
-              WebkitBackdropFilter: "blur(80px) saturate(2.2)",
-              border: "0.5px solid hsl(var(--foreground) / 0.12)",
-              boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1)",
-            }}
-          >
-            {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-current" /> : <Play className="w-8 h-8 text-foreground fill-current ml-1" />}
-          </button>
-          {queue.length > 1 && (
-            <motion.button whileTap={{ scale: 0.75 }} onClick={next} className="p-1">
-              <SkipForward className="w-8 h-8 text-foreground/70 fill-current" />
-            </motion.button>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between">
-          <button className="p-1 active:scale-90 transition-transform">
-            <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} onClick={() => toggleLike(currentSong)} />
-          </button>
-          <div />
-          <div />
-        </div>
+        </AnimatePresence>
       </div>
     </motion.div>
   );
+}
+
+function formatTimeAgo(date: Date): string {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60) return "À l'instant";
+  if (diff < 3600) return `il y a ${Math.floor(diff / 60)}min`;
+  return `il y a ${Math.floor(diff / 3600)}h`;
 }
 
 /* ─────────────────────────────────────────────
