@@ -238,6 +238,7 @@ const LibraryPage = () => {
   const [artistSearch, setArtistSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [albumSearch, setAlbumSearch] = useState("");
+  const [artistSort, setArtistSort] = useState<"alpha" | "count">("alpha");
   const [likedSearch, setLikedSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
   const [offlineSearch, setOfflineSearch] = useState("");
