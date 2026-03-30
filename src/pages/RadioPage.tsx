@@ -910,15 +910,41 @@ const RadioPage = () => {
       {/* ── SEARCH MODE ── */}
       {isSearching ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-          <div className="px-4 md:px-8 py-3 flex items-center justify-between">
+          {/* Country filter pills */}
+          <div className="px-4 md:px-8 pt-3 pb-1 flex gap-2 overflow-x-auto scrollbar-hide">
+            {[
+              { code: null, label: "Tous", flag: "🌍" },
+              { code: "FR", label: "France", flag: "🇫🇷" },
+              { code: "BE", label: "Belgique", flag: "🇧🇪" },
+              { code: "CH", label: "Suisse", flag: "🇨🇭" },
+              { code: "CA", label: "Canada", flag: "🇨🇦" },
+            ].map(({ code, label, flag }) => {
+              const active = countryFilter === code;
+              return (
+                <button
+                  key={label}
+                  onClick={() => setCountryFilter(active ? null : code)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full active:scale-95 transition-all duration-150"
+                  style={{
+                    background: active
+                      ? "hsl(var(--primary))"
+                      : "hsl(var(--foreground) / 0.05)",
+                    border: active
+                      ? "0.5px solid hsl(var(--primary))"
+                      : "0.5px solid hsl(var(--foreground) / 0.06)",
+                    color: active ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground) / 0.7)",
+                  }}
+                >
+                  <span className="text-[13px]">{flag}</span>
+                  <span className="text-[12px] font-semibold">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="px-4 md:px-8 py-2 flex items-center justify-between">
             <p className="text-[12px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
-              {loadingSearch ? "Recherche en cours…" : `${searchStations.length} résultat${searchStations.length > 1 ? "s" : ""} pour "${debouncedSearch}"`}
+              {loadingSearch ? "Recherche en cours…" : `${(countryFilter ? searchStations.filter(s => s.countryCode === countryFilter) : searchStations).length} résultat${(countryFilter ? searchStations.filter(s => s.countryCode === countryFilter) : searchStations).length > 1 ? "s" : ""} pour "${debouncedSearch}"${countryFilter ? ` (${countryFilter})` : ""}`}
             </p>
-            {!loadingSearch && searchStations.length > 0 && (
-              <span className="text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.3)" }}>
-                {searchStations.filter(s => s.countryCode === "FR").length > 0 && `${searchStations.filter(s => s.countryCode === "FR").length} 🇫🇷`}
-              </span>
-            )}
           </div>
           {loadingSearch ? (
             <div className="space-y-1">
