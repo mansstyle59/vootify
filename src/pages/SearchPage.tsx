@@ -546,22 +546,31 @@ const SearchPage = () => {
                     boxShadow: "0 2px 12px -4px hsl(var(--primary) / 0.06), inset 0 0.5px 0 hsl(var(--primary) / 0.05)",
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-4">
                     <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
                       <Headphones className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <h3 className="text-[11px] font-extrabold text-primary uppercase tracking-[0.12em]">Ma bibliothèque</h3>
                   </div>
-                  <div className="grid grid-cols-4 gap-1">
+                  <div className="flex items-center justify-around">
                     {[
                       { value: libraryStats.songs, label: "Titres" },
                       { value: libraryStats.artists, label: "Artistes" },
                       { value: libraryStats.albums, label: "Albums" },
                       { value: libraryStats.duration, label: "Durée" },
                     ].map((stat) => (
-                      <div key={stat.label} className="text-center">
-                        <p className="text-[22px] font-black text-foreground leading-none tabular-nums tracking-tight">{stat.value}</p>
-                        <p className="text-[9px] text-primary/50 font-semibold mt-1 uppercase tracking-wider">{stat.label}</p>
+                      <div key={stat.label} className="flex flex-col items-center">
+                        <div
+                          className="w-[68px] h-[68px] rounded-full flex items-center justify-center mb-1.5"
+                          style={{
+                            background: "linear-gradient(145deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))",
+                            border: "1px solid hsl(var(--primary) / 0.15)",
+                            boxShadow: "inset 0 1px 0 hsl(var(--primary) / 0.08), 0 2px 8px hsl(var(--primary) / 0.06)",
+                          }}
+                        >
+                          <p className="text-[18px] font-black text-foreground leading-none tabular-nums tracking-tight">{stat.value}</p>
+                        </div>
+                        <p className="text-[9px] text-primary/60 font-semibold uppercase tracking-wider">{stat.label}</p>
                       </div>
                     ))}
                   </div>
