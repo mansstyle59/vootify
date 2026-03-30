@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play } from "lucide-react";
+import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play, WifiOff, Download } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,20 @@ const HomePage = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [refreshingArtists, setRefreshingArtists] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const on = () => setIsOffline(false);
+    const off = () => setIsOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+
+  // When offline, redirect to library (offline downloads)
+  useEffect(() => {
+    if (isOffline) navigate("/library", { replace: true });
+  }, [isOffline, navigate]);
 
   const { data: artists, isLoading: loadingArtists } = useQuery({
     queryKey: ["home-artists"],
