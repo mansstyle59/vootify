@@ -127,7 +127,12 @@ const HomePage = () => {
 
   const allCustomSongIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
-    return [...new Set(homeConfig.customSections.flatMap((c) => c.songIds))];
+    return [...new Set(homeConfig.customSections.filter((c) => c.type !== "albums").flatMap((c) => c.songIds))];
+  }, [homeConfig?.customSections]);
+
+  const allCustomAlbumIds = useMemo(() => {
+    if (!homeConfig?.customSections) return [];
+    return [...new Set(homeConfig.customSections.filter((c) => c.type === "albums").flatMap((c) => c.albumIds || []))];
   }, [homeConfig?.customSections]);
 
   const { data: customSongsData, isLoading: loadingCustomSongs } = useQuery({
@@ -155,6 +160,44 @@ const HomePage = () => {
       return map;
     },
     enabled: allCustomSongIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: customAlbumsData, isLoading: loadingCustomAlbums } = useQuery({
+    queryKey: ["all-custom-section-albums", allCustomAlbumIds],
+    queryFn: async () => {
+      if (allCustomAlbumIds.length === 0) return new Map<string, { id: string; title: string; artist: string; cover_url: string | null }>();
+      const map = new Map<string, { id: string; title: string; artist: string; cover_url: string | null }>();
+
+      // Separate explicit UUIDs vs derived keys
+      const explicitIds = allCustomAlbumIds.filter((id) => !id.startsWith("derived-"));
+      const derivedKeys = allCustomAlbumIds.filter((id) => id.startsWith("derived-"));
+
+      // Fetch explicit albums
+      if (explicitIds.length > 0) {
+        const { data } = await supabase.from("custom_albums").select("id, title, artist, cover_url").in("id", explicitIds);
+        for (const a of data || []) map.set(a.id, a);
+      }
+
+      // Resolve derived albums from songs
+      for (const key of derivedKeys) {
+        const parts = key.replace("derived-", "").split("|||");
+        if (parts.length !== 2) continue;
+        const [artistLow, albumLow] = parts;
+        const { data: songs } = await supabase
+          .from("custom_songs")
+          .select("album, artist, cover_url")
+          .ilike("artist", artistLow)
+          .ilike("album", albumLow)
+          .limit(1);
+        if (songs && songs.length > 0) {
+          map.set(key, { id: key, title: songs[0].album!, artist: songs[0].artist, cover_url: songs[0].cover_url });
+        }
+      }
+
+      return map;
+    },
+    enabled: allCustomAlbumIds.length > 0,
     staleTime: 2 * 60 * 1000,
   });
 
