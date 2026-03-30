@@ -474,10 +474,11 @@ const SearchPage = () => {
               if (e.key === "Escape") setShowSuggestions(false);
             }}
             placeholder="Artistes, titres, albums..."
-            className="w-full pl-11 pr-10 py-3.5 rounded-2xl text-foreground placeholder:text-muted-foreground/30 focus:outline-none text-[15px] font-medium transition-all"
+            className="w-full pl-11 pr-10 py-3 rounded-2xl text-foreground placeholder:text-muted-foreground/30 focus:outline-none text-[15px] font-medium transition-all"
             style={{
-              background: "hsl(var(--foreground) / 0.04)",
-              border: "0.5px solid hsl(var(--foreground) / 0.06)",
+              background: "hsl(var(--foreground) / 0.05)",
+              border: "0.5px solid hsl(var(--foreground) / 0.08)",
+              boxShadow: "inset 0 1px 2px hsl(0 0% 0% / 0.1)",
             }}
           />
           {query && (
