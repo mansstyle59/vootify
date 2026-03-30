@@ -265,6 +265,7 @@ const LibraryPage = () => {
   const [albumSearch, setAlbumSearch] = useState("");
   const [likedSearch, setLikedSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
+  const [offlineSearch, setOfflineSearch] = useState("");
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [deezerUrl, setDeezerUrl] = useState("");
@@ -1789,7 +1790,24 @@ const LibraryPage = () => {
                   <p className="text-[10px] text-muted-foreground/40 mt-1 text-right">{cachedSongs.length} / 300 titres</p>
                 </div>
 
-
+                {/* Search filter for offline songs */}
+                {cachedSongs.length > 0 && (
+                  <div className="relative mb-4">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                    <input
+                      value={offlineSearch}
+                      onChange={(e) => setOfflineSearch(e.target.value)}
+                      placeholder="Rechercher dans les titres hors-ligne…"
+                      className="w-full pl-9 pr-8 py-2.5 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      style={{ background: "hsl(var(--card) / 0.4)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
+                    />
+                    {offlineSearch && (
+                      <button onClick={() => setOfflineSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted/50">
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                )}
                 {cachedSongs.length === 0 ? (
                   <div className="flex flex-col items-center gap-4 py-12">
                     <div className="p-4 rounded-full" style={{ background: "hsl(var(--primary) / 0.1)" }}>
@@ -1816,8 +1834,29 @@ const LibraryPage = () => {
                   </div>
                 ) : (
                   <>
-                    {/* ── Offline Playlists ── */}
                     {(() => {
+                      const q = offlineSearch.trim().toLowerCase();
+                      const filteredCached = q
+                        ? cachedSongs.filter((s) =>
+                            s.title.toLowerCase().includes(q) ||
+                            s.artist.toLowerCase().includes(q) ||
+                            (s.album || "").toLowerCase().includes(q)
+                          )
+                        : cachedSongs;
+
+                      if (q && filteredCached.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center gap-3 py-8">
+                            <SearchIcon className="w-6 h-6 text-muted-foreground/30" />
+                            <p className="text-sm text-muted-foreground/50">Aucun résultat pour « {offlineSearch} »</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                    {/* ── Offline Playlists ── */}
+                    {!q && (() => {
                       // Build offline playlists: playlists where at least 1 song is cached
                       const offlinePlaylists = playlists.filter((p) => {
                         const songs = playlistSongs[p.id] || [];
@@ -1877,7 +1916,7 @@ const LibraryPage = () => {
                     })()}
 
                     {/* ── Offline Albums ── */}
-                    {(() => {
+                    {!q && (() => {
                       // Group cached songs by album
                       const albumMap = new Map<string, { title: string; artist: string; coverUrl: string; songs: (Song & { cachedAt: number })[] }>();
                       for (const s of cachedSongs) {
@@ -1942,15 +1981,15 @@ const LibraryPage = () => {
                     <div className="mb-2">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
                         <Music className="w-3.5 h-3.5" />
-                        Tous les titres ({cachedSongs.length})
+                        {q ? `Résultats (${filteredCached.length})` : `Tous les titres (${cachedSongs.length})`}
                       </p>
                     </div>
                     <ActionButtons
-                      onPlayAll={() => { setQueue(cachedSongs); play(cachedSongs[0]); }}
-                      onShuffle={() => { const s = [...cachedSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
+                      onPlayAll={() => { setQueue(filteredCached); play(filteredCached[0]); }}
+                      onShuffle={() => { const s = [...filteredCached].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
                     />
                     <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.06)" }}>
-                      {cachedSongs.map((s, i) => (
+                      {filteredCached.map((s, i) => (
                         <PremiumSongRow
                           key={s.id}
                           song={s}
@@ -1958,11 +1997,14 @@ const LibraryPage = () => {
                           cached
                           isActive={currentSong?.id === s.id}
                           isPlaying={currentSong?.id === s.id && isPlaying}
-                          onClick={() => { setQueue(cachedSongs); play(s); }}
+                          onClick={() => { setQueue(filteredCached); play(s); }}
                           onSwipeLeft={() => removeCached(s.id)}
                         />
                       ))}
                     </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
 
