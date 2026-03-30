@@ -5,9 +5,23 @@
  */
 
 const RECOVERY_KEY = "sw-recovery-ts";
+const RECOVERY_DONE_KEY = "sw-recovery-done";
 const RECOVERY_COOLDOWN = 10_000; // 10s between auto-recoveries
 
 export function guardServiceWorker() {
+  // Show toast if we just recovered from a stale module error
+  if (sessionStorage.getItem(RECOVERY_DONE_KEY)) {
+    sessionStorage.removeItem(RECOVERY_DONE_KEY);
+    setTimeout(() => {
+      import("sonner").then(({ toast }) => {
+        toast.info("Mise à jour appliquée", {
+          description: "L'application a été actualisée automatiquement.",
+          duration: 4000,
+        });
+      });
+    }, 1500);
+  }
+
   const isInIframe = (() => {
     try {
       return window.self !== window.top;
@@ -63,7 +77,8 @@ function installStaleModuleRecovery() {
       console.error("[SW Guard] Cache cleanup error:", e);
     }
 
-    // 3. Hard reload — bypasses any remaining cache
+    // 3. Flag for post-reload toast, then hard reload
+    sessionStorage.setItem(RECOVERY_DONE_KEY, "1");
     window.location.reload();
   };
 
