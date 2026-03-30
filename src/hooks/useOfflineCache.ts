@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { offlineCache } from "@/lib/offlineCache";
 import { Song } from "@/data/mockData";
+import { toast } from "sonner";
+
+const WARN_SONGS = 280;
+const WARN_BYTES = 900 * 1024 * 1024; // 900 MB
 
 export function useOfflineCache(songId: string | undefined) {
   const [isCached, setIsCached] = useState(false);
@@ -19,8 +23,24 @@ export function useOfflineCache(songId: string | undefined) {
     try {
       await offlineCache.cacheSong(song, setProgress);
       setIsCached(true);
-    } catch (e) {
-      console.error("Download failed:", e);
+
+      // Check limits after successful download
+      const [count, size] = await Promise.all([
+        offlineCache.getAllCachedCount(),
+        offlineCache.getCacheSize(),
+      ]);
+      if (count >= WARN_SONGS) {
+        toast.warning(`⚠️ ${count}/300 titres hors-ligne — limite bientôt atteinte`);
+      } else if (size >= WARN_BYTES) {
+        const mb = Math.round(size / (1024 * 1024));
+        toast.warning(`⚠️ ${mb} Mo / 500 Mo utilisés — espace limité`);
+      }
+    } catch (e: any) {
+      if (e.message?.includes("Limite")) {
+        toast.error(e.message);
+      } else {
+        console.error("Download failed:", e);
+      }
     } finally {
       setIsDownloading(false);
     }
