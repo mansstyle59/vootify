@@ -415,11 +415,10 @@ const LibraryPage = () => {
     enabled: tab === "custom",
   });
 
-  // Albums query — derived from custom_songs + custom_albums
+  // Albums query — derived from custom_songs + custom_albums, grouped by artist
   const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
     queryKey: ["library-albums"],
     queryFn: async () => {
-      // Fetch albums from songs
       const { data: songs, error: songsErr } = await supabase
         .from("custom_songs")
         .select("album, artist, cover_url, year")
@@ -427,14 +426,12 @@ const LibraryPage = () => {
         .not("album", "is", null);
       if (songsErr) throw songsErr;
 
-      // Fetch explicit custom_albums
       const { data: explicit, error: expErr } = await supabase
         .from("custom_albums")
         .select("*")
         .order("created_at", { ascending: false });
       if (expErr) throw expErr;
 
-      // Build album map from songs
       const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
       for (const row of songs || []) {
         if (!row.album || row.album.trim() === "") continue;
@@ -456,7 +453,6 @@ const LibraryPage = () => {
         }
       }
 
-      // Merge explicit custom_albums (override derived ones)
       for (const album of explicit || []) {
         const key = `${album.artist.toLowerCase()}|||${album.title.toLowerCase()}`;
         albumMap.set(key, {
@@ -469,7 +465,15 @@ const LibraryPage = () => {
         });
       }
 
-      return Array.from(albumMap.values()).sort((a, b) => a.title.localeCompare(b.title, "fr"));
+      // Sort: by artist name (A-Z), then by year (newest first), then by title
+      return Array.from(albumMap.values()).sort((a, b) => {
+        const artistCmp = a.artist.localeCompare(b.artist, "fr");
+        if (artistCmp !== 0) return artistCmp;
+        if (a.year && b.year) return b.year - a.year;
+        if (a.year) return -1;
+        if (b.year) return 1;
+        return a.title.localeCompare(b.title, "fr");
+      });
     },
     staleTime: 2 * 60 * 1000,
     enabled: tab === "albums",
