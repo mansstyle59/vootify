@@ -89,7 +89,7 @@ const GenrePage = () => {
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80" />
-          <div className="relative px-4 md:px-8 pt-[calc(max(1rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px))] pb-6">
+          <div className="relative px-4 md:px-8 pb-6" style={{ paddingTop: "calc(max(1rem, env(safe-area-inset-top, 0px)) + var(--ai-banner-h, 0px))" }}>
             <button
               onClick={() => navigate(-1)}
               className="mb-4 flex items-center gap-1.5 text-white/80 hover:text-white transition-colors"

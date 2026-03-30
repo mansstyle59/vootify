@@ -203,7 +203,7 @@ const ArtistPage = () => {
           <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/10 to-accent/20" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
-        <button onClick={() => navigate(-1)} className="absolute top-[calc(max(1rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px))] left-4 p-2 rounded-full z-10" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2)" }}>
+        <button onClick={() => navigate(-1)} className="absolute left-4 p-2 rounded-full z-10" style={{ top: "calc(max(1rem, env(safe-area-inset-top, 0px)) + var(--ai-banner-h, 0px))", background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2)" }}>
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="absolute bottom-6 left-4 right-4 flex items-end gap-4">

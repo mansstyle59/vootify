@@ -761,7 +761,7 @@ const RadioPage = () => {
           WebkitBackdropFilter: "blur(40px) saturate(1.8)",
         }}
       >
-        <div className="px-4 md:px-8 pt-[calc(max(1rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px))] pb-3">
+        <div className="px-4 md:px-8 pb-3" style={{ paddingTop: "calc(max(1rem, env(safe-area-inset-top, 0px)) + var(--ai-banner-h, 0px))" }}>
           <h1 className="text-[28px] md:text-[34px] font-black text-foreground leading-tight tracking-tight mb-3">
             Radio
           </h1>
