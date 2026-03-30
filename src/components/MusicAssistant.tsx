@@ -368,32 +368,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      {/* Input */}
-      <form
-        onSubmit={handleSubmit}
-        className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
-        style={{
-          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
-          borderTop: "0.5px solid hsl(var(--border) / 0.3)",
-          background: "hsl(var(--background) / 0.95)",
-          backdropFilter: "blur(20px)",
-        }}
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ex: « Bohemian Rhapsody de Queen »"
-          disabled={isLoading}
-          className="flex-1 h-11 px-4 rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/40 outline-none"
-          style={{
-            background: "hsl(var(--foreground) / 0.05)",
-            border: "0.5px solid hsl(var(--foreground) / 0.06)",
-          }}
-        />
-        <Button type="submit" size="icon" disabled={!input.trim() || isLoading} className="w-11 h-11 rounded-2xl flex-shrink-0">
-          <Send className="w-4 h-4" />
-        </Button>
-      </form>
+      {/* Input hidden — under construction */}
     </>
   );
 }
