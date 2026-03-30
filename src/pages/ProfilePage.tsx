@@ -513,11 +513,11 @@ const ProfilePage = () => {
 
           {/* Progress bar */}
           <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: `${swPercent}%` }} transition={{ duration: 0.8, delay: 0.2 }}
-              className="h-full" style={{ background: "hsl(var(--primary))", borderRadius: (offlinePercent > 0 || coverPercent > 0) ? "9999px 0 0 9999px" : "9999px" }} />
-            <motion.div initial={{ width: 0 }} animate={{ width: `${coverPercent}%` }} transition={{ duration: 0.8, delay: 0.3 }}
+            <motion.div initial={{ width: 0 }} animate={{ width: `${scaledSw}%` }} transition={{ duration: 0.8, delay: 0.2 }}
+              className="h-full" style={{ background: "hsl(var(--primary))", borderRadius: (scaledOffline > 0 || scaledCover > 0) ? "9999px 0 0 9999px" : "9999px" }} />
+            <motion.div initial={{ width: 0 }} animate={{ width: `${scaledCover}%` }} transition={{ duration: 0.8, delay: 0.3 }}
               className="h-full" style={{ background: "hsl(var(--primary) / 0.55)" }} />
-            <motion.div initial={{ width: 0 }} animate={{ width: `${offlinePercent}%` }} transition={{ duration: 0.8, delay: 0.4 }}
+            <motion.div initial={{ width: 0 }} animate={{ width: `${scaledOffline}%` }} transition={{ duration: 0.8, delay: 0.4 }}
               className="h-full" style={{ background: "hsl(var(--primary) / 0.3)", borderRadius: "0 9999px 9999px 0" }} />
           </div>
 
