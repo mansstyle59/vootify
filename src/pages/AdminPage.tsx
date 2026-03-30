@@ -2446,7 +2446,155 @@ function SongPickerModal({
   );
 }
 
-/* ── Subscriptions & Usage Tab ── */
+/** Modal to pick albums for a custom album section */
+function AlbumPickerModal({
+  selectedIds,
+  onUpdate,
+  onClose,
+}: {
+  selectedIds: string[];
+  onUpdate: (ids: string[]) => void;
+  onClose: () => void;
+}) {
+  const [allAlbums, setAllAlbums] = useState<{ id: string; title: string; artist: string; cover_url: string | null }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+
+  useEffect(() => {
+    (async () => {
+      // Fetch from custom_albums
+      const { data: explicit } = await supabase
+        .from("custom_albums")
+        .select("id, title, artist, cover_url")
+        .order("title");
+
+      // Also derive albums from custom_songs
+      const { data: songs } = await supabase
+        .from("custom_songs")
+        .select("album, artist, cover_url")
+        .not("stream_url", "is", null)
+        .not("album", "is", null);
+
+      const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null }>();
+
+      // Add explicit albums
+      for (const a of explicit || []) {
+        albumMap.set(a.id, a);
+      }
+
+      // Add derived albums (by artist|||album key)
+      for (const s of songs || []) {
+        if (!s.album || s.album.trim() === "") continue;
+        const key = `derived-${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`;
+        if (!albumMap.has(key)) {
+          albumMap.set(key, { id: key, title: s.album, artist: s.artist, cover_url: s.cover_url });
+        }
+      }
+
+      setAllAlbums(Array.from(albumMap.values()).sort((a, b) => a.title.localeCompare(b.title, "fr")));
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = search.trim()
+    ? allAlbums.filter(
+        (a) =>
+          a.title.toLowerCase().includes(search.toLowerCase()) ||
+          a.artist.toLowerCase().includes(search.toLowerCase())
+      )
+    : allAlbums;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDone = () => {
+    onUpdate(Array.from(selected));
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Disc3 className="w-4 h-4 text-primary" />
+            Sélectionner des albums
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</span>
+            <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+              OK
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-3 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un album..."
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-12">Aucun album trouvé</p>
+          ) : (
+            filtered.map((album) => {
+              const isSelected = selected.has(album.id);
+              return (
+                <button
+                  key={album.id}
+                  onClick={() => toggle(album.id)}
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                    isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                    isSelected ? "bg-primary border-primary" : "border-border"
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  {album.cover_url ? (
+                    <img src={album.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                      <Disc3 className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Subscription {
   id: string;
   user_id: string;
