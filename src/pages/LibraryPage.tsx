@@ -1834,8 +1834,29 @@ const LibraryPage = () => {
                   </div>
                 ) : (
                   <>
-                    {/* ── Offline Playlists ── */}
                     {(() => {
+                      const q = offlineSearch.trim().toLowerCase();
+                      const filteredCached = q
+                        ? cachedSongs.filter((s) =>
+                            s.title.toLowerCase().includes(q) ||
+                            s.artist.toLowerCase().includes(q) ||
+                            (s.album || "").toLowerCase().includes(q)
+                          )
+                        : cachedSongs;
+
+                      if (q && filteredCached.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center gap-3 py-8">
+                            <SearchIcon className="w-6 h-6 text-muted-foreground/30" />
+                            <p className="text-sm text-muted-foreground/50">Aucun résultat pour « {offlineSearch} »</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                    {/* ── Offline Playlists ── */}
+                    {!q && (() => {
                       // Build offline playlists: playlists where at least 1 song is cached
                       const offlinePlaylists = playlists.filter((p) => {
                         const songs = playlistSongs[p.id] || [];
