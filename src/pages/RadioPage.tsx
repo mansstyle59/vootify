@@ -958,15 +958,18 @@ const RadioPage = () => {
                 </div>
               ))}
             </div>
-          ) : searchStations.length > 0 ? (
-            <div>
-              {(countryFilter ? searchStations.filter(s => s.countryCode === countryFilter) : searchStations).map((station) => (
-                <SearchResultRowComponent key={station.id} station={station} ctx={stationTileProps} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState searching />
-          )}
+          ) : (() => {
+            const filtered = countryFilter ? searchStations.filter(s => s.countryCode === countryFilter) : searchStations;
+            return filtered.length > 0 ? (
+              <div>
+                {filtered.map((station) => (
+                  <SearchResultRowComponent key={station.id} station={station} ctx={stationTileProps} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState searching />
+            );
+          })()}
         </motion.div>
       ) : activeGenre ? (
         /* ── GENRE MODE ── */
