@@ -324,8 +324,15 @@ const SearchResultRowComponent = memo(function SearchResultRowComponent({
         )}
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {station.countryCode && <span className="text-[9px] font-medium text-muted-foreground/50 uppercase">{station.countryCode}</span>}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {station.bitrate > 0 && (
+          <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-md" style={{ background: "hsl(var(--foreground) / 0.04)", color: "hsl(var(--muted-foreground) / 0.4)" }}>
+            {station.bitrate}k
+          </span>
+        )}
+        {station.countryCode && (
+          <span className="text-[9px] font-medium text-muted-foreground/40 uppercase">{station.countryCode}</span>
+        )}
         <button onClick={(e) => { e.stopPropagation(); isSaved ? removeStation(station.id) : saveStation(station); }}
           className="p-1.5 rounded-full active:scale-90 transition-transform"
         >
