@@ -127,12 +127,17 @@ const HomePage = () => {
 
   const allCustomSongIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
-    return [...new Set(homeConfig.customSections.filter((c) => c.type !== "albums").flatMap((c) => c.songIds))];
+    return [...new Set(homeConfig.customSections.filter((c) => c.type !== "albums" && c.type !== "playlists").flatMap((c) => c.songIds))];
   }, [homeConfig?.customSections]);
 
   const allCustomAlbumIds = useMemo(() => {
     if (!homeConfig?.customSections) return [];
     return [...new Set(homeConfig.customSections.filter((c) => c.type === "albums").flatMap((c) => c.albumIds || []))];
+  }, [homeConfig?.customSections]);
+
+  const allCustomPlaylistIds = useMemo(() => {
+    if (!homeConfig?.customSections) return [];
+    return [...new Set(homeConfig.customSections.filter((c) => c.type === "playlists").flatMap((c) => c.playlistIds || []))];
   }, [homeConfig?.customSections]);
 
   const { data: customSongsData, isLoading: loadingCustomSongs } = useQuery({
@@ -242,7 +247,7 @@ const HomePage = () => {
   const getCustomSectionSongs = useCallback((sectionId: string): Song[] => {
     if (!homeConfig?.customSections || !customSongsData) return [];
     const cs = homeConfig.customSections.find((c) => c.id === sectionId);
-    if (!cs || cs.type === "albums") return [];
+    if (!cs || cs.type === "albums" || cs.type === "playlists") return [];
     return cs.songIds
       .map((id) => customSongsData.get(id))
       .filter(Boolean) as Song[];
@@ -256,6 +261,15 @@ const HomePage = () => {
       .map((id) => customAlbumsData.get(id))
       .filter(Boolean) as { id: string; title: string; artist: string; cover_url: string | null }[];
   }, [homeConfig?.customSections, customAlbumsData]);
+
+  const getCustomSectionPlaylists = useCallback((sectionId: string) => {
+    if (!homeConfig?.customSections || !customPlaylistsData) return [];
+    const cs = homeConfig.customSections.find((c) => c.id === sectionId);
+    if (!cs || cs.type !== "playlists") return [];
+    return (cs.playlistIds || [])
+      .map((id) => customPlaylistsData.get(id))
+      .filter(Boolean) as { id: string; name: string; cover_url: string | null }[];
+  }, [homeConfig?.customSections, customPlaylistsData]);
 
   const renderSection = (title: string, songs: Song[] | undefined, loading: boolean) => {
     if (!loading && (!songs || songs.length === 0)) return null;
