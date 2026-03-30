@@ -2111,9 +2111,9 @@ function HomeTab() {
 }
 
 /** Parse a Deezer URL to extract type and ID */
-function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist"; id: string } | null {
+function parseDeezerUrl(url: string): { type: "album" | "playlist" | "artist" | "profile"; id: string } | null {
   try {
-    const m = url.match(/deezer\.com\/(?:\w+\/)?(album|playlist|artist)\/(\d+)/i);
+    const m = url.match(/deezer\.com\/(?:\w+\/)?(album|playlist|artist|profile)\/(\d+)/i);
     if (m) return { type: m[1] as any, id: m[2] };
     return null;
   } catch {
