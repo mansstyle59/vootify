@@ -18,7 +18,7 @@ const RADIO_FRANCE_STATIONS: Record<string, { name: string; stationId: number }>
   franceculture: { name: "France Culture",  stationId: 3 },
   francemusique: { name: "France Musique",  stationId: 4 },
   fip:           { name: "FIP",             stationId: 5 },
-  mouv:          { name: "Mouv'",           stationId: 7 },
+  mouv:          { name: "Mouv'",           stationId: 6 },
 };
 
 function detectRadioFranceStation(url: string): { name: string; stationId: number } | null {
