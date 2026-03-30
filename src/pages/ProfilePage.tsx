@@ -482,9 +482,9 @@ const ProfilePage = () => {
                 <Database className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h3 className="text-[13px] font-bold text-foreground">Stockage</h3>
+                <h3 className="text-[13px] font-bold text-foreground">Stockage hors-ligne</h3>
                 <p className="text-[10px] text-muted-foreground/50 font-medium">
-                  {totalUsed > 0 ? formatBytes(totalUsed) : "Calcul…"}
+                  {totalUsed > 0 ? `${formatBytes(totalUsed)} / 1 To` : "Calcul…"}
                 </p>
               </div>
             </div>
