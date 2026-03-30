@@ -2461,15 +2461,20 @@ function AlbumPickerModal({
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
 
+  // Deezer import
+  const [mode, setMode] = useState<"library" | "deezer">("library");
+  const [deezerUrl, setDeezerUrl] = useState("");
+  const [deezerLoading, setDeezerLoading] = useState(false);
+  const [deezerAlbums, setDeezerAlbums] = useState<{ id: number; title: string; artist: string; cover_url: string; existsLocally: boolean; localId?: string }[]>([]);
+  const [deezerError, setDeezerError] = useState("");
+
   useEffect(() => {
     (async () => {
-      // Fetch from custom_albums
       const { data: explicit } = await supabase
         .from("custom_albums")
         .select("id, title, artist, cover_url")
         .order("title");
 
-      // Also derive albums from custom_songs
       const { data: songs } = await supabase
         .from("custom_songs")
         .select("album, artist, cover_url")
@@ -2477,13 +2482,7 @@ function AlbumPickerModal({
         .not("album", "is", null);
 
       const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null }>();
-
-      // Add explicit albums
-      for (const a of explicit || []) {
-        albumMap.set(a.id, a);
-      }
-
-      // Add derived albums (by artist|||album key)
+      for (const a of explicit || []) albumMap.set(a.id, a);
       for (const s of songs || []) {
         if (!s.album || s.album.trim() === "") continue;
         const key = `derived-${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`;
@@ -2519,6 +2518,107 @@ function AlbumPickerModal({
     onClose();
   };
 
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+
+  /** Fetch albums from a Deezer link */
+  const fetchDeezer = async () => {
+    let urlToUse = deezerUrl.trim();
+
+    if (isDeezerShortLink(urlToUse)) {
+      setDeezerError("");
+      setDeezerLoading(true);
+      setDeezerAlbums([]);
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("deezer-proxy", {
+          body: { resolveUrl: urlToUse },
+        });
+        if (resolveData?.resolvedUrl) {
+          urlToUse = resolveData.resolvedUrl;
+        } else {
+          setDeezerError("Impossible de résoudre ce lien court Deezer.");
+          setDeezerLoading(false);
+          return;
+        }
+      } catch {
+        setDeezerError("Erreur lors de la résolution du lien court.");
+        setDeezerLoading(false);
+        return;
+      }
+    }
+
+    const parsed = parseDeezerUrl(urlToUse);
+    if (!parsed) {
+      setDeezerError("Lien Deezer invalide. Formats acceptés : album, playlist ou artiste.");
+      setDeezerLoading(false);
+      return;
+    }
+    setDeezerError("");
+    setDeezerLoading(true);
+    setDeezerAlbums([]);
+
+    try {
+      let albums: { id: number; title: string; artist: string; cover_url: string }[] = [];
+
+      if (parsed.type === "album") {
+        // Single album
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/album/${parsed.id}` },
+        });
+        if (data) {
+          albums = [{ id: data.id, title: data.title, artist: data.artist?.name || "", cover_url: data.cover_medium || "" }];
+        }
+      } else if (parsed.type === "playlist") {
+        // Extract unique albums from playlist tracks
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/playlist/${parsed.id}` },
+        });
+        const seen = new Map<number, { id: number; title: string; artist: string; cover_url: string }>();
+        for (const t of data?.tracks?.data || []) {
+          if (t.album?.id && !seen.has(t.album.id)) {
+            seen.set(t.album.id, {
+              id: t.album.id,
+              title: t.album.title || "",
+              artist: t.artist?.name || "",
+              cover_url: t.album.cover_medium || "",
+            });
+          }
+        }
+        albums = Array.from(seen.values());
+      } else if (parsed.type === "artist") {
+        // Get artist's albums
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/artist/${parsed.id}/albums?limit=50` },
+        });
+        albums = (data?.data || []).map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          artist: a.artist?.name || "",
+          cover_url: a.cover_medium || "",
+        }));
+      }
+
+      // Match against local albums
+      const localIndex = new Map<string, string>();
+      for (const a of allAlbums) {
+        localIndex.set(normalize(a.artist) + "||" + normalize(a.title), a.id);
+      }
+
+      const result = albums.map((a) => {
+        const key = normalize(a.artist) + "||" + normalize(a.title);
+        const localId = localIndex.get(key);
+        return { ...a, existsLocally: !!localId, localId };
+      });
+
+      setDeezerAlbums(result);
+    } catch {
+      setDeezerError("Erreur lors de la récupération Deezer.");
+    } finally {
+      setDeezerLoading(false);
+    }
+  };
+
+  const localCount = deezerAlbums.filter((a) => a.existsLocally).length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
@@ -2538,58 +2638,167 @@ function AlbumPickerModal({
           </div>
         </div>
 
-        <div className="p-3 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un album..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-              autoFocus
-            />
-          </div>
+        {/* Mode tabs */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setMode("library")}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${mode === "library" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            Bibliothèque
+          </button>
+          <button
+            onClick={() => setMode("deezer")}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${mode === "deezer" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            🎵 Deezer URL
+          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        {mode === "library" ? (
+          <>
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher un album..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
             </div>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-12">Aucun album trouvé</p>
-          ) : (
-            filtered.map((album) => {
-              const isSelected = selected.has(album.id);
-              return (
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-12">Aucun album trouvé</p>
+              ) : (
+                filtered.map((album) => {
+                  const isSelected = selected.has(album.id);
+                  return (
+                    <button
+                      key={album.id}
+                      onClick={() => toggle(album.id)}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                        isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                        isSelected ? "bg-primary border-primary" : "border-border"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      {album.cover_url ? (
+                        <img src={album.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <Disc3 className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Deezer URL input */}
+            <div className="p-3 border-b border-border space-y-2">
+              <div className="relative flex gap-2">
+                <input
+                  value={deezerUrl}
+                  onChange={(e) => setDeezerUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && fetchDeezer()}
+                  placeholder="https://www.deezer.com/album/..."
+                  className="flex-1 pl-3 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
                 <button
-                  key={album.id}
-                  onClick={() => toggle(album.id)}
-                  className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                    isSelected ? "bg-primary/10" : "hover:bg-muted/50"
-                  }`}
+                  onClick={fetchDeezer}
+                  disabled={deezerLoading || !deezerUrl.trim()}
+                  className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 flex items-center gap-1"
                 >
-                  <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                    isSelected ? "bg-primary border-primary" : "border-border"
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                  </div>
-                  {album.cover_url ? (
-                    <img src={album.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                      <Disc3 className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
-                  </div>
+                  {deezerLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                  Chercher
                 </button>
-              );
-            })
-          )}
-        </div>
+              </div>
+              {deezerError && <p className="text-xs text-destructive">{deezerError}</p>}
+              {deezerAlbums.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground">
+                    {deezerAlbums.length} album{deezerAlbums.length > 1 ? "s" : ""} · <span className="text-primary font-semibold">{localCount} local</span>
+                  </p>
+                  {localCount > 0 && (
+                    <button
+                      onClick={() => {
+                        const localIds = deezerAlbums.filter((a) => a.localId).map((a) => a.localId!);
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          localIds.forEach((id) => next.add(id));
+                          return next;
+                        });
+                      }}
+                      className="text-[10px] text-primary font-semibold"
+                    >
+                      Tout sélectionner (local)
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {deezerLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : deezerAlbums.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  Collez un lien Deezer (album, playlist ou artiste)
+                </p>
+              ) : (
+                deezerAlbums.map((album) => {
+                  const isSelected = album.localId ? selected.has(album.localId) : false;
+                  return (
+                    <button
+                      key={album.id}
+                      onClick={() => { if (album.localId) toggle(album.localId); }}
+                      disabled={!album.existsLocally}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                        !album.existsLocally ? "opacity-40" : isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                        isSelected ? "bg-primary border-primary" : "border-border"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <img src={album.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
+                      </div>
+                      {album.existsLocally ? (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary">Local</span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground">Absent</span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
