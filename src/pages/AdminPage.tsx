@@ -1919,16 +1919,32 @@ function HomeTab() {
 
                 {isCustom && (
                   <>
-                    <button
-                      onClick={() => { setEditingCustom(section.id); setSongPickerOpen(true); }}
-                      className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
-                      title="Gérer les morceaux"
-                    >
-                      <Music className="w-4 h-4" />
-                    </button>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {customSections.find((c) => c.id === section.id)?.songIds.length || 0}
-                    </span>
+                    {(() => {
+                      const cs = customSections.find((c) => c.id === section.id);
+                      const isAlbumType = cs?.type === "albums";
+                      return (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (isAlbumType) {
+                                setEditingAlbumSection(section.id);
+                                setAlbumPickerOpen(true);
+                              } else {
+                                setEditingCustom(section.id);
+                                setSongPickerOpen(true);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                            title={isAlbumType ? "Gérer les albums" : "Gérer les morceaux"}
+                          >
+                            {isAlbumType ? <Disc3 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
+                          </button>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            {isAlbumType ? (cs?.albumIds?.length || 0) : (cs?.songIds.length || 0)}
+                          </span>
+                        </>
+                      );
+                    })()}
                     <button
                       onClick={() => removeCustomSection(section.id)}
                       className="p-1.5 rounded-lg text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
