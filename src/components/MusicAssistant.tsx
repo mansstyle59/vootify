@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, X, Send, Sparkles, Music2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -265,7 +266,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className="max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] leading-relaxed whitespace-pre-wrap"
+                className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] leading-relaxed ${msg.role === "user" ? "whitespace-pre-wrap" : ""}`}
                 style={
                   msg.role === "user"
                     ? {
@@ -280,7 +281,13 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
                       }
                 }
               >
-                {msg.content}
+                {msg.role === "user" ? (
+                  msg.content
+                ) : (
+                  <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_a]:text-primary [&_a]:underline [&_strong]:text-foreground [&_code]:text-[12px] [&_code]:bg-foreground/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
                 {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
                   <span className="inline-block w-1.5 h-4 ml-0.5 rounded-full bg-primary animate-pulse" />
                 )}
