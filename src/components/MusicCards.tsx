@@ -91,9 +91,16 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className={`text-[12px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
-          {song.title}
-        </p>
+        <div className="flex items-center gap-1">
+          <p className={`text-[12px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
+            {song.title}
+          </p>
+          {isCached && (
+            <span className="shrink-0 inline-flex items-center justify-center w-3.5 h-3.5 rounded-full" style={{ background: "hsl(142 71% 45% / 0.15)" }}>
+              <Download className="w-2 h-2" style={{ color: "hsl(142 71% 45%)" }} />
+            </span>
+          )}
+        </div>
         <p className="text-[10px] text-muted-foreground/50 mt-0.5 truncate font-medium">
           <button
             onClick={(e) => { e.stopPropagation(); navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`); }}
