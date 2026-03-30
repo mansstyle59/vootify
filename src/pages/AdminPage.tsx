@@ -1703,6 +1703,8 @@ function HomeTab() {
   };
   const [editingCustom, setEditingCustom] = useState<string | null>(null);
   const [songPickerOpen, setSongPickerOpen] = useState(false);
+  const [editingAlbumSection, setEditingAlbumSection] = useState<string | null>(null);
+  const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
 
   useEffect(() => {
     if (config) {
