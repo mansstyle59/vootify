@@ -40,7 +40,7 @@ const AudioSettingsPage = () => {
       <div
         className="sticky top-0 z-30 px-4 py-3"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.75rem)",
           background: "hsl(var(--background))",
           borderBottom: "0.5px solid hsl(var(--border) / 0.3)",
         }}

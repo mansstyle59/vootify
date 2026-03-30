@@ -224,7 +224,7 @@ const PlaylistDetailPage = () => {
         </div>
 
         {/* Navigation bar */}
-        <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)" }}>
+        <div className="relative z-20 flex items-center justify-between px-4 md:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.75rem)" }}>
           <button onClick={() => navigate("/")} className="p-2.5 rounded-full text-foreground transition-all active:scale-90" style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", border: "0.5px solid hsl(var(--foreground) / 0.08)", boxShadow: "0 4px 16px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)" }}>
             <ArrowLeft className="w-5 h-5" />
           </button>

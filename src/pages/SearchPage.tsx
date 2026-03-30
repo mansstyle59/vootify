@@ -452,7 +452,7 @@ const SearchPage = () => {
       <div
         className="sticky top-0 z-20 px-5 md:px-8 pb-4"
         style={{
-          paddingTop: "calc(max(2rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px))",
+          paddingTop: "calc(max(2rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px))",
           background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.97) 75%, hsl(var(--background) / 0) 100%)",
           backdropFilter: "blur(40px) saturate(1.8)",
           WebkitBackdropFilter: "blur(40px) saturate(1.8)",
