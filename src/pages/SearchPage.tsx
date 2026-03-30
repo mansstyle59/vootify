@@ -538,7 +538,7 @@ const SearchPage = () => {
 
             {/* ── Library Overview (glass card) ── */}
             {libraryStats && (
-              <section>
+              <section onClick={() => navigate("/library")} className="cursor-pointer active:scale-[0.99] transition-transform">
                 <div
                   className="rounded-2xl px-5 py-4 relative overflow-hidden"
                   style={{
@@ -602,7 +602,7 @@ const SearchPage = () => {
             {/* ── Trending Artists (premium circles) ── */}
             {trendingArtists.length > 0 && (
               <section>
-                <SectionHeader title="Artistes populaires" />
+                <SectionHeader title="Artistes populaires" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {trendingArtists.slice(0, 10).map((artist) => (
                     <button
@@ -638,7 +638,7 @@ const SearchPage = () => {
             {/* ── New Releases (premium overlay cards) ── */}
             {newReleases.length > 0 && (
               <section>
-                <SectionHeader title="Nouveautés" />
+                <SectionHeader title="Nouveautés" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {newReleases.slice(0, 8).map((release) => {
                     const isAvailable = availableReleases.has(release.albumId);
@@ -691,7 +691,7 @@ const SearchPage = () => {
             {/* ── Genre Cards (premium glass) ── */}
             {genreCards.length > 0 && (
               <section>
-                <SectionHeader title="Explorer par genre" />
+                <SectionHeader title="Explorer par genre" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
                   {genreCards.slice(0, 8).map((g) => {
                     const def = genreDefs[g.genre] || defaultGenreColor;
@@ -726,7 +726,7 @@ const SearchPage = () => {
             {/* ── Recently Played ── */}
             {recentlyPlayed.length > 0 && (
               <section>
-                <SectionHeader title="Écoutés récemment" />
+                <SectionHeader title="Écoutés récemment" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {recentlyPlayed.slice(0, 6).map((song) => (
                     <button
