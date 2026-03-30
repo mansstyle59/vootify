@@ -915,8 +915,32 @@ function PlaylistForm() {
       <FieldInput label="Nom de la playlist" value={name} onChange={setName} placeholder="Ma playlist" required />
       <CoverImagePicker value={coverUrl} onChange={setCoverUrl} />
 
+      {/* Deezer URL import */}
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground flex items-center gap-2">
+          <Link className="w-4 h-4 text-primary" />
+          Importer depuis Deezer
+          <span className="text-[10px] text-muted-foreground/50">(optionnel)</span>
+        </p>
+        <div className="flex gap-2">
+          <input
+            value={deezerUrl}
+            onChange={(e) => setDeezerUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleDeezerImport()}
+            placeholder="🔗 Lien Deezer playlist ou album..."
+            className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+          <button
+            onClick={handleDeezerImport}
+            disabled={deezerImporting || !deezerUrl.trim()}
+            className="px-4 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform disabled:opacity-40"
+            style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
+          >
+            {deezerImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
 
-      {/* Local audio files section */}
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground flex items-center gap-2">
           <Music className="w-4 h-4 text-primary" />
