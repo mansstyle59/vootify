@@ -29,7 +29,7 @@ const PLAN_CONFIG: Record<PlanType, PlanPermissions> = {
   premium: {
     allowedRoutes: ["/", "/library", "/profile", "/audio-settings", "/auth", "/reset-password", "/request-access"],
     blockedRoutes: ["/search", "/radio"],
-    allowedLibraryTabs: ["artists", "albums"],
+    allowedLibraryTabs: ["artists", "albums", "songs"],
     label: "Premium",
     color: "primary",
     icon: "crown",
