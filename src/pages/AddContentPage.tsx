@@ -123,6 +123,8 @@ interface SongEntry {
   totalTracks?: number;
   albumArtist?: string;
   composer?: string;
+  /** Pre-detected duplicate info */
+  duplicateOf?: { id: string; title: string; artist: string };
 }
 
 function SongForm() {
@@ -264,9 +266,42 @@ function SongForm() {
       } catch { /* silent */ }
     }
 
+    // ── Pre-detect duplicates against existing DB ──
+    const stripChars = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+    try {
+      // Fetch all existing songs (paginated)
+      const PAGE_SIZE = 1000;
+      let allExisting: { id: string; title: string; artist: string }[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await supabase.from("custom_songs").select("id, title, artist").range(from, from + PAGE_SIZE - 1);
+        if (!data || data.length === 0) break;
+        allExisting = allExisting.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+
+      let dupCount = 0;
+      for (const entry of entries) {
+        const sTitle = stripChars(entry.title);
+        const sArtist = stripChars(entry.artist);
+        const match = allExisting.find(e => stripChars(e.title) === sTitle && stripChars(e.artist) === sArtist);
+        if (match) {
+          entry.duplicateOf = { id: match.id, title: match.title, artist: match.artist };
+          entry.skipped = true; // Pre-skip duplicates (user can override)
+          dupCount++;
+        }
+      }
+      if (dupCount > 0) {
+        toast.warning(`${dupCount} doublon${dupCount > 1 ? "s" : ""} détecté${dupCount > 1 ? "s" : ""} — marqués pour remplacement`);
+      }
+    } catch { /* silent — will re-check at upload */ }
+
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
-    if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} analysé${entries.length > 1 ? "s" : ""}`);
+    const newCount = entries.filter(e => !e.duplicateOf).length;
+    const dupCount2 = entries.filter(e => !!e.duplicateOf).length;
+    if (newCount > 0) toast.success(`${newCount} nouveau${newCount > 1 ? "x" : ""} fichier${newCount > 1 ? "s" : ""} prêt${newCount > 1 ? "s" : ""}`);
   };
 
   const updateSong = (idx: number, field: string, value: string) => {
@@ -362,7 +397,11 @@ function SongForm() {
       {songs.length > 0 && (
         <div className="space-y-2">
           <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider px-1">
-            {songs.length} fichier{songs.length > 1 ? "s" : ""} • {songs.filter(s => s.uploaded).length} importé{songs.filter(s => s.uploaded).length > 1 ? "s" : ""}
+            {songs.length} fichier{songs.length > 1 ? "s" : ""}
+            {songs.filter(s => s.uploaded).length > 0 && ` • ${songs.filter(s => s.uploaded).length} importé${songs.filter(s => s.uploaded).length > 1 ? "s" : ""}`}
+            {songs.filter(s => s.duplicateOf && s.skipped).length > 0 && (
+              <span className="text-amber-400"> • {songs.filter(s => s.duplicateOf && s.skipped).length} doublon{songs.filter(s => s.duplicateOf && s.skipped).length > 1 ? "s" : ""}</span>
+            )}
           </p>
           {songs.map((song, idx) => (
             <motion.div
@@ -388,8 +427,20 @@ function SongForm() {
                   {song.album && <p className="text-[10px] text-muted-foreground/40 truncate">{song.album}{song.year ? ` • ${song.year}` : ""}</p>}
                 </div>
                 {song.uploaded && <CheckCircle className="w-5 h-5 text-primary shrink-0" />}
-                {song.skipped && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">Doublon</span>
+                {song.skipped && song.duplicateOf && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">Doublon</span>
+                    <button
+                      type="button"
+                      onClick={() => setSongs(prev => prev.map((s, i) => i === idx ? { ...s, skipped: false } : s))}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 transition-colors"
+                    >
+                      Remplacer
+                    </button>
+                  </div>
+                )}
+                {song.skipped && !song.duplicateOf && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">Ignoré</span>
                 )}
                 {song.uploading && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
                 {!song.uploaded && !song.uploading && !song.skipped && (
