@@ -1279,57 +1279,119 @@ const LibraryPage = () => {
                       }
                       if (currentGroup.length > 0) groups.push({ artist: currentArtist, albums: currentGroup });
 
+                      // Letters for sidebar
+                      const albumLetters = Array.from(new Set(groups.map((g) => {
+                        const first = g.artist.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toUpperCase();
+                        return /[A-Z]/.test(first) ? first : "#";
+                      }))).sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b));
+
+                      const scrollToAlbumLetter = (letter: string) => {
+                        const el = document.getElementById(`album-letter-${letter}`);
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      };
+
+                      // Tag each group with its letter
+                      const groupsWithLetter = groups.map((g) => {
+                        const first = g.artist.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toUpperCase();
+                        return { ...g, letter: /[A-Z]/.test(first) ? first : "#" };
+                      });
+
+                      // Track which letters we've already rendered an anchor for
+                      const renderedLetters = new Set<string>();
+
                       return (
-                        <div className="space-y-6">
-                          {groups.map((group) => (
-                            <div key={group.artist}>
-                              <button
-                                onClick={() => navigate(`/artist/${encodeURIComponent(group.artist)}`)}
-                                className="flex items-center gap-2 mb-2.5 px-1 group/artist active:opacity-70 transition-opacity"
-                              >
-                                <User className="w-3.5 h-3.5 text-muted-foreground/40" />
-                                <span className="text-[13px] font-bold text-foreground group-hover/artist:text-primary transition-colors">
-                                  {group.artist}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground/40 font-medium">
-                                  {group.albums.length} album{group.albums.length > 1 ? "s" : ""}
-                                </span>
-                              </button>
-                              <div className="grid grid-cols-3 gap-2.5">
-                                {group.albums.map((album, i) => (
-                                  <motion.button
-                                    key={album.id}
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.02 }}
-                                    whileTap={{ scale: 0.97 }}
-                                    onClick={() => {
-                                      if (album.id.startsWith("derived-")) {
-                                        navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
-                                      } else {
-                                        navigate(`/album/${album.id}`);
-                                      }
-                                    }}
-                                    className="text-left group"
-                                  >
-                                    <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
-                                      {album.cover_url ? (
-                                        <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
-                                          <Disc3 className="w-8 h-8 text-primary/25" />
-                                        </div>
-                                      )}
+                        <div className="relative">
+                          <div className={albumLetters.length > 1 ? "pr-5" : ""}>
+                            <div className="space-y-6">
+                              {groupsWithLetter.map((group) => {
+                                const showAnchor = !renderedLetters.has(group.letter);
+                                if (showAnchor) renderedLetters.add(group.letter);
+                                return (
+                                  <div key={group.artist}>
+                                    {showAnchor && <div id={`album-letter-${group.letter}`} className="scroll-mt-4" />}
+                                    <button
+                                      onClick={() => navigate(`/artist/${encodeURIComponent(group.artist)}`)}
+                                      className="flex items-center gap-2 mb-2.5 px-1 group/artist active:opacity-70 transition-opacity"
+                                    >
+                                      <User className="w-3.5 h-3.5 text-muted-foreground/40" />
+                                      <span className="text-[13px] font-bold text-foreground group-hover/artist:text-primary transition-colors">
+                                        {group.artist}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground/40 font-medium">
+                                        {group.albums.length} album{group.albums.length > 1 ? "s" : ""}
+                                      </span>
+                                    </button>
+                                    <div className="grid grid-cols-3 gap-2.5">
+                                      {group.albums.map((album, i) => (
+                                        <motion.button
+                                          key={album.id}
+                                          initial={{ opacity: 0, y: 12 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ delay: i * 0.02 }}
+                                          whileTap={{ scale: 0.97 }}
+                                          onClick={() => {
+                                            if (album.id.startsWith("derived-")) {
+                                              navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
+                                            } else {
+                                              navigate(`/album/${album.id}`);
+                                            }
+                                          }}
+                                          className="text-left group"
+                                        >
+                                          <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
+                                            {album.cover_url ? (
+                                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
+                                                <Disc3 className="w-8 h-8 text-primary/25" />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
+                                          <p className="text-[9px] text-muted-foreground/45 truncate font-medium">
+                                            {album.year ? album.year : ""}{album.count > 0 ? `${album.year ? " · " : ""}${album.count} titre${album.count > 1 ? "s" : ""}` : ""}
+                                          </p>
+                                        </motion.button>
+                                      ))}
                                     </div>
-                                    <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
-                                    <p className="text-[9px] text-muted-foreground/45 truncate font-medium">
-                                      {album.year ? album.year : ""}{album.count > 0 ? `${album.year ? " · " : ""}${album.count} titre${album.count > 1 ? "s" : ""}` : ""}
-                                    </p>
-                                  </motion.button>
-                                ))}
-                              </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          ))}
+                          </div>
+
+                          {/* Alphabet sidebar for albums */}
+                          {albumLetters.length > 1 && (
+                            <div
+                              className="fixed right-0 flex flex-col items-center z-50 py-1 px-[3px] rounded-l-lg"
+                              style={{
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "hsl(var(--card) / 0.6)",
+                                backdropFilter: "blur(12px)",
+                                WebkitBackdropFilter: "blur(12px)",
+                                boxShadow: "-2px 0 8px hsl(0 0% 0% / 0.15)",
+                              }}
+                              onTouchMove={(e) => {
+                                e.preventDefault();
+                                const touch = e.touches[0];
+                                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                                const l = el?.getAttribute("data-album-letter");
+                                if (l) scrollToAlbumLetter(l);
+                              }}
+                            >
+                              {albumLetters.map((l) => (
+                                <button
+                                  key={l}
+                                  data-album-letter={l}
+                                  onClick={() => scrollToAlbumLetter(l)}
+                                  className="w-5 h-[14px] flex items-center justify-center text-[9px] font-extrabold text-primary active:text-primary-foreground active:bg-primary active:rounded-full transition-all"
+                                >
+                                  {l}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
