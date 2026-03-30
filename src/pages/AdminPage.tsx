@@ -3271,31 +3271,43 @@ function PlaylistPickerModal({
               ) : (
                 deezerPlaylists.map((pl) => {
                   const isSelected = pl.localId ? selected.has(pl.localId) : false;
+                  const isCreating = creatingPlaylist === pl.id;
                   return (
-                    <button
+                    <div
                       key={pl.id}
-                      onClick={() => { if (pl.localId) toggle(pl.localId); }}
-                      disabled={!pl.existsLocally}
                       className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                        !pl.existsLocally ? "opacity-40" : isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                        !pl.existsLocally ? "opacity-70" : isSelected ? "bg-primary/10" : "hover:bg-muted/50"
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                        isSelected ? "bg-primary border-primary" : "border-border"
-                      }`}>
-                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                      </div>
-                      <img src={pl.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="text-sm font-medium text-foreground truncate">{pl.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{pl.trackCount} titre{pl.trackCount > 1 ? "s" : ""}</p>
-                      </div>
+                      <button
+                        onClick={() => { if (pl.localId) toggle(pl.localId); }}
+                        disabled={!pl.existsLocally}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                          isSelected ? "bg-primary border-primary" : "border-border"
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                        </div>
+                        <img src={pl.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-sm font-medium text-foreground truncate">{pl.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{pl.trackCount} titre{pl.trackCount > 1 ? "s" : ""}</p>
+                        </div>
+                      </button>
                       {pl.existsLocally ? (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary">Local</span>
                       ) : (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground">Absent</span>
+                        <button
+                          onClick={() => createFromDeezer(pl)}
+                          disabled={isCreating}
+                          className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary text-primary-foreground flex items-center gap-1 flex-shrink-0 disabled:opacity-50"
+                        >
+                          {isCreating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                          Créer
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })
               )}
