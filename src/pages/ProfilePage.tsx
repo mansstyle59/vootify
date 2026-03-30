@@ -245,10 +245,16 @@ const ProfilePage = () => {
   if (!user) return null;
   const initials = (displayName || "U").slice(0, 2).toUpperCase();
   const totalUsed = (swCacheSize || 0) + (offlineCacheSize || 0) + (coverCacheSize || 0);
-  const maxEstimate = Math.max(totalUsed * 2, 50 * 1024 * 1024);
-  const swPercent = maxEstimate > 0 ? ((swCacheSize || 0) / maxEstimate) * 100 : 0;
-  const coverPercent = maxEstimate > 0 ? ((coverCacheSize || 0) / maxEstimate) * 100 : 0;
-  const offlinePercent = maxEstimate > 0 ? ((offlineCacheSize || 0) / maxEstimate) * 100 : 0;
+  const MAX_OFFLINE = 1024 * 1024 * 1024 * 1024; // 1 TB
+  const usedPercent = MAX_OFFLINE > 0 ? (totalUsed / MAX_OFFLINE) * 100 : 0;
+  const swPercent = MAX_OFFLINE > 0 ? ((swCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
+  const coverPercent = MAX_OFFLINE > 0 ? ((coverCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
+  const offlinePercent = MAX_OFFLINE > 0 ? ((offlineCacheSize || 0) / MAX_OFFLINE) * 100 : 0;
+  // Scale segments visually so they're visible even at small sizes
+  const minVisiblePct = 2;
+  const scaledSw = totalUsed > 0 ? Math.max(swPercent / usedPercent * Math.max(usedPercent, minVisiblePct * 3), minVisiblePct) : 0;
+  const scaledCover = totalUsed > 0 ? Math.max(coverPercent / usedPercent * Math.max(usedPercent, minVisiblePct * 3), minVisiblePct) : 0;
+  const scaledOffline = totalUsed > 0 ? Math.max(offlinePercent / usedPercent * Math.max(usedPercent, minVisiblePct * 3), minVisiblePct) : 0;
 
   const plan = isActive && subscription ? normalizePlan(subscription.plan) : "free";
   const planBadge: Record<string, { bg: string; border: string; text: string }> = {
@@ -476,9 +482,9 @@ const ProfilePage = () => {
                 <Database className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h3 className="text-[13px] font-bold text-foreground">Stockage</h3>
+                <h3 className="text-[13px] font-bold text-foreground">Stockage hors-ligne</h3>
                 <p className="text-[10px] text-muted-foreground/50 font-medium">
-                  {totalUsed > 0 ? formatBytes(totalUsed) : "Calcul…"}
+                  {totalUsed > 0 ? `${formatBytes(totalUsed)} / 1 To` : "Calcul…"}
                 </p>
               </div>
             </div>
@@ -507,11 +513,11 @@ const ProfilePage = () => {
 
           {/* Progress bar */}
           <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: `${swPercent}%` }} transition={{ duration: 0.8, delay: 0.2 }}
-              className="h-full" style={{ background: "hsl(var(--primary))", borderRadius: (offlinePercent > 0 || coverPercent > 0) ? "9999px 0 0 9999px" : "9999px" }} />
-            <motion.div initial={{ width: 0 }} animate={{ width: `${coverPercent}%` }} transition={{ duration: 0.8, delay: 0.3 }}
+            <motion.div initial={{ width: 0 }} animate={{ width: `${scaledSw}%` }} transition={{ duration: 0.8, delay: 0.2 }}
+              className="h-full" style={{ background: "hsl(var(--primary))", borderRadius: (scaledOffline > 0 || scaledCover > 0) ? "9999px 0 0 9999px" : "9999px" }} />
+            <motion.div initial={{ width: 0 }} animate={{ width: `${scaledCover}%` }} transition={{ duration: 0.8, delay: 0.3 }}
               className="h-full" style={{ background: "hsl(var(--primary) / 0.55)" }} />
-            <motion.div initial={{ width: 0 }} animate={{ width: `${offlinePercent}%` }} transition={{ duration: 0.8, delay: 0.4 }}
+            <motion.div initial={{ width: 0 }} animate={{ width: `${scaledOffline}%` }} transition={{ duration: 0.8, delay: 0.4 }}
               className="h-full" style={{ background: "hsl(var(--primary) / 0.3)", borderRadius: "0 9999px 9999px 0" }} />
           </div>
 
