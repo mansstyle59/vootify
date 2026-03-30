@@ -646,6 +646,98 @@ function PlaylistForm() {
   const [songs, setSongs] = useState<SongEntry[]>([]);
   const [processing, setProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [deezerUrl, setDeezerUrl] = useState("");
+  const [deezerImporting, setDeezerImporting] = useState(false);
+
+  const handleDeezerImport = async () => {
+    if (!deezerUrl.trim()) return;
+    setDeezerImporting(true);
+    try {
+      let resolvedUrl = deezerUrl.trim();
+      if (/link\.deezer/i.test(resolvedUrl)) {
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { resolveUrl: resolvedUrl },
+        });
+        if (data?.resolved) resolvedUrl = data.resolved;
+      }
+      const playlistMatch = resolvedUrl.match(/playlist\/(\d+)/i);
+      const albumMatch = resolvedUrl.match(/album\/(\d+)/i);
+      if (!playlistMatch && !albumMatch) {
+        toast.error("URL Deezer invalide (playlist ou album attendu)");
+        setDeezerImporting(false);
+        return;
+      }
+      const isAlbum = !!albumMatch;
+      const dId = isAlbum ? albumMatch![1] : playlistMatch![1];
+      const endpoint = isAlbum ? `album/${dId}` : `playlist/${dId}/tracks`;
+      const { data: proxyData } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: endpoint, limit: 200 },
+      });
+      const tracks = isAlbum ? proxyData?.tracks?.data : proxyData?.data;
+      if (!tracks || tracks.length === 0) {
+        toast.error("Aucun morceau trouvé");
+        setDeezerImporting(false);
+        return;
+      }
+      // Auto-fill name if empty
+      if (!name.trim()) {
+        if (isAlbum && proxyData?.title) setName(proxyData.title);
+        else if (!isAlbum && proxyData?.title) setName(proxyData.title);
+        else {
+          const { data: plData } = await supabase.functions.invoke("deezer-proxy", {
+            body: { path: `playlist/${dId}` },
+          });
+          if (plData?.title) setName(plData.title);
+        }
+      }
+      // Auto-fill cover if empty
+      if (!coverUrl.trim()) {
+        const cover = isAlbum ? proxyData?.cover_xl || proxyData?.cover_big : proxyData?.picture_xl || proxyData?.picture_big;
+        if (cover) setCoverUrl(cover);
+      }
+      // Match tracks with local library
+      const { data: allSongs } = await supabase
+        .from("custom_songs")
+        .select("id, title, artist, album, duration, cover_url, stream_url, genre, year")
+        .not("stream_url", "is", null);
+      const localSongs = allSongs || [];
+      let matched = 0;
+      for (const t of tracks) {
+        const dTitle = (t.title || "").toLowerCase().trim();
+        const dArtist = (t.artist?.name || "").toLowerCase().trim();
+        const local = localSongs.find((s: any) => {
+          const lt = s.title.toLowerCase().trim();
+          const la = s.artist.toLowerCase().trim();
+          return (lt.includes(dTitle) || dTitle.includes(lt)) && (la.includes(dArtist) || dArtist.includes(la));
+        });
+        if (local) {
+          matched++;
+          setSongs(prev => [...prev, {
+            file: null as any,
+            title: local.title,
+            artist: local.artist,
+            album: local.album || "",
+            coverUrl: local.cover_url || t.album?.cover_medium || "",
+            duration: local.duration || t.duration || 0,
+            genre: local.genre || "",
+            year: local.year || undefined,
+            id3Filled: new Set(["title", "artist"]),
+            uploaded: false,
+            uploading: false,
+            skipped: false,
+            existingStreamUrl: local.stream_url,
+          }]);
+        }
+      }
+      toast.success(`${matched}/${tracks.length} morceaux trouvés dans la bibliothèque`);
+      setDeezerUrl("");
+    } catch (e) {
+      console.error("[deezer-import]", e);
+      toast.error("Erreur lors de l'import Deezer");
+    } finally {
+      setDeezerImporting(false);
+    }
+  };
 
 
   const processFiles = async (files: FileList) => {
