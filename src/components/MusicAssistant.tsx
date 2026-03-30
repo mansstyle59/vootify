@@ -25,7 +25,32 @@ const SUGGESTIONS = [
 export function MusicAssistantFAB() {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const lastY = useRef(0);
+
+  // Check for unread admin responses
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const lastSeen = localStorage.getItem("vootify_requests_last_seen") || "1970-01-01";
+      const { count } = await supabase
+        .from("music_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .not("admin_response", "is", null)
+        .gt("resolved_at", lastSeen);
+      if (!cancelled) setUnreadCount(count || 0);
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  const markSeen = () => {
+    localStorage.setItem("vootify_requests_last_seen", new Date().toISOString());
+    setUnreadCount(0);
+  };
 
   useEffect(() => {
     if (open) return;
