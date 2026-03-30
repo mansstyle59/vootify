@@ -5,6 +5,7 @@
  */
 
 const RECOVERY_KEY = "sw-recovery-ts";
+const RECOVERY_DONE_KEY = "sw-recovery-done";
 const RECOVERY_COOLDOWN = 10_000; // 10s between auto-recoveries
 
 export function guardServiceWorker() {
