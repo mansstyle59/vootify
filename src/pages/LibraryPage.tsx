@@ -607,7 +607,6 @@ const LibraryPage = () => {
 
   const sortedCustomSongs = useMemo(() => {
     let arr = [...customSongs];
-    // Search filter
     if (customSearch.trim()) {
       const q = customSearch.toLowerCase().trim();
       arr = arr.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q)));
@@ -619,6 +618,20 @@ const LibraryPage = () => {
       default: return arr;
     }
   }, [customSongs, customSort, customSearch]);
+
+  const sortedAllSongs = useMemo(() => {
+    let arr = [...customSongs];
+    if (songsSearch.trim()) {
+      const q = songsSearch.toLowerCase().trim();
+      arr = arr.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q)));
+    }
+    switch (songsSort) {
+      case "alpha": return arr.sort((a, b) => a.title.localeCompare(b.title, "fr"));
+      case "artist": return arr.sort((a, b) => a.artist.localeCompare(b.artist, "fr"));
+      case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+      default: return arr;
+    }
+  }, [customSongs, songsSort, songsSearch]);
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
