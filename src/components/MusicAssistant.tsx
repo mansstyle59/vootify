@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, X, Send, Sparkles, Music2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
