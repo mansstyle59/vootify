@@ -266,9 +266,42 @@ function SongForm() {
       } catch { /* silent */ }
     }
 
+    // ── Pre-detect duplicates against existing DB ──
+    const stripChars = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+    try {
+      // Fetch all existing songs (paginated)
+      const PAGE_SIZE = 1000;
+      let allExisting: { id: string; title: string; artist: string }[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await supabase.from("custom_songs").select("id, title, artist").range(from, from + PAGE_SIZE - 1);
+        if (!data || data.length === 0) break;
+        allExisting = allExisting.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+
+      let dupCount = 0;
+      for (const entry of entries) {
+        const sTitle = stripChars(entry.title);
+        const sArtist = stripChars(entry.artist);
+        const match = allExisting.find(e => stripChars(e.title) === sTitle && stripChars(e.artist) === sArtist);
+        if (match) {
+          entry.duplicateOf = { id: match.id, title: match.title, artist: match.artist };
+          entry.skipped = true; // Pre-skip duplicates (user can override)
+          dupCount++;
+        }
+      }
+      if (dupCount > 0) {
+        toast.warning(`${dupCount} doublon${dupCount > 1 ? "s" : ""} détecté${dupCount > 1 ? "s" : ""} — marqués pour remplacement`);
+      }
+    } catch { /* silent — will re-check at upload */ }
+
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
-    if (entries.length > 0) toast.success(`${entries.length} fichier${entries.length > 1 ? "s" : ""} analysé${entries.length > 1 ? "s" : ""}`);
+    const newCount = entries.filter(e => !e.duplicateOf).length;
+    const dupCount2 = entries.filter(e => !!e.duplicateOf).length;
+    if (newCount > 0) toast.success(`${newCount} nouveau${newCount > 1 ? "x" : ""} fichier${newCount > 1 ? "s" : ""} prêt${newCount > 1 ? "s" : ""}`);
   };
 
   const updateSong = (idx: number, field: string, value: string) => {
