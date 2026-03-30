@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 
 interface Props {
@@ -29,11 +29,12 @@ function MiniEqualizer() {
   );
 }
 
-const GLASS = {
-  background: "hsl(0 0% 100%/0.08)",
-  backdropFilter: "blur(40px)",
-  WebkitBackdropFilter: "blur(40px)",
-  border: "1px solid hsl(0 0% 100%/0.06)",
+const LIQUID_GLASS = {
+  background: "hsl(0 0% 100%/0.07)",
+  backdropFilter: "blur(80px) saturate(2.2)",
+  WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+  border: "0.5px solid hsl(0 0% 100%/0.12)",
+  boxShadow: "inset 0 0.5px 0 hsl(0 0% 100%/0.15), inset 0 -0.5px 0 hsl(0 0% 0%/0.1), 0 12px 40px hsl(0 0% 0%/0.4)",
 };
 
 export function CarPlayMiniBar({
@@ -46,17 +47,17 @@ export function CarPlayMiniBar({
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 120, opacity: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 28 }}
-      className="fixed bottom-0 left-0 right-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3"
-      style={{ background: "linear-gradient(180deg, transparent 0%, hsl(0 0% 4%) 30%)" }}
+      className="fixed bottom-0 left-0 right-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 z-[51]"
+      style={{ background: "linear-gradient(180deg, transparent 0%, hsl(0 0% 0%/0.6) 40%)" }}
     >
       <motion.div
-        className="flex items-center gap-3 px-4 py-3.5 rounded-2xl cursor-pointer"
-        style={GLASS}
+        className="flex items-center gap-3 px-4 py-3 rounded-[20px] cursor-pointer"
+        style={LIQUID_GLASS}
         onClick={onExpand}
         whileTap={{ scale: 0.97 }}
       >
         {/* Cover */}
-        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative" style={{ background: "hsl(0 0% 100%/0.06)" }}>
+        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 relative" style={{ background: "hsl(0 0% 100%/0.06)" }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={coverUrl}
@@ -86,37 +87,41 @@ export function CarPlayMiniBar({
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
             >
-              <p className="text-[15px] font-bold text-white truncate">{title || "—"}</p>
-              <p className="text-[12px] text-white/40 truncate">{artist || "—"}</p>
+              <p className="text-[14px] font-bold text-white truncate">{title || "—"}</p>
+              <p className="text-[11px] text-white/40 truncate">{artist || "—"}</p>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Controls — large touch targets */}
-        <div className="flex items-center gap-1.5">
+        {/* Controls */}
+        <div className="flex items-center gap-1">
           {!isLiveRadio && (
             <button
               onClick={(e) => { e.stopPropagation(); onPrevious(); }}
-              className="p-3.5 rounded-full active:scale-90 transition-transform"
-              style={{ background: "hsl(0 0% 100%/0.08)", minWidth: 48, minHeight: 48 }}
+              className="p-2.5 rounded-full active:scale-90 transition-transform"
+              style={{ background: "hsl(0 0% 100%/0.08)", minWidth: 44, minHeight: 44 }}
             >
-              <SkipBack className="w-5 h-5 text-white" />
+              <SkipBack className="w-4.5 h-4.5 text-white" />
             </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); onTogglePlay(); }}
-            className="p-4 rounded-full active:scale-90 transition-transform"
-            style={{ background: "hsl(var(--primary))", minWidth: 52, minHeight: 52 }}
+            className="p-3 rounded-full active:scale-90 transition-transform"
+            style={{
+              background: "hsl(var(--primary))",
+              boxShadow: "0 4px 20px hsl(var(--primary)/0.3)",
+              minWidth: 48, minHeight: 48,
+            }}
           >
-            {isPlaying ? <Pause className="w-6 h-6 text-primary-foreground" /> : <Play className="w-6 h-6 text-primary-foreground ml-0.5" />}
+            {isPlaying ? <Pause className="w-5 h-5 text-primary-foreground" /> : <Play className="w-5 h-5 text-primary-foreground ml-0.5" />}
           </button>
           {!isLiveRadio && (
             <button
               onClick={(e) => { e.stopPropagation(); onNext(); }}
-              className="p-3.5 rounded-full active:scale-90 transition-transform"
-              style={{ background: "hsl(0 0% 100%/0.08)", minWidth: 48, minHeight: 48 }}
+              className="p-2.5 rounded-full active:scale-90 transition-transform"
+              style={{ background: "hsl(0 0% 100%/0.08)", minWidth: 44, minHeight: 44 }}
             >
-              <SkipForward className="w-5 h-5 text-white" />
+              <SkipForward className="w-4.5 h-4.5 text-white" />
             </button>
           )}
         </div>
