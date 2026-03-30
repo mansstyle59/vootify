@@ -107,6 +107,7 @@ const ProfilePage = () => {
   const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
   const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
+  const [isCachingAll, setIsCachingAll] = useState(false);
   const biometricSupported = isBiometricAvailable();
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -559,6 +560,46 @@ const ProfilePage = () => {
               <span className="text-[10px] font-semibold text-primary">{pendingActions} action{pendingActions > 1 ? "s" : ""} en attente</span>
             </div>
           )}
+
+          {/* Download all caches button */}
+          <button
+            onClick={async () => {
+              if (isCachingAll) return;
+              setIsCachingAll(true);
+              try {
+                toast.info("Téléchargement des données hors-ligne…");
+                // 1. Re-run full cache (pages + API data)
+                if (user) {
+                  const { performInitialCache } = await import("@/lib/appCache");
+                  await performInitialCache(user.id);
+                }
+                // 2. Force cover pre-cache by clearing session flag and re-importing
+                sessionStorage.removeItem("vootify-covers-cached-v1");
+                sessionStorage.removeItem("vootify-friday-covers-cached-v1");
+                if (user) {
+                  const { silentCacheRefresh: refresh } = await import("@/lib/appCache");
+                  refresh(user.id);
+                }
+                // Refresh stats
+                const allCached = await offlineCache.getAllCached();
+                setOfflineCount(allCached.length);
+                const newSize = await offlineCache.getCacheSize();
+                setOfflineCacheSize(newSize);
+                toast.success("Cache, pochettes et pages téléchargés !");
+              } catch (e) {
+                console.error("Cache all failed:", e);
+                toast.error("Erreur lors du téléchargement");
+              } finally {
+                setIsCachingAll(false);
+              }
+            }}
+            disabled={isCachingAll}
+            className="w-full py-2.5 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
+            style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
+          >
+            {isCachingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            {isCachingAll ? "Téléchargement en cours…" : "Tout télécharger (pochettes, pages, cache)"}
+          </button>
 
           {/* Clear cache */}
           <button
