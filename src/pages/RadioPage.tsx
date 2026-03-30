@@ -908,11 +908,16 @@ const RadioPage = () => {
 
       {/* ── SEARCH MODE ── */}
       {isSearching ? (
-        <div>
-          <div className="px-4 md:px-8 py-3">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+          <div className="px-4 md:px-8 py-3 flex items-center justify-between">
             <p className="text-[12px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.5)" }}>
-              {loadingSearch ? "Recherche..." : `${searchStations.length} résultat${searchStations.length > 1 ? "s" : ""}`}
+              {loadingSearch ? "Recherche en cours…" : `${searchStations.length} résultat${searchStations.length > 1 ? "s" : ""} pour "${debouncedSearch}"`}
             </p>
+            {!loadingSearch && searchStations.length > 0 && (
+              <span className="text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground) / 0.3)" }}>
+                {searchStations.filter(s => s.countryCode === "FR").length > 0 && `${searchStations.filter(s => s.countryCode === "FR").length} 🇫🇷`}
+              </span>
+            )}
           </div>
           {loadingSearch ? (
             <div className="space-y-1">
