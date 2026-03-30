@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Song } from "@/data/mockData";
-import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
+
 import { Section } from "@/components/home/Section";
 import { CoverCard } from "@/components/home/CoverCard";
 import { ContentStrip, StripSkeleton } from "@/components/home/ContentStrip";
@@ -15,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play, Sparkles } from "lucide-react";
+import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play } from "lucide-react";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,79 +42,6 @@ const HomePage = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [refreshingArtists, setRefreshingArtists] = useState(false);
-
-  // ── Friday Releases ──
-  interface FridayRelease { id: number; title: string; artist: string; coverUrl: string; albumId: number; }
-  const { data: fridayReleases = [] } = useQuery<FridayRelease[]>({
-    queryKey: ["friday-releases-home"],
-    queryFn: async () => {
-      const { data: cached } = await (supabase
-        .from("friday_releases" as any)
-        .select("album_id, title, artist, cover_url")
-        .order("position", { ascending: true })
-        .limit(20) as any);
-      if (!cached || cached.length === 0) return [];
-
-      // Resolve covers from offline cache
-      const releases = await Promise.all(
-        cached.map(async (r: any) => {
-          let coverUrl = r.cover_url;
-          try { const c = await getFridayCoverUrl(r.album_id); if (c) coverUrl = c; } catch {}
-          return { id: r.album_id, title: r.title, artist: r.artist, coverUrl, albumId: r.album_id };
-        })
-      );
-
-      // Background refresh if stale
-      if (isFridayDataStale()) {
-        supabase.functions.invoke("refresh-friday-releases", { body: {} })
-          .then(() => { markFridayRefreshed(); queryClient.invalidateQueries({ queryKey: ["friday-releases-home"] }); })
-          .catch(() => {});
-      } else { markFridayRefreshed(); }
-
-      return releases;
-    },
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: allSongsForFriday } = useQuery({
-    queryKey: ["all-songs-for-friday"],
-    queryFn: async () => {
-      const { data } = await supabase.from("custom_songs").select("id, title, artist, album, duration, cover_url, stream_url").not("stream_url", "is", null);
-      return (data || []).map((r) => ({
-        id: `custom-${r.id}`, title: r.title, artist: r.artist, album: r.album || "",
-        duration: r.duration || 0, coverUrl: r.cover_url || "", streamUrl: r.stream_url || "", liked: false,
-      })) as Song[];
-    },
-    staleTime: 5 * 60 * 1000,
-    enabled: fridayReleases.length > 0,
-  });
-
-  const playFridayRelease = useCallback(async (release: FridayRelease) => {
-    try {
-      const { data } = await supabase.functions.invoke("deezer-proxy", {
-        body: { path: `/album/${release.albumId}/tracks?limit=50` },
-      });
-      const deezerTracks = data?.data || [];
-      if (deezerTracks.length === 0) return;
-      const library = allSongsForFriday || [];
-      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-      const fullTracks: Song[] = [];
-      for (const t of deezerTracks) {
-        const dTitle = normalize(t.title || "");
-        const dArtist = normalize(t.artist?.name || release.artist);
-        const match = library.find((s) => {
-          const sTitle = normalize(s.title);
-          const sArtist = normalize(s.artist);
-          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
-                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
-        });
-        if (match && match.streamUrl) {
-          fullTracks.push({ ...match, album: release.title, coverUrl: release.coverUrl || match.coverUrl });
-        }
-      }
-      if (fullTracks.length > 0) { setQueue(fullTracks); play(fullTracks[0]); }
-    } catch {}
-  }, [play, setQueue, allSongsForFriday]);
 
   const { data: artists, isLoading: loadingArtists } = useQuery({
     queryKey: ["home-artists"],
@@ -394,15 +321,15 @@ const HomePage = () => {
 
       {/* ── Top Artists — integrated in hero zone ── */}
       {visibleSections.some((s) => s.id === "top_artists") && (topArtists && topArtists.length > 0 || loadingTopArtists) && (
-        <div className="mt-1 mb-2">
-          <div className="px-5 md:px-9 mb-2.5">
+        <div className="mt-1 mb-4">
+          <div className="px-5 md:px-9 mb-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsl(var(--muted-foreground) / 0.4)" }}>
               {visibleSections.find((s) => s.id === "top_artists")?.title || "Top Artistes 🏆"}
             </p>
           </div>
           <div className="px-5 md:px-9">
             {loadingTopArtists ? (
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 -mx-1 px-1">
+              <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-6 pt-1 px-1">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
                     <div className="w-[64px] h-[64px] rounded-full animate-pulse" style={{ background: "hsl(var(--foreground) / 0.06)" }} />
@@ -411,11 +338,11 @@ const HomePage = () => {
                 ))}
               </div>
             ) : (
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3 -mx-1 px-1">
+              <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-6 pt-1 px-1">
                 {topArtists?.map((artist, i) => (
                   <TopArtistBubble key={artist.name} artist={artist} index={i} navigate={navigate} />
                 ))}
-                <div className="w-1 flex-shrink-0" />
+                <div className="w-3 flex-shrink-0" />
               </div>
             )}
           </div>
@@ -506,58 +433,6 @@ const HomePage = () => {
         })}
       </div>
 
-      {/* ── Friday Releases ── */}
-      {fridayReleases.length > 0 && (
-        <Section title="Nouveautés du vendredi 🇫🇷">
-          <ContentStrip>
-            {fridayReleases.map((release, i) => (
-              <div
-                key={release.id}
-                className="flex-shrink-0 w-[140px] md:w-[160px] snap-start group cursor-pointer active:scale-[0.96] transition-transform duration-150"
-                onClick={() => playFridayRelease(release)}
-              >
-                <div
-                  className="relative w-[140px] h-[140px] md:w-[160px] md:h-[160px] rounded-2xl overflow-hidden mb-2.5"
-                  style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.15), 0 1px 3px hsl(0 0% 0% / 0.08)" }}
-                >
-                  {release.coverUrl ? (
-                    <img
-                      src={release.coverUrl}
-                      alt={release.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.04)" }}>
-                      <Music className="w-6 h-6 text-muted-foreground/15" />
-                    </div>
-                  )}
-                  {/* Play button */}
-                  <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center"
-                      style={{ background: "hsl(var(--primary))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.4)" }}
-                    >
-                      <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
-                    </div>
-                  </div>
-                  {/* New badge */}
-                  <div
-                    className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
-                    style={{ background: "hsl(var(--primary) / 0.85)" }}
-                  >
-                    <Sparkles className="w-2 h-2 text-primary-foreground" />
-                    <span className="text-[8px] font-bold text-primary-foreground">NEW</span>
-                  </div>
-                </div>
-                <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{release.title}</p>
-                <p className="text-[11px] text-muted-foreground/50 truncate mt-0.5">{release.artist}</p>
-              </div>
-            ))}
-          </ContentStrip>
-        </Section>
-      )}
 
       {!loadingAdded && (!recentlyAdded || recentlyAdded.length === 0) && (
         <div className="px-5 md:px-8 py-24 text-center">

@@ -267,6 +267,8 @@ const LibraryPage = () => {
   const [customSearch, setCustomSearch] = useState("");
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [deezerUrl, setDeezerUrl] = useState("");
+  const [deezerImporting, setDeezerImporting] = useState(false);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin } = useAdminAuth();
@@ -635,8 +637,99 @@ const LibraryPage = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
   };
 
-  const handleCreate = () => {
-    if (newName.trim()) { createPlaylist(newName.trim()); setNewName(""); setShowCreate(false); }
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    createPlaylist(newName.trim());
+    setNewName("");
+    setShowCreate(false);
+  };
+
+  const isDeezerPlaylistUrl = (url: string) => {
+    return /deezer\.\w+\/.*playlist/i.test(url) || /link\.deezer/i.test(url);
+  };
+
+  const handleCreateFromDeezer = async () => {
+    if (!deezerUrl.trim()) return;
+    setDeezerImporting(true);
+    try {
+      let resolvedUrl = deezerUrl.trim();
+      // Resolve short link
+      if (/link\.deezer/i.test(resolvedUrl)) {
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { resolveUrl: resolvedUrl },
+        });
+        if (data?.resolvedUrl) resolvedUrl = data.resolvedUrl;
+      }
+      // Extract playlist ID
+      const playlistMatch = resolvedUrl.match(/playlist\/(\d+)/i);
+      if (!playlistMatch) {
+        toast.error("URL de playlist Deezer invalide");
+        setDeezerImporting(false);
+        return;
+      }
+      const playlistId = playlistMatch[1];
+      // Fetch playlist info
+      const { data: plData } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/playlist/${playlistId}` },
+      });
+      const playlistName = plData?.title || "Playlist Deezer";
+      const deezerTracks = plData?.tracks?.data || [];
+      if (deezerTracks.length === 0) {
+        toast.error("Playlist vide ou introuvable");
+        setDeezerImporting(false);
+        return;
+      }
+      // Create playlist
+      await createPlaylist(playlistName);
+      // Wait for state to update
+      await new Promise((r) => setTimeout(r, 300));
+      const newPlaylists = usePlayerStore.getState().playlists;
+      const newPl = newPlaylists.find((p) => p.name === playlistName);
+      if (!newPl) {
+        toast.error("Erreur lors de la création");
+        setDeezerImporting(false);
+        return;
+      }
+      // Match Deezer tracks with local library
+      const { data: allSongs } = await supabase
+        .from("custom_songs")
+        .select("id, title, artist, album, duration, cover_url, stream_url")
+        .not("stream_url", "is", null);
+      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      let matched = 0;
+      for (const dt of deezerTracks) {
+        const dTitle = normalize(dt.title || "");
+        const dArtist = normalize(dt.artist?.name || "");
+        const match = (allSongs || []).find((s: any) => {
+          const sTitle = normalize(s.title);
+          const sArtist = normalize(s.artist);
+          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
+                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
+        });
+        if (match) {
+          const song: Song = {
+            id: `custom-${match.id}`,
+            title: match.title,
+            artist: match.artist,
+            album: match.album || "",
+            duration: match.duration || 0,
+            coverUrl: match.cover_url || "",
+            streamUrl: match.stream_url || "",
+            liked: false,
+          };
+          await addSongToPlaylist(newPl.id, song);
+          matched++;
+        }
+      }
+      toast.success(`"${playlistName}" créée — ${matched}/${deezerTracks.length} morceaux trouvés localement`);
+      setDeezerUrl("");
+      setShowCreate(false);
+    } catch (e) {
+      console.error("[deezer-playlist]", e);
+      toast.error("Erreur lors de l'import Deezer");
+    } finally {
+      setDeezerImporting(false);
+    }
   };
 
   // Filtered recent: music only (no radios)
@@ -906,17 +999,39 @@ const LibraryPage = () => {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="flex gap-2 mb-4 overflow-hidden"
+                      className="mb-4 overflow-hidden space-y-2"
                     >
-                      <input
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                        placeholder="Nom de la playlist..."
-                        className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        autoFocus
-                      />
-                      <button onClick={handleCreate} className="px-5 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>Créer</button>
+                      {/* Manual name */}
+                      <div className="flex gap-2">
+                        <input
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                          placeholder="Nom de la playlist..."
+                          className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          autoFocus
+                        />
+                        <button onClick={handleCreate} className="px-5 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>Créer</button>
+                      </div>
+
+                      {/* Deezer URL import */}
+                      <div className="flex gap-2">
+                        <input
+                          value={deezerUrl}
+                          onChange={(e) => setDeezerUrl(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleCreateFromDeezer()}
+                          placeholder="🔗 Coller un lien Deezer playlist..."
+                          className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                        <button
+                          onClick={handleCreateFromDeezer}
+                          disabled={deezerImporting || !deezerUrl.trim()}
+                          className="px-4 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform disabled:opacity-40"
+                          style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
+                        >
+                          {deezerImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Import"}
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
