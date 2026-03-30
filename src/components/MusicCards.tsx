@@ -39,129 +39,131 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
   };
 
   return (
-    <div
-      className="group flex items-center gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98]"
-      style={{
-        background: isCurrentSong ? "hsl(var(--primary) / 0.05)" : "transparent",
-        boxShadow: isCurrentSong ? "inset 0 0 0 1px hsl(var(--primary) / 0.12)" : "none",
-      }}
-      onClick={handleClick}
-    >
-      {showIndex && (
-        <div className="w-5 flex-shrink-0 flex items-center justify-center">
-          {isCurrentSong && isPlaying ? (
-            <div className="flex items-end gap-[2px] h-3.5">
-              <div className="w-[2px] rounded-full bg-primary animate-equalizer-1" />
-              <div className="w-[2px] rounded-full bg-primary animate-equalizer-2" />
-              <div className="w-[2px] rounded-full bg-primary animate-equalizer-3" />
-            </div>
-          ) : (
-            <span className={`text-[11px] tabular-nums font-medium ${isCurrentSong ? "text-primary" : "text-muted-foreground/40"}`}>
-              {(index || 0) + 1}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Cover */}
-      <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
+    <LongPressMenu song={song}>
+      <div
+        className="group flex items-center gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98]"
         style={{
-          boxShadow: isCurrentSong
-            ? "0 4px 16px hsl(var(--primary) / 0.15), 0 0 0 1px hsl(var(--primary) / 0.15)"
-            : "0 2px 8px hsl(0 0% 0% / 0.08)",
+          background: isCurrentSong ? "hsl(var(--primary) / 0.05)" : "transparent",
+          boxShadow: isCurrentSong ? "inset 0 0 0 1px hsl(var(--primary) / 0.12)" : "none",
         }}
+        onClick={handleClick}
       >
-        <LazyImage
-          src={resolvedCover}
-          alt={song.title}
-          className="w-full h-full object-cover"
-          wrapperClassName="w-full h-full"
-        />
-        {!showIndex && (
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${
-            isCurrentSong ? "bg-black/20 opacity-100" : "bg-black/25 opacity-0 group-hover:opacity-100"
-          }`}>
+        {showIndex && (
+          <div className="w-5 flex-shrink-0 flex items-center justify-center">
             {isCurrentSong && isPlaying ? (
-              <Pause className="w-3.5 h-3.5 text-white" />
+              <div className="flex items-end gap-[2px] h-3.5">
+                <div className="w-[2px] rounded-full bg-primary animate-equalizer-1" />
+                <div className="w-[2px] rounded-full bg-primary animate-equalizer-2" />
+                <div className="w-[2px] rounded-full bg-primary animate-equalizer-3" />
+              </div>
             ) : (
-              <Play className="w-3.5 h-3.5 text-white ml-0.5" />
+              <span className={`text-[11px] tabular-nums font-medium ${isCurrentSong ? "text-primary" : "text-muted-foreground/40"}`}>
+                {(index || 0) + 1}
+              </span>
             )}
           </div>
         )}
-      </div>
 
-      {/* Info — takes priority */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1">
-          <p className={`text-[13px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
-            {song.title}
-          </p>
-          {isCached && (
-            <span className="shrink-0 inline-flex items-center justify-center w-3.5 h-3.5 rounded-full" style={{ background: "hsl(142 71% 45% / 0.15)" }}>
-              <Download className="w-2 h-2" style={{ color: "hsl(142 71% 45%)" }} />
-            </span>
+        {/* Cover */}
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
+          style={{
+            boxShadow: isCurrentSong
+              ? "0 4px 16px hsl(var(--primary) / 0.15), 0 0 0 1px hsl(var(--primary) / 0.15)"
+              : "0 2px 8px hsl(0 0% 0% / 0.08)",
+          }}
+        >
+          <LazyImage
+            src={resolvedCover}
+            alt={song.title}
+            className="w-full h-full object-cover"
+            wrapperClassName="w-full h-full"
+          />
+          {!showIndex && (
+            <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${
+              isCurrentSong ? "bg-black/20 opacity-100" : "bg-black/25 opacity-0 group-hover:opacity-100"
+            }`}>
+              {isCurrentSong && isPlaying ? (
+                <Pause className="w-3.5 h-3.5 text-white" />
+              ) : (
+                <Play className="w-3.5 h-3.5 text-white ml-0.5" />
+              )}
+            </div>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground/50 mt-0.5 truncate font-medium">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`); }}
-            className="hover:text-primary hover:underline transition-colors"
-          >
-            {song.artist}
-          </button>
-          {song.album && (
-            <>
-              {" · "}
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/album/by-name?artist=${encodeURIComponent(song.artist.split(",")[0].trim())}&album=${encodeURIComponent(song.album)}`); }}
-                className="hover:text-primary hover:underline transition-colors"
-              >
-                {song.album}
-              </button>
-            </>
-          )}
-        </p>
-      </div>
 
-      {/* Compact actions */}
-      <div className="flex items-center gap-0 flex-shrink-0">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleLike(song);
-            if (navigator.vibrate) navigator.vibrate(8);
-          }}
-          className="p-1.5 rounded-full transition-transform active:scale-90"
-        >
-          <Heart className={`w-3.5 h-3.5 transition-all ${liked ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
-        </button>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <p className={`text-[13px] font-bold leading-tight truncate ${isCurrentSong ? "text-primary" : "text-foreground"}`}>
+              {song.title}
+            </p>
+            {isCached && (
+              <span className="shrink-0 inline-flex items-center justify-center w-3.5 h-3.5 rounded-full" style={{ background: "hsl(142 71% 45% / 0.15)" }}>
+                <Download className="w-2 h-2" style={{ color: "hsl(142 71% 45%)" }} />
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground/50 mt-0.5 truncate font-medium">
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`); }}
+              className="hover:text-primary hover:underline transition-colors"
+            >
+              {song.artist}
+            </button>
+            {song.album && (
+              <>
+                {" · "}
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(`/album/by-name?artist=${encodeURIComponent(song.artist.split(",")[0].trim())}&album=${encodeURIComponent(song.album)}`); }}
+                  className="hover:text-primary hover:underline transition-colors"
+                >
+                  {song.album}
+                </button>
+              </>
+            )}
+          </p>
+        </div>
 
-        {song.streamUrl && song.duration > 0 && (
+        {/* Compact actions */}
+        <div className="flex items-center gap-0 flex-shrink-0">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!isCached && !isDownloading) {
-                download(song);
-                if (navigator.vibrate) navigator.vibrate(8);
-              }
+              toggleLike(song);
+              if (navigator.vibrate) navigator.vibrate(8);
             }}
             className="p-1.5 rounded-full transition-transform active:scale-90"
           >
-            {isCached ? (
-              <CheckCircle className="w-3.5 h-3.5 text-primary" />
-            ) : isDownloading ? (
-              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
-            ) : (
-              <Download className="w-3.5 h-3.5 text-muted-foreground/30" />
-            )}
+            <Heart className={`w-3.5 h-3.5 transition-all ${liked ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
           </button>
-        )}
-      </div>
 
-      <span className="text-[10px] text-muted-foreground/35 tabular-nums flex-shrink-0 font-medium">
-        {formatDuration(song.duration)}
-      </span>
-    </div>
+          {song.streamUrl && song.duration > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isCached && !isDownloading) {
+                  download(song);
+                  if (navigator.vibrate) navigator.vibrate(8);
+                }
+              }}
+              className="p-1.5 rounded-full transition-transform active:scale-90"
+            >
+              {isCached ? (
+                <CheckCircle className="w-3.5 h-3.5 text-primary" />
+              ) : isDownloading ? (
+                <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5 text-muted-foreground/30" />
+              )}
+            </button>
+          )}
+        </div>
+
+        <span className="text-[10px] text-muted-foreground/35 tabular-nums flex-shrink-0 font-medium">
+          {formatDuration(song.duration)}
+        </span>
+      </div>
+    </LongPressMenu>
   );
 });
 
