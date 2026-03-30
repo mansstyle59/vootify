@@ -308,6 +308,14 @@ const AlbumDetailPage = () => {
           <Shuffle className="w-4 h-4" />
           Aléatoire
         </button>
+        <button
+          onClick={handleDownloadAll}
+          disabled={downloading || tracks.length === 0}
+          className="p-3.5 rounded-full transition-all active:scale-[0.95] text-muted-foreground hover:text-primary disabled:opacity-40"
+          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
+        >
+          {downloading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Download className="w-5 h-5" />}
+        </button>
         {user && (
           <button
             onClick={() => toggleSave.mutate()}
@@ -323,6 +331,29 @@ const AlbumDetailPage = () => {
           </button>
         )}
       </motion.div>
+
+      {/* Download progress */}
+      {downloading && (
+        <div className="px-4 md:px-8 pb-3 space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${overallProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {dlCompleted + dlSkipped}/{dlTotal}
+            </span>
+            <button onClick={cancelDownload} className="p-1 rounded-full text-muted-foreground hover:text-destructive transition-colors active:scale-90">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── TRACK LIST ─── */}
       <div className="px-4 md:px-8">

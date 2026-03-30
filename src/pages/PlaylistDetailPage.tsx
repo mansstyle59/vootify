@@ -426,6 +426,14 @@ const PlaylistDetailPage = () => {
           <Shuffle className="w-4 h-4" />
           Aléatoire
         </button>
+        <button
+          onClick={handleDownloadAll}
+          disabled={downloading || displaySongs.length === 0}
+          className="p-3.5 rounded-full transition-all active:scale-[0.95] text-muted-foreground hover:text-primary disabled:opacity-40"
+          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
+        >
+          {downloading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Download className="w-5 h-5" />}
+        </button>
       </motion.div>
 
       {/* HD resolve progress */}
