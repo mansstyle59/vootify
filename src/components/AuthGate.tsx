@@ -30,8 +30,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const publicPaths = ["/auth", "/reset-password", "/request-access"];
   const isPublicRoute = publicPaths.some((p) => location.pathname.startsWith(p));
 
-  // Still loading auth state → show nothing (splash handles visual)
-  if (loading) return null;
+  // Still loading auth state → render children (splash covers the visual)
+  if (loading) return <>{children}</>;
 
   // Authenticated → pass through
   if (user) return <>{children}</>;
