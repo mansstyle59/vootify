@@ -1792,7 +1792,7 @@ const LibraryPage = () => {
                 {/* Search filter for offline songs */}
                 {cachedSongs.length > 0 && (
                   <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
                     <input
                       value={offlineSearch}
                       onChange={(e) => setOfflineSearch(e.target.value)}
