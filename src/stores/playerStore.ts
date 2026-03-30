@@ -3,6 +3,7 @@ import { Song, Playlist } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { offlineCache } from "@/lib/offlineCache";
 
 
 
@@ -172,6 +173,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       audioDuration: 0,
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     }));
+
+    // Try to resolve cached audio URL (offline-first)
+    const rawId = song.id.startsWith("custom-") ? song.id.slice(7) : song.id;
+    offlineCache.getCachedUrl(rawId).then((cachedUrl) => {
+      if (cachedUrl) {
+        // Update the song with the cached blob URL for the audio manager
+        const current = get().currentSong;
+        if (current?.id === song.id) {
+          set({ currentSong: { ...current, streamUrl: cachedUrl } });
+        }
+      }
+    }).catch(() => {});
+
     // Don't record radio stations in recently played
     if (userId && song.album !== "Radio en direct") {
       musicDb.addRecentlyPlayed(userId, song).catch((e) => {
