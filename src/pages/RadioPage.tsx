@@ -763,21 +763,30 @@ const RadioPage = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
             <Input
               ref={searchInputRef}
-              placeholder="Rechercher une station..."
+              placeholder="Rechercher une station, un genre…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               className="pl-10 pr-9 h-10 rounded-2xl text-sm border-0"
               style={{
-                background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
+                background: searchFocused
+                  ? "linear-gradient(145deg, hsl(var(--card) / 0.65), hsl(var(--card) / 0.35))"
+                  : "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
                 backdropFilter: "blur(24px) saturate(1.6)",
                 WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                border: "0.5px solid hsl(var(--foreground) / 0.06)",
-                boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                border: searchFocused
+                  ? "0.5px solid hsl(var(--primary) / 0.2)"
+                  : "0.5px solid hsl(var(--foreground) / 0.06)",
+                boxShadow: searchFocused
+                  ? "0 2px 16px hsl(var(--primary) / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.06)"
+                  : "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
+                transition: "all 0.2s ease",
               }}
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => { setSearchQuery(""); setDebouncedSearch(""); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full active:scale-90"
                 style={{ background: "hsl(var(--foreground) / 0.08)" }}
               >
@@ -787,6 +796,94 @@ const RadioPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Search suggestions (recent + trending) when focused but no query ── */}
+      <AnimatePresence>
+        {searchFocused && !isSearching && searchQuery.length < 2 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Recent searches */}
+            {recentSearches.length > 0 && (
+              <div className="px-4 md:px-8 mt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[13px] font-bold text-foreground/60">Recherches récentes</h3>
+                  <button
+                    onClick={() => { localStorage.removeItem(RECENT_RADIO_KEY); setRecentSearches([]); }}
+                    className="text-[11px] font-medium text-primary active:opacity-70"
+                  >
+                    Effacer
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {recentSearches.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => { setSearchQuery(q); setDebouncedSearch(q); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+                      style={{
+                        background: "hsl(var(--foreground) / 0.05)",
+                        border: "0.5px solid hsl(var(--foreground) / 0.06)",
+                      }}
+                    >
+                      <Clock className="w-3 h-3 text-muted-foreground/40" />
+                      <span className="text-[12px] font-medium text-foreground/70">{q}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trending stations */}
+            {enrichedTrending.length > 0 && (
+              <div className="mt-4">
+                <div className="px-4 md:px-8 mb-2">
+                  <h3 className="text-[13px] font-bold text-foreground/60 flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-primary/60" />
+                    Tendances France
+                  </h3>
+                </div>
+                <div className="space-y-0.5">
+                  {enrichedTrending.slice(0, 6).map((station, i) => (
+                    <div
+                      key={station.id}
+                      onClick={() => playStation(station)}
+                      className="flex items-center gap-3 px-4 md:px-8 py-2 cursor-pointer active:bg-foreground/[0.03] transition-colors"
+                    >
+                      <span className="text-[11px] font-bold w-5 text-center" style={{ color: "hsl(var(--muted-foreground) / 0.3)" }}>
+                        {i + 1}
+                      </span>
+                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-card ring-1 ring-border/8">
+                        <LazyImage src={station.coverUrl} alt={station.name} className="w-full h-full object-contain p-0.5" fallback wrapperClassName="w-full h-full" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold text-foreground truncate">{station.name}</p>
+                        <p className="text-[11px] text-muted-foreground/50 truncate capitalize">{station.genre || "Radio"}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {station.bitrate > 0 && (
+                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-md" style={{ background: "hsl(var(--foreground) / 0.04)", color: "hsl(var(--muted-foreground) / 0.4)" }}>
+                            {station.bitrate}kbps
+                          </span>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); savedIds.has(station.id) ? removeStation(station.id) : saveStation(station); }}
+                          className="p-1 rounded-full active:scale-90 transition-transform"
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${savedIds.has(station.id) ? "fill-primary text-primary" : "text-muted-foreground/25"}`} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Now Playing ── */}
       <AnimatePresence>
