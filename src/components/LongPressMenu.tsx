@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect, ReactNode } from "react";
 import { Song } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, ListEnd, ListPlus, Heart, Music } from "lucide-react";
+import { Play, ListEnd, ListPlus, Heart, Music, Download, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
+import { useNavigate } from "react-router-dom";
+import { useOfflineCache } from "@/hooks/useOfflineCache";
 
 interface LongPressMenuProps {
   song: Song;
