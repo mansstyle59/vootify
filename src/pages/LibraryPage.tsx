@@ -241,6 +241,9 @@ const LibraryPage = () => {
   const [artistSort, setArtistSort] = useState<"alpha" | "count">("alpha");
   const [likedSearch, setLikedSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
+  const [songsSearch, setSongsSearch] = useState("");
+  const [songsSort, setSongsSort] = useState<SortOption>("alpha");
+  const [showSongsSortMenu, setShowSongsSortMenu] = useState(false);
   const [offlineSearch, setOfflineSearch] = useState("");
   const [offlineSelectMode, setOfflineSelectMode] = useState(false);
   const [offlineSelected, setOfflineSelected] = useState<Set<string>>(new Set());
