@@ -12,6 +12,8 @@ export interface CustomSection {
   id: string;
   title: string;
   songIds: string[]; // custom_songs UUIDs
+  type?: "songs" | "albums"; // default: "songs"
+  albumIds?: string[]; // custom_albums UUIDs or derived keys
 }
 
 export interface HomeConfig {

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff, ChevronRight } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff, ChevronRight, Disc3 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1703,6 +1703,8 @@ function HomeTab() {
   };
   const [editingCustom, setEditingCustom] = useState<string | null>(null);
   const [songPickerOpen, setSongPickerOpen] = useState(false);
+  const [editingAlbumSection, setEditingAlbumSection] = useState<string | null>(null);
+  const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -1735,17 +1737,27 @@ function HomeTab() {
     setSections(updated.map((s, i) => ({ ...s, order: i })));
   };
 
-  const addCustomSection = () => {
+  const addCustomSection = (type: "songs" | "albums" = "songs") => {
     const id = `custom_${Date.now()}`;
-    const newCustom: CustomSection = { id, title: "Nouvelle section", songIds: [] };
+    const newCustom: CustomSection = {
+      id,
+      title: type === "albums" ? "Nouvelle section Albums" : "Nouvelle section",
+      songIds: [],
+      type,
+      albumIds: [],
+    };
     setCustomSections((prev) => [...prev, newCustom]);
-    // Add to sections list
     setSections((prev) => [
       ...prev,
-      { id, title: "Nouvelle section ⭐", visible: true, order: prev.length },
+      { id, title: type === "albums" ? "Nouvelle section Albums 💿" : "Nouvelle section ⭐", visible: true, order: prev.length },
     ]);
-    setEditingCustom(id);
-    setSongPickerOpen(true);
+    if (type === "songs") {
+      setEditingCustom(id);
+      setSongPickerOpen(true);
+    } else {
+      setEditingAlbumSection(id);
+      setAlbumPickerOpen(true);
+    }
   };
 
   const removeCustomSection = (id: string) => {
@@ -1907,16 +1919,32 @@ function HomeTab() {
 
                 {isCustom && (
                   <>
-                    <button
-                      onClick={() => { setEditingCustom(section.id); setSongPickerOpen(true); }}
-                      className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
-                      title="Gérer les morceaux"
-                    >
-                      <Music className="w-4 h-4" />
-                    </button>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {customSections.find((c) => c.id === section.id)?.songIds.length || 0}
-                    </span>
+                    {(() => {
+                      const cs = customSections.find((c) => c.id === section.id);
+                      const isAlbumType = cs?.type === "albums";
+                      return (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (isAlbumType) {
+                                setEditingAlbumSection(section.id);
+                                setAlbumPickerOpen(true);
+                              } else {
+                                setEditingCustom(section.id);
+                                setSongPickerOpen(true);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                            title={isAlbumType ? "Gérer les albums" : "Gérer les morceaux"}
+                          >
+                            {isAlbumType ? <Disc3 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
+                          </button>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            {isAlbumType ? (cs?.albumIds?.length || 0) : (cs?.songIds.length || 0)}
+                          </span>
+                        </>
+                      );
+                    })()}
                     <button
                       onClick={() => removeCustomSection(section.id)}
                       className="p-1.5 rounded-lg text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -1943,13 +1971,22 @@ function HomeTab() {
           })}
         </div>
 
-        <button
-          onClick={addCustomSection}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors w-full justify-center"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Ajouter une section personnalisée
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => addCustomSection("songs")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Section Morceaux
+          </button>
+          <button
+            onClick={() => addCustomSection("albums")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex-1 justify-center"
+          >
+            <Disc3 className="w-3.5 h-3.5" />
+            Section Albums
+          </button>
+        </div>
       </div>
 
       {/* Song picker modal */}
@@ -1959,6 +1996,19 @@ function HomeTab() {
           selectedIds={customSections.find((c) => c.id === editingCustom)?.songIds || []}
           onUpdate={(ids) => updateCustomSongs(editingCustom, ids)}
           onClose={() => { setSongPickerOpen(false); setEditingCustom(null); }}
+        />
+      )}
+
+      {/* Album picker modal */}
+      {albumPickerOpen && editingAlbumSection && (
+        <AlbumPickerModal
+          selectedIds={customSections.find((c) => c.id === editingAlbumSection)?.albumIds || []}
+          onUpdate={(ids) => {
+            setCustomSections((prev) =>
+              prev.map((c) => (c.id === editingAlbumSection ? { ...c, albumIds: ids } : c))
+            );
+          }}
+          onClose={() => { setAlbumPickerOpen(false); setEditingAlbumSection(null); }}
         />
       )}
 
@@ -2396,7 +2446,155 @@ function SongPickerModal({
   );
 }
 
-/* ── Subscriptions & Usage Tab ── */
+/** Modal to pick albums for a custom album section */
+function AlbumPickerModal({
+  selectedIds,
+  onUpdate,
+  onClose,
+}: {
+  selectedIds: string[];
+  onUpdate: (ids: string[]) => void;
+  onClose: () => void;
+}) {
+  const [allAlbums, setAllAlbums] = useState<{ id: string; title: string; artist: string; cover_url: string | null }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+
+  useEffect(() => {
+    (async () => {
+      // Fetch from custom_albums
+      const { data: explicit } = await supabase
+        .from("custom_albums")
+        .select("id, title, artist, cover_url")
+        .order("title");
+
+      // Also derive albums from custom_songs
+      const { data: songs } = await supabase
+        .from("custom_songs")
+        .select("album, artist, cover_url")
+        .not("stream_url", "is", null)
+        .not("album", "is", null);
+
+      const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null }>();
+
+      // Add explicit albums
+      for (const a of explicit || []) {
+        albumMap.set(a.id, a);
+      }
+
+      // Add derived albums (by artist|||album key)
+      for (const s of songs || []) {
+        if (!s.album || s.album.trim() === "") continue;
+        const key = `derived-${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`;
+        if (!albumMap.has(key)) {
+          albumMap.set(key, { id: key, title: s.album, artist: s.artist, cover_url: s.cover_url });
+        }
+      }
+
+      setAllAlbums(Array.from(albumMap.values()).sort((a, b) => a.title.localeCompare(b.title, "fr")));
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = search.trim()
+    ? allAlbums.filter(
+        (a) =>
+          a.title.toLowerCase().includes(search.toLowerCase()) ||
+          a.artist.toLowerCase().includes(search.toLowerCase())
+      )
+    : allAlbums;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDone = () => {
+    onUpdate(Array.from(selected));
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Disc3 className="w-4 h-4 text-primary" />
+            Sélectionner des albums
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</span>
+            <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+              OK
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-3 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un album..."
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-12">Aucun album trouvé</p>
+          ) : (
+            filtered.map((album) => {
+              const isSelected = selected.has(album.id);
+              return (
+                <button
+                  key={album.id}
+                  onClick={() => toggle(album.id)}
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                    isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                    isSelected ? "bg-primary border-primary" : "border-border"
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  {album.cover_url ? (
+                    <img src={album.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                      <Disc3 className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-foreground truncate">{album.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Subscription {
   id: string;
   user_id: string;
