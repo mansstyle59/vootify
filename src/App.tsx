@@ -160,7 +160,7 @@ function AppContent() {
       <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 scrollbar-hide" style={{ paddingBottom: !isCarPlay && currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
         <AnimatedRoutes />
       </PullToRefresh>
-      {!isCarPlay && <MiniPlayer />}
+      {isCarPlay ? <div className="hidden"><MiniPlayer /></div> : <MiniPlayer />}
       {!isCarPlay && <MobileNav />}
       {!isCarPlay && <MusicAssistantFAB />}
       <AnimatePresence>
