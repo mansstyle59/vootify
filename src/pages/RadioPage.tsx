@@ -446,17 +446,46 @@ function NowPlayingHero({
 
 const GENRE_LIST = ["pop", "rock", "jazz", "classical", "hip hop", "electronic", "reggae", "country", "rnb", "latin", "ambient", "talk", "news"];
 
+const RECENT_RADIO_KEY = "vootify_recent_radio_searches";
+const MAX_RECENT = 8;
+
+function loadRecentSearches(): string[] {
+  try { return JSON.parse(localStorage.getItem(RECENT_RADIO_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveRecentSearch(q: string) {
+  const list = loadRecentSearches().filter(s => s.toLowerCase() !== q.toLowerCase());
+  const updated = [q, ...list].slice(0, MAX_RECENT);
+  localStorage.setItem(RECENT_RADIO_KEY, JSON.stringify(updated));
+}
+
 const RadioPage = () => {
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", genre: "", streamUrl: "", coverUrl: "" });
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
   const [showAllStations, setShowAllStations] = useState(false);
   const [deletingStation, setDeletingStation] = useState<{ id: string; name: string } | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>(loadRecentSearches);
+  const [searchFocused, setSearchFocused] = useState(false);
   const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQuery.length < 2) { setDebouncedSearch(""); return; }
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      saveRecentSearch(searchQuery);
+      setRecentSearches(loadRecentSearches());
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery]);
 
   const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = useRadioMetadata(
@@ -567,9 +596,9 @@ const RadioPage = () => {
   });
 
   const { data: myRadioResults = [] } = useQuery({
-    queryKey: ["myradio-search", searchQuery],
+    queryKey: ["myradio-search", debouncedSearch],
     queryFn: async () => {
-      const stations = await myRadioApi.search(searchQuery);
+      const stations = await myRadioApi.search(debouncedSearch);
       return stations.map(s => ({
         id: `mred-${s.slug}`, name: s.name, genre: s.nowPlaying || "Radio française",
         coverUrl: s.logoHdUrl || s.logoUrl, streamUrl: "", country: "France", countryCode: "FR",
@@ -578,17 +607,33 @@ const RadioPage = () => {
       } as RadioBrowserStation & { _nowPlaying?: string; _artist?: string; _title?: string; _slug?: string }));
     },
     staleTime: 2 * 60 * 1000,
-    enabled: searchQuery.length >= 2,
+    enabled: debouncedSearch.length >= 2,
   });
 
   const { data: searchResults = [], isLoading: loadingSearch } = useQuery({
-    queryKey: ["radio-browser-search", searchQuery],
-    queryFn: () => radioBrowserApi.search(searchQuery, 30),
+    queryKey: ["radio-browser-search", debouncedSearch],
+    queryFn: () => radioBrowserApi.search(debouncedSearch, 30),
     staleTime: 5 * 60 * 1000,
-    enabled: searchQuery.length >= 2,
+    enabled: debouncedSearch.length >= 2,
   });
 
-  const isSearching = searchQuery.length >= 2;
+  // Trending French stations (shown when search focused but empty)
+  const { data: trendingStations = [] } = useQuery({
+    queryKey: ["radio-trending-fr"],
+    queryFn: () => radioBrowserApi.getTopFrench(12),
+    staleTime: 15 * 60 * 1000,
+  });
+
+  const enrichedTrending = useMemo(() => {
+    if (!myRadioLogoMap) return trendingStations;
+    return trendingStations.map(s => {
+      const hdLogo = findMyRadioLogo(s.name, myRadioLogoMap);
+      if (hdLogo) return { ...s, coverUrl: hdLogo };
+      return s;
+    });
+  }, [trendingStations, myRadioLogoMap]);
+
+  const isSearching = debouncedSearch.length >= 2;
   const isLoading = isSearching ? loadingSearch : loadingCustom;
 
   // Enriched custom stations
