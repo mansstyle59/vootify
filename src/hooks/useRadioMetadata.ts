@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { radioCoverCache } from "@/lib/radioCoverCache";
 
+export type RadioSource = "official" | "stream" | "radio_fr" | "tunein" | "none";
+
 export interface RadioMetadata {
   nowPlaying: string;
   title: string;
   artist: string;
   coverUrl: string;
   album?: string;
+  source: RadioSource;
 }
 
 export interface RadioHistoryEntry {
@@ -113,6 +116,7 @@ export function useRadioMetadata(
               artist: data.artist,
               coverUrl,
               album: data.album || undefined,
+              source: data.source || "none",
             };
           });
         }

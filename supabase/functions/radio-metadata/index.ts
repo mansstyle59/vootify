@@ -359,6 +359,7 @@ serve(async (req) => {
     let artist = "";
     let coverUrl = "";
     let album = "";
+    let source = "none"; // official | stream | radio_fr | tunein | none
 
     const rfStation = detectRadioFranceStation(streamUrl);
     const resolvedStationName = stationName || rfStation?.name || "";
@@ -372,8 +373,8 @@ serve(async (req) => {
         album = rfLive.album;
         coverUrl = rfLive.coverUrl || "";
         nowPlaying = artist && title ? `${artist} - ${title}` : title || `En direct sur ${rfStation.name}`;
+        source = "official";
 
-        // Enrich cover from Deezer if RF didn't provide one
         if (!coverUrl && artist && title) {
           const deezer = await searchDeezerCover(artist, title);
           if (deezer) coverUrl = deezer.coverUrl;
@@ -381,7 +382,7 @@ serve(async (req) => {
         if (!coverUrl) coverUrl = stationCover || "";
 
         return new Response(
-          JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl, album }),
+          JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl, album, source }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -396,14 +397,13 @@ serve(async (req) => {
       artist = parsed.artist;
       title = parsed.title;
       nowPlaying = icyRaw;
+      source = "stream";
 
-      // Search Deezer for cover + corrected metadata
       if (artist && title) {
         const deezer = await searchDeezerCover(artist, title);
         if (deezer) {
           coverUrl = deezer.coverUrl;
           album = deezer.deezerAlbum;
-          // Use Deezer's cleaner artist/title names
           if (deezer.deezerArtist) artist = deezer.deezerArtist;
           if (deezer.deezerTitle) title = deezer.deezerTitle;
           nowPlaying = `${artist} - ${title}`;
@@ -419,8 +419,8 @@ serve(async (req) => {
         title = radioFr.title;
         artist = radioFr.artist;
         coverUrl = radioFr.coverUrl || "";
+        source = "radio_fr";
 
-        // Enrich cover from Deezer
         if (!coverUrl && artist && title) {
           const deezer = await searchDeezerCover(artist, title);
           if (deezer) {
@@ -439,11 +439,13 @@ serve(async (req) => {
         title = tuneInData.title;
         artist = tuneInData.artist;
         coverUrl = tuneInData.coverUrl || stationCover || "";
+        source = "tunein";
       } else if (tuneInData?.logoHd) {
         nowPlaying = `En direct sur ${resolvedStationName}`;
         title = "En direct";
         artist = resolvedStationName;
         coverUrl = tuneInData.logoHd;
+        source = "tunein";
       }
     }
 
@@ -461,6 +463,7 @@ serve(async (req) => {
       title = "En direct";
       artist = resolvedStationName;
       coverUrl = stationCover || "";
+      source = "none";
     }
 
     // Never return relative/broken paths
@@ -469,7 +472,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl, album }),
+      JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl, album, source }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
