@@ -15,7 +15,7 @@ import { CarPlayNowPlaying } from "@/components/carplay/CarPlayNowPlaying";
 import { CarPlayMiniBar } from "@/components/carplay/CarPlayMiniBar";
 import { CarPlayRadioHistory } from "@/components/carplay/CarPlayRadioHistory";
 
-type CarPlayTab = "music" | "radio";
+type CarPlayTab = "music" | "radio" | "recent";
 
 /* ── Liquid Glass shared styles ── */
 const GLASS_BG = {
