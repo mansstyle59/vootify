@@ -222,6 +222,7 @@ const HomePage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  const handlePlayTrack = useCallback(
     (song: Song, allSongs: Song[]) => {
       if (currentSong?.id === song.id) {
         togglePlay();
