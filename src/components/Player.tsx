@@ -841,6 +841,61 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
 
+  const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
+    const entryKey = `${entry.artist}|||${entry.title}`;
+    if (savedIds.has(entryKey)) return;
+    setSavingId(entryKey);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Connexion requise"); return; }
+      const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", entry.title).eq("artist", entry.artist).maybeSingle();
+      if (existing) {
+        setSavedIds(prev => new Set(prev).add(entryKey));
+        toast.info(`${entry.title} déjà dans la bibliothèque`);
+        return;
+      }
+      const { error } = await supabase.from("custom_songs").insert({
+        title: entry.title, artist: entry.artist, album: currentSong?.title || "Radio",
+        cover_url: entry.coverUrl || "", duration: 0, user_id: user.id, genre: "Radio",
+      });
+      if (error) throw error;
+      setSavedIds(prev => new Set(prev).add(entryKey));
+      toast.success(`${entry.title} ajouté`);
+      if (navigator.vibrate) navigator.vibrate(10);
+    } catch { toast.error("Erreur lors de l'ajout"); }
+    finally { setSavingId(null); }
+  };
+
+  const saveAllToLibrary = async () => {
+    if (history.length === 0) return;
+    setSavingAll(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Connexion requise"); return; }
+      let added = 0;
+      for (const entry of history) {
+        const entryKey = `${entry.artist}|||${entry.title}`;
+        if (savedIds.has(entryKey)) continue;
+        const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", entry.title).eq("artist", entry.artist).maybeSingle();
+        if (existing) { setSavedIds(prev => new Set(prev).add(entryKey)); continue; }
+        const { error } = await supabase.from("custom_songs").insert({
+          title: entry.title, artist: entry.artist, album: currentSong?.title || "Radio",
+          cover_url: entry.coverUrl || "", duration: 0, user_id: user.id, genre: "Radio",
+        });
+        if (!error) { setSavedIds(prev => new Set(prev).add(entryKey)); added++; }
+      }
+      toast.success(`${added} morceau${added > 1 ? "x" : ""} ajouté${added > 1 ? "s" : ""}`);
+      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+    } catch { toast.error("Erreur lors de la sauvegarde"); }
+    finally { setSavingAll(false); }
+  };
+
+  const searchEntry = (entry: { title: string; artist: string }) => {
+    const q = encodeURIComponent(`${entry.artist} ${entry.title}`.trim());
+    onClose();
+    setTimeout(() => navigate(`/search?q=${q}`), 150);
+  };
+
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
   const stationName = currentSong.title;
