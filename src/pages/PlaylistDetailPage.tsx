@@ -6,6 +6,7 @@ import { VirtualSongList } from "@/components/VirtualSongList";
 import { Song } from "@/data/mockData";
 import { musicDb } from "@/lib/musicDb";
 import { ArrowLeft, Play, Shuffle, Trash2, GripVertical, Image as ImageIcon, Download, CheckCircle, Loader2, MoreHorizontal, Clock, Music, Share2, ListPlus, Heart, RotateCcw, X, AlertCircle, Link, Send, Users } from "lucide-react";
+import { ActionBar } from "@/components/ActionBar";
 import { notifyUser } from "@/lib/notifyUser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -408,32 +409,13 @@ const PlaylistDetailPage = () => {
         transition={{ delay: 0.25 }}
         className="px-4 md:px-8 flex items-center gap-3 mb-4 -mt-1"
       >
-        <button
-          onClick={handlePlayAll}
+        <ActionBar
+          onPlay={handlePlayAll}
+          onShuffle={handleShufflePlay}
+          onDownload={handleDownloadAll}
+          downloading={downloading}
           disabled={displaySongs.length === 0}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
-          style={{ background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))", color: "hsl(var(--primary-foreground))", boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)" }}
-        >
-          <Play className="w-5 h-5 fill-current" />
-          Lecture
-        </button>
-        <button
-          onClick={handleShufflePlay}
-          disabled={displaySongs.length === 0}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-40"
-          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", color: "hsl(var(--foreground))", border: "0.5px solid hsl(var(--foreground) / 0.06)", boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)" }}
-        >
-          <Shuffle className="w-4 h-4" />
-          Aléatoire
-        </button>
-        <button
-          onClick={handleDownloadAll}
-          disabled={downloading || displaySongs.length === 0}
-          className="p-3.5 rounded-full transition-all active:scale-[0.95] text-muted-foreground hover:text-primary disabled:opacity-40"
-          style={{ background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: "0.5px solid hsl(var(--foreground) / 0.06)" }}
-        >
-          {downloading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Download className="w-5 h-5" />}
-        </button>
+        />
       </motion.div>
 
       {/* HD resolve progress */}
