@@ -3096,16 +3096,31 @@ function PlaylistPickerModal({
           trackCount: p.nb_tracks || 0,
         }));
       } else if (parsed.type === "profile") {
-        // Fetch all playlists from a Deezer user profile
-        const { data } = await supabase.functions.invoke("deezer-proxy", {
-          body: { path: `/user/${parsed.id}/playlists?limit=100` },
-        });
-        playlists = (data?.data || []).map((p: any) => ({
-          id: p.id,
-          title: p.title || "",
-          cover_url: p.picture_medium || p.picture || "",
-          trackCount: p.nb_tracks || 0,
-        }));
+        // Fetch all playlists from a Deezer user profile with pagination
+        let nextUrl: string | null = `/user/${parsed.id}/playlists?limit=100`;
+        while (nextUrl) {
+          const { data } = await supabase.functions.invoke("deezer-proxy", {
+            body: { path: nextUrl },
+          });
+          const batch = (data?.data || []).map((p: any) => ({
+            id: p.id,
+            title: p.title || "",
+            cover_url: p.picture_medium || p.picture || "",
+            trackCount: p.nb_tracks || 0,
+          }));
+          playlists = [...playlists, ...batch];
+          // Check if there's a next page
+          if (data?.next) {
+            try {
+              const nextFullUrl = new URL(data.next);
+              nextUrl = nextFullUrl.pathname + nextFullUrl.search;
+            } catch {
+              nextUrl = null;
+            }
+          } else {
+            nextUrl = null;
+          }
+        }
       } else {
         setDeezerError("Utilisez un lien de playlist, artiste ou profil Deezer.");
         setDeezerLoading(false);

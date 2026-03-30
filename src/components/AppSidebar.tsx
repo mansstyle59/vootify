@@ -1,6 +1,6 @@
 import { NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import {
-  Home, Search, Library, Radio, PlusCircle, LogOut, Shield, Lock,
+  Home, Search, Library, Radio, PlusCircle, LogOut, Shield, Lock, User,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Badge } from "@/components/ui/badge";
@@ -114,8 +114,8 @@ export function AppSidebar() {
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={avatarUrl} alt={displayName || "User"} />
-                <AvatarFallback className="text-xs font-semibold bg-primary/20 text-primary">
-                  {(displayName || "U").slice(0, 2).toUpperCase()}
+                <AvatarFallback className="bg-primary/20 text-primary flex items-center justify-center">
+                  <User className="w-4 h-4" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">

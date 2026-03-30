@@ -842,7 +842,7 @@ const RadioPage = () => {
             ))}
           </StationStrip>
 
-          {/* My stations */}
+          {/* My stations — always grid */}
           {enrichedCustom.length > 0 && (
             <>
               <SectionHeader
@@ -850,19 +850,11 @@ const RadioPage = () => {
                 count={enrichedCustom.length}
                 onSeeAll={enrichedCustom.length > 8 ? () => setShowAllStations(!showAllStations) : undefined}
               />
-              {showAllStations ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
-                  {enrichedCustom.map((station) => (
-                    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
-                  ))}
-                </div>
-              ) : (
-                <StationStrip>
-                  {displayStations.map((station) => (
-                    <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
-                  ))}
-                </StationStrip>
-              )}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 px-4 md:px-8">
+                {(showAllStations ? enrichedCustom : displayStations).map((station) => (
+                  <StationTileComponent key={station.id} station={station} ctx={stationTileProps} />
+                ))}
+              </div>
             </>
           )}
 
