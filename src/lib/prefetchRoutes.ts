@@ -54,17 +54,21 @@ export function initRoutePrefetch() {
     { capture: true, passive: true }
   );
 
-  // Prefetch main nav routes after a longer idle delay to not compete with initial render
+  // Eagerly prefetch ALL nav routes shortly after boot for instant transitions
   const prefetchAll = () => {
     prefetchRoute("/");
     prefetchRoute("/search");
     prefetchRoute("/library");
     prefetchRoute("/radio");
+    prefetchRoute("/add");
+    prefetchRoute("/profile");
+    prefetchRoute("/admin");
   };
 
+  // Start prefetch early — 1.5s is enough for initial render to settle
   if ("requestIdleCallback" in window) {
-    requestIdleCallback(prefetchAll, { timeout: 5000 });
+    requestIdleCallback(prefetchAll, { timeout: 2000 });
   } else {
-    setTimeout(prefetchAll, 3000);
+    setTimeout(prefetchAll, 1500);
   }
 }
