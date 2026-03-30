@@ -199,34 +199,8 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
   onPlayAll: () => void; onShuffle: () => void; extra?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <button
-        onClick={onPlayAll}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold active:scale-[0.96] transition-transform"
-        style={{
-          background: "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))",
-          color: "hsl(var(--primary-foreground))",
-          boxShadow: "0 4px 16px hsl(var(--primary) / 0.3), inset 0 0.5px 0 hsl(0 0% 100% / 0.15)",
-        }}
-      >
-        <Play className="w-3.5 h-3.5 fill-current" />
-        Tout lire
-      </button>
-      <button
-        onClick={onShuffle}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-semibold text-foreground active:scale-[0.96] transition-transform"
-        style={{
-          background: "linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25))",
-          backdropFilter: "blur(24px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-          border: "0.5px solid hsl(var(--foreground) / 0.06)",
-          boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
-        }}
-      >
-        <Shuffle className="w-3.5 h-3.5" />
-        Aléatoire
-      </button>
-      {extra}
+    <div className="mb-4">
+      <ActionBar onPlay={onPlayAll} onShuffle={onShuffle} compact extra={extra} />
     </div>
   );
 }
