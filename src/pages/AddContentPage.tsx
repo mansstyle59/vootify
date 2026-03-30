@@ -123,6 +123,8 @@ interface SongEntry {
   totalTracks?: number;
   albumArtist?: string;
   composer?: string;
+  /** Pre-detected duplicate info */
+  duplicateOf?: { id: string; title: string; artist: string };
 }
 
 function SongForm() {
