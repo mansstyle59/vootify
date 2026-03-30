@@ -837,6 +837,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const dominantColor = useDominantColor(coverUrl);
   const history = useRadioHistory(currentSong?.streamUrl);
   const [showHistory, setShowHistory] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
