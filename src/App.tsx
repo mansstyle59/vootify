@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
@@ -100,6 +100,8 @@ function AppContent() {
   const setUserId = usePlayerStore((s) => s.setUserId);
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const isCarPlay = location.pathname === "/carplay";
 
   // Track usage time
   useUsageTracking();
@@ -130,14 +132,9 @@ function AppContent() {
         lastHidden = Date.now();
         return;
       }
-      // Only refresh if app was hidden for more than 5 seconds
       const away = Date.now() - lastHidden;
       if (away < 5000) return;
-
-      // Invalidate all react-query caches → triggers refetch of visible queries
       queryClient.invalidateQueries();
-
-      // Also refresh Supabase caches & player data
       silentCacheRefresh(userId);
       loadUserData(userId);
     };
@@ -158,19 +155,19 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex w-full">
-      <AppSidebar />
-      <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 scrollbar-hide" style={{ paddingBottom: currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
+      {!isCarPlay && <AppSidebar />}
+      <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 scrollbar-hide" style={{ paddingBottom: !isCarPlay && currentSong ? "calc(5.5rem + env(safe-area-inset-bottom, 0px))" : undefined }}>
         <AnimatedRoutes />
       </PullToRefresh>
-      {/* NotificationBell moved into HeroBanner */}
-      <MiniPlayer />
-      <MobileNav />
+      {!isCarPlay && <MiniPlayer />}
+      {!isCarPlay && <MobileNav />}
       <AnimatePresence>
-        {fullScreen && <FullScreenPlayer />}
+        {fullScreen && !isCarPlay && <FullScreenPlayer />}
       </AnimatePresence>
     </div>
   );
 }
+
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
