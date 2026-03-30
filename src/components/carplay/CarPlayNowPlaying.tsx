@@ -29,11 +29,19 @@ interface Props {
   onPrevious: () => void;
 }
 
-const SOURCE_LABELS: Record<string, { label: string; color: string }> = {
-  official: { label: "Officielle", color: "bg-green-500/20 text-green-400" },
-  stream: { label: "Flux", color: "bg-blue-500/20 text-blue-400" },
-  radio_fr: { label: "radio.fr", color: "bg-amber-500/20 text-amber-400" },
-  tunein: { label: "TuneIn", color: "bg-amber-500/20 text-amber-400" },
+const SOURCE_LABELS: Record<string, { label: string; bg: string; color: string }> = {
+  official: { label: "Officielle", bg: "hsl(142 70% 45%/0.15)", color: "hsl(142 70% 65%)" },
+  stream: { label: "Flux", bg: "hsl(210 70% 50%/0.15)", color: "hsl(210 70% 70%)" },
+  radio_fr: { label: "radio.fr", bg: "hsl(38 90% 50%/0.15)", color: "hsl(38 90% 65%)" },
+  tunein: { label: "TuneIn", bg: "hsl(38 90% 50%/0.15)", color: "hsl(38 90% 65%)" },
+};
+
+const GLASS_CONTROL = {
+  background: "hsl(0 0% 100%/0.08)",
+  backdropFilter: "blur(40px) saturate(1.8)",
+  WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+  border: "0.5px solid hsl(0 0% 100%/0.1)",
+  boxShadow: "inset 0 0.5px 0 hsl(0 0% 100%/0.1)",
 };
 
 export function CarPlayNowPlaying({
@@ -48,9 +56,9 @@ export function CarPlayNowPlaying({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.45 }}
     >
-      {/* Blurred bg */}
+      {/* Blurred bg — Liquid Glass multi-layer */}
       <motion.div
         className="absolute inset-0"
         initial={{ scale: 1.3, opacity: 0 }}
@@ -60,20 +68,32 @@ export function CarPlayNowPlaying({
       >
         <div className="absolute inset-0 bg-black" />
         {coverUrl && (
-          <img
-            src={coverUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ filter: "blur(90px) brightness(0.35) saturate(2)", transform: "scale(1.4)" }}
-          />
+          <>
+            <img
+              src={coverUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ filter: "blur(100px) brightness(0.25) saturate(2.5)", transform: "scale(1.5)" }}
+            />
+            {/* Secondary warm glow layer */}
+            <img
+              src={coverUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ filter: "blur(60px) brightness(0.15) saturate(3) hue-rotate(15deg)", transform: "scale(1.3)", opacity: 0.4 }}
+            />
+          </>
         )}
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, hsl(0 0% 0%/0.2) 0%, hsl(0 0% 0%/0.75) 100%)" }}
-        />
+        {/* Gradient overlays for depth */}
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(160deg, hsl(0 0% 0%/0.1) 0%, hsl(0 0% 0%/0.6) 50%, hsl(0 0% 0%/0.85) 100%)"
+        }} />
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse at 50% 30%, transparent 0%, hsl(0 0% 0%/0.4) 70%)"
+        }} />
       </motion.div>
 
-      {/* Header */}
+      {/* Header with glass controls */}
       <motion.div
         className="relative z-10 flex items-center px-5 pt-[max(1rem,env(safe-area-inset-top))]"
         initial={{ opacity: 0, y: -30 }}
@@ -82,29 +102,44 @@ export function CarPlayNowPlaying({
       >
         <button
           onClick={onClose}
-          className="p-4 rounded-full active:scale-90 transition-transform"
-          style={{ background: "hsl(0 0% 100%/0.1)", minWidth: 56, minHeight: 56 }}
+          className="p-3.5 rounded-2xl active:scale-90 transition-transform"
+          style={{ ...GLASS_CONTROL, minWidth: 52, minHeight: 52 }}
         >
-          <ChevronDown className="w-7 h-7 text-white" />
+          <ChevronDown className="w-6 h-6 text-white" />
         </button>
         <div className="ml-auto flex items-center gap-2">
           {isLiveRadio && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "hsl(0 0% 100%/0.1)" }}>
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-bold text-white/80 uppercase tracking-wider">En direct</span>
+            <div
+              className="flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{
+                background: "hsl(0 70% 50%/0.12)",
+                border: "0.5px solid hsl(0 70% 50%/0.2)",
+                boxShadow: "inset 0 0.5px 0 hsl(0 70% 80%/0.1)",
+              }}
+            >
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[11px] font-bold text-red-400/90 uppercase tracking-wider">En direct</span>
             </div>
           )}
           {srcCfg && (
-            <span className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${srcCfg.color}`}>
+            <span
+              className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              style={{
+                background: srcCfg.bg,
+                color: srcCfg.color,
+                border: `0.5px solid ${srcCfg.color}33`,
+                boxShadow: `inset 0 0.5px 0 ${srcCfg.color}22`,
+              }}
+            >
               {srcCfg.label}
             </span>
           )}
         </div>
       </motion.div>
 
-      {/* Giant artwork with vinyl rotation for radio */}
+      {/* Giant artwork — Liquid Glass frame */}
       <motion.div
-        className="relative z-10 flex-1 flex items-center justify-center px-6 py-4"
+        className="relative z-10 flex-1 flex items-center justify-center px-8 py-4"
         initial={{ scale: 0.6, opacity: 0, y: 50 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 180, damping: 22, delay: 0.1 }}
@@ -112,14 +147,15 @@ export function CarPlayNowPlaying({
         <AnimatePresence mode="wait">
           <motion.div
             key={coverUrl}
-            initial={{ opacity: 0, scale: 0.8, rotateY: -20 }}
+            initial={{ opacity: 0, scale: 0.8, rotateY: -15 }}
             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            exit={{ opacity: 0, scale: 0.8, rotateY: 20 }}
+            exit={{ opacity: 0, scale: 0.8, rotateY: 15 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-[88vw] max-h-[48vh] overflow-hidden"
+            className="w-full max-w-[82vw] max-h-[44vh] overflow-hidden"
             style={{
               borderRadius: isLiveRadio ? "50%" : "1.5rem",
-              boxShadow: "0 40px 100px hsl(0 0% 0%/0.7), 0 15px 40px hsl(0 0% 0%/0.5)",
+              boxShadow: "0 40px 100px hsl(0 0% 0%/0.65), 0 15px 40px hsl(0 0% 0%/0.4), inset 0 0.5px 0 hsl(0 0% 100%/0.08)",
+              border: "0.5px solid hsl(0 0% 100%/0.08)",
               aspectRatio: "1/1",
             }}
           >
@@ -127,113 +163,125 @@ export function CarPlayNowPlaying({
               <motion.div
                 className="w-full h-full"
                 animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
               >
                 {coverUrl ? (
                   <img src={coverUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.06)" }}>
-                    <Disc3 className="w-24 h-24 text-white/20" />
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.04)" }}>
+                    <Disc3 className="w-24 h-24 text-white/15" />
                   </div>
                 )}
               </motion.div>
             ) : coverUrl ? (
               <img src={coverUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.06)" }}>
-                <Disc3 className="w-24 h-24 text-white/20" />
+              <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.04)" }}>
+                <Disc3 className="w-24 h-24 text-white/15" />
               </div>
             )}
           </motion.div>
         </AnimatePresence>
       </motion.div>
 
-      {/* Track info + controls */}
+      {/* Track info + Liquid Glass controls panel */}
       <motion.div
-        className="relative z-10 w-full px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))]"
+        className="relative z-10 w-full px-5 pb-[max(2rem,env(safe-area-inset-bottom))]"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Title + Artist */}
-        <div className="text-center mb-10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 12, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -12, filter: "blur(10px)" }}
-              transition={{ duration: 0.4 }}
-            >
-              <p className="text-3xl font-black text-white truncate mb-2">{title}</p>
-              <p className="text-lg text-white/50 truncate">{artist}</p>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Large transport controls — extra big for driving */}
-        <div className="flex items-center justify-center gap-8">
-          {!isLiveRadio && (
-            <motion.button
-              onClick={onPrevious}
-              className="rounded-full active:scale-85 transition-transform"
-              style={{ background: "hsl(0 0% 100%/0.1)", padding: "1.25rem", minWidth: 64, minHeight: 64 }}
-              whileTap={{ scale: 0.82 }}
-            >
-              <SkipBack className="w-8 h-8 text-white" />
-            </motion.button>
-          )}
-          <motion.button
-            onClick={onTogglePlay}
-            className="rounded-full active:scale-85 transition-transform"
-            style={{
-              background: "hsl(var(--primary))",
-              boxShadow: "0 12px 40px hsl(var(--primary)/0.5)",
-              padding: isLiveRadio ? "2rem" : "1.75rem",
-              minWidth: 80,
-              minHeight: 80,
-            }}
-            whileTap={{ scale: 0.85 }}
-          >
+        {/* Glass control panel */}
+        <div
+          className="rounded-3xl p-5 mb-2"
+          style={{
+            background: "hsl(0 0% 100%/0.05)",
+            backdropFilter: "blur(80px) saturate(2.2)",
+            WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+            border: "0.5px solid hsl(0 0% 100%/0.1)",
+            boxShadow: "inset 0 0.5px 0 hsl(0 0% 100%/0.12), inset 0 -0.5px 0 hsl(0 0% 0%/0.1), 0 16px 48px hsl(0 0% 0%/0.3)",
+          }}
+        >
+          {/* Title + Artist */}
+          <div className="text-center mb-6">
             <AnimatePresence mode="wait">
               <motion.div
-                key={isPlaying ? "pause" : "play"}
-                initial={{ scale: 0.4, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.4, opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                key={title}
+                initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -10, filter: "blur(8px)" }}
+                transition={{ duration: 0.4 }}
               >
-                {isPlaying
-                  ? <Pause className="w-10 h-10 text-primary-foreground" />
-                  : <Play className="w-10 h-10 text-primary-foreground ml-1" />
-                }
+                <p className="text-2xl font-black text-white truncate mb-1">{title}</p>
+                <p className="text-base text-white/45 truncate">{artist}</p>
               </motion.div>
             </AnimatePresence>
-          </motion.button>
-          {!isLiveRadio && (
+          </div>
+
+          {/* Transport controls */}
+          <div className="flex items-center justify-center gap-6">
+            {!isLiveRadio && (
+              <motion.button
+                onClick={onPrevious}
+                className="rounded-2xl active:scale-85 transition-transform"
+                style={{ ...GLASS_CONTROL, padding: "1.1rem", minWidth: 60, minHeight: 60 }}
+                whileTap={{ scale: 0.82 }}
+              >
+                <SkipBack className="w-7 h-7 text-white" />
+              </motion.button>
+            )}
             <motion.button
-              onClick={onNext}
+              onClick={onTogglePlay}
               className="rounded-full active:scale-85 transition-transform"
-              style={{ background: "hsl(0 0% 100%/0.1)", padding: "1.25rem", minWidth: 64, minHeight: 64 }}
-              whileTap={{ scale: 0.82 }}
+              style={{
+                background: "hsl(var(--primary))",
+                boxShadow: "0 10px 36px hsl(var(--primary)/0.45), inset 0 1px 0 hsl(0 0% 100%/0.15)",
+                padding: isLiveRadio ? "1.75rem" : "1.5rem",
+                minWidth: 76,
+                minHeight: 76,
+              }}
+              whileTap={{ scale: 0.85 }}
             >
-              <SkipForward className="w-8 h-8 text-white" />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={isPlaying ? "pause" : "play"}
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.4, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {isPlaying
+                    ? <Pause className="w-9 h-9 text-primary-foreground" />
+                    : <Play className="w-9 h-9 text-primary-foreground ml-0.5" />
+                  }
+                </motion.div>
+              </AnimatePresence>
             </motion.button>
+            {!isLiveRadio && (
+              <motion.button
+                onClick={onNext}
+                className="rounded-2xl active:scale-85 transition-transform"
+                style={{ ...GLASS_CONTROL, padding: "1.1rem", minWidth: 60, minHeight: 60 }}
+                whileTap={{ scale: 0.82 }}
+              >
+                <SkipForward className="w-7 h-7 text-white" />
+              </motion.button>
+            )}
+          </div>
+
+          {/* Live indicator */}
+          {isLiveRadio && isPlaying && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center gap-4 mt-5"
+            >
+              <LiveEqualizer />
+              <span className="text-xs font-bold text-primary uppercase tracking-widest">En direct</span>
+              <LiveEqualizer />
+            </motion.div>
           )}
         </div>
-
-        {/* Live indicator */}
-        {isLiveRadio && isPlaying && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center justify-center gap-4 mt-8"
-          >
-            <LiveEqualizer />
-            <span className="text-sm font-bold text-primary uppercase tracking-widest">En direct</span>
-            <LiveEqualizer />
-          </motion.div>
-        )}
       </motion.div>
     </motion.div>
   );
