@@ -405,13 +405,22 @@ function SongForm() {
               )}
             </p>
             {songs.filter(s => s.duplicateOf && s.skipped).length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSongs(prev => prev.map(s => s.duplicateOf && s.skipped ? { ...s, skipped: false } : s))}
-                className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 active:scale-95 transition-all"
-              >
-                Tout remplacer ({songs.filter(s => s.duplicateOf && s.skipped).length})
-              </button>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSongs(prev => prev.filter(s => !(s.duplicateOf && s.skipped)))}
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-destructive/15 text-destructive border border-destructive/20 hover:bg-destructive/25 active:scale-95 transition-all"
+                >
+                  Tout ignorer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSongs(prev => prev.map(s => s.duplicateOf && s.skipped ? { ...s, skipped: false } : s))}
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 active:scale-95 transition-all"
+                >
+                  Tout remplacer
+                </button>
+              </div>
             )}
           </div>
           {songs.map((song, idx) => (
