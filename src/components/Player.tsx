@@ -12,6 +12,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { useRadioMetadata, useRadioHistory, type RadioSource } from "@/hooks/useRadioMetadata";
+import { RadioRecognitionOverlay, PulseRings } from "./RadioRecognition";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
