@@ -1977,6 +1977,7 @@ function HomeTab() {
                     {(() => {
                       const cs = customSections.find((c) => c.id === section.id);
                       const isAlbumType = cs?.type === "albums";
+                      const isPlaylistType = cs?.type === "playlists";
                       return (
                         <>
                           <button
@@ -1984,18 +1985,21 @@ function HomeTab() {
                               if (isAlbumType) {
                                 setEditingAlbumSection(section.id);
                                 setAlbumPickerOpen(true);
+                              } else if (isPlaylistType) {
+                                setEditingPlaylistSection(section.id);
+                                setPlaylistPickerOpen(true);
                               } else {
                                 setEditingCustom(section.id);
                                 setSongPickerOpen(true);
                               }
                             }}
                             className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
-                            title={isAlbumType ? "Gérer les albums" : "Gérer les morceaux"}
+                            title={isAlbumType ? "Gérer les albums" : isPlaylistType ? "Gérer les playlists" : "Gérer les morceaux"}
                           >
-                            {isAlbumType ? <Disc3 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
+                            {isAlbumType ? <Disc3 className="w-4 h-4" /> : isPlaylistType ? <ListMusic className="w-4 h-4" /> : <Music className="w-4 h-4" />}
                           </button>
                           <span className="text-[10px] text-muted-foreground tabular-nums">
-                            {isAlbumType ? (cs?.albumIds?.length || 0) : (cs?.songIds.length || 0)}
+                            {isAlbumType ? (cs?.albumIds?.length || 0) : isPlaylistType ? (cs?.playlistIds?.length || 0) : (cs?.songIds.length || 0)}
                           </span>
                         </>
                       );
