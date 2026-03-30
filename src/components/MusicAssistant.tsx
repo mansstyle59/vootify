@@ -374,7 +374,36 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      {/* Input hidden — under construction */}
+      {/* Input */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+        style={{
+          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+          borderTop: "0.5px solid hsl(var(--border) / 0.3)",
+          background: "hsl(var(--background) / 0.95)",
+          backdropFilter: "blur(20px)",
+        }}
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Pose ta question..."
+          className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none px-3 py-2 rounded-xl"
+          style={{ background: "hsl(var(--foreground) / 0.05)" }}
+          disabled={isLoading}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={!input.trim() || isLoading}
+          className="rounded-xl shrink-0"
+          style={{ background: "hsl(var(--primary))" }}
+        >
+          <Send className="w-4 h-4 text-primary-foreground" />
+        </Button>
+      </form>
     </>
   );
 }
