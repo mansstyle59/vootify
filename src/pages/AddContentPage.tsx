@@ -967,7 +967,8 @@ function PlaylistForm() {
                 key={idx}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`p-2.5 rounded-xl space-y-2 transition-all ${song.uploaded || song.skipped ? "opacity-50" : "liquid-glass"}`}
+                className={`p-2.5 rounded-xl space-y-2 transition-all ${song.uploaded || song.skipped ? "opacity-50" : ""}`}
+                style={!(song.uploaded || song.skipped) ? { background: "hsl(var(--foreground) / 0.03)", border: "0.5px solid hsl(var(--border) / 0.15)" } : {}}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] text-muted-foreground/40 w-5 text-center tabular-nums font-medium">{idx + 1}</span>
@@ -1079,8 +1080,9 @@ const AddContentPage = () => {
               className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl text-center transition-all ${
                 tab === key
                   ? "bg-primary/10 ring-1 ring-primary/25 text-primary"
-                  : "liquid-glass text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
+              style={tab !== key ? { background: "hsl(var(--card))", border: "0.5px solid hsl(var(--border) / 0.2)" } : {}}
             >
               <Icon className="w-5 h-5" />
               <span className="text-xs font-semibold">{label}</span>
@@ -1098,7 +1100,8 @@ const AddContentPage = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="rounded-2xl liquid-glass p-5"
+            className="rounded-2xl p-5"
+            style={{ background: "hsl(var(--card))", border: "0.5px solid hsl(var(--border) / 0.3)" }}
           >
             {tab === "song" && <SongForm />}
             {tab === "playlist" && <PlaylistForm />}
