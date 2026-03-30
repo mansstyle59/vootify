@@ -25,7 +25,32 @@ const SUGGESTIONS = [
 export function MusicAssistantFAB() {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const lastY = useRef(0);
+
+  // Check for unread admin responses
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const lastSeen = localStorage.getItem("vootify_requests_last_seen") || "1970-01-01";
+      const { count } = await supabase
+        .from("music_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .not("admin_response", "is", null)
+        .gt("resolved_at", lastSeen);
+      if (!cancelled) setUnreadCount(count || 0);
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  const markSeen = () => {
+    localStorage.setItem("vootify_requests_last_seen", new Date().toISOString());
+    setUnreadCount(0);
+  };
 
   useEffect(() => {
     if (open) return;
@@ -63,7 +88,7 @@ export function MusicAssistantFAB() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
             transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-            onClick={() => setOpen(true)}
+            onClick={() => { setOpen(true); markSeen(); }}
             className="fixed z-50 top-0 left-0 right-0 flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
             style={{
               paddingTop: "calc(env(safe-area-inset-top, 0px) + 4px)",
@@ -77,6 +102,14 @@ export function MusicAssistantFAB() {
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-[11px] font-semibold text-primary tracking-wide">Demander du contenu</span>
+            {unreadCount > 0 && (
+              <span
+                className="min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                style={{ background: "hsl(0 84% 60%)", color: "white" }}
+              >
+                {unreadCount}
+              </span>
+            )}
           </motion.button>
         )}
       </AnimatePresence>
