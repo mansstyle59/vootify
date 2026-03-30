@@ -3246,25 +3246,41 @@ function PlaylistPickerModal({
               </div>
               {deezerError && <p className="text-xs text-destructive">{deezerError}</p>}
               {deezerPlaylists.length > 0 && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <p className="text-[10px] text-muted-foreground">
                     {deezerPlaylists.length} playlist{deezerPlaylists.length > 1 ? "s" : ""} · <span className="text-primary font-semibold">{localCount} local</span>
                   </p>
-                  {localCount > 0 && (
-                    <button
-                      onClick={() => {
-                        const localIds = deezerPlaylists.filter((p) => p.localId).map((p) => p.localId!);
-                        setSelected((prev) => {
-                          const next = new Set(prev);
-                          localIds.forEach((id) => next.add(id));
-                          return next;
-                        });
-                      }}
-                      className="text-[10px] text-primary font-semibold"
-                    >
-                      Tout sélectionner (local)
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {deezerPlaylists.some((p) => !p.existsLocally) && (
+                      <button
+                        onClick={async () => {
+                          const toCreate = deezerPlaylists.filter((p) => !p.existsLocally);
+                          for (const pl of toCreate) {
+                            await createFromDeezer(pl);
+                          }
+                        }}
+                        disabled={creatingPlaylist !== null}
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/15 text-primary disabled:opacity-50"
+                      >
+                        {creatingPlaylist !== null ? "Création..." : `Créer toutes (${deezerPlaylists.filter((p) => !p.existsLocally).length})`}
+                      </button>
+                    )}
+                    {localCount > 0 && (
+                      <button
+                        onClick={() => {
+                          const localIds = deezerPlaylists.filter((p) => p.localId).map((p) => p.localId!);
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            localIds.forEach((id) => next.add(id));
+                            return next;
+                          });
+                        }}
+                        className="text-[10px] text-primary font-semibold"
+                      >
+                        Tout sélectionner (local)
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -3276,7 +3292,7 @@ function PlaylistPickerModal({
                 </div>
               ) : deezerPlaylists.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">
-                  Collez un lien de playlist Deezer
+                  Collez un lien de playlist, profil ou artiste Deezer
                 </p>
               ) : (
                 deezerPlaylists.map((pl) => {
