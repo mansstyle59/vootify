@@ -2224,7 +2224,10 @@ function ArtistLibraryCard({ artist, index, navigate }: {
         )}
       </div>
       <p className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{artist.name}</p>
-      <p className="text-[9px] text-muted-foreground/40 font-medium">{artist.count} titre{artist.count > 1 ? "s" : ""}</p>
+      <p className="text-[9px] text-muted-foreground/40 font-medium">
+        {artist.count} titre{artist.count > 1 ? "s" : ""}
+        {artist.albumCount ? ` · ${artist.albumCount} album${artist.albumCount > 1 ? "s" : ""}` : ""}
+      </p>
     </motion.button>
   );
 }
