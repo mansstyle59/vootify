@@ -1805,64 +1805,111 @@ function HomeTab() {
   return (
     <div className="space-y-6">
       {/* Hero customization */}
-       <div className="rounded-2xl p-4 space-y-3" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(20px) saturate(1.6)", border: "1px solid hsl(var(--border) / 0.12)" }}>
-        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-          <LayoutDashboard className="w-4 h-4 text-primary" />
-          Bannière d'accueil
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Sous-titre personnalisé (optionnel)</label>
+       <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.5)", backdropFilter: "blur(40px) saturate(2)", WebkitBackdropFilter: "blur(40px) saturate(2)", border: "0.5px solid hsl(var(--border) / 0.15)", boxShadow: "inset 0 1px 0 hsl(var(--foreground) / 0.04), 0 8px 32px hsl(0 0% 0% / 0.3)" }}>
+        {/* Live Preview */}
+        <div
+          className="relative h-28 flex items-end p-4 overflow-hidden"
+          style={{
+            background: heroBgColor
+              ? heroBgColor
+              : heroBgImage
+                ? undefined
+                : "linear-gradient(145deg, hsl(var(--primary) / 0.15), hsl(var(--background)))",
+          }}
+        >
+          {heroBgImage && (
+            <img src={heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          )}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--background) / 0.85), transparent)" }} />
+          <div className="relative z-10 w-full">
+            <p className="text-[22px] font-black text-foreground leading-tight">Bonjour</p>
+            <p className="text-[11px] font-medium mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}>
+              {heroSubtitle || "La musique est le langage des émotions."}
+            </p>
+          </div>
+          <div className="absolute top-2 right-2 z-10">
+            <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: "hsl(var(--primary) / 0.2)", color: "hsl(var(--primary))" }}>
+              Aperçu
+            </span>
+          </div>
+        </div>
+
+        {/* Settings */}
+        <div className="p-4 space-y-4">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <LayoutDashboard className="w-4 h-4 text-primary" />
+            Bannière d'accueil
+          </h3>
+
+          {/* Subtitle */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider block">Sous-titre</label>
             <input
               value={heroSubtitle}
               onChange={(e) => setHeroSubtitle(e.target.value)}
               placeholder="Ex: Bienvenue sur votre plateforme musicale"
-              className="w-full text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full text-sm rounded-xl px-3.5 py-2.5 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
+              style={{ background: "hsl(var(--foreground) / 0.04)", border: "0.5px solid hsl(var(--border) / 0.12)" }}
             />
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Couleur de fond (optionnel)</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={heroBgColor || "#000000"}
-                onChange={(e) => setHeroBgColor(e.target.value)}
-                className="w-9 h-9 rounded-lg border border-border cursor-pointer bg-transparent p-0.5"
-              />
+
+          {/* Color */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider block">Couleur de fond</label>
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <input
+                  type="color"
+                  value={heroBgColor || "#000000"}
+                  onChange={(e) => setHeroBgColor(e.target.value)}
+                  className="w-10 h-10 rounded-xl cursor-pointer bg-transparent p-0 border-0 appearance-none"
+                  style={{ WebkitAppearance: "none" }}
+                />
+                <div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  style={{ border: "0.5px solid hsl(var(--border) / 0.2)", boxShadow: "inset 0 1px 2px hsl(0 0% 0% / 0.2)" }}
+                />
+              </div>
               <input
                 value={heroBgColor}
                 onChange={(e) => setHeroBgColor(e.target.value)}
-                placeholder="#1a1a2e ou rgb(26,26,46)"
-                className="flex-1 text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="#1a1a2e"
+                className="flex-1 text-sm rounded-xl px-3.5 py-2.5 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all font-mono"
+                style={{ background: "hsl(var(--foreground) / 0.04)", border: "0.5px solid hsl(var(--border) / 0.12)" }}
               />
               {heroBgColor && (
-                <button onClick={() => setHeroBgColor("")} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X className="w-4 h-4" /></button>
+                <button onClick={() => setHeroBgColor("")} className="p-2 rounded-xl text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"><X className="w-4 h-4" /></button>
               )}
             </div>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Image de fond (optionnel)</label>
+
+          {/* Image */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider block">Image de fond</label>
             <div className="flex gap-2">
               <input
                 value={heroBgImage}
                 onChange={(e) => setHeroBgImage(e.target.value)}
                 placeholder="https://exemple.com/image.jpg"
-                className="flex-1 text-sm bg-background/80 border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                className="flex-1 text-sm rounded-xl px-3.5 py-2.5 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
+                style={{ background: "hsl(var(--foreground) / 0.04)", border: "0.5px solid hsl(var(--border) / 0.12)" }}
               />
               <input ref={bgImageFileRef} type="file" accept="image/*" onChange={handleBgImageUpload} className="hidden" />
               <button
                 onClick={() => bgImageFileRef.current?.click()}
                 disabled={uploadingBgImage}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex-shrink-0"
+                style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
               >
                 {uploadingBgImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 Importer
               </button>
             </div>
             {heroBgImage && (
-              <div className="mt-2 relative rounded-lg overflow-hidden h-20">
+              <div className="mt-2 relative rounded-xl overflow-hidden h-24 group">
                 <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" />
-                <button onClick={() => setHeroBgImage("")} className="absolute top-1 right-1 p-1 rounded-full bg-background/50 text-foreground hover:bg-background/70"><X className="w-3 h-3" /></button>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <button onClick={() => setHeroBgImage("")} className="absolute top-2 right-2 p-1.5 rounded-full text-foreground opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "hsl(var(--background) / 0.7)", backdropFilter: "blur(8px)" }}><X className="w-3.5 h-3.5" /></button>
               </div>
             )}
           </div>
