@@ -9,21 +9,69 @@ const DEEZER_API = "https://api.deezer.com";
 const TUNEIN_API = "https://opml.radiotime.com";
 const TUNEIN_CDN = "https://cdn-profiles.tunein.com";
 
-// Known Radio France station mappings: URL pattern → station info
-const RADIO_FRANCE_STATIONS: Record<string, { name: string; logo: string }> = {
-  franceinter: { name: "France Inter", logo: "/radio-logos/france-inter.png" },
-  franceinfo: { name: "franceinfo", logo: "/radio-logos/franceinfo.png" },
-  fip: { name: "FIP", logo: "/radio-logos/fip.png" },
-  francemusique: { name: "France Musique", logo: "/radio-logos/france-musique.png" },
-  franceculture: { name: "France Culture", logo: "/radio-logos/france-culture.png" },
-  mouv: { name: "Mouv'", logo: "/radio-logos/mouv.png" },
+// Radio France API for live metadata
+const RADIO_FRANCE_API = "https://www.radiofrance.fr/api/v2.1/stations";
+const RADIO_FRANCE_STATIONS: Record<string, { name: string; apiSlug: string }> = {
+  franceinter:  { name: "France Inter",    apiSlug: "france-inter" },
+  franceinfo:   { name: "franceinfo",      apiSlug: "franceinfo" },
+  fip:          { name: "FIP",             apiSlug: "fip" },
+  francemusique:{ name: "France Musique",  apiSlug: "france-musique" },
+  franceculture:{ name: "France Culture",  apiSlug: "france-culture" },
+  mouv:         { name: "Mouv'",           apiSlug: "mouv" },
 };
 
-function detectRadioFranceStation(url: string): { name: string; logo: string } | null {
+function detectRadioFranceStation(url: string): { name: string; apiSlug: string } | null {
   if (!url.includes("radiofrance.fr")) return null;
   for (const [key, info] of Object.entries(RADIO_FRANCE_STATIONS)) {
     if (url.includes(key)) return info;
   }
+  return null;
+}
+
+/**
+ * Fetch live metadata from Radio France's public API
+ */
+async function fetchRadioFranceLive(slug: string): Promise<{ title: string; artist: string; coverUrl: string } | null> {
+  try {
+    // Try the open API endpoint
+    const resp = await fetch(`${RADIO_FRANCE_API}/${slug}/live`, {
+      headers: { "User-Agent": "Vootify/1.0" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const now = data?.now;
+      if (now) {
+        const title = now.secondLine || now.title || now.firstLine || "";
+        const artist = now.thirdLine || now.subtitle || "";
+        const cover = now.visual?.src || now.cover || "";
+        if (title || artist) {
+          return { title, artist, coverUrl: cover };
+        }
+      }
+    }
+  } catch { /* silent */ }
+
+  // Alternative: scrape the grid/webapi
+  try {
+    const resp2 = await fetch(`https://www.radiofrance.fr/api/v2.1/stations/${slug}/grid?x-token=Undefined`, {
+      headers: { "User-Agent": "Vootify/1.0" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (resp2.ok) {
+      const grid = await resp2.json();
+      const steps = grid?.steps || grid?.data?.steps || [];
+      const now = Date.now() / 1000;
+      const current = steps.find((s: any) => s.start <= now && s.end >= now);
+      if (current) {
+        const title = current.title || current.diffusion?.title || "";
+        const artist = current.artists?.[0]?.name || "";
+        const cover = current.visual?.src || "";
+        if (title) return { title, artist, coverUrl: cover };
+      }
+    }
+  } catch { /* silent */ }
+
   return null;
 }
 
@@ -41,12 +89,12 @@ async function fetchTuneInMetadata(stationName: string): Promise<{
     const searchUrl = `${TUNEIN_API}/Search.ashx?query=${encodeURIComponent(stationName)}&render=json&types=station`;
     const resp = await fetch(searchUrl, {
       headers: { "User-Agent": "Vootify/1.0" },
+      signal: AbortSignal.timeout(4000),
     });
     if (!resp.ok) return null;
     const data = await resp.json();
     const body = data.body || [];
 
-    // Find best matching station
     const nameNorm = stationName.toLowerCase().trim();
     let bestStation: any = null;
 
@@ -58,12 +106,9 @@ async function fetchTuneInMetadata(stationName: string): Promise<{
         break;
       }
     }
-
-    // Fallback to first station result
     if (!bestStation) {
       bestStation = body.find((item: any) => item.item === "station");
     }
-
     if (!bestStation) return null;
 
     const id = bestStation.guide_id;
@@ -84,7 +129,7 @@ async function fetchTuneInMetadata(stationName: string): Promise<{
       }
     }
 
-    // If we got artist + title from TuneIn, search Deezer for album art
+    // If we got artist + title, search Deezer for album art
     if (artist && title) {
       try {
         const query = `${artist} ${title}`;
@@ -96,9 +141,7 @@ async function fetchTuneInMetadata(stationName: string): Promise<{
             coverUrl = track.album?.cover_xl || track.album?.cover_big || track.album?.cover_medium || "";
           }
         }
-      } catch {
-        // use station logo as fallback
-      }
+      } catch { /* silent */ }
     }
 
     return {
@@ -126,12 +169,62 @@ serve(async (req) => {
       });
     }
 
+    let nowPlaying = "";
+    let title = "";
+    let artist = "";
+    let coverUrl = "";
+
+    // ── Step 1: Detect Radio France → use their API for live metadata ──
+    const rfStation = detectRadioFranceStation(streamUrl);
+    if (rfStation) {
+      const rfLive = await fetchRadioFranceLive(rfStation.apiSlug);
+      if (rfLive && (rfLive.title || rfLive.artist)) {
+        title = rfLive.title;
+        artist = rfLive.artist || rfStation.name;
+        coverUrl = rfLive.coverUrl || "";
+        nowPlaying = artist && title ? `${artist} - ${title}` : title || `En direct sur ${rfStation.name}`;
+
+        // If Radio France API gave us artist+title but no cover, search Deezer
+        if (!coverUrl && artist && title && title !== "En direct") {
+          try {
+            const deezerRes = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(`${artist} ${title}`)}&limit=1`);
+            if (deezerRes.ok) {
+              const dd = await deezerRes.json();
+              if (dd.data?.length > 0) {
+                coverUrl = dd.data[0].album?.cover_xl || dd.data[0].album?.cover_big || "";
+              }
+            }
+          } catch { /* silent */ }
+        }
+
+        // Use station cover from client as fallback
+        if (!coverUrl) coverUrl = stationCover || "";
+      } else {
+        // Radio France detected but no live data from API — try TuneIn
+        const tuneIn = await fetchTuneInMetadata(rfStation.name);
+        if (tuneIn && tuneIn.title) {
+          title = tuneIn.title;
+          artist = tuneIn.artist || rfStation.name;
+          coverUrl = tuneIn.coverUrl || stationCover || "";
+          nowPlaying = tuneIn.nowPlaying;
+        } else {
+          nowPlaying = `En direct sur ${rfStation.name}`;
+          title = "En direct";
+          artist = rfStation.name;
+          coverUrl = stationCover || "";
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, nowPlaying, title, artist, coverUrl }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Step 2: Try ICY metadata from the stream ──
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    let nowPlaying = "";
-
-    // ── Step 1: Try ICY metadata from the stream ──
     try {
       const response = await fetch(streamUrl, {
         headers: { "Icy-MetaData": "1" },
@@ -175,16 +268,12 @@ serve(async (req) => {
         }
       }
     } catch (e) {
-      console.log("ICY fetch error:", e.message);
+      console.log("ICY fetch error:", (e as Error).message);
     } finally {
       clearTimeout(timeout);
     }
 
-    let title = "";
-    let artist = "";
-    let coverUrl = "";
-
-    // ── Step 2: If ICY gave us metadata, parse & search Deezer for cover art ──
+    // ── Step 3: Parse ICY metadata & search Deezer for cover art ──
     if (nowPlaying) {
       const cleaned = nowPlaying.replace(/\s*§\d+$/, "").trim();
       const parts = cleaned.split(" - ");
@@ -197,8 +286,7 @@ serve(async (req) => {
 
       if (artist && title) {
         try {
-          const query = `${artist} ${title}`;
-          const deezerRes = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(query)}&limit=1`);
+          const deezerRes = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(`${artist} ${title}`)}&limit=1`);
           if (deezerRes.ok) {
             const deezerData = await deezerRes.json();
             if (deezerData.data?.length > 0) {
@@ -207,19 +295,8 @@ serve(async (req) => {
             }
           }
         } catch (e) {
-          console.log("Deezer search error:", e.message);
+          console.log("Deezer search error:", (e as Error).message);
         }
-      }
-    }
-
-    // ── Step 3: Fallback — detect Radio France station ──
-    if (!nowPlaying) {
-      const station = detectRadioFranceStation(streamUrl);
-      if (station) {
-        nowPlaying = `En direct sur ${station.name}`;
-        title = "En direct";
-        artist = station.name;
-        coverUrl = station.logo;
       }
     }
 
@@ -232,7 +309,6 @@ serve(async (req) => {
         artist = tuneInData.artist;
         coverUrl = tuneInData.coverUrl || stationCover || "";
       } else if (tuneInData?.logoHd) {
-        // At least we got a good logo
         nowPlaying = `En direct sur ${stationName}`;
         title = "En direct";
         artist = stationName;
@@ -240,23 +316,26 @@ serve(async (req) => {
       }
     }
 
-    // ── Step 5: If still no cover from Deezer, try TuneIn logo ──
+    // ── Step 5: If still no cover, try TuneIn logo ──
     if (!coverUrl && stationName) {
       try {
         const tuneInData = await fetchTuneInMetadata(stationName);
         if (tuneInData?.logoHd) {
           coverUrl = tuneInData.logoHd;
         }
-      } catch {
-        // silent
-      }
+      } catch { /* silent */ }
     }
 
-    // ── Step 6: Generic fallback — use station name from client ──
+    // ── Step 6: Generic fallback ──
     if (!nowPlaying && stationName) {
       nowPlaying = `En direct sur ${stationName}`;
       title = "En direct";
       artist = stationName;
+      coverUrl = stationCover || "";
+    }
+
+    // Final fallback: never return relative paths like /radio-logos/...
+    if (!coverUrl || coverUrl.startsWith("/")) {
       coverUrl = stationCover || "";
     }
 
@@ -266,7 +345,7 @@ serve(async (req) => {
     );
   } catch (e) {
     return new Response(
-      JSON.stringify({ success: false, error: e.message }),
+      JSON.stringify({ success: false, error: (e as Error).message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
