@@ -999,17 +999,39 @@ const LibraryPage = () => {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="flex gap-2 mb-4 overflow-hidden"
+                      className="mb-4 overflow-hidden space-y-2"
                     >
-                      <input
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                        placeholder="Nom de la playlist..."
-                        className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        autoFocus
-                      />
-                      <button onClick={handleCreate} className="px-5 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>Créer</button>
+                      {/* Manual name */}
+                      <div className="flex gap-2">
+                        <input
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                          placeholder="Nom de la playlist..."
+                          className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          autoFocus
+                        />
+                        <button onClick={handleCreate} className="px-5 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>Créer</button>
+                      </div>
+
+                      {/* Deezer URL import */}
+                      <div className="flex gap-2">
+                        <input
+                          value={deezerUrl}
+                          onChange={(e) => setDeezerUrl(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleCreateFromDeezer()}
+                          placeholder="🔗 Coller un lien Deezer playlist..."
+                          className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                        <button
+                          onClick={handleCreateFromDeezer}
+                          disabled={deezerImporting || !deezerUrl.trim()}
+                          className="px-4 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform disabled:opacity-40"
+                          style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
+                        >
+                          {deezerImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Import"}
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
