@@ -27,6 +27,7 @@ import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { initAutoDownload } from "@/lib/autoDownload";
+import { MusicAssistantFAB } from "@/components/MusicAssistant";
 
 // Lazy load all pages for faster initial load & smooth transitions
 const Home = lazy(() => import("./pages/Home"));
