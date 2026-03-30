@@ -518,7 +518,7 @@ const LibraryPage = () => {
     const allSongs = [
       ...(tab === "recent" ? recentlyPlayed : []),
       ...(tab === "liked" ? likedSongs : []),
-      ...(tab === "custom" ? customSongs : []),
+      ...(tab === "custom" || tab === "songs" ? customSongs : []),
     ];
     if (allSongs.length === 0) { setLibraryCachedIds(new Set()); return; }
     Promise.all(
