@@ -71,7 +71,7 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
       {/* ─── Top bar ─── */}
       <div
         className="flex items-center justify-between px-5 md:px-8 pb-1"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)" }}
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.75rem)" }}
       >
         {/* Large title */}
         <h1 className="text-[32px] md:text-[36px] font-black text-foreground leading-tight tracking-tight">

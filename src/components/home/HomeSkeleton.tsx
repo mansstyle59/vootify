@@ -7,7 +7,7 @@ export function HomeSkeleton() {
       {/* Header skeleton */}
       <div
         className="sticky top-0 z-30 flex items-center justify-between px-5 md:px-8 pb-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + 0.75rem)" }}
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.75rem)" }}
       >
         <Skeleton className="h-8 w-40 rounded-xl" />
         <div className="flex items-center gap-2.5">
