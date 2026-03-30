@@ -109,8 +109,9 @@ export function MusicAssistantFAB() {
             onClick={() => setOpen(true)}
             className="fixed z-50 top-0 left-0 right-0 flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
             style={{
-              paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)",
-              paddingBottom: "6px",
+              paddingTop: "calc(env(safe-area-inset-top, 0px) + 4px)",
+              paddingBottom: "4px",
+              height: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 28px))",
               background: "linear-gradient(90deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.08))",
               backdropFilter: "blur(20px) saturate(1.5)",
               WebkitBackdropFilter: "blur(20px) saturate(1.5)",
