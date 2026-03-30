@@ -156,6 +156,8 @@ export function HeroBanner({ customSubtitle, bgColor, bgImage }: { onCustomize?:
                   <span className="font-semibold text-[13px]">Mode CarPlay</span>
                 </DropdownMenuItem>
 
+                <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
+
                 <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer text-destructive focus:text-destructive transition-all duration-150">
                   <LogOut className="w-4 h-4" />
                   <span className="font-semibold text-[13px]">Déconnexion</span>
