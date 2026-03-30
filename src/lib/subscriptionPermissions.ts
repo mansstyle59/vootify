@@ -37,7 +37,7 @@ const PLAN_CONFIG: Record<PlanType, PlanPermissions> = {
   gold: {
     allowedRoutes: ["/", "/search", "/library", "/profile", "/audio-settings", "/auth", "/reset-password", "/request-access", "/add", "/admin"],
     blockedRoutes: ["/radio"],
-    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists"],
+    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists", "songs"],
     label: "Gold",
     color: "yellow-500",
     icon: "star",
