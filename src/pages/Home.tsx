@@ -43,6 +43,20 @@ const HomePage = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [refreshingArtists, setRefreshingArtists] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const on = () => setIsOffline(false);
+    const off = () => setIsOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+
+  // When offline, redirect to library (offline downloads)
+  useEffect(() => {
+    if (isOffline) navigate("/library", { replace: true });
+  }, [isOffline, navigate]);
 
   const { data: artists, isLoading: loadingArtists } = useQuery({
     queryKey: ["home-artists"],
