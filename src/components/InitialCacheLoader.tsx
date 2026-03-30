@@ -39,16 +39,24 @@ export function InitialCacheLoader({ children }: Props) {
     }
 
     let cancelled = false;
+    // Add a safety timeout to never block more than 6s
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) {
+        setCacheReady(true);
+        setShowLoader(false);
+      }
+    }, 6000);
+
     performInitialCache(userId, handleProgress).then(() => {
       if (cancelled) return;
       setFadeOut(true);
       setTimeout(() => {
         setCacheReady(true);
         setShowLoader(false);
-      }, 700);
+      }, 500);
     });
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(safetyTimer); };
   }, [userId, authLoading, cacheReady, handleProgress]);
 
   if (cacheReady && !showLoader) return <>{children}</>;
