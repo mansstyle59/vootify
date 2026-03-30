@@ -1098,7 +1098,8 @@ const AddContentPage = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="rounded-2xl liquid-glass p-5"
+            className="rounded-2xl p-5"
+            style={{ background: "hsl(var(--card))", border: "0.5px solid hsl(var(--border) / 0.3)" }}
           >
             {tab === "song" && <SongForm />}
             {tab === "playlist" && <PlaylistForm />}
