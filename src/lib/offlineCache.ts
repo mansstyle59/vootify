@@ -59,6 +59,17 @@ export const offlineCache = {
     });
   },
 
+  /** Get total number of cached songs */
+  async getAllCachedCount(): Promise<number> {
+    const db = await openDb();
+    return new Promise((resolve) => {
+      const tx = db.transaction(META_STORE, "readonly");
+      const req = tx.objectStore(META_STORE).count();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(0);
+    });
+  },
+
   /** Download and cache a song's audio + metadata + cover art */
   async cacheSong(song: Song, onProgress?: (pct: number) => void): Promise<void> {
     if (!song.streamUrl) throw new Error("No stream URL");
