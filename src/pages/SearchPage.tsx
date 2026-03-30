@@ -638,7 +638,7 @@ const SearchPage = () => {
             {/* ── New Releases (premium overlay cards) ── */}
             {newReleases.length > 0 && (
               <section>
-                <SectionHeader title="Nouveautés" />
+                <SectionHeader title="Nouveautés" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {newReleases.slice(0, 8).map((release) => {
                     const isAvailable = availableReleases.has(release.albumId);
