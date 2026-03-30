@@ -33,13 +33,17 @@ function openDb(): Promise<IDBDatabase> {
 /** Fetch an image URL and return it as a Blob */
 async function fetchCoverBlob(url: string): Promise<Blob | null> {
   try {
-    // Try with CORS first, fall back to no-cors
+    // Try normal fetch first
     let res = await fetch(url);
     if (!res.ok) {
+      // Retry without referrer (helps with Deezer CDN)
+      res = await fetch(url, { referrerPolicy: "no-referrer" });
+    }
+    if (!res.ok) {
+      // Last resort: no-cors (opaque but may work in some contexts)
       res = await fetch(url, { mode: "no-cors" });
     }
     const blob = await res.blob();
-    // Ensure we got a real image (no-cors gives opaque responses with size 0)
     return blob.size > 0 ? blob : null;
   } catch {
     return null;
@@ -141,7 +145,10 @@ export const offlineCache = {
       duration: song.duration,
       coverUrl: song.coverUrl,
       streamUrl: song.streamUrl,
+      genre: song.genre || null,
+      year: song.year || null,
       cachedAt: Date.now(),
+      hasCover: !!coverBlob,
     };
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(META_STORE, "readwrite");
@@ -213,6 +220,8 @@ export const offlineCache = {
           coverUrl,
           streamUrl: m.streamUrl || "",
           liked: false,
+          genre: m.genre || undefined,
+          year: m.year || undefined,
           cachedAt: m.cachedAt,
         };
       })
