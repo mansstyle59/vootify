@@ -971,7 +971,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="flex-1 flex flex-col"
             >
-              <div className="flex-1 flex items-center justify-center py-4">
+              <div className="flex-1 flex items-center justify-center py-4 relative">
+                <PulseRings active={isPlaying && !!radioMeta?.title} />
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={coverUrl}
@@ -981,7 +982,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.92 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="w-full max-w-[340px] aspect-square rounded-xl object-cover"
+                    className="w-full max-w-[340px] aspect-square rounded-xl object-cover relative z-10"
                     style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
                   />
                 </AnimatePresence>
