@@ -30,21 +30,45 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
-/** Fetch an image URL and return it as a Blob */
+/** Compress an image blob to a smaller JPEG (max 300x300, quality 0.7) */
+async function compressCover(blob: Blob, maxSize = 300, quality = 0.7): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(blob); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (result) => resolve(result || blob),
+        "image/jpeg",
+        quality,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
+    img.src = url;
+  });
+}
+
+/** Fetch an image URL and return it as a compressed Blob */
 async function fetchCoverBlob(url: string): Promise<Blob | null> {
   try {
-    // Try normal fetch first
     let res = await fetch(url);
     if (!res.ok) {
-      // Retry without referrer (helps with Deezer CDN)
       res = await fetch(url, { referrerPolicy: "no-referrer" });
     }
     if (!res.ok) {
-      // Last resort: no-cors (opaque but may work in some contexts)
       res = await fetch(url, { mode: "no-cors" });
     }
     const blob = await res.blob();
-    return blob.size > 0 ? blob : null;
+    if (!blob || blob.size === 0) return null;
+    // Compress to save ~60-80% storage
+    return await compressCover(blob);
   } catch {
     return null;
   }

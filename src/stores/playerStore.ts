@@ -174,14 +174,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       recentlyPlayed: [song, ...state.recentlyPlayed.filter((s) => s.id !== song.id)].slice(0, 30),
     }));
 
-    // Try to resolve cached audio URL (offline-first)
+    // Offline-first: resolve cached audio URL BEFORE audio manager starts
     const rawId = song.id.startsWith("custom-") ? song.id.slice(7) : song.id;
     offlineCache.getCachedUrl(rawId).then((cachedUrl) => {
-      if (cachedUrl) {
-        // Update the song with the cached blob URL for the audio manager
+      const current = get().currentSong;
+      if (current?.id === song.id && cachedUrl) {
+        // Use cached blob URL — zero network latency
+        set({ currentSong: { ...current, streamUrl: cachedUrl } });
+      }
+    }).catch(() => {});
+
+    // Also resolve cached cover for offline display
+    offlineCache.getCachedCoverUrl(rawId).then((cachedCover) => {
+      if (cachedCover) {
         const current = get().currentSong;
-        if (current?.id === song.id) {
-          set({ currentSong: { ...current, streamUrl: cachedUrl } });
+        if (current?.id === song.id && !current.coverUrl?.startsWith("blob:")) {
+          set({ currentSong: { ...current, coverUrl: cachedCover } });
         }
       }
     }).catch(() => {});
