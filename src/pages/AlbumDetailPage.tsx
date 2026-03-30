@@ -108,38 +108,9 @@ const AlbumDetailPage = () => {
   const playAll = () => { if (tracks.length > 0) { setQueue(tracks); handlePlay(tracks[0]); } };
   const playShuffle = () => { if (tracks.length > 0) { const s = [...tracks].sort(() => Math.random() - 0.5); setQueue(s); handlePlay(s[0]); } };
 
-  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
-
-  const handleDownloadAll = async () => {
+  const handleDownloadAll = () => {
     if (downloading || tracks.length === 0) return;
-    setDownloading(true);
-    const toDownload = tracks.filter((s) => s.streamUrl);
-    // Filter already cached
-    const uncached: Song[] = [];
-    for (const s of toDownload) {
-      if (!(await offlineCache.isCached(s.id))) uncached.push(s);
-    }
-    if (uncached.length === 0) {
-      toast.success("Tout est déjà téléchargé !");
-      setDownloading(false);
-      return;
-    }
-    setDownloadProgress({ current: 0, total: uncached.length });
-    let done = 0;
-    const queue = [...uncached];
-    const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
-      while (queue.length > 0) {
-        const song = queue.shift()!;
-        try {
-          await offlineCache.cacheSong(song);
-        } catch { /* skip */ }
-        done++;
-        setDownloadProgress({ current: done, total: uncached.length });
-      }
-    });
-    await Promise.all(workers);
-    setDownloading(false);
-    toast.success(`${done} titre${done > 1 ? "s" : ""} téléchargé${done > 1 ? "s" : ""}`);
+    downloadPlaylist(tracks);
   };
 
   if (isLoading) {
