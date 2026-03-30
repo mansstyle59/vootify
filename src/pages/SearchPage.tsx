@@ -539,18 +539,18 @@ const SearchPage = () => {
             {libraryStats && (
               <section>
                 <div
-                  className="rounded-3xl p-5 pb-4 relative overflow-hidden"
+                  className="rounded-2xl px-4 py-3.5 relative overflow-hidden"
                   style={{
-                    background: "linear-gradient(160deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--primary) / 0.04) 50%, hsl(var(--primary) / 0.02) 100%)",
+                    background: "linear-gradient(160deg, hsl(var(--primary) / 0.10) 0%, hsl(var(--primary) / 0.03) 100%)",
                     border: "0.5px solid hsl(var(--primary) / 0.10)",
-                    boxShadow: "0 4px 24px -4px hsl(var(--primary) / 0.08), inset 0 1px 0 hsl(var(--primary) / 0.06)",
+                    boxShadow: "0 2px 12px -4px hsl(var(--primary) / 0.06), inset 0 0.5px 0 hsl(var(--primary) / 0.05)",
                   }}
                 >
-                  <div className="flex items-center gap-2.5 mb-5">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
-                      <Headphones className="w-4 h-4 text-primary" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                      <Headphones className="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <h3 className="text-[13px] font-extrabold text-primary uppercase tracking-[0.12em]">Ma bibliothèque</h3>
+                    <h3 className="text-[11px] font-extrabold text-primary uppercase tracking-[0.12em]">Ma bibliothèque</h3>
                   </div>
                   <div className="grid grid-cols-4 gap-1">
                     {[
@@ -560,8 +560,8 @@ const SearchPage = () => {
                       { value: libraryStats.duration, label: "Durée" },
                     ].map((stat) => (
                       <div key={stat.label} className="text-center">
-                        <p className="text-[26px] font-black text-foreground leading-none tabular-nums tracking-tight">{stat.value}</p>
-                        <p className="text-[10px] text-primary/50 font-semibold mt-1.5 uppercase tracking-wider">{stat.label}</p>
+                        <p className="text-[22px] font-black text-foreground leading-none tabular-nums tracking-tight">{stat.value}</p>
+                        <p className="text-[9px] text-primary/50 font-semibold mt-1 uppercase tracking-wider">{stat.label}</p>
                       </div>
                     ))}
                   </div>
