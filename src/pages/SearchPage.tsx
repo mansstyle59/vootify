@@ -539,17 +539,20 @@ const SearchPage = () => {
             {libraryStats && (
               <section>
                 <div
-                  className="rounded-3xl p-5 relative overflow-hidden"
+                  className="rounded-3xl p-5 pb-4 relative overflow-hidden"
                   style={{
-                    background: "linear-gradient(145deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.02))",
-                    border: "0.5px solid hsl(var(--primary) / 0.08)",
+                    background: "linear-gradient(160deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--primary) / 0.04) 50%, hsl(var(--primary) / 0.02) 100%)",
+                    border: "0.5px solid hsl(var(--primary) / 0.10)",
+                    boxShadow: "0 4px 24px -4px hsl(var(--primary) / 0.08), inset 0 1px 0 hsl(var(--primary) / 0.06)",
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-4">
-                    <Headphones className="w-4 h-4 text-primary" />
-                    <h3 className="text-[13px] font-bold text-primary uppercase tracking-wider">Ma bibliothèque</h3>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                      <Headphones className="w-4 h-4 text-primary" />
+                    </div>
+                    <h3 className="text-[13px] font-extrabold text-primary uppercase tracking-[0.12em]">Ma bibliothèque</h3>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-1">
                     {[
                       { value: libraryStats.songs, label: "Titres" },
                       { value: libraryStats.artists, label: "Artistes" },
@@ -557,8 +560,8 @@ const SearchPage = () => {
                       { value: libraryStats.duration, label: "Durée" },
                     ].map((stat) => (
                       <div key={stat.label} className="text-center">
-                        <p className="text-[22px] font-black text-foreground leading-none tabular-nums">{stat.value}</p>
-                        <p className="text-[10px] text-muted-foreground/50 font-medium mt-1">{stat.label}</p>
+                        <p className="text-[26px] font-black text-foreground leading-none tabular-nums tracking-tight">{stat.value}</p>
+                        <p className="text-[10px] text-primary/50 font-semibold mt-1.5 uppercase tracking-wider">{stat.label}</p>
                       </div>
                     ))}
                   </div>
