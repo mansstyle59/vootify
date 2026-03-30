@@ -266,6 +266,8 @@ const LibraryPage = () => {
   const [likedSearch, setLikedSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
   const [offlineSearch, setOfflineSearch] = useState("");
+  const [offlineSelectMode, setOfflineSelectMode] = useState(false);
+  const [offlineSelected, setOfflineSelected] = useState<Set<string>>(new Set());
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [deezerUrl, setDeezerUrl] = useState("");
