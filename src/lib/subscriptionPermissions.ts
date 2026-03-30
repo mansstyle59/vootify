@@ -45,7 +45,7 @@ const PLAN_CONFIG: Record<PlanType, PlanPermissions> = {
   vip: {
     allowedRoutes: ["*"],
     blockedRoutes: [],
-    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists"],
+    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists", "songs"],
     label: "VIP",
     color: "red-500",
     icon: "gem",
