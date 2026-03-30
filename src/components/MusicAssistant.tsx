@@ -300,7 +300,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-hide">
-        {true ? (
+        {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
             <div
               className="w-20 h-20 rounded-3xl flex items-center justify-center"
@@ -309,19 +309,25 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
               <Music2 className="w-10 h-10 text-primary" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-bold text-foreground mb-1">🚧 En construction</h3>
+              <h3 className="text-lg font-bold text-foreground mb-1">Salut ! 🎧</h3>
               <p className="text-sm text-muted-foreground max-w-[280px]">
-                L'assistant musical arrive bientôt ! Tu pourras demander l'ajout de morceaux manquants directement ici.
+                Je suis ton assistant musical. Demande-moi des suggestions, infos artistes ou radios !
               </p>
             </div>
-            <div
-              className="px-5 py-2.5 rounded-2xl text-[13px] font-semibold"
-              style={{
-                background: "hsl(var(--primary) / 0.1)",
-                color: "hsl(var(--primary))",
-              }}
-            >
-              Prochainement
+            <div className="flex flex-wrap justify-center gap-2 px-4">
+              {SUGGESTIONS.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => send(s)}
+                  className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+                  style={{
+                    background: "hsl(var(--primary) / 0.1)",
+                    color: "hsl(var(--primary))",
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
           </div>
         ) : (
