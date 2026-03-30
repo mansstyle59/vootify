@@ -3,8 +3,9 @@ import { Song } from "@/data/mockData";
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
 
-/** Maximum offline cache size: ~1 TB (smart limit for large libraries) */
-const MAX_CACHE_BYTES = 1024 * 1024 * 1024; // 1 GB
+/** Maximum offline cache: 500 MB / 300 songs */
+const MAX_CACHE_BYTES = 500 * 1024 * 1024; // 500 MB
+const MAX_CACHE_SONGS = 300;
 const AUDIO_STORE = "audio";
 const META_STORE = "meta";
 const COVER_STORE = "covers";
@@ -58,18 +59,35 @@ export const offlineCache = {
     });
   },
 
+  /** Get total number of cached songs */
+  async getAllCachedCount(): Promise<number> {
+    const db = await openDb();
+    return new Promise((resolve) => {
+      const tx = db.transaction(META_STORE, "readonly");
+      const req = tx.objectStore(META_STORE).count();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(0);
+    });
+  },
+
   /** Download and cache a song's audio + metadata + cover art */
   async cacheSong(song: Song, onProgress?: (pct: number) => void): Promise<void> {
     if (!song.streamUrl) throw new Error("No stream URL");
 
-    // Check cache size limit
+    // Check cache limits (size + song count)
     try {
-      const currentSize = await this.getCacheSize();
+      const [currentSize, allCached] = await Promise.all([
+        this.getCacheSize(),
+        this.getAllCachedCount(),
+      ]);
       if (currentSize >= MAX_CACHE_BYTES) {
-        throw new Error("Cache limit reached (1 TB)");
+        throw new Error("Limite de stockage atteinte (500 Mo)");
+      }
+      if (allCached >= MAX_CACHE_SONGS) {
+        throw new Error("Limite de 300 titres hors-ligne atteinte");
       }
     } catch (e: any) {
-      if (e.message?.includes("Cache limit")) throw e;
+      if (e.message?.includes("Limite")) throw e;
     }
 
     const response = await fetch(song.streamUrl);
