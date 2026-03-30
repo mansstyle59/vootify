@@ -3062,7 +3062,7 @@ function PlaylistPickerModal({
 
     const parsed = parseDeezerUrl(urlToUse);
     if (!parsed) {
-      setDeezerError("Lien Deezer invalide. Collez un lien de playlist Deezer.");
+      setDeezerError("Lien Deezer invalide. Collez un lien de playlist, artiste ou profil Deezer.");
       setDeezerLoading(false);
       return;
     }
@@ -3086,7 +3086,6 @@ function PlaylistPickerModal({
           }];
         }
       } else if (parsed.type === "artist") {
-        // Get artist's playlists containing their tracks
         const { data } = await supabase.functions.invoke("deezer-proxy", {
           body: { path: `/search/playlist?q=${encodeURIComponent(parsed.id)}&limit=25` },
         });
@@ -3096,8 +3095,19 @@ function PlaylistPickerModal({
           cover_url: p.picture_medium || "",
           trackCount: p.nb_tracks || 0,
         }));
+      } else if (parsed.type === "profile") {
+        // Fetch all playlists from a Deezer user profile
+        const { data } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `/user/${parsed.id}/playlists?limit=100` },
+        });
+        playlists = (data?.data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title || "",
+          cover_url: p.picture_medium || p.picture || "",
+          trackCount: p.nb_tracks || 0,
+        }));
       } else {
-        setDeezerError("Utilisez un lien de playlist Deezer.");
+        setDeezerError("Utilisez un lien de playlist, artiste ou profil Deezer.");
         setDeezerLoading(false);
         return;
       }
