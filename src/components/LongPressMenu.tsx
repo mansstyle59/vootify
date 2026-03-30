@@ -22,6 +22,8 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
   const didLongPressRef = useRef(false);
   const { play, queue, setQueue, toggleLike, isLiked } = usePlayerStore();
   const liked = isLiked(song.id);
+  const navigate = useNavigate();
+  const { isCached, isDownloading, download } = useOfflineCache(song.id);
 
   const startPress = useCallback(() => {
     didLongPressRef.current = false;
