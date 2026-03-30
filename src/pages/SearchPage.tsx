@@ -538,7 +538,7 @@ const SearchPage = () => {
 
             {/* ── Library Overview (glass card) ── */}
             {libraryStats && (
-              <section>
+              <section onClick={() => navigate("/library")} className="cursor-pointer active:scale-[0.99] transition-transform">
                 <div
                   className="rounded-2xl px-5 py-4 relative overflow-hidden"
                   style={{
