@@ -1033,7 +1033,15 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
+              {/* Recognition overlay */}
+              <RadioRecognitionOverlay
+                radioMeta={radioMeta}
+                isPlaying={isPlaying}
+                stationName={stationName}
+                coverUrl={coverUrl}
+              />
+
+              <div className="flex items-center justify-between mt-3">
                 <button className="p-1 active:scale-90 transition-transform">
                   <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} onClick={() => toggleLike(currentSong)} />
                 </button>
