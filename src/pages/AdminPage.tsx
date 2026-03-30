@@ -2893,10 +2893,12 @@ function PlaylistPickerModal({
   onUpdate: (ids: string[]) => void;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const [allPlaylists, setAllPlaylists] = useState<{ id: string; name: string; cover_url: string | null; songCount?: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
+  const [creatingPlaylist, setCreatingPlaylist] = useState<number | null>(null);
 
   // Deezer import
   const [mode, setMode] = useState<"library" | "deezer">("library");
@@ -2904,6 +2906,79 @@ function PlaylistPickerModal({
   const [deezerLoading, setDeezerLoading] = useState(false);
   const [deezerPlaylists, setDeezerPlaylists] = useState<{ id: number; title: string; cover_url: string; trackCount: number; existsLocally: boolean; localId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
+
+  /** Create a local playlist from a Deezer playlist */
+  const createFromDeezer = async (pl: { id: number; title: string; cover_url: string; trackCount: number }) => {
+    if (!user?.id) return;
+    setCreatingPlaylist(pl.id);
+    try {
+      // 1. Fetch tracks from Deezer
+      const { data: deezerData } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: `/playlist/${pl.id}/tracks?limit=200` },
+      });
+      const tracks: any[] = deezerData?.data || [];
+
+      // 2. Create local playlist
+      const { data: newPlaylist, error: plErr } = await supabase
+        .from("playlists")
+        .insert({ name: pl.title, cover_url: pl.cover_url, user_id: user.id })
+        .select("id")
+        .single();
+      if (plErr || !newPlaylist) throw plErr;
+
+      // 3. Match tracks to local custom_songs
+      const { data: allSongs } = await supabase
+        .from("custom_songs")
+        .select("id, title, artist, album, cover_url, stream_url, duration")
+        .not("stream_url", "is", null);
+
+      const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+      const songIndex = new Map<string, any>();
+      for (const s of allSongs || []) {
+        songIndex.set(norm(s.title) + "|" + norm(s.artist), s);
+      }
+
+      const playlistSongs: any[] = [];
+      for (let i = 0; i < tracks.length; i++) {
+        const t = tracks[i];
+        const key = norm(t.title || "") + "|" + norm(t.artist?.name || "");
+        const local = songIndex.get(key);
+        if (local) {
+          playlistSongs.push({
+            playlist_id: newPlaylist.id,
+            song_id: `custom-${local.id}`,
+            title: local.title,
+            artist: local.artist,
+            album: local.album || "",
+            cover_url: local.cover_url || t.album?.cover_medium || "",
+            stream_url: local.stream_url,
+            duration: local.duration || t.duration || 0,
+            position: i,
+          });
+        }
+      }
+
+      // 4. Insert matched songs
+      if (playlistSongs.length > 0) {
+        await supabase.from("playlist_songs").insert(playlistSongs);
+      }
+
+      // 5. Update local state
+      const newEntry = { id: newPlaylist.id, name: pl.title, cover_url: pl.cover_url, songCount: playlistSongs.length };
+      setAllPlaylists((prev) => [...prev, newEntry]);
+      setSelected((prev) => new Set([...prev, newPlaylist.id]));
+      setDeezerPlaylists((prev) =>
+        prev.map((p) => p.id === pl.id ? { ...p, existsLocally: true, localId: newPlaylist.id } : p)
+      );
+
+      toast.success(`Playlist "${pl.title}" créée avec ${playlistSongs.length} titre${playlistSongs.length > 1 ? "s" : ""} matchés`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la création de la playlist");
+    } finally {
+      setCreatingPlaylist(null);
+    }
+  };
 
   useEffect(() => {
     (async () => {
