@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { radioCoverCache } from "@/lib/radioCoverCache";
 
@@ -8,6 +8,47 @@ export interface RadioMetadata {
   artist: string;
   coverUrl: string;
   album?: string;
+}
+
+export interface RadioHistoryEntry {
+  title: string;
+  artist: string;
+  coverUrl: string;
+  playedAt: Date;
+}
+
+// Global history store keyed by streamUrl
+const radioHistoryMap = new Map<string, RadioHistoryEntry[]>();
+const MAX_HISTORY = 20;
+
+export function useRadioHistory(streamUrl?: string): RadioHistoryEntry[] {
+  const [history, setHistory] = useState<RadioHistoryEntry[]>([]);
+
+  useEffect(() => {
+    if (!streamUrl) { setHistory([]); return; }
+    setHistory(radioHistoryMap.get(streamUrl) || []);
+  }, [streamUrl]);
+
+  // Subscribe to changes
+  useEffect(() => {
+    if (!streamUrl) return;
+    const interval = setInterval(() => {
+      const current = radioHistoryMap.get(streamUrl) || [];
+      setHistory(prev => prev.length !== current.length ? [...current] : prev);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [streamUrl]);
+
+  return history;
+}
+
+function addToHistory(streamUrl: string, entry: Omit<RadioHistoryEntry, "playedAt">) {
+  const list = radioHistoryMap.get(streamUrl) || [];
+  // Don't add if same as last entry
+  if (list.length > 0 && list[0].title === entry.title && list[0].artist === entry.artist) return;
+  const newEntry = { ...entry, playedAt: new Date() };
+  const updated = [newEntry, ...list].slice(0, MAX_HISTORY);
+  radioHistoryMap.set(streamUrl, updated);
 }
 
 export function useRadioMetadata(
@@ -55,6 +96,15 @@ export function useRadioMetadata(
           setMetadata((prev) => {
             if (prev?.nowPlaying === data.nowPlaying && prev?.coverUrl === coverUrl) {
               return prev;
+            }
+
+            // Track history when song changes
+            if (data.title && data.artist && streamUrl) {
+              addToHistory(streamUrl, {
+                title: data.title,
+                artist: data.artist,
+                coverUrl,
+              });
             }
 
             return {
