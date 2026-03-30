@@ -162,6 +162,7 @@ function AppContent() {
       </PullToRefresh>
       {!isCarPlay && <MiniPlayer />}
       {!isCarPlay && <MobileNav />}
+      {!isCarPlay && <MusicAssistantFAB />}
       <AnimatePresence>
         {fullScreen && !isCarPlay && <FullScreenPlayer />}
       </AnimatePresence>
