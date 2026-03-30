@@ -330,7 +330,7 @@ const HomePage = () => {
       <div
         className="sticky top-0 z-30"
         style={{
-          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px))",
         }}
       >
         {/* Hero background layer */}
