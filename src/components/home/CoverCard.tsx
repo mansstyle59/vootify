@@ -23,7 +23,7 @@ export const CoverCard = memo(function CoverCard({
 
   return (
     <div
-      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.97] transition-transform duration-150"
+      className="flex-shrink-0 w-[140px] md:w-[160px] cursor-pointer group snap-start active:scale-[0.97] transition-transform duration-150 overflow-visible"
       onClick={onClick}
     >
       <div
