@@ -1245,43 +1245,84 @@ const LibraryPage = () => {
                         )}
                       </motion.button>
                     )}
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {libraryAlbums
-                        .filter((album) => {
-                          if (!albumSearch.trim()) return true;
-                          const q = albumSearch.toLowerCase().trim();
-                          return album.artist.toLowerCase().includes(q) || album.title.toLowerCase().includes(q);
-                        })
-                        .map((album, i) => (
-                        <motion.button
-                          key={album.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => {
-                            if (album.id.startsWith("derived-")) {
-                              navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
-                            } else {
-                              navigate(`/album/${album.id}`);
-                            }
-                          }}
-                          className="text-left group"
-                        >
-                          <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
-                            {album.cover_url ? (
-                              <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
-                                <Disc3 className="w-8 h-8 text-primary/25" />
+                    {/* Albums grouped by artist */}
+                    {(() => {
+                      const filtered = albumSearch.trim()
+                        ? libraryAlbums.filter((a) => {
+                            const q = albumSearch.toLowerCase().trim();
+                            return a.artist.toLowerCase().includes(q) || a.title.toLowerCase().includes(q);
+                          })
+                        : libraryAlbums;
+
+                      // Group by artist (already sorted by artist then year)
+                      const groups: { artist: string; albums: typeof filtered }[] = [];
+                      let currentArtist = "";
+                      let currentGroup: typeof filtered = [];
+                      for (const album of filtered) {
+                        if (album.artist.toLowerCase() !== currentArtist.toLowerCase()) {
+                          if (currentGroup.length > 0) groups.push({ artist: currentArtist, albums: currentGroup });
+                          currentArtist = album.artist;
+                          currentGroup = [album];
+                        } else {
+                          currentGroup.push(album);
+                        }
+                      }
+                      if (currentGroup.length > 0) groups.push({ artist: currentArtist, albums: currentGroup });
+
+                      return (
+                        <div className="space-y-6">
+                          {groups.map((group) => (
+                            <div key={group.artist}>
+                              <button
+                                onClick={() => navigate(`/artist/${encodeURIComponent(group.artist)}`)}
+                                className="flex items-center gap-2 mb-2.5 px-1 group/artist active:opacity-70 transition-opacity"
+                              >
+                                <User className="w-3.5 h-3.5 text-muted-foreground/40" />
+                                <span className="text-[13px] font-bold text-foreground group-hover/artist:text-primary transition-colors">
+                                  {group.artist}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground/40 font-medium">
+                                  {group.albums.length} album{group.albums.length > 1 ? "s" : ""}
+                                </span>
+                              </button>
+                              <div className="grid grid-cols-3 gap-2.5">
+                                {group.albums.map((album, i) => (
+                                  <motion.button
+                                    key={album.id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.02 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => {
+                                      if (album.id.startsWith("derived-")) {
+                                        navigate(`/album/by-name?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.title)}`);
+                                      } else {
+                                        navigate(`/album/${album.id}`);
+                                      }
+                                    }}
+                                    className="text-left group"
+                                  >
+                                    <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
+                                      {album.cover_url ? (
+                                        <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
+                                          <Disc3 className="w-8 h-8 text-primary/25" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
+                                    <p className="text-[9px] text-muted-foreground/45 truncate font-medium">
+                                      {album.year ? album.year : ""}{album.count > 0 ? `${album.year ? " · " : ""}${album.count} titre${album.count > 1 ? "s" : ""}` : ""}
+                                    </p>
+                                  </motion.button>
+                                ))}
                               </div>
-                            )}
-                          </div>
-                          <p className="text-[11px] font-bold text-foreground truncate">{album.title}</p>
-                          <p className="text-[9px] text-muted-foreground/45 truncate font-medium">{album.artist}{album.year ? ` · ${album.year}` : ""}</p>
-                        </motion.button>
-                      ))}
-                    </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
               </div>
