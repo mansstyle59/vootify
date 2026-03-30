@@ -485,16 +485,25 @@ const LibraryPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custom_songs")
-        .select("artist, cover_url")
+        .select("artist, album, cover_url")
         .not("stream_url", "is", null);
       if (error) throw error;
-      const artistMap = new Map<string, { name: string; cover: string; count: number }>();
+      const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
       for (const row of data || []) {
         const existing = artistMap.get(row.artist);
-        if (existing) { existing.count++; if (!existing.cover && row.cover_url) existing.cover = row.cover_url; }
-        else artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1 });
+        if (existing) {
+          existing.count++;
+          if (!existing.cover && row.cover_url) existing.cover = row.cover_url;
+          if (row.album && row.album.trim()) existing.albums.add(row.album.toLowerCase());
+        } else {
+          const albums = new Set<string>();
+          if (row.album && row.album.trim()) albums.add(row.album.toLowerCase());
+          artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1, albums });
+        }
       }
-      return Array.from(artistMap.values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+      return Array.from(artistMap.values())
+        .map((a) => ({ name: a.name, cover: a.cover, count: a.count, albumCount: a.albums.size }))
+        .sort((a, b) => a.name.localeCompare(b.name, "fr"));
     },
     staleTime: 2 * 60 * 1000,
     enabled: tab === "artists",
