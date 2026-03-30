@@ -4,7 +4,7 @@ const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
 
 /** Maximum offline cache size: ~1 TB (smart limit for large libraries) */
-const MAX_CACHE_BYTES = 1024 * 1024 * 1024 * 1024; // 1 TB
+const MAX_CACHE_BYTES = 1024 * 1024 * 1024; // 1 GB
 const AUDIO_STORE = "audio";
 const META_STORE = "meta";
 const COVER_STORE = "covers";
