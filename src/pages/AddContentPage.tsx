@@ -423,8 +423,20 @@ function SongForm() {
                   {song.album && <p className="text-[10px] text-muted-foreground/40 truncate">{song.album}{song.year ? ` • ${song.year}` : ""}</p>}
                 </div>
                 {song.uploaded && <CheckCircle className="w-5 h-5 text-primary shrink-0" />}
-                {song.skipped && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">Doublon</span>
+                {song.skipped && song.duplicateOf && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">Doublon</span>
+                    <button
+                      type="button"
+                      onClick={() => setSongs(prev => prev.map((s, i) => i === idx ? { ...s, skipped: false } : s))}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 transition-colors"
+                    >
+                      Remplacer
+                    </button>
+                  </div>
+                )}
+                {song.skipped && !song.duplicateOf && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 shrink-0">Ignoré</span>
                 )}
                 {song.uploading && <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />}
                 {!song.uploaded && !song.uploading && !song.skipped && (
