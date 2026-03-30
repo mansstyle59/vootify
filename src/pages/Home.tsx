@@ -475,6 +475,29 @@ const HomePage = () => {
                 </Section>
               );
             }
+            if (cs?.type === "playlists") {
+              const sectionPlaylists = getCustomSectionPlaylists(section.id);
+              if (!loadingCustomPlaylists && sectionPlaylists.length === 0) return null;
+              return (
+                <Section key={section.id} title={section.title}>
+                  <ContentStrip>
+                    {loadingCustomPlaylists ? (
+                      <StripSkeleton count={6} />
+                    ) : (
+                      sectionPlaylists.map((pl) => (
+                        <CoverCard
+                          key={pl.id}
+                          title={pl.name}
+                          subtitle=""
+                          coverUrl={pl.cover_url || ""}
+                          onClick={() => navigate(`/playlist/${pl.id}`)}
+                        />
+                      ))
+                    )}
+                  </ContentStrip>
+                </Section>
+              );
+            }
             const songs = getCustomSectionSongs(section.id);
             return <div key={section.id}>{renderSection(section.title, songs, loadingCustomSongs)}</div>;
           }
