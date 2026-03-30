@@ -6,7 +6,7 @@
 
 export type PlanType = "premium" | "gold" | "vip" | "free";
 
-export type LibraryTab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists";
+export type LibraryTab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs";
 
 interface PlanPermissions {
   allowedRoutes: string[];        // routes the plan can access
@@ -29,7 +29,7 @@ const PLAN_CONFIG: Record<PlanType, PlanPermissions> = {
   premium: {
     allowedRoutes: ["/", "/library", "/profile", "/audio-settings", "/auth", "/reset-password", "/request-access"],
     blockedRoutes: ["/search", "/radio"],
-    allowedLibraryTabs: ["artists", "albums"],
+    allowedLibraryTabs: ["artists", "albums", "songs"],
     label: "Premium",
     color: "primary",
     icon: "crown",
@@ -37,7 +37,7 @@ const PLAN_CONFIG: Record<PlanType, PlanPermissions> = {
   gold: {
     allowedRoutes: ["/", "/search", "/library", "/profile", "/audio-settings", "/auth", "/reset-password", "/request-access", "/add", "/admin"],
     blockedRoutes: ["/radio"],
-    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists"],
+    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists", "songs"],
     label: "Gold",
     color: "yellow-500",
     icon: "star",
@@ -45,7 +45,7 @@ const PLAN_CONFIG: Record<PlanType, PlanPermissions> = {
   vip: {
     allowedRoutes: ["*"],
     blockedRoutes: [],
-    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists"],
+    allowedLibraryTabs: ["liked", "playlists", "recent", "downloads", "custom", "albums", "artists", "songs"],
     label: "VIP",
     color: "red-500",
     icon: "gem",
