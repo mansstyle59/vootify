@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect, ReactNode } from "react";
 import { Song } from "@/data/mockData";
 import { usePlayerStore } from "@/stores/playerStore";
-import { Play, ListEnd, ListPlus, Heart, Music } from "lucide-react";
+import { Play, ListEnd, ListPlus, Heart, Music, Download, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
+import { useNavigate } from "react-router-dom";
+import { useOfflineCache } from "@/hooks/useOfflineCache";
 
 interface LongPressMenuProps {
   song: Song;
@@ -20,6 +22,8 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
   const didLongPressRef = useRef(false);
   const { play, queue, setQueue, toggleLike, isLiked } = usePlayerStore();
   const liked = isLiked(song.id);
+  const navigate = useNavigate();
+  const { isCached, isDownloading, download } = useOfflineCache(song.id);
 
   const startPress = useCallback(() => {
     didLongPressRef.current = false;
@@ -92,6 +96,25 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
       action: () => {
         toggleLike(song);
         if (navigator.vibrate) navigator.vibrate(10);
+        setOpen(false);
+      },
+    },
+    ...(song.streamUrl && song.duration > 0 && !isCached ? [{
+      icon: Download,
+      label: isDownloading ? "Téléchargement en cours…" : "Télécharger hors-ligne",
+      action: () => {
+        if (!isDownloading) {
+          download(song);
+          if (navigator.vibrate) navigator.vibrate(10);
+        }
+        setOpen(false);
+      },
+    }] : []),
+    {
+      icon: User,
+      label: `Voir ${song.artist.split(",")[0].trim()}`,
+      action: () => {
+        navigate(`/artist/${encodeURIComponent(song.artist.split(",")[0].trim())}`);
         setOpen(false);
       },
     },
