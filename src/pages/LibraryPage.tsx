@@ -1614,7 +1614,7 @@ const LibraryPage = () => {
               </div>
             )}
 
-            {/* ── SONGS (current user only) ── */}
+            {/* ── SONGS (all catalog) ── */}
             {tab === "songs" && (
               <div>
                 {customSongs.length === 0 ? (
