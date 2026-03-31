@@ -21,6 +21,65 @@ import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
 import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Song } from "@/data/mockData";
+
+/* ── Add to Library Button ── */
+function AddToLibraryButton({ song }: { song: Song }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [adding, setAdding] = useState(false);
+
+  const handleAdd = async () => {
+    if (!user || adding) return;
+    setAdding(true);
+    try {
+      const rawId = song.id.startsWith("custom-") ? song.id.slice(7) : song.id;
+      // Check if already exists
+      const { data: existing } = await supabase
+        .from("custom_songs")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("title", song.title)
+        .eq("artist", song.artist)
+        .maybeSingle();
+      if (existing) {
+        toast("Déjà dans votre bibliothèque");
+        return;
+      }
+      await supabase.from("custom_songs").insert({
+        user_id: user.id,
+        title: song.title,
+        artist: song.artist,
+        album: song.album || null,
+        duration: song.duration || 0,
+        cover_url: song.coverUrl || null,
+        stream_url: song.streamUrl || null,
+      });
+      toast.success("Ajouté à votre bibliothèque");
+      queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["library-counts"] });
+    } catch (e) {
+      console.error("Failed to add to library:", e);
+      toast.error("Erreur lors de l'ajout");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <motion.button
+      whileTap={{ scale: 1.3 }}
+      onClick={handleAdd}
+      disabled={adding}
+      className="p-1.5 mt-1 transition-transform"
+    >
+      <Plus className={`w-6 h-6 transition-colors duration-300 ${adding ? "text-primary animate-pulse" : "text-white/30"}`} />
+    </motion.button>
+  );
+}
 
 /* ── Shared liquid glass styles ── */
 const glassStyle = {
