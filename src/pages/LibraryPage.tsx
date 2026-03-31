@@ -24,7 +24,7 @@ import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
 
-type Tab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs" | null;
+type Tab = "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs" | null;
 type SortOption = "recent" | "alpha" | "artist" | "duration";
 
 const filterFullStreams = (songs: Song[]) =>
@@ -436,131 +436,72 @@ const LibraryPage = () => {
     enabled: (tab === "custom" || tab === "songs") && !!userId,
   });
 
-  // Albums query — derived from custom_songs + custom_albums, grouped by artist
-  const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
-    queryKey: ["library-albums", userId],
-    queryFn: async () => {
-      const { data: songs, error: songsErr } = await supabase
-        .from("custom_songs")
-        .select("album, artist, cover_url, year")
-        .eq("user_id", userId!)
-        .not("stream_url", "is", null)
-        .not("album", "is", null);
-      if (songsErr) throw songsErr;
-
-      const { data: explicit, error: expErr } = await supabase
-        .from("custom_albums")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (expErr) throw expErr;
-
-      const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
-      for (const row of songs || []) {
-        if (!row.album || row.album.trim() === "") continue;
-        const key = `${row.artist.toLowerCase()}|||${row.album.toLowerCase()}`;
-        const existing = albumMap.get(key);
-        if (existing) {
-          existing.count++;
-          if (!existing.cover_url && row.cover_url) existing.cover_url = row.cover_url;
-          if (!existing.year && row.year) existing.year = row.year;
-        } else {
-          albumMap.set(key, {
-            id: `derived-${key}`,
-            title: row.album,
-            artist: row.artist,
-            cover_url: row.cover_url || null,
-            year: row.year || null,
-            count: 1,
-          });
-        }
+  // Albums derived from liked songs
+  const libraryAlbums = useMemo(() => {
+    const songs = filterFullStreams(likedSongs);
+    const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
+    for (const s of songs) {
+      if (!s.album || s.album.trim() === "") continue;
+      const key = `${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`;
+      const existing = albumMap.get(key);
+      if (existing) {
+        existing.count++;
+        if (!existing.cover_url && s.coverUrl) existing.cover_url = s.coverUrl;
+      } else {
+        albumMap.set(key, { id: `derived-${key}`, title: s.album, artist: s.artist, cover_url: s.coverUrl || null, year: (s as any).year || null, count: 1 });
       }
+    }
+    return Array.from(albumMap.values()).sort((a, b) => {
+      const artistCmp = a.artist.localeCompare(b.artist, "fr");
+      if (artistCmp !== 0) return artistCmp;
+      if (a.year && b.year) return b.year - a.year;
+      if (a.year) return -1;
+      if (b.year) return 1;
+      return a.title.localeCompare(b.title, "fr");
+    });
+  }, [likedSongs]);
+  const loadingLibAlbums = false;
 
-      for (const album of explicit || []) {
-        const key = `${album.artist.toLowerCase()}|||${album.title.toLowerCase()}`;
-        albumMap.set(key, {
-          id: album.id,
-          title: album.title,
-          artist: album.artist,
-          cover_url: album.cover_url,
-          year: album.year,
-          count: albumMap.get(key)?.count || 0,
-        });
+  // Artists derived from liked songs
+  const libraryArtists = useMemo(() => {
+    const songs = filterFullStreams(likedSongs);
+    const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
+    for (const s of songs) {
+      const existing = artistMap.get(s.artist);
+      if (existing) {
+        existing.count++;
+        if (!existing.cover && s.coverUrl) existing.cover = s.coverUrl;
+        if (s.album && s.album.trim()) existing.albums.add(s.album.toLowerCase());
+      } else {
+        const albums = new Set<string>();
+        if (s.album && s.album.trim()) albums.add(s.album.toLowerCase());
+        artistMap.set(s.artist, { name: s.artist, cover: s.coverUrl || "", count: 1, albums });
       }
+    }
+    return Array.from(artistMap.values())
+      .map((a) => ({ name: a.name, cover: a.cover, count: a.count, albumCount: a.albums.size }))
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  }, [likedSongs]);
+  const loadingLibArtists = false;
 
-      // Sort: by artist name (A-Z), then by year (newest first), then by title
-      return Array.from(albumMap.values()).sort((a, b) => {
-        const artistCmp = a.artist.localeCompare(b.artist, "fr");
-        if (artistCmp !== 0) return artistCmp;
-        if (a.year && b.year) return b.year - a.year;
-        if (a.year) return -1;
-        if (b.year) return 1;
-        return a.title.localeCompare(b.title, "fr");
-      });
-    },
-    staleTime: 2 * 60 * 1000,
-    enabled: tab === "albums" && !!userId,
-  });
-
-  // Artists query (derived from custom_songs)
-  const { data: libraryArtists = [], isLoading: loadingLibArtists } = useQuery({
-    queryKey: ["library-artists", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("artist, album, cover_url")
-        .eq("user_id", userId!)
-        .not("stream_url", "is", null);
-      if (error) throw error;
-      const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
-      for (const row of data || []) {
-        const existing = artistMap.get(row.artist);
-        if (existing) {
-          existing.count++;
-          if (!existing.cover && row.cover_url) existing.cover = row.cover_url;
-          if (row.album && row.album.trim()) existing.albums.add(row.album.toLowerCase());
-        } else {
-          const albums = new Set<string>();
-          if (row.album && row.album.trim()) albums.add(row.album.toLowerCase());
-          artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1, albums });
-        }
-      }
-      return Array.from(artistMap.values())
-        .map((a) => ({ name: a.name, cover: a.cover, count: a.count, albumCount: a.albums.size }))
-        .sort((a, b) => a.name.localeCompare(b.name, "fr"));
-    },
-    staleTime: 2 * 60 * 1000,
-    enabled: tab === "artists" && !!userId,
-  });
-
-  // Lightweight summary counts for the main menu view
-  const { data: libraryCounts } = useQuery({
-    queryKey: ["library-counts", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("artist, album")
-        .eq("user_id", userId!)
-        .not("stream_url", "is", null);
-      if (error) throw error;
-      const rows = data || [];
-      const artists = new Set<string>();
-      const albums = new Set<string>();
-      for (const r of rows) {
-        if (r.artist) artists.add(r.artist.toLowerCase());
-        if (r.album && r.album.trim()) albums.add(`${r.artist.toLowerCase()}|||${r.album.toLowerCase()}`);
-      }
-      return { songs: rows.length, artists: artists.size, albums: albums.size };
-    },
-    staleTime: 2 * 60 * 1000,
-    enabled: tab === null && !!userId,
-  });
+  // Lightweight summary counts — based on liked songs (user's library)
+  const libraryCounts = useMemo(() => {
+    const songs = filterFullStreams(likedSongs);
+    const artists = new Set<string>();
+    const albums = new Set<string>();
+    for (const s of songs) {
+      if (s.artist) s.artist.split(",").forEach(a => { const n = a.trim().toLowerCase(); if (n) artists.add(n); });
+      if (s.album && s.album.trim()) albums.add(`${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`);
+    }
+    return { songs: songs.length, artists: artists.size, albums: albums.size };
+  }, [likedSongs]);
 
   // Check which songs in current view are cached offline
   useEffect(() => {
     const allSongs = [
       ...(tab === "recent" ? recentlyPlayed : []),
-      ...(tab === "liked" ? likedSongs : []),
-      ...(tab === "custom" || tab === "songs" ? customSongs : []),
+      ...(tab === "songs" ? likedSongs : []),
+      ...(tab === "custom" ? customSongs : []),
     ];
     if (allSongs.length === 0) { setLibraryCachedIds(new Set()); return; }
     Promise.all(
@@ -663,7 +604,7 @@ const LibraryPage = () => {
   }, [customSongs, customSort, customSearch]);
 
   const sortedAllSongs = useMemo(() => {
-    let arr = [...customSongs];
+    let arr = filterFullStreams([...likedSongs]);
     if (songsSearch.trim()) {
       const q = songsSearch.toLowerCase().trim();
       arr = arr.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q)));
@@ -674,7 +615,7 @@ const LibraryPage = () => {
       case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
       default: return arr;
     }
-  }, [customSongs, songsSort, songsSearch]);
+  }, [likedSongs, songsSort, songsSearch]);
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
@@ -793,16 +734,15 @@ const LibraryPage = () => {
   }, [recentlyPlayed]);
 
   // Dynamic header color from first song
-  const headerSong = tab === "recent" ? recentMusic[0] : tab === "liked" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
+  const headerSong = tab === "recent" ? recentMusic[0] : tab === "songs" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
   const headerColor = useDominantColor(headerSong?.coverUrl);
 
   const allTabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "recent", label: "Récents", icon: Clock },
-    { key: "liked", label: "Aimés", icon: Heart },
-    { key: "playlists", label: "Playlists", icon: ListMusic },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "albums", label: "Albums", icon: Disc3 },
     { key: "artists", label: "Artistes", icon: User },
+    { key: "playlists", label: "Playlists", icon: ListMusic },
+    { key: "recent", label: "Récents", icon: Clock },
     { key: "custom", label: "Gestion titres", icon: Music },
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
@@ -967,80 +907,6 @@ const LibraryPage = () => {
               </div>
             )}
 
-            {/* ── LIKED ── */}
-            {tab === "liked" && (
-              <div>
-                {filterFullStreams(likedSongs).length === 0 ? (
-                  <EmptyState icon={Heart} title="Pas encore de favoris" subtitle="Likez des morceaux pour les retrouver ici" />
-                ) : (
-                  <>
-                    <div className="relative mb-3">
-                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                       <input
-                        type="text"
-                        value={likedSearch}
-                        onChange={(e) => setLikedSearch(e.target.value)}
-                        placeholder="Rechercher dans mes titres..."
-                        className="w-full pl-9 pr-8 py-2.5 rounded-2xl text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
-                        style={{
-                          background: "linear-gradient(145deg, hsl(var(--card) / 0.45), hsl(var(--card) / 0.2))",
-                          backdropFilter: "blur(24px) saturate(1.6)",
-                          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                          border: "0.5px solid hsl(var(--foreground) / 0.06)",
-                          boxShadow: "0 2px 12px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.04)",
-                         }}
-                      />
-                      {likedSearch && (
-                        <button onClick={() => setLikedSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    <ActionButtons
-                      onPlayAll={() => { const full = filterFullStreams(likedSongs); setQueue(full); play(full[0]); }}
-                      onShuffle={() => { const s = filterFullStreams([...likedSongs]).sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
-                    />
-                    {(() => {
-                      const fullLiked = filterFullStreams(likedSongs);
-                      const filtered = likedSearch.trim()
-                        ? fullLiked.filter((s) => {
-                            const q = likedSearch.toLowerCase().trim();
-                            return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q));
-                          })
-                        : fullLiked;
-                      return (
-                        <>
-                          <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
-                            {filtered.length} titre{filtered.length > 1 ? "s" : ""}{likedSearch.trim() ? ` sur ${fullLiked.length}` : ""}
-                          </p>
-                          <div className="rounded-2xl overflow-hidden" style={{
-                            background: "linear-gradient(145deg, hsl(var(--card) / 0.35), hsl(var(--card) / 0.15))",
-                            backdropFilter: "blur(24px) saturate(1.6)",
-                            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                            border: "0.5px solid hsl(var(--foreground) / 0.05)",
-                            boxShadow: "0 4px 20px hsl(0 0% 0% / 0.1), inset 0 0.5px 0 hsl(var(--foreground) / 0.03)",
-                          }}>
-                            {filtered.map((s, i) => (
-                              <PremiumSongRow
-                                key={s.id}
-                                song={s}
-                                index={i}
-                                showIndex
-                                cached={libraryCachedIds.has(s.id)}
-                                isActive={currentSong?.id === s.id}
-                                isPlaying={currentSong?.id === s.id && isPlaying}
-                                onClick={() => { if (currentSong?.id === s.id) togglePlay(); else { setQueue(filtered); play(s); } }}
-                                onSwipeLeft={() => toggleLike(s)}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
-            )}
 
             {/* ── PLAYLISTS ── */}
             {tab === "playlists" && (
@@ -1633,11 +1499,11 @@ const LibraryPage = () => {
               </div>
             )}
 
-            {/* ── SONGS (all catalog) ── */}
+            {/* ── SONGS (user's library = liked songs) ── */}
             {tab === "songs" && (
               <div>
-                {customSongs.length === 0 ? (
-                  <EmptyState icon={Music} title="Commencez votre bibliothèque" subtitle="Recherchez et ajoutez vos morceaux préférés" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
+                {filterFullStreams(likedSongs).length === 0 ? (
+                  <EmptyState icon={Music} title="Votre bibliothèque est vide" subtitle="Recherchez des morceaux et ajoutez-les à votre collection" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
                 ) : (
                   <>
                     {/* Search */}
@@ -1670,7 +1536,7 @@ const LibraryPage = () => {
                     {/* Sort */}
                     <div className="relative flex items-center justify-between px-1 mb-3">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
-                        {sortedAllSongs.length} morceau{sortedAllSongs.length > 1 ? "x" : ""}{songsSearch.trim() ? ` sur ${customSongs.length}` : ""}
+                        {sortedAllSongs.length} morceau{sortedAllSongs.length > 1 ? "x" : ""}{songsSearch.trim() ? ` sur ${filterFullStreams(likedSongs).length}` : ""}
                       </p>
                       <button
                         onClick={() => setShowSongsSortMenu(!showSongsSortMenu)}
