@@ -461,19 +461,28 @@ function SongForm() {
     <div className="space-y-4">
       <input ref={fileRef} type="file" accept={ACCEPTED_AUDIO} multiple onChange={(e) => e.target.files && processFiles(e.target.files)} className="hidden" />
       
-      <motion.button
-        type="button"
+      <motion.div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         whileTap={{ scale: 0.98 }}
         onClick={() => fileRef.current?.click()}
-        disabled={processing}
-        className="w-full flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border-2 border-dashed border-border/50 hover:border-primary/40 bg-secondary/20 hover:bg-secondary/30 transition-all"
+        role="button"
+        tabIndex={0}
+        className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
+          dragOver
+            ? "border-primary bg-primary/10 scale-[1.02]"
+            : "border-border/50 hover:border-primary/40 bg-secondary/20 hover:bg-secondary/30"
+        } ${processing ? "pointer-events-none opacity-60" : ""}`}
       >
-        <div className="p-3 rounded-2xl bg-primary/10">
+        <div className={`p-3 rounded-2xl transition-colors ${dragOver ? "bg-primary/20" : "bg-primary/10"}`}>
           {processing ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary" />}
         </div>
-        <span className="text-sm font-medium text-foreground">{processing ? "Analyse en cours..." : "Sélectionner des fichiers audio"}</span>
-        <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Max 50 Mo</span>
-      </motion.button>
+        <span className="text-sm font-medium text-foreground">
+          {processing ? "Analyse en cours..." : dragOver ? "Déposez ici !" : "Sélectionner ou glisser des fichiers / dossiers"}
+        </span>
+        <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Fichiers ou dossiers • Max 50 Mo</span>
+      </motion.div>
 
       {songs.length > 0 && (
         <div className="space-y-2">
