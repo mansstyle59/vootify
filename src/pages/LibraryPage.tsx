@@ -503,7 +503,7 @@ const LibraryPage = () => {
       ...(tab === "songs" ? likedSongs : []),
       ...(tab === "custom" ? customSongs : []),
     ];
-    if (allSongs.length === 0) { setLibraryCachedIds(new Set()); return; }
+    if (allSongs.length === 0) { setLibraryCachedIds((prev) => prev.size === 0 ? prev : new Set()); return; }
     Promise.all(
       allSongs.map((s) => offlineCache.isCached(s.id).then((c) => (c ? s.id : null)))
     ).then((ids) => setLibraryCachedIds(new Set(ids.filter(Boolean) as string[])));
