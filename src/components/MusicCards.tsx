@@ -126,17 +126,6 @@ export const SongCard = memo(function SongCard({ song, index, showIndex }: SongC
 
         {/* Compact actions */}
         <div className="flex items-center gap-0 flex-shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLike(song);
-              if (navigator.vibrate) navigator.vibrate(8);
-            }}
-            className="p-1.5 rounded-full transition-transform active:scale-90"
-          >
-            <Heart className={`w-3.5 h-3.5 transition-all ${liked ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
-          </button>
-
           {song.streamUrl && song.duration > 0 && (
             <button
               onClick={(e) => {
