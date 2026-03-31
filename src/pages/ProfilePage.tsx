@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { offlineCache } from "@/lib/offlineCache";
+import { isCryptoAvailable, isEncryptionEnabled, setEncryptionEnabled } from "@/lib/cryptoCache";
 import { useSubscription } from "@/hooks/useSubscription";
 import { normalizePlan, getPlanConfig } from "@/lib/subscriptionPermissions";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi
+  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi, Lock, LockOpen
 } from "lucide-react";
 import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
@@ -559,6 +560,25 @@ const ProfilePage = () => {
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               <span className="text-[10px] font-semibold text-primary">{pendingActions} action{pendingActions > 1 ? "s" : ""} en attente</span>
             </div>
+          )}
+
+          {/* Encryption toggle */}
+          {isCryptoAvailable() && (
+            <button
+              onClick={() => {
+                const next = !isEncryptionEnabled();
+                setEncryptionEnabled(next);
+                toast.success(next ? "Chiffrement AES-256 activé" : "Chiffrement désactivé");
+              }}
+              className="w-full py-2.5 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
+              style={{
+                background: isEncryptionEnabled() ? "hsl(var(--primary) / 0.12)" : "hsl(var(--foreground) / 0.04)",
+                color: isEncryptionEnabled() ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+              }}
+            >
+              {isEncryptionEnabled() ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
+              {isEncryptionEnabled() ? "Chiffrement AES-256 · Activé" : "Activer le chiffrement du cache"}
+            </button>
           )}
 
           {/* Download all caches button */}
