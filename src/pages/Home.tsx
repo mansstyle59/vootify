@@ -28,8 +28,8 @@ import { useUserHomeLayout } from "@/hooks/useUserHomeLayout";
 import { HomeSkeleton } from "@/components/home/HomeSkeleton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
 import { SafeImage } from "@/components/SafeImage";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
