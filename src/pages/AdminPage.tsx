@@ -3874,7 +3874,7 @@ function SubscriptionsTab() {
   const chartData = useMemo(() => {
     if (!viewUserId) return [];
     const now = new Date();
-    let days = period === "week" ? 7 : period === "month" ? 30 : 365;
+    const days = period === "week" ? 7 : period === "month" ? 30 : 365;
     const cutoff = new Date(now);
     cutoff.setDate(cutoff.getDate() - days);
 

@@ -54,7 +54,7 @@ function detectRadioFranceStation(url: string): { name: string; stationId: numbe
 
 // ─── ICY metadata cleanup ───
 function cleanIcyTitle(raw: string): { artist: string; title: string } {
-  let cleaned = raw
+  const cleaned = raw
     .replace(/\s*§\d+$/g, "")
     .replace(/\s*\|.*$/g, "")
     .replace(/\s*\[live\]\s*/gi, "")
