@@ -4354,7 +4354,7 @@ function SharedPlaylistsTab() {
               className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border"
             >
               {p.cover_url ? (
-                <img src={p.cover_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                <img src={p.cover_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" referrerPolicy="no-referrer" />
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <ListMusic className="w-5 h-5 text-primary/40" />
