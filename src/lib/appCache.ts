@@ -395,59 +395,65 @@ export function markFridayRefreshed() {
 /**
  * Silent background refresh — called on subsequent opens.
  * Re-fetches data so the SW gets fresh copies without blocking UI.
+ * Returns a promise that resolves when done. Accepts optional progress callback.
  */
-export function silentCacheRefresh(userId: string) {
-  const run = async () => {
-    const base = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1`;
-    const session = (await supabase.auth.getSession()).data.session;
-    const headers: Record<string, string> = {
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${session?.access_token || ""}`,
-    };
-
-    // Core data
-    await Promise.allSettled([
-      fetch(`${base}/liked_songs?user_id=eq.${userId}&order=created_at.desc&limit=200`, { headers }),
-      fetch(`${base}/playlists?user_id=eq.${userId}&order=created_at.desc`, { headers }),
-      fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers }),
-      fetch(`${base}/home_config?limit=1`, { headers }),
-      fetch(`${base}/user_audio_settings?user_id=eq.${userId}&limit=1`, { headers }),
-      fetch(`${base}/friday_releases?order=position.asc&limit=25`, { headers }),
-      // Artist, album & catalog pages
-      fetch(`${base}/custom_albums?order=created_at.desc`, { headers }),
-      fetch(`${base}/custom_songs?select=id,title,artist,album,cover_url,stream_url,duration,genre,year&order=artist.asc`, { headers }),
-      fetch(`${base}/artist_images?select=artist_name,image_url`, { headers }),
-    ]);
-
-    // Refresh playlist songs in background
-    try {
-      const plRes = await fetch(`${base}/playlists?user_id=eq.${userId}&select=id`, { headers });
-      const pls = await plRes.json().catch(() => []);
-      if (Array.isArray(pls) && pls.length > 0) {
-        await Promise.allSettled(
-          pls.map((p: any) =>
-            fetch(`${base}/playlist_songs?playlist_id=eq.${p.id}&order=position.asc`, { headers })
-          )
-        );
-      }
-    } catch {}
-
-    // Refresh Friday covers if stale
-    if (isFridayDataStale()) {
-      await preCacheFridayCovers();
-      markFridayRefreshed();
-    }
-
-    // Update version if needed
-    if (needsCacheUpdate()) {
-      await preCacheCovers(userId);
-      markCacheReady();
-    }
+export async function silentCacheRefresh(
+  userId: string,
+  onPageProgress?: (done: number, total: number) => void,
+) {
+  const base = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1`;
+  const session = (await supabase.auth.getSession()).data.session;
+  const headers: Record<string, string> = {
+    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    Authorization: `Bearer ${session?.access_token || ""}`,
   };
 
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(() => run(), { timeout: 10000 });
-  } else {
-    setTimeout(run, 4000);
+  const fetches = [
+    () => fetch(`${base}/liked_songs?user_id=eq.${userId}&order=created_at.desc&limit=200`, { headers }),
+    () => fetch(`${base}/playlists?user_id=eq.${userId}&order=created_at.desc`, { headers }),
+    () => fetch(`${base}/recently_played?user_id=eq.${userId}&order=played_at.desc&limit=30`, { headers }),
+    () => fetch(`${base}/home_config?limit=1`, { headers }),
+    () => fetch(`${base}/user_audio_settings?user_id=eq.${userId}&limit=1`, { headers }),
+    () => fetch(`${base}/friday_releases?order=position.asc&limit=25`, { headers }),
+    () => fetch(`${base}/custom_albums?order=created_at.desc`, { headers }),
+    () => fetch(`${base}/custom_songs?select=id,title,artist,album,cover_url,stream_url,duration,genre,year&order=artist.asc`, { headers }),
+    () => fetch(`${base}/artist_images?select=artist_name,image_url`, { headers }),
+  ];
+
+  const total = fetches.length;
+  let done = 0;
+  onPageProgress?.(0, total);
+
+  await Promise.allSettled(
+    fetches.map(async (fn) => {
+      await fn().catch(() => {});
+      done++;
+      onPageProgress?.(done, total);
+    })
+  );
+
+  // Refresh playlist songs
+  try {
+    const plRes = await fetch(`${base}/playlists?user_id=eq.${userId}&select=id`, { headers });
+    const pls = await plRes.json().catch(() => []);
+    if (Array.isArray(pls) && pls.length > 0) {
+      await Promise.allSettled(
+        pls.map((p: any) =>
+          fetch(`${base}/playlist_songs?playlist_id=eq.${p.id}&order=position.asc`, { headers })
+        )
+      );
+    }
+  } catch {}
+
+  // Refresh Friday covers if stale
+  if (isFridayDataStale()) {
+    await preCacheFridayCovers();
+    markFridayRefreshed();
+  }
+
+  // Update version if needed
+  if (needsCacheUpdate()) {
+    await preCacheCovers(userId);
+    markCacheReady();
   }
 }
