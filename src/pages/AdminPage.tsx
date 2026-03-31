@@ -2304,24 +2304,32 @@ function SongPickerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-lg max-h-[80vh] rounded-2xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-lg max-h-[80vh] rounded-t-2xl sm:rounded-2xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-foreground">Choisir les morceaux</h3>
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Music className="w-4 h-4 text-primary" />
+              Choisir les morceaux
+            </h3>
             <p className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+              OK
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground active:scale-90 transition-transform" aria-label="Fermer">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Mode toggle */}
