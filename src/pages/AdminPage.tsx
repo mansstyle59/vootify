@@ -999,26 +999,31 @@ function SongsTab() {
   useEffect(() => { loadSongs(); }, []);
 
   const handleDelete = async (id: string) => {
-    await supabase.from("custom_songs").delete().eq("id", id);
+    // Optimistic: remove from UI instantly
     setSongs((prev) => prev.filter((s) => s.id !== id));
     toast.success("Morceau supprimé");
+    supabase.from("custom_songs").delete().eq("id", id).then(({ error }) => {
+      if (error) { console.error("Delete failed:", error); loadSongs(); toast.error("Erreur lors de la suppression"); }
+    });
   };
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     const count = selectedIds.size;
     if (!confirm(`Supprimer ${count} morceau${count > 1 ? "x" : ""} ? Cette action est irréversible.`)) return;
-    setDeleting(true);
-    const ids = Array.from(selectedIds);
-    // Delete in batches of 50
-    for (let i = 0; i < ids.length; i += 50) {
-      const batch = ids.slice(i, i + 50);
-      await supabase.from("custom_songs").delete().in("id", batch);
-    }
+    // Optimistic: remove all selected from UI instantly
+    const idsToDelete = Array.from(selectedIds);
     setSongs((prev) => prev.filter((s) => !selectedIds.has(s.id)));
     setSelectedIds(new Set());
-    setDeleting(false);
     toast.success(`${count} morceau${count > 1 ? "x" : ""} supprimé${count > 1 ? "s" : ""}`);
+    // Delete in background batches
+    setDeleting(true);
+    for (let i = 0; i < idsToDelete.length; i += 50) {
+      const batch = idsToDelete.slice(i, i + 50);
+      const { error } = await supabase.from("custom_songs").delete().in("id", batch);
+      if (error) { console.error("Bulk delete batch error:", error); }
+    }
+    setDeleting(false);
   };
 
   const toggleSelect = (id: string) => {
