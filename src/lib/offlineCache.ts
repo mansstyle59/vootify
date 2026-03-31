@@ -40,9 +40,9 @@ function shouldEncrypt(): boolean {
   return isCryptoAvailable() && isEncryptionEnabled();
 }
 
-/** Get seed for encryption */
+/** Get seed for encryption (device ID - always available) */
 function getSeed(): string {
-  return getEffectiveUserId();
+  return getDeviceId();
 }
 
 /** Encrypt a blob if encryption is enabled */
