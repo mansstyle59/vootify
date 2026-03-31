@@ -489,11 +489,12 @@ const LibraryPage = () => {
 
   // Artists query (derived from custom_songs)
   const { data: libraryArtists = [], isLoading: loadingLibArtists } = useQuery({
-    queryKey: ["library-artists"],
+    queryKey: ["library-artists", userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custom_songs")
         .select("artist, album, cover_url")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       if (error) throw error;
       const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
