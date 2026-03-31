@@ -238,6 +238,9 @@ export async function preCacheCovers(_userId: string, onCoverProgress?: CoverPro
         });
       }
 
+      downloaded += batch.length;
+      onCoverProgress?.(downloaded, missing.length);
+
       // Yield to main thread between batches
       if (i + BATCH < missing.length) {
         await new Promise((r) => setTimeout(r, 100));
