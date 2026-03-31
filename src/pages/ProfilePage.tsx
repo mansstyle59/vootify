@@ -113,6 +113,7 @@ const ProfilePage = () => {
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pendingActions, setPendingActions] = useState(getPendingCount());
+  const storageRefreshKey = useRef(0);
 
   const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
   const [tracksPlayed, setTracksPlayed] = useState(0);
