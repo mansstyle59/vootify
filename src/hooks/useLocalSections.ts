@@ -127,7 +127,7 @@ export function useRecommended(limit = 20, seed?: number) {
         );
         const likedIds = new Set(likedSongs.map((s) => s.id));
 
-        const day = new Date().getDate();
+        
         const scored = mapped
           .filter((s) => !likedIds.has(s.id))
           .map((s) => {
