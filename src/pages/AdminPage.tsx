@@ -4487,8 +4487,6 @@ function LibraryConfigTab() {
   const { data: config, isLoading } = useAppSettings<LibraryTabConfig[]>("library_tabs", DEFAULT_LIBRARY_TABS);
   const saveSetting = useSaveAppSetting();
   const [local, setLocal] = useState<LibraryTabConfig[]>(DEFAULT_LIBRARY_TABS);
-  const dragItem = useRef<number | null>(null);
-  const dragOver = useRef<number | null>(null);
 
   useEffect(() => {
     if (config) {
