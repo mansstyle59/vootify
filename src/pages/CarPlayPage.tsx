@@ -54,6 +54,22 @@ const CarPlayPage = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
 
+  // Profile for greeting
+  const { data: profile } = useQuery({
+    queryKey: ["carplay-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const timeCtx = getTimeContext();
+  const greeting = getGreeting(profile?.display_name);
+  const TimeIcon = timeCtx === "morning" ? Sun : timeCtx === "night" ? Moon : Sunset;
+
   const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = useRadioMetadata(
     isLiveRadio ? currentSong?.streamUrl : undefined,
