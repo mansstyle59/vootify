@@ -621,7 +621,7 @@ const HomePage = () => {
 
           const data = builtinDataMap[section.id];
           if (!data) return null;
-          return <div key={section.id}>{renderSection(section.title, data.songs, data.loading)}</div>;
+          return <div key={section.id}>{renderSection(section.title, data.songs, data.loading, section.id)}</div>;
         })}
       </div>
 
