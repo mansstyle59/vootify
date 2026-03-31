@@ -61,7 +61,7 @@ const CoverImagePicker = ({ value, onChange, className = "" }: CoverImagePickerP
 
       {value && (
         <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-secondary group">
-          <img src={value} alt="Cover" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <img src={value} alt="Cover" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           <button
             type="button"
             onClick={() => onChange("")}
