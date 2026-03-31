@@ -77,6 +77,7 @@ const SearchPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const { data: searchSections } = useSearchSections();
+  const { data: suggestedSongs } = useRecommended(10);
 
   interface DeezerNewRelease {
     id: number;
