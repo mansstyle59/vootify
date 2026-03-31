@@ -124,6 +124,7 @@ const AdminPage = () => {
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
         {tab === "notifs" && <NotificationsTab />}
+        {tab === "search_config" && <SearchConfigTab />}
       </div>
       )}
     </div>
