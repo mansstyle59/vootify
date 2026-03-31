@@ -1524,12 +1524,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
-                  <motion.button whileTap={{ scale: 1.4 }} onClick={() => { toggleLike(currentSong); if (navigator.vibrate) navigator.vibrate(10); }} className="p-1.5 mt-1 transition-transform">
-                    <motion.div animate={liked ? { scale: [1, 1.4, 1] } : {}} transition={{ duration: 0.35 }}>
-                      <Heart className={`w-7 h-7 transition-colors duration-300 ${liked ? "fill-primary text-primary drop-shadow-[0_0_16px_hsl(var(--primary)/0.6)]" : "text-white/30"}`} />
-                    </motion.div>
-                  </motion.button>
+                <div className="flex items-center">
                   <AddToLibraryButton song={currentSong} />
                 </div>
               </motion.div>
