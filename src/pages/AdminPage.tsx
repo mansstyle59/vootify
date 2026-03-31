@@ -2208,7 +2208,9 @@ function SongPickerModal({
 
   /** Fetch tracks from a Deezer link */
   const fetchDeezer = async () => {
+    if (deezerLoading) return;
     let urlToUse = deezerUrl.trim();
+    if (!urlToUse) return;
 
     // Resolve short links first
     if (isDeezerShortLink(urlToUse)) {
