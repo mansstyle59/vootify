@@ -379,7 +379,6 @@ const LibraryPage = () => {
         const { data, error } = await supabase
           .from("custom_songs")
           .select("*")
-          .eq("user_id", userId!)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE - 1);
         if (error) throw error;
