@@ -207,7 +207,10 @@ function ActionButtons({ onPlayAll, onShuffle, extra }: {
 }
 
 /* ── Empty State ── */
-function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle: string }) {
+function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }: {
+  icon: React.ElementType; title: string; subtitle: string;
+  actionLabel?: string; onAction?: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
       <div
@@ -224,6 +227,18 @@ function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; 
       </div>
       <p className="text-foreground font-bold text-[14px]">{title}</p>
       <p className="text-[11px] text-muted-foreground/45 mt-1 max-w-[220px] leading-relaxed">{subtitle}</p>
+      {actionLabel && onAction && (
+        <button
+          onClick={onAction}
+          className="mt-5 px-5 py-2.5 rounded-full text-[13px] font-semibold text-primary-foreground transition-all duration-150 active:scale-95"
+          style={{
+            background: "hsl(var(--primary))",
+            boxShadow: "0 4px 14px hsl(var(--primary) / 0.35)",
+          }}
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   );
 }
