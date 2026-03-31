@@ -77,7 +77,15 @@ const SearchPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const { data: searchSections } = useSearchSections();
-  const { data: suggestedSongs } = useRecommended(10);
+  const [suggestionSeed, setSuggestionSeed] = useState(() => Date.now());
+  const { data: suggestedSongs } = useRecommended(10, suggestionSeed);
+  const [refreshingSuggestions, setRefreshingSuggestions] = useState(false);
+
+  const handleRefreshSuggestions = useCallback(() => {
+    setRefreshingSuggestions(true);
+    setSuggestionSeed(Date.now());
+    setTimeout(() => setRefreshingSuggestions(false), 600);
+  }, []);
 
   interface DeezerNewRelease {
     id: number;
@@ -640,7 +648,17 @@ const SearchPage = () => {
             {/* ── Suggestions ── */}
             {searchSections?.suggestions && suggestedSongs && suggestedSongs.length > 0 && (
               <section>
-                <SectionHeader title="Suggestions pour vous" />
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-[17px] font-extrabold text-foreground tracking-tight">Suggestions pour vous</h2>
+                  <button
+                    onClick={handleRefreshSuggestions}
+                    disabled={refreshingSuggestions}
+                    className="flex items-center gap-1 text-[12px] font-semibold text-primary active:opacity-70 transition-opacity disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${refreshingSuggestions ? "animate-spin" : ""}`} />
+                    Rafraîchir
+                  </button>
+                </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {suggestedSongs.slice(0, 10).map((song) => {
                     const isCurrent = currentSong?.id === song.id;

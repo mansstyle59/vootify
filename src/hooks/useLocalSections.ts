@@ -100,12 +100,13 @@ export function useMostPlayed(limit = 20) {
 }
 
 /** Recommended songs based on liked artists or random from catalog */
-export function useRecommended(limit = 20) {
+export function useRecommended(limit = 20, seed?: number) {
   const userId = usePlayerStore((s) => s.userId);
   const likedSongs = usePlayerStore((s) => s.likedSongs);
+  const effectiveSeed = seed ?? new Date().getDate();
 
   return useQuery({
-    queryKey: ["local-recommended", userId, likedSongs.length, limit],
+    queryKey: ["local-recommended", userId, likedSongs.length, limit, effectiveSeed],
     queryFn: async () => {
       // Fetch a reasonable sample instead of ALL songs
       const sampleSize = Math.min(limit * 5, 200);
@@ -126,13 +127,13 @@ export function useRecommended(limit = 20) {
         );
         const likedIds = new Set(likedSongs.map((s) => s.id));
 
-        const day = new Date().getDate();
+        
         const scored = mapped
           .filter((s) => !likedIds.has(s.id))
           .map((s) => {
             const artists = s.artist.toLowerCase().split(",").map((a) => a.trim());
             const artistMatch = artists.some((a) => likedArtists.has(a));
-            const hash = (s.id.charCodeAt(0) * 31 + day) % 100;
+            const hash = (s.id.charCodeAt(0) * 31 + effectiveSeed) % 100;
             return { song: s, score: (artistMatch ? 100 : 0) + hash };
           })
           .sort((a, b) => b.score - a.score);
@@ -141,10 +142,9 @@ export function useRecommended(limit = 20) {
       }
 
       // No liked songs: shuffle catalog
-      const day = new Date().getDate();
       const shuffled = [...mapped].sort((a, b) => {
-        const ha = (a.id.charCodeAt(0) * 31 + day) % 100;
-        const hb = (b.id.charCodeAt(0) * 31 + day) % 100;
+        const ha = (a.id.charCodeAt(0) * 31 + effectiveSeed) % 100;
+        const hb = (b.id.charCodeAt(0) * 31 + effectiveSeed) % 100;
         return ha - hb;
       });
 
