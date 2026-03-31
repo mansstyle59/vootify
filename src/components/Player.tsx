@@ -1388,7 +1388,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                               <GripVertical className="w-4 h-4 text-white/15 shrink-0 touch-none" />
                               <span className="w-4 text-center text-[11px] text-white/25 tabular-nums font-medium">{i + 1}</span>
                               {song.coverUrl ? (
-                                <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" />
+                                <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" referrerPolicy="no-referrer" />
                               ) : (
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                   <Music className="w-4 h-4 text-primary/40" />
