@@ -611,11 +611,8 @@ const ProfilePage = () => {
                   const { silentCacheRefresh: refresh } = await import("@/lib/appCache");
                   refresh(user.id);
                 }
-                // Refresh stats
-                const allCached = await offlineCache.getAllCached();
-                setOfflineCount(allCached.length);
-                const newSize = await offlineCache.getCacheSize();
-                setOfflineCacheSize(newSize);
+                // Refresh all stats instantly
+                await refreshStorageStats();
                 toast.success("Cache, pochettes et pages téléchargés !");
               } catch (e) {
                 console.error("Cache all failed:", e);
