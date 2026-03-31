@@ -385,6 +385,7 @@ function SongForm() {
 
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
+    setAnalyzeProgress({ done: 0, total: 0 });
     const newCount = entries.filter(e => !e.duplicateOf).length;
     const dupCount2 = entries.filter(e => !!e.duplicateOf).length;
     if (newCount > 0) toast.success(`${newCount} nouveau${newCount > 1 ? "x" : ""} fichier${newCount > 1 ? "s" : ""} prêt${newCount > 1 ? "s" : ""}`);
