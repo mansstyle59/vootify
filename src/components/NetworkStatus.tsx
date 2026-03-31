@@ -1,14 +1,44 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { WifiOff, Wifi, Check, Loader2 } from "lucide-react";
-import { getPendingCount } from "@/lib/offlineQueue";
+import { WifiOff, Wifi, Check, Loader2, AlertTriangle } from "lucide-react";
+import { getPendingCount, getPendingSummary } from "@/lib/offlineQueue";
 import { toast } from "sonner";
+
+const ACTION_LABELS: Record<string, string> = {
+  like: "favoris",
+  unlike: "favoris",
+  play: "historique",
+  playlist_add: "playlist",
+  playlist_remove: "playlist",
+  playlist_create: "playlist",
+  playlist_rename: "playlist",
+  search_history: "recherche",
+  profile_update: "profil",
+};
+
+function formatPendingSummary(): string {
+  const summary = getPendingSummary();
+  const parts: string[] = [];
+  const grouped: Record<string, number> = {};
+  
+  for (const [type, count] of Object.entries(summary)) {
+    const label = ACTION_LABELS[type] || type;
+    grouped[label] = (grouped[label] || 0) + count;
+  }
+  
+  for (const [label, count] of Object.entries(grouped)) {
+    parts.push(`${count} ${label}`);
+  }
+  
+  return parts.join(", ");
+}
 
 export function NetworkStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showBanner, setShowBanner] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ synced: number; failed: number } | null>(null);
 
   useEffect(() => {
     const goOnline = () => {
@@ -16,31 +46,48 @@ export function NetworkStatus() {
       if (wasOffline) {
         setShowBanner(true);
         setSyncing(true);
-        // Banner will be updated by sync-done event
+        setSyncResult(null);
       }
     };
     const goOffline = () => {
       setIsOnline(false);
       setWasOffline(true);
       setShowBanner(true);
+      setSyncResult(null);
     };
 
     const onSyncDone = (e: Event) => {
-      const count = (e as CustomEvent).detail?.count || 0;
+      const detail = (e as CustomEvent).detail || {};
+      const { synced = 0, failed = 0 } = detail;
       setSyncing(false);
-      if (count > 0) {
-        toast.success(`${count} action${count > 1 ? "s" : ""} synchronisée${count > 1 ? "s" : ""}`);
+      setSyncResult({ synced, failed });
+
+      if (synced > 0 && failed === 0) {
+        toast.success(`${synced} action${synced > 1 ? "s" : ""} synchronisée${synced > 1 ? "s" : ""}`, {
+          description: "Toutes vos modifications hors-ligne sont à jour",
+          duration: 3000,
+        });
+      } else if (synced > 0 && failed > 0) {
+        toast.warning(`${synced} synchronisée${synced > 1 ? "s" : ""}, ${failed} échouée${failed > 1 ? "s" : ""}`, {
+          description: "Les actions échouées seront réessayées",
+          duration: 4000,
+        });
+      } else if (failed > 0) {
+        toast.error(`${failed} action${failed > 1 ? "s" : ""} non synchronisée${failed > 1 ? "s" : ""}`, {
+          description: "Nouvelle tentative automatique",
+          duration: 4000,
+        });
       }
-      setTimeout(() => setShowBanner(false), 2500);
+
+      setTimeout(() => setShowBanner(false), synced > 0 ? 2500 : 4000);
     };
 
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
     window.addEventListener("offline-sync-done", onSyncDone);
 
-    // Also hide banner after timeout if no sync event fires
     let timer: ReturnType<typeof setTimeout>;
-    if (showBanner && isOnline) {
+    if (showBanner && isOnline && !syncing) {
       timer = setTimeout(() => {
         setSyncing(false);
         setShowBanner(false);
@@ -53,9 +100,10 @@ export function NetworkStatus() {
       window.removeEventListener("offline-sync-done", onSyncDone);
       clearTimeout(timer);
     };
-  }, [wasOffline, showBanner, isOnline]);
+  }, [wasOffline, showBanner, isOnline, syncing]);
 
   const pending = !isOnline ? getPendingCount() : 0;
+  const pendingDetail = !isOnline && pending > 0 ? formatPendingSummary() : "";
 
   return (
     <AnimatePresence>
@@ -69,7 +117,9 @@ export function NetworkStatus() {
           style={{
             paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.625rem)",
             background: isOnline
-              ? "hsl(var(--primary))"
+              ? syncResult?.failed
+                ? "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(40 100% 50%) 100%)"
+                : "hsl(var(--primary))"
               : "linear-gradient(135deg, hsl(var(--destructive)) 0%, hsl(var(--destructive) / 0.9) 100%)",
             color: isOnline
               ? "hsl(var(--primary-foreground))"
@@ -80,10 +130,18 @@ export function NetworkStatus() {
             <>
               {syncing ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : syncResult?.failed ? (
+                <AlertTriangle className="w-4 h-4" />
               ) : (
                 <Check className="w-4 h-4" />
               )}
-              <span>{syncing ? "Synchronisation…" : "Connexion rétablie"}</span>
+              <span>
+                {syncing
+                  ? "Synchronisation en cours…"
+                  : syncResult?.failed
+                  ? `${syncResult.synced} sync · ${syncResult.failed} en attente`
+                  : "Connexion rétablie"}
+              </span>
             </>
           ) : (
             <>
@@ -91,7 +149,7 @@ export function NetworkStatus() {
               <span>Mode hors-ligne</span>
               {pending > 0 && (
                 <span className="text-xs opacity-80 ml-1">
-                  · {pending} action{pending > 1 ? "s" : ""} en attente
+                  · {pendingDetail || `${pending} en attente`}
                 </span>
               )}
             </>
