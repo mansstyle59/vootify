@@ -872,6 +872,22 @@ const LibraryPage = () => {
       {/* Apple Music style menu */}
       {tab === null && (
         <div className="px-5 md:px-9 mt-1">
+          {/* Summary counters */}
+          {libraryCounts && (libraryCounts.songs > 0 || libraryCounts.albums > 0 || libraryCounts.artists > 0) && (
+            <div className="flex items-center gap-4 mb-4 px-1">
+              {[
+                { count: libraryCounts.songs, label: "morceau", plural: "morceaux", icon: Music },
+                { count: libraryCounts.albums, label: "album", plural: "albums", icon: Disc3 },
+                { count: libraryCounts.artists, label: "artiste", plural: "artistes", icon: User },
+              ].map(({ count, label, plural, icon: Icon }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <Icon className="w-3.5 h-3.5 text-primary/70" />
+                  <span className="text-[12px] font-semibold text-foreground/80">{count}</span>
+                  <span className="text-[11px] text-muted-foreground/60">{count > 1 ? plural : label}</span>
+                </div>
+              ))}
+            </div>
+          )}
           {visibleTabs.map(({ key, label, icon }) => (
             <MenuRow key={key} icon={icon} label={label} onClick={() => setTab(key)} />
           ))}
