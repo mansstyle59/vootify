@@ -510,8 +510,8 @@ const ProfilePage = () => {
                   if (reg) await reg.update();
                   if (user) silentCacheRefresh(user.id);
                   const result = await flushQueue();
-                  setPendingActions(getPendingCount());
                   await queryClient.invalidateQueries();
+                  await refreshStorageStats();
                   toast.success(result.synced > 0 ? `${result.synced} action(s) synchronisée(s)` : "Données à jour !");
                 } catch { toast.error("Erreur"); }
                 finally { setIsRefreshing(false); }
