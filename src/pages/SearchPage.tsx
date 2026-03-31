@@ -637,6 +637,69 @@ const SearchPage = () => {
               </section>
             )}
 
+            {/* ── Suggestions ── */}
+            {searchSections?.suggestions && suggestedSongs && suggestedSongs.length > 0 && (
+              <section>
+                <SectionHeader title="Suggestions pour vous" />
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                  {suggestedSongs.slice(0, 10).map((song) => {
+                    const isCurrent = currentSong?.id === song.id;
+                    const added = isLiked(song.id);
+                    return (
+                      <button
+                        key={song.id}
+                        onClick={() => {
+                          play(song);
+                          setQueue(suggestedSongs, suggestedSongs.indexOf(song));
+                        }}
+                        className="flex-shrink-0 w-[130px] group text-left active:scale-[0.96] transition-transform"
+                      >
+                        <div
+                          className="relative w-[130px] h-[130px] rounded-2xl overflow-hidden mb-2"
+                          style={{
+                            boxShadow: "0 6px 24px hsl(0 0% 0% / 0.25)",
+                          }}
+                        >
+                          <LazyImage
+                            src={song.coverUrl}
+                            alt={song.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {isCurrent && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <Headphones className="w-6 h-6 text-white" />
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!added) {
+                                toggleLike(song);
+                                toast.success("Ajouté à la bibliothèque");
+                              }
+                            }}
+                            className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-90"
+                            style={{
+                              background: added ? "hsl(var(--primary))" : "hsl(0 0% 0% / 0.5)",
+                              backdropFilter: "blur(12px)",
+                            }}
+                          >
+                            {added ? (
+                              <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                            ) : (
+                              <Plus className="w-3.5 h-3.5 text-white" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-[12px] font-bold text-foreground truncate leading-tight">{song.title}</p>
+                        <p className="text-[10px] text-muted-foreground/60 truncate">{song.artist}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* ── Genre Cards (premium glass) ── */}
             {searchSections?.genres && genreCards.length > 0 && (
               <section>
