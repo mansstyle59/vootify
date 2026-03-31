@@ -418,7 +418,7 @@ const LibraryPage = () => {
       return songs as Song[];
     },
     staleTime: 60 * 1000,
-    enabled: tab === "custom" || tab === "songs",
+    enabled: (tab === "custom" || tab === "songs") && !!userId,
   });
 
   // Albums query — derived from custom_songs + custom_albums, grouped by artist
