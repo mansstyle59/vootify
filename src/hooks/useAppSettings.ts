@@ -97,3 +97,21 @@ export const DEFAULT_SEARCH_SECTIONS: SearchSectionsConfig = {
 export function useSearchSections() {
   return useAppSettings<SearchSectionsConfig>("search_sections", DEFAULT_SEARCH_SECTIONS);
 }
+
+export interface LibraryTabConfig {
+  key: string;
+  visible: boolean;
+}
+
+export const DEFAULT_LIBRARY_TABS: LibraryTabConfig[] = [
+  { key: "songs", visible: true },
+  { key: "recent", visible: true },
+  { key: "albums", visible: true },
+  { key: "artists", visible: true },
+  { key: "playlists", visible: true },
+  { key: "downloads", visible: true },
+];
+
+export function useLibraryTabsConfig() {
+  return useAppSettings<LibraryTabConfig[]>("library_tabs", DEFAULT_LIBRARY_TABS);
+}
