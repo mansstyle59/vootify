@@ -24,7 +24,7 @@ const AlbumDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, toggleLike, isLiked } = usePlayerStore();
   const heroRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

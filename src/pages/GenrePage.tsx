@@ -14,7 +14,7 @@ const GenrePage = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const genreName = decodeURIComponent(name || "");
-  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, toggleLike, isLiked } = usePlayerStore();
   const { data: allSongs, isLoading } = useAllLocalSongs();
   const [searchQuery, setSearchQuery] = useState("");
 
