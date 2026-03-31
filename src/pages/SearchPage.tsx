@@ -78,6 +78,8 @@ const SearchPage = () => {
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const { data: searchSections } = useSearchSections();
   const { data: suggestedSongs } = useRecommended(10);
+  const queryClient = useRef(usePlayerStore.getState()).current; // just for type, we use react-query's
+  const [refreshingSuggestions, setRefreshingSuggestions] = useState(false);
 
   interface DeezerNewRelease {
     id: number;
