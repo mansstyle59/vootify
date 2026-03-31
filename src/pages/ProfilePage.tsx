@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { offlineCache } from "@/lib/offlineCache";
 import { isCryptoAvailable, isEncryptionEnabled, setEncryptionEnabled } from "@/lib/cryptoCache";
 import { useSubscription } from "@/hooks/useSubscription";
