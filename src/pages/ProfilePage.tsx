@@ -108,8 +108,11 @@ const ProfilePage = () => {
   const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
   const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
+  const [isCachingCovers, setIsCachingCovers] = useState(false);
+  const [isCachingPages, setIsCachingPages] = useState(false);
   const [isCachingAll, setIsCachingAll] = useState(false);
   const [coverProgress, setCoverProgress] = useState<{ done: number; total: number } | null>(null);
+  const [pagesProgress, setPagesProgress] = useState<{ done: number; total: number } | null>(null);
   const biometricSupported = isBiometricAvailable();
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -598,8 +601,8 @@ const ProfilePage = () => {
             {/* Download covers */}
             <button
               onClick={async () => {
-                if (isCachingAll) return;
-                setIsCachingAll(true);
+                if (isCachingCovers || isCachingAll) return;
+                setIsCachingCovers(true);
                 setCoverProgress({ done: 0, total: 0 });
                 try {
                   sessionStorage.removeItem("vootify-covers-cached-v1");
@@ -613,16 +616,16 @@ const ProfilePage = () => {
                   await refreshStorageStats();
                   toast.success("Pochettes téléchargées !");
                 } catch { toast.error("Erreur"); }
-                finally { setIsCachingAll(false); setCoverProgress(null); }
+                finally { setIsCachingCovers(false); setCoverProgress(null); }
               }}
-              disabled={isCachingAll}
+              disabled={isCachingCovers || isCachingAll}
               className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
               style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
             >
-              {isCachingAll && coverProgress ? (
+              {isCachingCovers ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  {coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : "…"}
+                  {coverProgress && coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : "…"}
                 </>
               ) : (
                 <>
@@ -634,28 +637,36 @@ const ProfilePage = () => {
             {/* Download pages */}
             <button
               onClick={async () => {
-                if (isCachingAll) return;
-                setIsCachingAll(true);
+                if (isCachingPages || isCachingAll) return;
+                setIsCachingPages(true);
+                setPagesProgress({ done: 0, total: 0 });
                 try {
                   if (user) {
                     const { silentCacheRefresh } = await import("@/lib/appCache");
-                    // silentCacheRefresh is fire-and-forget, wrap in timeout
-                    await new Promise<void>((resolve) => {
-                      silentCacheRefresh(user.id);
-                      setTimeout(resolve, 4000);
+                    await silentCacheRefresh(user.id, (done, total) => {
+                      setPagesProgress({ done, total });
                     });
                   }
                   await refreshStorageStats();
                   toast.success("Pages en cache mises à jour !");
                 } catch { toast.error("Erreur"); }
-                finally { setIsCachingAll(false); }
+                finally { setIsCachingPages(false); setPagesProgress(null); }
               }}
-              disabled={isCachingAll}
+              disabled={isCachingPages || isCachingAll}
               className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
               style={{ background: "hsl(var(--primary) / 0.08)", color: "hsl(var(--primary))" }}
             >
-              {isCachingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-              Pages
+              {isCachingPages ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {pagesProgress && pagesProgress.total > 0 ? `${pagesProgress.done}/${pagesProgress.total}` : "…"}
+                </>
+              ) : (
+                <>
+                  <FileText className="w-3.5 h-3.5" />
+                  Pages
+                </>
+              )}
             </button>
             {/* Download all */}
             <button
@@ -663,31 +674,37 @@ const ProfilePage = () => {
                 if (isCachingAll) return;
                 setIsCachingAll(true);
                 setCoverProgress({ done: 0, total: 0 });
+                setPagesProgress({ done: 0, total: 0 });
                 try {
                   toast.info("Téléchargement complet…");
                   if (user) {
                     const { performInitialCache, preCacheCovers, silentCacheRefresh } = await import("@/lib/appCache");
+                    // 1. Pages data
                     await performInitialCache(user.id);
+                    // 2. Covers
                     sessionStorage.removeItem("vootify-covers-cached-v1");
                     sessionStorage.removeItem("vootify-friday-covers-cached-v1");
                     await preCacheCovers(user.id, (done, total) => {
                       setCoverProgress({ done, total });
                     });
-                    silentCacheRefresh(user.id);
+                    // 3. Background refresh
+                    await silentCacheRefresh(user.id, (done, total) => {
+                      setPagesProgress({ done, total });
+                    });
                   }
                   await refreshStorageStats();
                   toast.success("Cache complet téléchargé !");
                 } catch { toast.error("Erreur"); }
-                finally { setIsCachingAll(false); setCoverProgress(null); }
+                finally { setIsCachingAll(false); setCoverProgress(null); setPagesProgress(null); }
               }}
               disabled={isCachingAll}
               className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
               style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
             >
-              {isCachingAll && coverProgress ? (
+              {isCachingAll ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  {coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : "…"}
+                  {coverProgress && coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : "…"}
                 </>
               ) : (
                 <>
