@@ -342,21 +342,23 @@ const HomePage = () => {
       <div
         className="sticky top-0 z-30"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px) + 0.5rem)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px))",
         }}
       >
-        {/* Hero background layer */}
-        {(homeConfig?.heroBgColor || homeConfig?.heroBgImage) && (
-          <div className="absolute inset-0 overflow-hidden -z-10">
-            {homeConfig?.heroBgImage ? (
-              <SafeImage src={homeConfig.heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-            ) : null}
-            {homeConfig?.heroBgColor && !homeConfig?.heroBgImage ? (
-              <div className="absolute inset-0 opacity-20" style={{ background: homeConfig.heroBgColor }} />
-            ) : null}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.7) 0%, hsl(var(--background)) 100%)" }} />
-          </div>
-        )}
+        {/* Background layer — shown when bg image or color configured */}
+        <div className="absolute inset-0 overflow-hidden -z-10">
+          {homeConfig?.heroBgImage ? (
+            <>
+              <SafeImage src={homeConfig.heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.35 }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.5) 0%, hsl(var(--background)) 100%)" }} />
+            </>
+          ) : homeConfig?.heroBgColor ? (
+            <>
+              <div className="absolute inset-0" style={{ background: homeConfig.heroBgColor, opacity: 0.25 }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background) / 0.6) 0%, hsl(var(--background)) 100%)" }} />
+            </>
+          ) : null}
+        </div>
 
         <div
           className="flex items-center justify-between px-5 md:px-8 py-3"
