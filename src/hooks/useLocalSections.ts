@@ -142,10 +142,9 @@ export function useRecommended(limit = 20, seed?: number) {
       }
 
       // No liked songs: shuffle catalog
-      const day = new Date().getDate();
       const shuffled = [...mapped].sort((a, b) => {
-        const ha = (a.id.charCodeAt(0) * 31 + day) % 100;
-        const hb = (b.id.charCodeAt(0) * 31 + day) % 100;
+        const ha = (a.id.charCodeAt(0) * 31 + effectiveSeed) % 100;
+        const hb = (b.id.charCodeAt(0) * 31 + effectiveSeed) % 100;
         return ha - hb;
       });
 
