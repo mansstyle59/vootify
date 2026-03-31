@@ -3228,7 +3228,7 @@ function PlaylistPickerModal({
                         {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                       {playlist.cover_url ? (
-                        <img src={playlist.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                        <img src={playlist.cover_url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
                           <ListMusic className="w-4 h-4 text-muted-foreground" />
