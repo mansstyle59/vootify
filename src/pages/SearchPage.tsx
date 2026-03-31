@@ -601,7 +601,7 @@ const SearchPage = () => {
             )}
 
             {/* ── Trending Artists (premium circles) ── */}
-            {trendingArtists.length > 0 && (
+            {searchSections?.artists && trendingArtists.length > 0 && (
               <section>
                 <SectionHeader title="Artistes populaires" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
