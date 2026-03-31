@@ -245,7 +245,9 @@ function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }: {
 }
 
 const LibraryPage = () => {
-  const [tab, setTab] = useState<Tab>(null);
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") as Tab;
+  const [tab, setTab] = useState<Tab>(initialTab || null);
   const [customSort, setCustomSort] = useState<SortOption>("recent");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
