@@ -4471,6 +4471,126 @@ function SearchConfigTab() {
   );
 }
 
+/* ── Library Tabs Config Tab ── */
+
+const TAB_LABELS: Record<string, string> = {
+  songs: "Morceaux",
+  recent: "Écoutés récemment",
+  albums: "Albums",
+  artists: "Artistes",
+  playlists: "Playlists",
+  downloads: "Hors-ligne",
+};
+
+function LibraryConfigTab() {
+  const { user } = useAuth();
+  const { data: config, isLoading } = useAppSettings<LibraryTabConfig[]>("library_tabs", DEFAULT_LIBRARY_TABS);
+  const saveSetting = useSaveAppSetting();
+  const [local, setLocal] = useState<LibraryTabConfig[]>(DEFAULT_LIBRARY_TABS);
+  const dragItem = useRef<number | null>(null);
+  const dragOver = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (config) {
+      // Merge any new tabs that might not be in saved config
+      const savedKeys = new Set(config.map((t) => t.key));
+      const merged = [
+        ...config,
+        ...DEFAULT_LIBRARY_TABS.filter((t) => !savedKeys.has(t.key)),
+      ];
+      setLocal(merged);
+    }
+  }, [config]);
+
+  const handleToggle = (key: string) => {
+    setLocal((prev) => prev.map((t) => t.key === key ? { ...t, visible: !t.visible } : t));
+  };
+
+  const handleDragStart = (index: number) => {
+    dragItem.current = index;
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragOver.current = index;
+  };
+
+  const handleDragEnd = () => {
+    if (dragItem.current === null || dragOver.current === null) return;
+    const copy = [...local];
+    const [dragged] = copy.splice(dragItem.current, 1);
+    copy.splice(dragOver.current, 0, dragged);
+    setLocal(copy);
+    dragItem.current = null;
+    dragOver.current = null;
+  };
+
+  const handleSave = () => {
+    if (!user) return;
+    saveSetting.mutate(
+      { key: "library_tabs", value: local, userId: user.id },
+      { onSuccess: () => toast.success("Ordre des onglets sauvegardé") }
+    );
+  };
+
+  const hasChanges = config && JSON.stringify(local) !== JSON.stringify(config);
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[13px] text-muted-foreground/60">Réordonnez et activez/désactivez les onglets de la bibliothèque. Glissez pour réorganiser.</p>
+
+      <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.08)" }}>
+        {local.map((tab, i) => (
+          <div
+            key={tab.key}
+            draggable
+            onDragStart={() => handleDragStart(i)}
+            onDragEnter={() => handleDragEnter(i)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            className="w-full flex items-center gap-3 px-4 py-3.5 cursor-grab active:cursor-grabbing transition-colors"
+            style={{ borderBottom: i < local.length - 1 ? "1px solid hsl(var(--border) / 0.06)" : "none" }}
+          >
+            <GripVertical className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+            <div className="flex-1 text-left">
+              <p className="text-[13px] font-semibold text-foreground">{TAB_LABELS[tab.key] || tab.key}</p>
+            </div>
+            <button
+              onClick={() => handleToggle(tab.key)}
+              className="flex-shrink-0"
+            >
+              <div
+                className="w-11 h-6 rounded-full relative transition-colors duration-200"
+                style={{ background: tab.visible ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.1)" }}
+              >
+                <div
+                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200"
+                  style={{ transform: tab.visible ? "translateX(22px)" : "translateX(2px)" }}
+                />
+              </div>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {hasChanges && (
+        <motion.button
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={handleSave}
+          disabled={saveSetting.isPending}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-50"
+          style={{ background: "hsl(var(--primary))" }}
+        >
+          {saveSetting.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Sauvegarder
+        </motion.button>
+      )}
+    </div>
+  );
+}
+
 function NotificationsTab() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
