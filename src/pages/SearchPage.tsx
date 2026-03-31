@@ -76,6 +76,7 @@ const SearchPage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
+  const { data: searchSections } = useAppSettings<SearchSectionsConfig>("search_sections", { artists: true, genres: true, stats: true, suggestions: true });
 
   interface DeezerNewRelease {
     id: number;
