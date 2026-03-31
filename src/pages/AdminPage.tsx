@@ -2515,7 +2515,7 @@ function SongPickerModal({
 
         {/* Footer */}
         <div className="p-3 border-t border-border flex items-center justify-between gap-3">
-          {(() => {
+          {mode === "deezer" && deezerTracks.length > 0 ? (() => {
             const selectableIds = deezerTracks.filter(t => t.dbSongId).map(t => t.dbSongId!);
             const allSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
             return (
@@ -2534,7 +2534,9 @@ function SongPickerModal({
                 {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
               </button>
             );
-          })()}
+          })() : (
+            <span className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</span>
+          )}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleDone}
