@@ -6,7 +6,7 @@ import { useAllLocalSongs } from "@/hooks/useLocalSearch";
 import { getGenreTags, genreDefs, defaultGenreColor } from "@/lib/genreGroups";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
-import { ArrowLeft, Play, Shuffle, Search, X } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Search, X, Plus, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Song } from "@/data/mockData";
 
