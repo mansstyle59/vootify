@@ -138,6 +138,7 @@ function SongForm() {
   const [searchingCovers, setSearchingCovers] = useState(false);
   const [coverProgress, setCoverProgress] = useState({ done: 0, total: 0 });
   const [dragOver, setDragOver] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState({ done: 0, total: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
 
   /** Recursively extract audio files from DataTransferItem entries (supports folders) */
@@ -222,8 +223,12 @@ function SongForm() {
   const processFiles = async (files: FileList) => {
     setProcessing(true);
     const entries: SongEntry[] = [];
+    const fileArr = Array.from(files);
+    setAnalyzeProgress({ done: 0, total: fileArr.length });
 
-    for (const file of Array.from(files)) {
+    for (let fi = 0; fi < fileArr.length; fi++) {
+      const file = fileArr[fi];
+      setAnalyzeProgress({ done: fi, total: fileArr.length });
       if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd (max 50 Mo)`); continue; }
       const id3 = await extractID3(file, file.name);
       let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
@@ -380,6 +385,7 @@ function SongForm() {
 
     setSongs((prev) => [...prev, ...entries]);
     setProcessing(false);
+    setAnalyzeProgress({ done: 0, total: 0 });
     const newCount = entries.filter(e => !e.duplicateOf).length;
     const dupCount2 = entries.filter(e => !!e.duplicateOf).length;
     if (newCount > 0) toast.success(`${newCount} nouveau${newCount > 1 ? "x" : ""} fichier${newCount > 1 ? "s" : ""} prêt${newCount > 1 ? "s" : ""}`);
@@ -479,8 +485,23 @@ function SongForm() {
           {processing ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary" />}
         </div>
         <span className="text-sm font-medium text-foreground">
-          {processing ? "Analyse en cours..." : dragOver ? "Déposez ici !" : "Sélectionner ou glisser des fichiers / dossiers"}
+          {processing
+            ? analyzeProgress.total > 0
+              ? `Analyse ${analyzeProgress.done + 1}/${analyzeProgress.total} fichiers…`
+              : "Analyse en cours..."
+            : dragOver ? "Déposez ici !" : "Sélectionner ou glisser des fichiers / dossiers"}
         </span>
+        {processing && analyzeProgress.total > 1 && (
+          <div className="w-full max-w-[200px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-300 ease-out"
+              style={{
+                width: `${Math.round(((analyzeProgress.done + 1) / analyzeProgress.total) * 100)}%`,
+                background: "hsl(var(--primary))",
+              }}
+            />
+          </div>
+        )}
         <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Fichiers ou dossiers • Max 50 Mo</span>
       </motion.div>
 
