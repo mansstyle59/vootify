@@ -1856,7 +1856,7 @@ function HomeTab() {
           )}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--background) / 0.85), transparent)" }} />
           <div className="relative z-10 w-full">
-            <p className="text-[22px] font-black text-foreground leading-tight">Bonjour</p>
+            <p className="text-[22px] font-black text-foreground leading-tight">{heroTitle || "Bonjour"}</p>
             <p className="text-[11px] font-medium mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}>
               {heroSubtitle || "La musique est le langage des émotions."}
             </p>
