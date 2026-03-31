@@ -46,20 +46,20 @@ const AdminPage = () => {
   if (!isAdmin) return null;
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: "stats", label: "Stats", icon: Shield },
-    { key: "home", label: "Accueil", icon: LayoutDashboard },
-    { key: "search_config", label: "Recherche", icon: Search },
-    { key: "library_config", label: "Bibliothèque", icon: ListMusic },
-    { key: "theme", label: "Thème", icon: Palette },
-    { key: "shared", label: "Partages", icon: Share2 },
     { key: "users", label: "Utilisateurs", icon: Users },
     { key: "subscriptions", label: "Abos", icon: CreditCard },
     { key: "requests", label: "Demandes accès", icon: Inbox },
     { key: "music_requests", label: "Demandes musiques", icon: Disc3 },
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "radios", label: "Radios", icon: Radio },
-    { key: "logs", label: "Logs", icon: ScrollText },
+    { key: "home", label: "Accueil", icon: LayoutDashboard },
+    { key: "search_config", label: "Recherche", icon: Search },
+    { key: "library_config", label: "Bibliothèque", icon: ListMusic },
+    { key: "theme", label: "Thème", icon: Palette },
+    { key: "shared", label: "Partages", icon: Share2 },
     { key: "notifs", label: "Notifs", icon: Bell },
+    { key: "stats", label: "Stats", icon: Shield },
+    { key: "logs", label: "Logs", icon: ScrollText },
   ];
 
   const activeTabLabel = tab ? tabs.find((t) => t.key === tab)?.label : null;
