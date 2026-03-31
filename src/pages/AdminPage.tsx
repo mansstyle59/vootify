@@ -3062,7 +3062,9 @@ function PlaylistPickerModal({
 
   /** Fetch playlists from a Deezer link */
   const fetchDeezer = async () => {
+    if (deezerLoading) return;
     let urlToUse = deezerUrl.trim();
+    if (!urlToUse) return;
 
     if (isDeezerShortLink(urlToUse)) {
       setDeezerError("");
