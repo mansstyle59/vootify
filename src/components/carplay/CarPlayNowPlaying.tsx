@@ -162,7 +162,7 @@ export function CarPlayNowPlaying({
             }}
           >
             {coverUrl ? (
-              <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+              <img src={coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.04)" }}>
                 <Disc3 className="w-24 h-24 text-white/15" />
