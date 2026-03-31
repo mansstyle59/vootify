@@ -538,7 +538,7 @@ const SearchPage = () => {
           <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-6">
 
             {/* ── Library Overview (glass card) ── */}
-            {libraryStats && (
+            {searchSections?.stats && libraryStats && (
               <section onClick={() => navigate("/library")} className="cursor-pointer active:scale-[0.99] transition-transform">
                 <div
                   className="rounded-2xl px-5 py-4 relative overflow-hidden"
