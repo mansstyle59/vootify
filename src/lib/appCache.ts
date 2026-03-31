@@ -156,8 +156,10 @@ export async function performInitialCache(
   preCacheFridayCovers().catch(() => {});
 }
 
+export type CoverProgressCallback = (done: number, total: number) => void;
+
 /** Pre-fetch ALL song covers into IndexedDB for offline display */
-async function preCacheCovers(_userId: string) {
+export async function preCacheCovers(_userId: string, onCoverProgress?: CoverProgressCallback) {
   const COVERS_CACHED_KEY = "vootify-covers-cached-v1";
   try {
     // Skip if already done this session
