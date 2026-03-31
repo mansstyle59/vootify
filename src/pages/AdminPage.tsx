@@ -126,6 +126,7 @@ const AdminPage = () => {
         {tab === "logs" && <LogsTab />}
         {tab === "notifs" && <NotificationsTab />}
         {tab === "search_config" && <SearchConfigTab />}
+        {tab === "library_config" && <LibraryConfigTab />}
       </div>
       )}
     </div>
