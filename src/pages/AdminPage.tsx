@@ -1875,6 +1875,19 @@ function HomeTab() {
             Bannière d'accueil
           </h3>
 
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider block">Titre de bienvenue</label>
+            <input
+              value={heroTitle}
+              onChange={(e) => setHeroTitle(e.target.value)}
+              placeholder="Ex: Bienvenue sur Vootify"
+              className="w-full text-sm rounded-xl px-3.5 py-2.5 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
+              style={{ background: "hsl(var(--foreground) / 0.04)", border: "0.5px solid hsl(var(--border) / 0.12)" }}
+            />
+            <p className="text-[10px] text-muted-foreground/40">Laisser vide = salutation automatique (Bonjour, Bonsoir…)</p>
+          </div>
+
           {/* Subtitle */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider block">Sous-titre</label>
