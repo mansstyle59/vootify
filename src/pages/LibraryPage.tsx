@@ -436,98 +436,53 @@ const LibraryPage = () => {
     enabled: (tab === "custom" || tab === "songs") && !!userId,
   });
 
-  // Albums query — derived from custom_songs + custom_albums, grouped by artist
-  const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
-    queryKey: ["library-albums", userId],
-    queryFn: async () => {
-      const { data: songs, error: songsErr } = await supabase
-        .from("custom_songs")
-        .select("album, artist, cover_url, year")
-        .eq("user_id", userId!)
-        .not("stream_url", "is", null)
-        .not("album", "is", null);
-      if (songsErr) throw songsErr;
-
-      const { data: explicit, error: expErr } = await supabase
-        .from("custom_albums")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (expErr) throw expErr;
-
-      const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
-      for (const row of songs || []) {
-        if (!row.album || row.album.trim() === "") continue;
-        const key = `${row.artist.toLowerCase()}|||${row.album.toLowerCase()}`;
-        const existing = albumMap.get(key);
-        if (existing) {
-          existing.count++;
-          if (!existing.cover_url && row.cover_url) existing.cover_url = row.cover_url;
-          if (!existing.year && row.year) existing.year = row.year;
-        } else {
-          albumMap.set(key, {
-            id: `derived-${key}`,
-            title: row.album,
-            artist: row.artist,
-            cover_url: row.cover_url || null,
-            year: row.year || null,
-            count: 1,
-          });
-        }
+  // Albums derived from liked songs
+  const libraryAlbums = useMemo(() => {
+    const songs = filterFullStreams(likedSongs);
+    const albumMap = new Map<string, { id: string; title: string; artist: string; cover_url: string | null; year: number | null; count: number }>();
+    for (const s of songs) {
+      if (!s.album || s.album.trim() === "") continue;
+      const key = `${s.artist.toLowerCase()}|||${s.album.toLowerCase()}`;
+      const existing = albumMap.get(key);
+      if (existing) {
+        existing.count++;
+        if (!existing.cover_url && s.coverUrl) existing.cover_url = s.coverUrl;
+      } else {
+        albumMap.set(key, { id: `derived-${key}`, title: s.album, artist: s.artist, cover_url: s.coverUrl || null, year: (s as any).year || null, count: 1 });
       }
+    }
+    return Array.from(albumMap.values()).sort((a, b) => {
+      const artistCmp = a.artist.localeCompare(b.artist, "fr");
+      if (artistCmp !== 0) return artistCmp;
+      if (a.year && b.year) return b.year - a.year;
+      if (a.year) return -1;
+      if (b.year) return 1;
+      return a.title.localeCompare(b.title, "fr");
+    });
+  }, [likedSongs]);
+  const loadingLibAlbums = false;
 
-      for (const album of explicit || []) {
-        const key = `${album.artist.toLowerCase()}|||${album.title.toLowerCase()}`;
-        albumMap.set(key, {
-          id: album.id,
-          title: album.title,
-          artist: album.artist,
-          cover_url: album.cover_url,
-          year: album.year,
-          count: albumMap.get(key)?.count || 0,
-        });
+  // Artists derived from liked songs
+  const libraryArtists = useMemo(() => {
+    const songs = filterFullStreams(likedSongs);
+    const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
+    for (const s of songs) {
+      const existing = artistMap.get(s.artist);
+      if (existing) {
+        existing.count++;
+        if (!existing.cover && s.coverUrl) existing.cover = s.coverUrl;
+        if (s.album && s.album.trim()) existing.albums.add(s.album.toLowerCase());
+      } else {
+        const albums = new Set<string>();
+        if (s.album && s.album.trim()) albums.add(s.album.toLowerCase());
+        artistMap.set(s.artist, { name: s.artist, cover: s.coverUrl || "", count: 1, albums });
       }
-
-      // Sort: by artist name (A-Z), then by year (newest first), then by title
-      return Array.from(albumMap.values()).sort((a, b) => {
-        const artistCmp = a.artist.localeCompare(b.artist, "fr");
-        if (artistCmp !== 0) return artistCmp;
-        if (a.year && b.year) return b.year - a.year;
-        if (a.year) return -1;
-        if (b.year) return 1;
-        return a.title.localeCompare(b.title, "fr");
-      });
-    },
-    staleTime: 2 * 60 * 1000,
-    enabled: tab === "albums" && !!userId,
-  });
-
-  // Artists query (derived from custom_songs)
-  const { data: libraryArtists = [], isLoading: loadingLibArtists } = useQuery({
-    queryKey: ["library-artists", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("custom_songs")
-        .select("artist, album, cover_url")
-        .eq("user_id", userId!)
-        .not("stream_url", "is", null);
-      if (error) throw error;
-      const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
-      for (const row of data || []) {
-        const existing = artistMap.get(row.artist);
-        if (existing) {
-          existing.count++;
-          if (!existing.cover && row.cover_url) existing.cover = row.cover_url;
-          if (row.album && row.album.trim()) existing.albums.add(row.album.toLowerCase());
-        } else {
-          const albums = new Set<string>();
-          if (row.album && row.album.trim()) albums.add(row.album.toLowerCase());
-          artistMap.set(row.artist, { name: row.artist, cover: row.cover_url || "", count: 1, albums });
-        }
-      }
-      return Array.from(artistMap.values())
-        .map((a) => ({ name: a.name, cover: a.cover, count: a.count, albumCount: a.albums.size }))
-        .sort((a, b) => a.name.localeCompare(b.name, "fr"));
-    },
+    }
+    return Array.from(artistMap.values())
+      .map((a) => ({ name: a.name, cover: a.cover, count: a.count, albumCount: a.albums.size }))
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  }, [likedSongs]);
+  const loadingLibArtists = false;
     staleTime: 2 * 60 * 1000,
     enabled: tab === "artists" && !!userId,
   });
