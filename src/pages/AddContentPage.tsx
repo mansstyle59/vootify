@@ -223,8 +223,12 @@ function SongForm() {
   const processFiles = async (files: FileList) => {
     setProcessing(true);
     const entries: SongEntry[] = [];
+    const fileArr = Array.from(files);
+    setAnalyzeProgress({ done: 0, total: fileArr.length });
 
-    for (const file of Array.from(files)) {
+    for (let fi = 0; fi < fileArr.length; fi++) {
+      const file = fileArr[fi];
+      setAnalyzeProgress({ done: fi, total: fileArr.length });
       if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd (max 50 Mo)`); continue; }
       const id3 = await extractID3(file, file.name);
       let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
