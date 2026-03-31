@@ -1343,7 +1343,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/8" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.03))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.1)" }}>
                 <div className="relative">
                   {currentSong.coverUrl ? (
-                    <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" />
+                    <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" referrerPolicy="no-referrer" />
                   ) : (
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 shadow-2xl">
                       <Music className="w-6 h-6 text-primary/40" />
