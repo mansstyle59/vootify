@@ -4506,22 +4506,12 @@ function LibraryConfigTab() {
     setLocal((prev) => prev.map((t) => t.key === key ? { ...t, visible: !t.visible } : t));
   };
 
-  const handleDragStart = (index: number) => {
-    dragItem.current = index;
-  };
-
-  const handleDragEnter = (index: number) => {
-    dragOver.current = index;
-  };
-
-  const handleDragEnd = () => {
-    if (dragItem.current === null || dragOver.current === null) return;
+  const moveItem = (index: number, direction: -1 | 1) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= local.length) return;
     const copy = [...local];
-    const [dragged] = copy.splice(dragItem.current, 1);
-    copy.splice(dragOver.current, 0, dragged);
+    [copy[index], copy[newIndex]] = [copy[newIndex], copy[index]];
     setLocal(copy);
-    dragItem.current = null;
-    dragOver.current = null;
   };
 
   const handleSave = () => {
