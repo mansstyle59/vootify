@@ -668,37 +668,6 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Recently Played ── */}
-            {recentlyPlayed.length > 0 && (
-              <section>
-                <SectionHeader title="Écoutés récemment" action="Voir tout" onAction={() => navigate("/library")} />
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {recentlyPlayed.slice(0, 6).map((song) => (
-                    <button
-                      key={song.id}
-                      onClick={() => handlePlayTrack(song, recentlyPlayed)}
-                      className="flex-shrink-0 w-[110px] group text-left active:scale-[0.97] transition-transform"
-                    >
-                      <div
-                        className="w-[110px] h-[110px] rounded-2xl overflow-hidden mb-1.5 relative"
-                        style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.12)" }}
-                      >
-                        {song.coverUrl ? (
-                          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-                            <Music className="w-5 h-5 text-muted-foreground/10" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      </div>
-                      <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{song.title}</p>
-                      <p className="text-[9px] text-muted-foreground/40 truncate">{song.artist}</p>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
           </motion.div>
         ) : (
           /* ══════════════ RESULTS MODE ══════════════ */
