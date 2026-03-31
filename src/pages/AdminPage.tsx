@@ -16,7 +16,7 @@ import { notifyUser } from "@/lib/notifyUser";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | "search_config" | null;
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | "search_config" | "library_config" | null;
 
 interface UserProfile {
   user_id: string;
