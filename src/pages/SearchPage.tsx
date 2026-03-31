@@ -78,15 +78,15 @@ const SearchPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const { data: searchSections } = useSearchSections();
-  const { data: suggestedSongs } = useRecommended(10);
-  const rqClient = useQueryClient();
+  const [suggestionSeed, setSuggestionSeed] = useState(() => Date.now());
+  const { data: suggestedSongs } = useRecommended(10, suggestionSeed);
   const [refreshingSuggestions, setRefreshingSuggestions] = useState(false);
 
-  const handleRefreshSuggestions = useCallback(async () => {
+  const handleRefreshSuggestions = useCallback(() => {
     setRefreshingSuggestions(true);
-    await rqClient.invalidateQueries({ queryKey: ["local-recommended"] });
+    setSuggestionSeed(Date.now());
     setTimeout(() => setRefreshingSuggestions(false), 600);
-  }, [rqClient]);
+  }, []);
 
   interface DeezerNewRelease {
     id: number;
