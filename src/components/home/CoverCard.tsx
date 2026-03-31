@@ -47,6 +47,7 @@ export const CoverCard = memo(function CoverCard({
               src={resolvedUrl}
               alt={title}
               loading="lazy"
+              referrerPolicy="no-referrer"
               onLoad={() => setImgLoaded(true)}
               className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-[1.04] ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
