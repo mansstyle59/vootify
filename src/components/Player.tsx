@@ -807,8 +807,12 @@ export function MiniPlayer() {
                   </div>
                 </div>
                 <div className="flex items-center gap-0.5">
-                  <button onClick={() => toggleLike(currentSong)} className="p-2 active:scale-90 transition-transform">
-                    <Heart className={`w-4 h-4 transition-colors ${isLiked(currentSong.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                  <button onClick={(e) => { e.stopPropagation(); toggleLike(currentSong); }} className="p-2 active:scale-90 transition-transform">
+                    {isLiked(currentSong.id) ? (
+                      <Check className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                    )}
                   </button>
                   <button onClick={togglePlay} className="w-10 h-10 rounded-full flex items-center justify-center bg-foreground active:scale-90 transition-transform" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
                     {isBuffering ? <Loader2 className="w-4 h-4 text-background animate-spin" /> : isPlaying ? <Pause className="w-4 h-4 text-background fill-current" /> : <Play className="w-4 h-4 text-background fill-current ml-0.5" />}
