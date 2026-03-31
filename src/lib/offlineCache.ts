@@ -3,7 +3,7 @@ import {
   encryptBlob, decryptBlob, encryptJSON, decryptJSON,
   isCryptoAvailable, isEncryptionEnabled,
 } from "@/lib/cryptoCache";
-import { getEffectiveUserId } from "@/lib/deviceId";
+import { getDeviceId } from "@/lib/deviceId";
 
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
