@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, type CustomSection } from "@/hooks/useHomeConfig";
-import { useSaveAppSetting } from "@/hooks/useAppSettings";
+import { useAppSettings, useSaveAppSetting, type SearchSectionsConfig, DEFAULT_SEARCH_SECTIONS } from "@/hooks/useAppSettings";
 import { notifyUser } from "@/lib/notifyUser";
 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | null;
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | "search_config" | null;
 
 interface UserProfile {
   user_id: string;
@@ -48,6 +48,7 @@ const AdminPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "stats", label: "Stats", icon: Shield },
     { key: "home", label: "Accueil", icon: LayoutDashboard },
+    { key: "search_config", label: "Recherche", icon: Search },
     { key: "theme", label: "Thème", icon: Palette },
     { key: "shared", label: "Partages", icon: Share2 },
     { key: "users", label: "Utilisateurs", icon: Users },
@@ -123,6 +124,7 @@ const AdminPage = () => {
         {tab === "radios" && <RadiosTab />}
         {tab === "logs" && <LogsTab />}
         {tab === "notifs" && <NotificationsTab />}
+        {tab === "search_config" && <SearchConfigTab />}
       </div>
       )}
     </div>
@@ -4381,6 +4383,87 @@ function SharedPlaylistsTab() {
             </motion.div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Search Page Config Tab ── */
+
+function SearchConfigTab() {
+  const { user } = useAuth();
+  const { data: config, isLoading } = useAppSettings<SearchSectionsConfig>("search_sections", DEFAULT_SEARCH_SECTIONS);
+  const saveSetting = useSaveAppSetting();
+  const [local, setLocal] = useState<SearchSectionsConfig>(DEFAULT_SEARCH_SECTIONS);
+
+  useEffect(() => {
+    if (config) setLocal(config);
+  }, [config]);
+
+  const sections = [
+    { key: "stats" as const, label: "Carte statistiques", description: "Compteurs morceaux, artistes, albums" },
+    { key: "artists" as const, label: "Artistes populaires", description: "Bulles circulaires des artistes trending" },
+    { key: "genres" as const, label: "Explorer par genre", description: "Grille de cartes colorées par genre" },
+    { key: "suggestions" as const, label: "Suggestions", description: "Suggestions de recherche intelligentes" },
+  ];
+
+  const handleToggle = (key: keyof SearchSectionsConfig) => {
+    setLocal((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = () => {
+    if (!user) return;
+    saveSetting.mutate(
+      { key: "search_sections", value: local, userId: user.id },
+      { onSuccess: () => toast.success("Configuration sauvegardée") }
+    );
+  };
+
+  const hasChanges = config && JSON.stringify(local) !== JSON.stringify(config);
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[13px] text-muted-foreground/60">Activez ou désactivez les sections visibles sur la page de recherche.</p>
+
+      <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.08)" }}>
+        {sections.map((section, i) => (
+          <button
+            key={section.key}
+            onClick={() => handleToggle(section.key)}
+            className="w-full flex items-center justify-between px-4 py-3.5 transition-colors active:bg-primary/5"
+            style={{ borderBottom: i < sections.length - 1 ? "1px solid hsl(var(--border) / 0.06)" : "none" }}
+          >
+            <div className="text-left">
+              <p className="text-[13px] font-semibold text-foreground">{section.label}</p>
+              <p className="text-[11px] text-muted-foreground/50">{section.description}</p>
+            </div>
+            <div
+              className="w-11 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0"
+              style={{ background: local[section.key] ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.1)" }}
+            >
+              <div
+                className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200"
+                style={{ transform: local[section.key] ? "translateX(22px)" : "translateX(2px)" }}
+              />
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {hasChanges && (
+        <motion.button
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={handleSave}
+          disabled={saveSetting.isPending}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-50"
+          style={{ background: "hsl(var(--primary))" }}
+        >
+          {saveSetting.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Sauvegarder
+        </motion.button>
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { genreGroups, genreDefs, defaultGenreColor, buildTagToGroupMap } from "@/lib/genreGroups";
+import { useSearchSections } from "@/hooks/useAppSettings";
 import { usePlayerStore } from "@/stores/playerStore";
 import { musicDb } from "@/lib/musicDb";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
@@ -74,6 +75,7 @@ const SearchPage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
+  const { data: searchSections } = useSearchSections();
 
   interface DeezerNewRelease {
     id: number;
@@ -535,7 +537,7 @@ const SearchPage = () => {
           <motion.div key="explore" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 md:px-8 space-y-6">
 
             {/* ── Library Overview (glass card) ── */}
-            {libraryStats && (
+            {searchSections?.stats && libraryStats && (
               <section onClick={() => navigate("/library")} className="cursor-pointer active:scale-[0.99] transition-transform">
                 <div
                   className="rounded-2xl px-5 py-4 relative overflow-hidden"
@@ -598,7 +600,7 @@ const SearchPage = () => {
             )}
 
             {/* ── Trending Artists (premium circles) ── */}
-            {trendingArtists.length > 0 && (
+            {searchSections?.artists && trendingArtists.length > 0 && (
               <section>
                 <SectionHeader title="Artistes populaires" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
@@ -634,7 +636,7 @@ const SearchPage = () => {
             )}
 
             {/* ── Genre Cards (premium glass) ── */}
-            {genreCards.length > 0 && (
+            {searchSections?.genres && genreCards.length > 0 && (
               <section>
                 <SectionHeader title="Explorer par genre" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
