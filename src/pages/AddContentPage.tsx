@@ -137,6 +137,7 @@ function SongForm() {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [searchingCovers, setSearchingCovers] = useState(false);
   const [coverProgress, setCoverProgress] = useState({ done: 0, total: 0 });
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const processFiles = async (files: FileList) => {
