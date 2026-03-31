@@ -1658,7 +1658,7 @@ const LibraryPage = () => {
                     {/* Sort */}
                     <div className="relative flex items-center justify-between px-1 mb-3">
                       <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider">
-                        {sortedAllSongs.length} morceau{sortedAllSongs.length > 1 ? "x" : ""}{songsSearch.trim() ? ` sur ${customSongs.length}` : ""}
+                        {sortedAllSongs.length} morceau{sortedAllSongs.length > 1 ? "x" : ""}{songsSearch.trim() ? ` sur ${filterFullStreams(likedSongs).length}` : ""}
                       </p>
                       <button
                         onClick={() => setShowSongsSortMenu(!showSongsSortMenu)}
