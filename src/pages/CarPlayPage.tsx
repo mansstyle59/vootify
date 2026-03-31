@@ -233,7 +233,13 @@ const CarPlayPage = () => {
         >
           <ChevronLeft className="w-6 h-6 text-white" />
         </button>
-        <h1 className="text-xl font-black text-white flex-1 tracking-tight">CarPlay</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg font-black text-white tracking-tight truncate">{greeting}</h1>
+          <div className="flex items-center gap-1.5">
+            <TimeIcon className="w-3 h-3 text-white/30" />
+            <p className="text-[10px] text-white/30 font-medium">Mode conduite</p>
+          </div>
+        </div>
 
         {/* History button */}
         {isLiveRadio && (
