@@ -652,7 +652,7 @@ const LibraryPage = () => {
   }, [customSongs, customSort, customSearch]);
 
   const sortedAllSongs = useMemo(() => {
-    let arr = [...customSongs];
+    let arr = filterFullStreams([...likedSongs]);
     if (songsSearch.trim()) {
       const q = songsSearch.toLowerCase().trim();
       arr = arr.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.album && s.album.toLowerCase().includes(q)));
@@ -663,7 +663,7 @@ const LibraryPage = () => {
       case "duration": return arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
       default: return arr;
     }
-  }, [customSongs, songsSort, songsSearch]);
+  }, [likedSongs, songsSort, songsSearch]);
 
   const removeCached = async (songId: string) => {
     await offlineCache.removeCached(songId);
