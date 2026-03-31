@@ -56,7 +56,7 @@ export async function encryptBlob(blob: Blob, seed: string): Promise<Blob> {
   const key = await deriveKey(seed);
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const data = new Uint8Array(await blob.arrayBuffer());
-  const encrypted = await crypto.subtle.encrypt({ name: ALGORITHM, iv }, key, data);
+  const encrypted = await crypto.subtle.encrypt({ name: ALGORITHM, iv: iv.buffer as ArrayBuffer }, key, data.buffer as ArrayBuffer);
   // Prepend IV to ciphertext
   const result = new Uint8Array(IV_LENGTH + encrypted.byteLength);
   result.set(iv, 0);
