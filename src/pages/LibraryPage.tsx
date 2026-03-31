@@ -548,6 +548,7 @@ const LibraryPage = () => {
       const { data, error } = await supabase
         .from("custom_songs")
         .select("id, title, artist, album, cover_url, stream_url, duration, genre, year")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       if (error) throw error;
       const allSongs: Song[] = (data || []).map((s: any) => ({
