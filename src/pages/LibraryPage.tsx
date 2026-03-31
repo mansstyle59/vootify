@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -245,7 +245,9 @@ function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }: {
 }
 
 const LibraryPage = () => {
-  const [tab, setTab] = useState<Tab>(null);
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") as Tab;
+  const [tab, setTab] = useState<Tab>(initialTab || null);
   const [customSort, setCustomSort] = useState<SortOption>("recent");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
