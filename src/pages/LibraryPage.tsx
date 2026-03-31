@@ -1580,11 +1580,11 @@ const LibraryPage = () => {
               </div>
             )}
 
-            {/* ── SONGS (all users) ── */}
+            {/* ── SONGS (current user only) ── */}
             {tab === "songs" && (
               <div>
                 {customSongs.length === 0 ? (
-                  <EmptyState icon={Music} title="Aucun morceau" subtitle="Les morceaux du catalogue apparaîtront ici" />
+                  <EmptyState icon={Music} title="Aucun morceau" subtitle="Vos morceaux ajoutés apparaîtront ici" />
                 ) : (
                   <>
                     {/* Search */}
