@@ -34,36 +34,26 @@ async function warmApiData(userId: string) {
   await Promise.allSettled(queries);
 }
 
-/** Pre-load cover images into the browser/SW image cache */
+/** Pre-load cover images into memory cache + browser cache */
 async function warmCovers(userId: string) {
   try {
-    const { data: recent } = await supabase
-      .from("recently_played")
-      .select("cover_url")
-      .eq("user_id", userId)
-      .order("played_at", { ascending: false })
-      .limit(20);
-
-    const { data: liked } = await supabase
-      .from("liked_songs")
-      .select("cover_url")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(20);
+    const [{ data: recent }, { data: liked }, { data: catalog }] = await Promise.all([
+      supabase.from("recently_played").select("cover_url").eq("user_id", userId).order("played_at", { ascending: false }).limit(20),
+      supabase.from("liked_songs").select("cover_url").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("custom_songs").select("cover_url").order("created_at", { ascending: false }).limit(40),
+    ]);
 
     const urls = new Set<string>();
-    [...(recent || []), ...(liked || [])].forEach((r) => {
+    [...(recent || []), ...(liked || []), ...(catalog || [])].forEach((r) => {
       if (r.cover_url) urls.add(r.cover_url);
     });
 
-    // Load up to 30 covers in background (browser will cache them via SW)
-    const coverPromises = Array.from(urls)
-      .slice(0, 30)
-      .map((url) =>
-        fetch(url, { mode: "no-cors" }).catch(() => {})
-      );
+    // Prefetch into memory cache + browser cache
+    const coverUrls = Array.from(urls).slice(0, 50);
+    prefetchCovers(coverUrls);
 
-    await Promise.allSettled(coverPromises);
+    // Also store URLs in memory for instant resolution
+    coverUrls.forEach((url) => setCachedCover(url, url));
   } catch {}
 }
 
