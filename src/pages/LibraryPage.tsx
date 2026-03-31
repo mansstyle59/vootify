@@ -518,6 +518,29 @@ const LibraryPage = () => {
     enabled: tab === "artists" && !!userId,
   });
 
+  // Lightweight summary counts for the main menu view
+  const { data: libraryCounts } = useQuery({
+    queryKey: ["library-counts", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custom_songs")
+        .select("artist, album")
+        .eq("user_id", userId!)
+        .not("stream_url", "is", null);
+      if (error) throw error;
+      const rows = data || [];
+      const artists = new Set<string>();
+      const albums = new Set<string>();
+      for (const r of rows) {
+        if (r.artist) artists.add(r.artist.toLowerCase());
+        if (r.album && r.album.trim()) albums.add(`${r.artist.toLowerCase()}|||${r.album.toLowerCase()}`);
+      }
+      return { songs: rows.length, artists: artists.size, albums: albums.size };
+    },
+    staleTime: 2 * 60 * 1000,
+    enabled: tab === null && !!userId,
+  });
+
   // Check which songs in current view are cached offline
   useEffect(() => {
     const allSongs = [
