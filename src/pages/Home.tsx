@@ -288,12 +288,23 @@ const HomePage = () => {
       .filter(Boolean) as { id: string; name: string; cover_url: string | null }[];
   }, [homeConfig?.customSections, customPlaylistsData]);
 
-  const renderSection = (title: string, songs: Song[] | undefined, loading: boolean) => {
+  const sectionViewAllMap: Record<string, string> = {
+    recently_added: "/library?tab=songs",
+    recently_listened: "/library?tab=recent",
+    most_played: "/library?tab=songs",
+    recommended: "/search",
+    artists: "/library?tab=artists",
+    top_artists: "/library?tab=artists",
+    albums: "/library?tab=albums",
+  };
+
+  const renderSection = (title: string, songs: Song[] | undefined, loading: boolean, sectionId?: string) => {
     if (!loading && (!songs || songs.length === 0)) return null;
     return (
       <Section
         title={title}
         songs={songs}
+        viewAllLink={sectionId ? sectionViewAllMap[sectionId] : undefined}
         onPlayAll={
           songs && songs.length > 0
             ? () => { setQueue(songs); play(songs[0]); }
