@@ -1110,6 +1110,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     key={coverUrl}
                     src={coverUrl}
                     alt={stationName}
+                    referrerPolicy="no-referrer"
                     initial={{ opacity: 0, scale: 0.92 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.92 }}
