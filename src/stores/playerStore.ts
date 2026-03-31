@@ -4,6 +4,7 @@ import { musicDb } from "@/lib/musicDb";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { offlineCache } from "@/lib/offlineCache";
+import { prefetchQueueCovers } from "@/lib/coverMemoryCache";
 
 
 
