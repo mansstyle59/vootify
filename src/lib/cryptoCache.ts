@@ -29,9 +29,10 @@ async function deriveKey(seed: string): Promise<CryptoKey> {
   if (cachedKey && cachedSeed === seed) return cachedKey;
 
   const enc = new TextEncoder();
+  const rawBytes = enc.encode(seed);
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    enc.encode(seed),
+    rawBytes.buffer as ArrayBuffer,
     "PBKDF2",
     false,
     ["deriveKey"]
