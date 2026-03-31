@@ -1458,7 +1458,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <div className="relative w-full max-w-[360px]">
                 {currentSong.coverUrl && (
                   <div className="absolute inset-0 scale-90 blur-[60px] opacity-40 rounded-3xl overflow-hidden">
-                    <img src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                 )}
                 <AnimatePresence mode="popLayout">
