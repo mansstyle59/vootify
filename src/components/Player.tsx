@@ -1049,7 +1049,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       >
                         <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(var(--foreground) / 0.08)" }}>
                           {entry.coverUrl ? (
-                            <img src={entry.coverUrl} alt="" className="w-full h-full object-cover" />
+                            <img src={entry.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Music className="w-5 h-5 text-foreground/20" />
