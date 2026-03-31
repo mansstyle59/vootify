@@ -368,8 +368,9 @@ const LibraryPage = () => {
   // (cache check moved after customSongs declaration)
 
   const { data: customSongs = [] } = useQuery({
-    queryKey: ["custom-songs"],
+    queryKey: ["custom-songs", userId],
     queryFn: async () => {
+      if (!userId) return [];
       // Paginate past 1000-row Supabase default limit
       let allData: any[] = [];
       let from = 0;
