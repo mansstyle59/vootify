@@ -633,59 +633,6 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── New Releases (premium overlay cards) ── */}
-            {newReleases.length > 0 && (
-              <section>
-                <SectionHeader title="Nouveautés" action="Voir tout" onAction={() => navigate("/library")} />
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {newReleases.slice(0, 8).map((release) => {
-                    const isAvailable = availableReleases.has(release.albumId);
-                    return (
-                      <button
-                        key={release.albumId}
-                        onClick={() => isAvailable ? playFridayRelease(release) : undefined}
-                        className="flex-shrink-0 w-[130px] group text-left active:scale-[0.97] transition-transform"
-                      >
-                        <div
-                          className="w-[130px] h-[130px] rounded-2xl overflow-hidden mb-2 relative"
-                          style={{ boxShadow: "0 4px 20px hsl(0 0% 0% / 0.15)" }}
-                        >
-                          {release.coverUrl ? (
-                            <img src={release.coverUrl} alt={release.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-                              <Disc3 className="w-8 h-8 text-muted-foreground/10" />
-                            </div>
-                          )}
-                          {/* Premium gradient overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                          {isAvailable && (
-                            <div
-                              className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
-                              style={{
-                                background: "hsl(var(--primary))",
-                                boxShadow: "0 2px 10px hsl(var(--primary) / 0.4)",
-                              }}
-                            >
-                              <Play className="w-3.5 h-3.5 text-primary-foreground fill-current ml-0.5" />
-                            </div>
-                          )}
-                          {!isAvailable && (
-                            <div className="absolute inset-0 bg-background/30" />
-                          )}
-                          {/* Title overlay */}
-                          <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                            <p className="text-[11px] font-bold text-white truncate leading-tight drop-shadow-lg">{release.title}</p>
-                            <p className="text-[9px] text-white/60 truncate mt-0.5">{release.artist}</p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
             {/* ── Genre Cards (premium glass) ── */}
             {genreCards.length > 0 && (
               <section>
@@ -721,37 +668,6 @@ const SearchPage = () => {
               </section>
             )}
 
-            {/* ── Recently Played ── */}
-            {recentlyPlayed.length > 0 && (
-              <section>
-                <SectionHeader title="Écoutés récemment" action="Voir tout" onAction={() => navigate("/library")} />
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-                  {recentlyPlayed.slice(0, 6).map((song) => (
-                    <button
-                      key={song.id}
-                      onClick={() => handlePlayTrack(song, recentlyPlayed)}
-                      className="flex-shrink-0 w-[110px] group text-left active:scale-[0.97] transition-transform"
-                    >
-                      <div
-                        className="w-[110px] h-[110px] rounded-2xl overflow-hidden mb-1.5 relative"
-                        style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.12)" }}
-                      >
-                        {song.coverUrl ? (
-                          <img src={song.coverUrl} alt={song.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
-                            <Music className="w-5 h-5 text-muted-foreground/10" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      </div>
-                      <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{song.title}</p>
-                      <p className="text-[9px] text-muted-foreground/40 truncate">{song.artist}</p>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
           </motion.div>
         ) : (
           /* ══════════════ RESULTS MODE ══════════════ */
