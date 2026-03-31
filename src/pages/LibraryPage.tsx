@@ -368,8 +368,9 @@ const LibraryPage = () => {
   // (cache check moved after customSongs declaration)
 
   const { data: customSongs = [] } = useQuery({
-    queryKey: ["custom-songs"],
+    queryKey: ["custom-songs", userId],
     queryFn: async () => {
+      if (!userId) return [];
       // Paginate past 1000-row Supabase default limit
       let allData: any[] = [];
       let from = 0;
@@ -378,6 +379,7 @@ const LibraryPage = () => {
         const { data, error } = await supabase
           .from("custom_songs")
           .select("*")
+          .eq("user_id", userId!)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE - 1);
         if (error) throw error;
@@ -416,16 +418,17 @@ const LibraryPage = () => {
       return songs as Song[];
     },
     staleTime: 60 * 1000,
-    enabled: tab === "custom" || tab === "songs",
+    enabled: (tab === "custom" || tab === "songs") && !!userId,
   });
 
   // Albums query — derived from custom_songs + custom_albums, grouped by artist
   const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
-    queryKey: ["library-albums"],
+    queryKey: ["library-albums", userId],
     queryFn: async () => {
       const { data: songs, error: songsErr } = await supabase
         .from("custom_songs")
         .select("album, artist, cover_url, year")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null)
         .not("album", "is", null);
       if (songsErr) throw songsErr;
@@ -433,6 +436,7 @@ const LibraryPage = () => {
       const { data: explicit, error: expErr } = await supabase
         .from("custom_albums")
         .select("*")
+        .eq("user_id", userId!)
         .order("created_at", { ascending: false });
       if (expErr) throw expErr;
 
@@ -480,16 +484,17 @@ const LibraryPage = () => {
       });
     },
     staleTime: 2 * 60 * 1000,
-    enabled: tab === "albums",
+    enabled: tab === "albums" && !!userId,
   });
 
   // Artists query (derived from custom_songs)
   const { data: libraryArtists = [], isLoading: loadingLibArtists } = useQuery({
-    queryKey: ["library-artists"],
+    queryKey: ["library-artists", userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custom_songs")
         .select("artist, album, cover_url")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       if (error) throw error;
       const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
@@ -510,7 +515,7 @@ const LibraryPage = () => {
         .sort((a, b) => a.name.localeCompare(b.name, "fr"));
     },
     staleTime: 2 * 60 * 1000,
-    enabled: tab === "artists",
+    enabled: tab === "artists" && !!userId,
   });
 
   // Check which songs in current view are cached offline
@@ -543,6 +548,7 @@ const LibraryPage = () => {
       const { data, error } = await supabase
         .from("custom_songs")
         .select("id, title, artist, album, cover_url, stream_url, duration, genre, year")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       if (error) throw error;
       const allSongs: Song[] = (data || []).map((s: any) => ({
@@ -702,6 +708,7 @@ const LibraryPage = () => {
       const { data: allSongs } = await supabase
         .from("custom_songs")
         .select("id, title, artist, album, duration, cover_url, stream_url")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       let matched = 0;
