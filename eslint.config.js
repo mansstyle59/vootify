@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
+    ignores: ["src/components/SafeImage.tsx"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -21,6 +22,13 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "JSXOpeningElement[name.name='img']",
+          "message": "Utilise <SafeImage> depuis @/components/SafeImage au lieu de <img> pour garantir referrerPolicy=\"no-referrer\" automatiquement."
+        }
+      ],
     },
   },
 );
