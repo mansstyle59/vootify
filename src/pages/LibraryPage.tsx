@@ -493,6 +493,7 @@ const LibraryPage = () => {
       const { data, error } = await supabase
         .from("custom_songs")
         .select("artist, album, cover_url")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       if (error) throw error;
       const artistMap = new Map<string, { name: string; cover: string; count: number; albums: Set<string> }>();
