@@ -423,11 +423,12 @@ const LibraryPage = () => {
 
   // Albums query — derived from custom_songs + custom_albums, grouped by artist
   const { data: libraryAlbums = [], isLoading: loadingLibAlbums } = useQuery({
-    queryKey: ["library-albums"],
+    queryKey: ["library-albums", userId],
     queryFn: async () => {
       const { data: songs, error: songsErr } = await supabase
         .from("custom_songs")
         .select("album, artist, cover_url, year")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null)
         .not("album", "is", null);
       if (songsErr) throw songsErr;
@@ -435,6 +436,7 @@ const LibraryPage = () => {
       const { data: explicit, error: expErr } = await supabase
         .from("custom_albums")
         .select("*")
+        .eq("user_id", userId!)
         .order("created_at", { ascending: false });
       if (expErr) throw expErr;
 
