@@ -3177,8 +3177,9 @@ function PlaylistPickerModal({
   const localCount = deezerPlaylists.filter((p) => p.existsLocally).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <ListMusic className="w-4 h-4 text-primary" />
@@ -3189,8 +3190,8 @@ function PlaylistPickerModal({
             <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
               OK
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-              <X className="w-4 h-4" />
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground active:scale-90 transition-transform" aria-label="Fermer">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
