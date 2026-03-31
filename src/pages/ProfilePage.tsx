@@ -562,6 +562,25 @@ const ProfilePage = () => {
             </div>
           )}
 
+          {/* Encryption toggle */}
+          {isCryptoAvailable() && (
+            <button
+              onClick={() => {
+                const next = !isEncryptionEnabled();
+                setEncryptionEnabled(next);
+                toast.success(next ? "Chiffrement AES-256 activé" : "Chiffrement désactivé");
+              }}
+              className="w-full py-2.5 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
+              style={{
+                background: isEncryptionEnabled() ? "hsl(var(--primary) / 0.12)" : "hsl(var(--foreground) / 0.04)",
+                color: isEncryptionEnabled() ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+              }}
+            >
+              {isEncryptionEnabled() ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
+              {isEncryptionEnabled() ? "Chiffrement AES-256 · Activé" : "Activer le chiffrement du cache"}
+            </button>
+          )}
+
           {/* Download all caches button */}
           <button
             onClick={async () => {
