@@ -453,9 +453,7 @@ const SearchPage = () => {
         className="sticky top-0 z-20 px-5 md:px-8 pb-4"
         style={{
           paddingTop: "calc(max(2rem,env(safe-area-inset-top)) + var(--ai-banner-h, 0px) + var(--pwa-top-extra, 0px))",
-          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.97) 75%, hsl(var(--background) / 0) 100%)",
-          backdropFilter: "blur(40px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+          background: "hsl(var(--background))",
         }}
       >
         <h1 className="text-[32px] font-black text-foreground tracking-tight mb-3 leading-none">Rechercher</h1>
@@ -863,32 +861,10 @@ const SearchPage = () => {
                       {filteredResults.length} résultat{filteredResults.length > 1 ? "s" : ""}
                       {artistFilter && <> de <span className="text-primary font-semibold">{artistFilter}</span></>}
                     </p>
-                    <div className="rounded-2xl overflow-hidden" style={{
-                      background: "hsl(var(--foreground) / 0.02)",
-                      border: "0.5px solid hsl(var(--foreground) / 0.04)",
-                    }}>
+                    <div className="rounded-2xl overflow-hidden">
                       <VirtualSongList
                         songs={filteredResults}
                         onClickSong={(song) => handlePlayTrack(song, filteredResults)}
-                        renderRow={(song, _i, songCard) => (
-                          <div className="flex items-center">
-                            <div className="flex-1">{songCard}</div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleLike(song); }}
-                              className="flex-shrink-0 p-2 mr-2 rounded-full transition-all active:scale-90"
-                              style={{
-                                background: isLiked(song.id) ? "hsl(var(--primary) / 0.12)" : "transparent",
-                              }}
-                              title={isLiked(song.id) ? "Retirer de la bibliothèque" : "Ajouter à la bibliothèque"}
-                            >
-                              {isLiked(song.id) ? (
-                                <Check className="w-4 h-4 text-primary" />
-                              ) : (
-                                <Plus className="w-4 h-4 text-muted-foreground/50" />
-                              )}
-                            </button>
-                          </div>
-                        )}
                         className=""
                       />
                     </div>
