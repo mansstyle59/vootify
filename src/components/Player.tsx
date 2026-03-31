@@ -21,61 +21,26 @@ import { audioManager } from "@/lib/audioManager";
 import { preloadNextTrack } from "@/lib/smartPreload";
 import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
-import { useAuth } from "@/hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
 import type { Song } from "@/data/mockData";
 
-/* ── Add to Library Button ── */
+/* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [adding, setAdding] = useState(false);
-
-  const handleAdd = async () => {
-    if (!user || adding) return;
-    setAdding(true);
-    try {
-      const rawId = song.id.startsWith("custom-") ? song.id.slice(7) : song.id;
-      // Check if already exists
-      const { data: existing } = await supabase
-        .from("custom_songs")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("title", song.title)
-        .eq("artist", song.artist)
-        .maybeSingle();
-      if (existing) {
-        toast("Déjà dans votre bibliothèque");
-        return;
-      }
-      await supabase.from("custom_songs").insert({
-        user_id: user.id,
-        title: song.title,
-        artist: song.artist,
-        album: song.album || null,
-        duration: song.duration || 0,
-        cover_url: song.coverUrl || null,
-        stream_url: song.streamUrl || null,
-      });
-      toast.success("Ajouté à votre bibliothèque");
-      queryClient.invalidateQueries({ queryKey: ["custom-songs"] });
-      queryClient.invalidateQueries({ queryKey: ["library-counts"] });
-    } catch (e) {
-      console.error("Failed to add to library:", e);
-      toast.error("Erreur lors de l'ajout");
-    } finally {
-      setAdding(false);
-    }
-  };
+  const { toggleLike, isLiked } = usePlayerStore();
+  const inLibrary = isLiked(song.id);
 
   return (
     <motion.button
       whileTap={{ scale: 1.3 }}
-      onClick={handleAdd}
-      disabled={adding}
+      onClick={() => { toggleLike(song); if (navigator.vibrate) navigator.vibrate(10); }}
       className="p-1.5 mt-1 transition-transform"
     >
-      <Plus className={`w-6 h-6 transition-colors duration-300 ${adding ? "text-primary animate-pulse" : "text-white/30"}`} />
+      <motion.div animate={inLibrary ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
+        {inLibrary ? (
+          <Check className="w-6 h-6 text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/0.5)] transition-colors duration-300" />
+        ) : (
+          <Plus className="w-6 h-6 text-white/30 transition-colors duration-300" />
+        )}
+      </motion.div>
     </motion.button>
   );
 }
