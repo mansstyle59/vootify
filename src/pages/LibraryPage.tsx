@@ -484,7 +484,7 @@ const LibraryPage = () => {
       });
     },
     staleTime: 2 * 60 * 1000,
-    enabled: tab === "albums",
+    enabled: tab === "albums" && !!userId,
   });
 
   // Artists query (derived from custom_songs)
