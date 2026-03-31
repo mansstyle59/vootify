@@ -309,7 +309,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   isLiked: (songId) => get().likedSongs.some((s) => s.id === songId),
 
-  setQueue: (songs) => set({ queue: songs }),
+  setQueue: (songs) => {
+    set({ queue: songs });
+    // Prefetch covers for next songs in queue
+    prefetchQueueCovers(songs.slice(0, 10));
+  },
 
   createPlaylist: async (name) => {
     const { userId } = get();
