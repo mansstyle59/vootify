@@ -120,71 +120,81 @@ const ProfilePage = () => {
   const [likedCount, setLikedCount] = useState(0);
   const [playlistCount, setPlaylistCount] = useState(0);
 
-  useEffect(() => {
-    if ("caches" in window) {
-      (async () => {
-        try {
-          const cacheNames = await caches.keys();
-          let total = 0;
-          for (const name of cacheNames) {
-            const cache = await caches.open(name);
-            const keys = await cache.keys();
-            for (const req of keys) {
-              try {
-                const res = await cache.match(req);
-                if (res) { const blob = await res.clone().blob(); total += blob.size; }
-              } catch {}
-            }
-          }
-          setSwCacheSize(total);
-        } catch {}
-      })();
-      // Count cached page data (API responses for albums, artists, playlists)
-      (async () => {
-        try {
-          const cacheNames = await caches.keys();
-          let albums = 0, artists = 0, playlists = 0;
-          for (const name of cacheNames) {
-            const cache = await caches.open(name);
-            const keys = await cache.keys();
-            for (const req of keys) {
-              const url = req.url || "";
-              if (url.includes("custom_albums")) albums++;
-              else if (url.includes("custom_songs") || url.includes("artist_images")) artists++;
-              else if (url.includes("playlist_songs")) playlists++;
-            }
-          }
-          setPageCacheCount({ albums, artists, playlists });
-        } catch {}
-      })();
-    }
-    offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
-    offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
+  const refreshStorageStats = useCallback(async () => {
+    const promises: Promise<void>[] = [];
 
-    (async () => {
-      try {
-        const db = await new Promise<IDBDatabase>((resolve, reject) => {
-          const req = indexedDB.open("music-offline-cache", 2);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-        const tx = db.transaction("covers", "readonly");
-        const store = tx.objectStore("covers");
-        const allKeys = await new Promise<IDBValidKey[]>((resolve) => {
-          const r = store.getAllKeys();
-          r.onsuccess = () => resolve(r.result || []);
-          r.onerror = () => resolve([]);
-        });
-        setCoverCacheCount(allKeys.length);
-        const allBlobs = await new Promise<Blob[]>((resolve) => {
-          const r = store.getAll();
-          r.onsuccess = () => resolve(r.result || []);
-          r.onerror = () => resolve([]);
-        });
-        setCoverCacheSize(allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0));
-      } catch {}
-    })();
+    // SW cache size
+    if ("caches" in window) {
+      promises.push(
+        (async () => {
+          try {
+            const cacheNames = await caches.keys();
+            let total = 0;
+            let albums = 0, artists = 0, playlists = 0;
+            for (const name of cacheNames) {
+              const cache = await caches.open(name);
+              const keys = await cache.keys();
+              for (const req of keys) {
+                try {
+                  const res = await cache.match(req);
+                  if (res) { const blob = await res.clone().blob(); total += blob.size; }
+                } catch {}
+                const url = req.url || "";
+                if (url.includes("custom_albums")) albums++;
+                else if (url.includes("custom_songs") || url.includes("artist_images")) artists++;
+                else if (url.includes("playlist_songs")) playlists++;
+              }
+            }
+            setSwCacheSize(total);
+            setPageCacheCount({ albums, artists, playlists });
+          } catch {}
+        })()
+      );
+    }
+
+    // Offline audio cache
+    promises.push(
+      offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {}),
+      offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {}),
+    );
+
+    // Cover cache
+    promises.push(
+      (async () => {
+        try {
+          const db = await new Promise<IDBDatabase>((resolve, reject) => {
+            const req = indexedDB.open("music-offline-cache", 2);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          const tx = db.transaction("covers", "readonly");
+          const store = tx.objectStore("covers");
+          const allKeys = await new Promise<IDBValidKey[]>((resolve) => {
+            const r = store.getAllKeys();
+            r.onsuccess = () => resolve(r.result || []);
+            r.onerror = () => resolve([]);
+          });
+          setCoverCacheCount(allKeys.length);
+          const allBlobs = await new Promise<Blob[]>((resolve) => {
+            const r = store.getAll();
+            r.onsuccess = () => resolve(r.result || []);
+            r.onerror = () => resolve([]);
+          });
+          setCoverCacheSize(allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0));
+        } catch {}
+      })()
+    );
+
+    await Promise.all(promises);
+    setPendingActions(getPendingCount());
   }, []);
+
+  // Initial load + auto-refresh every 10s
+  useEffect(() => {
+    refreshStorageStats();
+    const interval = setInterval(refreshStorageStats, 10_000);
+    return () => clearInterval(interval);
+  }, [refreshStorageStats]);
 
   useEffect(() => {
     if (!user) return;
