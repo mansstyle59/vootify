@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useHomeConfig, useSaveHomeConfig, type HomeSection, type HomeConfig, type CustomSection } from "@/hooks/useHomeConfig";
-import { useAppSettings, useSaveAppSetting, type SearchSectionsConfig, DEFAULT_SEARCH_SECTIONS } from "@/hooks/useAppSettings";
+import { useAppSettings, useSaveAppSetting, type SearchSectionsConfig, DEFAULT_SEARCH_SECTIONS, type LibraryTabConfig, DEFAULT_LIBRARY_TABS } from "@/hooks/useAppSettings";
 import { notifyUser } from "@/lib/notifyUser";
 
 import { motion } from "framer-motion";
