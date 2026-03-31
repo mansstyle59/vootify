@@ -721,7 +721,7 @@ const SearchPage = () => {
             {/* ── Genre Cards (premium glass) ── */}
             {searchSections?.genres && genreCards.length > 0 && (
               <section>
-                <SectionHeader title="Explorer par genre" action="Voir tout" onAction={() => navigate("/library")} />
+                <SectionHeader title="Explorer par genre" />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
                   {genreCards.slice(0, 8).map((g) => {
                     const def = genreDefs[g.genre] || defaultGenreColor;
