@@ -343,6 +343,21 @@ const AlbumDetailPage = () => {
             songs={tracks}
             showIndex
             onClickSong={(song) => handlePlay(song)}
+            renderRow={(song, _i, songCard) => (
+              <div className="flex items-center">
+                <div className="flex-1 min-w-0">{songCard}</div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleLike(song); if (navigator.vibrate) navigator.vibrate(8); }}
+                  className="flex-shrink-0 p-2 active:scale-90 transition-transform"
+                >
+                  {isLiked(song.id) ? (
+                    <Check className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Plus className="w-4 h-4 text-muted-foreground/35" />
+                  )}
+                </button>
+              </div>
+            )}
             className=""
           />
         </div>
