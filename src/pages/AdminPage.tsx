@@ -1856,7 +1856,7 @@ function HomeTab() {
           )}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--background) / 0.85), transparent)" }} />
           <div className="relative z-10 w-full">
-            <p className="text-[22px] font-black text-foreground leading-tight">Bonjour</p>
+            <p className="text-[22px] font-black text-foreground leading-tight">{heroTitle || "Bonjour"}</p>
             <p className="text-[11px] font-medium mt-0.5" style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}>
               {heroSubtitle || "La musique est le langage des émotions."}
             </p>
@@ -1874,6 +1874,19 @@ function HomeTab() {
             <LayoutDashboard className="w-4 h-4 text-primary" />
             Bannière d'accueil
           </h3>
+
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider block">Titre de bienvenue</label>
+            <input
+              value={heroTitle}
+              onChange={(e) => setHeroTitle(e.target.value)}
+              placeholder="Ex: Bienvenue sur Vootify"
+              className="w-full text-sm rounded-xl px-3.5 py-2.5 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
+              style={{ background: "hsl(var(--foreground) / 0.04)", border: "0.5px solid hsl(var(--border) / 0.12)" }}
+            />
+            <p className="text-[10px] text-muted-foreground/40">Laisser vide = salutation automatique (Bonjour, Bonsoir…)</p>
+          </div>
 
           {/* Subtitle */}
           <div className="space-y-1.5">
