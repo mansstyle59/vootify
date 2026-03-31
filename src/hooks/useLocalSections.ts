@@ -100,12 +100,13 @@ export function useMostPlayed(limit = 20) {
 }
 
 /** Recommended songs based on liked artists or random from catalog */
-export function useRecommended(limit = 20) {
+export function useRecommended(limit = 20, seed?: number) {
   const userId = usePlayerStore((s) => s.userId);
   const likedSongs = usePlayerStore((s) => s.likedSongs);
+  const effectiveSeed = seed ?? new Date().getDate();
 
   return useQuery({
-    queryKey: ["local-recommended", userId, likedSongs.length, limit],
+    queryKey: ["local-recommended", userId, likedSongs.length, limit, effectiveSeed],
     queryFn: async () => {
       // Fetch a reasonable sample instead of ALL songs
       const sampleSize = Math.min(limit * 5, 200);
