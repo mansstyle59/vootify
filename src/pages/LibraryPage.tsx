@@ -738,7 +738,9 @@ const LibraryPage = () => {
   const headerSong = tab === "recent" ? recentMusic[0] : tab === "songs" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
   const headerColor = useDominantColor(headerSong?.coverUrl);
 
-  const allTabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+  const { data: tabsConfig } = useLibraryTabsConfig();
+
+  const allTabsDef: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "songs", label: "Morceaux", icon: Music },
     { key: "recent", label: "Écoutés récemment", icon: Clock },
     { key: "albums", label: "Albums", icon: Disc3 },
@@ -747,6 +749,26 @@ const LibraryPage = () => {
     { key: "custom", label: "Gestion titres", icon: Music },
     { key: "downloads", label: "Hors-ligne", icon: Download },
   ];
+
+  // Reorder and filter based on admin config
+  const allTabs = useMemo(() => {
+    if (!tabsConfig) return allTabsDef;
+    const configMap = new Map(tabsConfig.map((t) => [t.key, t]));
+    // Build ordered list from config, then append any missing tabs
+    const ordered: typeof allTabsDef = [];
+    for (const cfg of tabsConfig) {
+      if (!cfg.visible) continue;
+      const def = allTabsDef.find((d) => d.key === cfg.key);
+      if (def) ordered.push(def);
+    }
+    // Add tabs not in config (e.g. "custom" for admins)
+    for (const def of allTabsDef) {
+      if (!configMap.has(def.key) && !ordered.some((o) => o.key === def.key)) {
+        ordered.push(def);
+      }
+    }
+    return ordered;
+  }, [tabsConfig]);
 
   const tabs = isAdmin ? allTabs : allTabs.filter((t) => t.key !== "custom");
   const isGuest = !authLoading && !user;
