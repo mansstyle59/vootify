@@ -70,7 +70,7 @@ export async function decryptBlob(blob: Blob, seed: string, mimeType = "applicat
   const data = new Uint8Array(await blob.arrayBuffer());
   const iv = data.slice(0, IV_LENGTH);
   const ciphertext = data.slice(IV_LENGTH);
-  const decrypted = await crypto.subtle.decrypt({ name: ALGORITHM, iv }, key, ciphertext);
+  const decrypted = await crypto.subtle.decrypt({ name: ALGORITHM, iv: iv.buffer as ArrayBuffer }, key, ciphertext.buffer as ArrayBuffer);
   return new Blob([decrypted], { type: mimeType });
 }
 
