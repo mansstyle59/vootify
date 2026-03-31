@@ -485,8 +485,23 @@ function SongForm() {
           {processing ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary" />}
         </div>
         <span className="text-sm font-medium text-foreground">
-          {processing ? "Analyse en cours..." : dragOver ? "Déposez ici !" : "Sélectionner ou glisser des fichiers / dossiers"}
+          {processing
+            ? analyzeProgress.total > 0
+              ? `Analyse ${analyzeProgress.done + 1}/${analyzeProgress.total} fichiers…`
+              : "Analyse en cours..."
+            : dragOver ? "Déposez ici !" : "Sélectionner ou glisser des fichiers / dossiers"}
         </span>
+        {processing && analyzeProgress.total > 1 && (
+          <div className="w-full max-w-[200px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-300 ease-out"
+              style={{
+                width: `${Math.round(((analyzeProgress.done + 1) / analyzeProgress.total) * 100)}%`,
+                background: "hsl(var(--primary))",
+              }}
+            />
+          </div>
+        )}
         <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Fichiers ou dossiers • Max 50 Mo</span>
       </motion.div>
 
