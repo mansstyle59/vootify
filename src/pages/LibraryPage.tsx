@@ -524,6 +524,7 @@ const LibraryPage = () => {
       const { data, error } = await supabase
         .from("custom_songs")
         .select("artist, album")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       if (error) throw error;
       const rows = data || [];
