@@ -8,7 +8,7 @@ import { getEffectiveUserId } from "@/lib/deviceId";
 import { supabase } from "@/integrations/supabase/client";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
-import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2, X } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Loader2, Clock, Bookmark, BookmarkCheck, MoreHorizontal, Share2, Download, Trash2, X, Plus, Check } from "lucide-react";
 import { ActionBar } from "@/components/ActionBar";
 import { offlineCache } from "@/lib/offlineCache";
 import { usePlaylistDownload } from "@/hooks/usePlaylistDownload";
@@ -24,7 +24,7 @@ const AlbumDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, toggleLike, isLiked } = usePlayerStore();
   const heroRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -343,6 +343,21 @@ const AlbumDetailPage = () => {
             songs={tracks}
             showIndex
             onClickSong={(song) => handlePlay(song)}
+            renderRow={(song, _i, songCard) => (
+              <div className="flex items-center">
+                <div className="flex-1 min-w-0">{songCard}</div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleLike(song); if (navigator.vibrate) navigator.vibrate(8); }}
+                  className="flex-shrink-0 p-2 active:scale-90 transition-transform"
+                >
+                  {isLiked(song.id) ? (
+                    <Check className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Plus className="w-4 h-4 text-muted-foreground/35" />
+                  )}
+                </button>
+              </div>
+            )}
             className=""
           />
         </div>

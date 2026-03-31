@@ -6,7 +6,7 @@ import { useAllLocalSongs } from "@/hooks/useLocalSearch";
 import { getGenreTags, genreDefs, defaultGenreColor } from "@/lib/genreGroups";
 import { SongCard, SongSkeleton } from "@/components/MusicCards";
 import { VirtualSongList } from "@/components/VirtualSongList";
-import { ArrowLeft, Play, Shuffle, Search, X } from "lucide-react";
+import { ArrowLeft, Play, Shuffle, Search, X, Plus, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Song } from "@/data/mockData";
 
@@ -14,7 +14,7 @@ const GenrePage = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const genreName = decodeURIComponent(name || "");
-  const { play, setQueue, currentSong, isPlaying, togglePlay } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, toggleLike, isLiked } = usePlayerStore();
   const { data: allSongs, isLoading } = useAllLocalSongs();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -175,6 +175,21 @@ const GenrePage = () => {
             <VirtualSongList
               songs={filteredSongs}
               onClickSong={(song) => handlePlay(song)}
+              renderRow={(song, _i, songCard) => (
+                <div className="flex items-center">
+                  <div className="flex-1 min-w-0">{songCard}</div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleLike(song); if (navigator.vibrate) navigator.vibrate(8); }}
+                    className="flex-shrink-0 p-2 active:scale-90 transition-transform"
+                  >
+                    {isLiked(song.id) ? (
+                      <Check className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-muted-foreground/35" />
+                    )}
+                  </button>
+                </div>
+              )}
             />
           </div>
         )}
