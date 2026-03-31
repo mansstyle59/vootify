@@ -812,7 +812,7 @@ function UsersTab() {
                   >
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
                       {song.cover_url ? (
-                        <img src={song.cover_url} alt="" className="w-full h-full object-cover" />
+                        <img src={song.cover_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Music className="w-4 h-4 text-muted-foreground/30" />
@@ -1189,7 +1189,7 @@ function SongsTab() {
                   </div>
                 ) : editCoverUrl ? (
                   <>
-                    <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={editCoverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
                       <ImageIcon className="w-4 h-4 text-white" />
                     </div>
@@ -1203,7 +1203,7 @@ function SongsTab() {
             ) : (
               <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
                 {s.cover_url ? (
-                  <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
+                  <img src={s.cover_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
                     <Music className="w-4 h-4 text-primary/30" />
@@ -1324,7 +1324,7 @@ function RadioCardAdmin({ station, isSelected, onEdit, onDelete, onSelect }: {
     >
       <div className="relative aspect-square rounded-xl overflow-hidden ring-[1.5px] ring-border/20">
         {station.cover_url ? (
-          <img src={station.cover_url} alt={station.name} className="w-full h-full object-cover" />
+          <img src={station.cover_url} alt={station.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
             <Radio className="w-8 h-8 text-primary/25" />
@@ -1580,7 +1580,7 @@ function RadiosTab() {
                     <div className="w-full h-full flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                   ) : editCoverUrl ? (
                     <>
-                      <img src={editCoverUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={editCoverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
                         <ImageIcon className="w-4 h-4 text-white" />
                       </div>
@@ -1833,7 +1833,7 @@ function HomeTab() {
           }}
         >
           {heroBgImage && (
-            <img src={heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
           )}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--background) / 0.85), transparent)" }} />
           <div className="relative z-10 w-full">
@@ -1922,7 +1922,7 @@ function HomeTab() {
             </div>
             {heroBgImage && (
               <div className="mt-2 relative rounded-xl overflow-hidden h-24 group">
-                <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" />
+                <img src={heroBgImage} alt="Aperçu" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <button onClick={() => setHeroBgImage("")} className="absolute top-2 right-2 p-1.5 rounded-full text-foreground opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "hsl(var(--background) / 0.7)", backdropFilter: "blur(8px)" }}><X className="w-3.5 h-3.5" /></button>
               </div>
