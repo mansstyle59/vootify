@@ -58,17 +58,25 @@ async function compressCover(blob: Blob, maxSize = 300, quality = 0.7): Promise<
 /** Fetch an image URL and return it as a compressed Blob */
 async function fetchCoverBlob(url: string): Promise<Blob | null> {
   try {
+    // Try direct fetch first
     let res = await fetch(url);
     if (!res.ok) {
       res = await fetch(url, { referrerPolicy: "no-referrer" });
     }
-    if (!res.ok) {
-      res = await fetch(url, { mode: "no-cors" });
+    let blob = await res.blob();
+    if (blob && blob.size > 0 && blob.type !== "text/html") {
+      return await compressCover(blob);
     }
-    const blob = await res.blob();
-    if (!blob || blob.size === 0) return null;
-    // Compress to save ~60-80% storage
-    return await compressCover(blob);
+    // Fallback: proxy through edge function for CORS-restricted URLs
+    const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deezer-proxy?imageUrl=${encodeURIComponent(url)}`;
+    res = await fetch(proxyUrl);
+    if (res.ok) {
+      blob = await res.blob();
+      if (blob && blob.size > 0) {
+        return await compressCover(blob);
+      }
+    }
+    return null;
   } catch {
     return null;
   }

@@ -28,6 +28,27 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+
+    // GET with imageUrl param → proxy an image (for offline cover caching)
+    const imageUrl = url.searchParams.get('imageUrl');
+    if (req.method === 'GET' && imageUrl) {
+      const imgRes = await fetch(imageUrl, {
+        headers: { 'User-Agent': 'Vootify/1.0' },
+      });
+      if (!imgRes.ok) {
+        return new Response('Image not found', { status: 404, headers: corsHeaders });
+      }
+      const blob = await imgRes.blob();
+      return new Response(blob, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': imgRes.headers.get('Content-Type') || 'image/jpeg',
+          'Cache-Control': 'public, max-age=86400',
+        },
+      });
+    }
+
     const body = await req.json();
     const { path, resolveUrl } = body;
 
@@ -48,9 +69,9 @@ Deno.serve(async (req) => {
 
     // Ensure path starts with /
     const safePath = path.startsWith('/') ? path : `/${path}`;
-    const url = `${DEEZER_API}${safePath}`;
+    const apiUrl = `${DEEZER_API}${safePath}`;
 
-    const res = await fetch(url, {
+    const res = await fetch(apiUrl, {
       headers: { 'User-Agent': 'Vootify/1.0' },
     });
 
