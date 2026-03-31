@@ -1,4 +1,9 @@
 import { Song } from "@/data/mockData";
+import {
+  encryptBlob, decryptBlob, encryptJSON, decryptJSON,
+  isCryptoAvailable, isEncryptionEnabled,
+} from "@/lib/cryptoCache";
+import { getEffectiveUserId } from "@/lib/deviceId";
 
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
@@ -30,6 +35,51 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
+/** Check if we should encrypt */
+function shouldEncrypt(): boolean {
+  return isCryptoAvailable() && isEncryptionEnabled();
+}
+
+/** Get seed for encryption */
+function getSeed(): string {
+  return getEffectiveUserId();
+}
+
+/** Encrypt a blob if encryption is enabled */
+async function maybeEncrypt(blob: Blob): Promise<Blob> {
+  if (!shouldEncrypt()) return blob;
+  return encryptBlob(blob, getSeed());
+}
+
+/** Decrypt a blob if it's encrypted (detected by checking if it's a valid media blob) */
+async function maybeDecryptBlob(blob: Blob, mimeType: string): Promise<Blob> {
+  if (!shouldEncrypt()) return blob;
+  try {
+    return await decryptBlob(blob, getSeed(), mimeType);
+  } catch {
+    // Fallback: blob might not be encrypted (legacy data)
+    return blob;
+  }
+}
+
+/** Encrypt metadata if encryption is enabled */
+async function maybeEncryptMeta(meta: object): Promise<object | string> {
+  if (!shouldEncrypt()) return meta;
+  return { _encrypted: true, _data: await encryptJSON(meta, getSeed()) };
+}
+
+/** Decrypt metadata if encrypted */
+async function maybeDecryptMeta<T>(stored: any): Promise<T> {
+  if (stored && stored._encrypted && stored._data) {
+    try {
+      return await decryptJSON<T>(stored._data, getSeed());
+    } catch {
+      return stored as T;
+    }
+  }
+  return stored as T;
+}
+
 /** Compress an image blob to a smaller JPEG (max 300x300, quality 0.7) */
 async function compressCover(blob: Blob, maxSize = 300, quality = 0.7): Promise<Blob> {
   return new Promise((resolve) => {
@@ -58,7 +108,6 @@ async function compressCover(blob: Blob, maxSize = 300, quality = 0.7): Promise<
 /** Fetch an image URL and return it as a compressed Blob */
 async function fetchCoverBlob(url: string): Promise<Blob | null> {
   try {
-    // Try direct fetch first
     let res = await fetch(url);
     if (!res.ok) {
       res = await fetch(url, { referrerPolicy: "no-referrer" });
@@ -67,7 +116,6 @@ async function fetchCoverBlob(url: string): Promise<Blob | null> {
     if (blob && blob.size > 0 && blob.type !== "text/html") {
       return await compressCover(blob);
     }
-    // Fallback: proxy through edge function for CORS-restricted URLs
     const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deezer-proxy?imageUrl=${encodeURIComponent(url)}`;
     res = await fetch(proxyUrl);
     if (res.ok) {
@@ -110,7 +158,7 @@ export const offlineCache = {
   async cacheSong(song: Song, onProgress?: (pct: number) => void): Promise<void> {
     if (!song.streamUrl) throw new Error("No stream URL");
 
-    // Check cache limits (size + song count)
+    // Check cache limits
     try {
       const [currentSize, allCached] = await Promise.all([
         this.getCacheSize(),
@@ -138,7 +186,6 @@ export const offlineCache = {
 
     if (!reader) throw new Error("No readable stream");
 
-    // Download cover in parallel with audio
     const coverPromise = song.coverUrl ? fetchCoverBlob(song.coverUrl) : Promise.resolve(null);
 
     while (true) {
@@ -151,11 +198,18 @@ export const offlineCache = {
       }
     }
 
-    const audioBlob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
-    const coverBlob = await coverPromise;
+    let audioBlob: Blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
+    let coverBlob = await coverPromise;
+
+    // Encrypt blobs if enabled
+    audioBlob = await maybeEncrypt(audioBlob);
+    if (coverBlob) {
+      coverBlob = await maybeEncrypt(coverBlob);
+    }
+
     const db = await openDb();
 
-    // Store audio blob
+    // Store audio + cover blobs
     await new Promise<void>((resolve, reject) => {
       const stores = [AUDIO_STORE];
       if (coverBlob) stores.push(COVER_STORE);
@@ -168,7 +222,7 @@ export const offlineCache = {
       tx.onerror = () => reject(tx.error);
     });
 
-    // Store metadata
+    // Store metadata (encrypted if enabled)
     const meta = {
       id: song.id,
       title: song.title,
@@ -182,9 +236,10 @@ export const offlineCache = {
       cachedAt: Date.now(),
       hasCover: !!coverBlob,
     };
+    const storedMeta = await maybeEncryptMeta(meta);
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(META_STORE, "readwrite");
-      tx.objectStore(META_STORE).put(meta, song.id);
+      tx.objectStore(META_STORE).put(storedMeta, song.id);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -196,9 +251,14 @@ export const offlineCache = {
     return new Promise((resolve) => {
       const tx = db.transaction(AUDIO_STORE, "readonly");
       const req = tx.objectStore(AUDIO_STORE).get(songId);
-      req.onsuccess = () => {
+      req.onsuccess = async () => {
         if (req.result instanceof Blob) {
-          resolve(URL.createObjectURL(req.result));
+          try {
+            const decrypted = await maybeDecryptBlob(req.result, "audio/mpeg");
+            resolve(URL.createObjectURL(decrypted));
+          } catch {
+            resolve(URL.createObjectURL(req.result));
+          }
         } else {
           resolve(null);
         }
@@ -213,9 +273,14 @@ export const offlineCache = {
     return new Promise((resolve) => {
       const tx = db.transaction(COVER_STORE, "readonly");
       const req = tx.objectStore(COVER_STORE).get(songId);
-      req.onsuccess = () => {
+      req.onsuccess = async () => {
         if (req.result instanceof Blob) {
-          resolve(URL.createObjectURL(req.result));
+          try {
+            const decrypted = await maybeDecryptBlob(req.result, "image/jpeg");
+            resolve(URL.createObjectURL(decrypted));
+          } catch {
+            resolve(URL.createObjectURL(req.result));
+          }
         } else {
           resolve(null);
         }
@@ -227,7 +292,7 @@ export const offlineCache = {
   /** Get all cached songs metadata, with cover blob URLs resolved */
   async getAllCached(): Promise<(Song & { cachedAt: number })[]> {
     const db = await openDb();
-    const metas: any[] = await new Promise((resolve) => {
+    const rawMetas: any[] = await new Promise((resolve) => {
       const tx = db.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const req = store.getAll();
@@ -235,7 +300,9 @@ export const offlineCache = {
       req.onerror = () => resolve([]);
     });
 
-    // Resolve cover blob URLs for each cached song
+    // Decrypt metadata if needed
+    const metas = await Promise.all(rawMetas.map((m) => maybeDecryptMeta<any>(m)));
+
     const songs = await Promise.all(
       metas.map(async (m: any) => {
         let coverUrl = m.coverUrl;
