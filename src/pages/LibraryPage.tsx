@@ -515,7 +515,7 @@ const LibraryPage = () => {
         .sort((a, b) => a.name.localeCompare(b.name, "fr"));
     },
     staleTime: 2 * 60 * 1000,
-    enabled: tab === "artists",
+    enabled: tab === "artists" && !!userId,
   });
 
   // Check which songs in current view are cached offline
