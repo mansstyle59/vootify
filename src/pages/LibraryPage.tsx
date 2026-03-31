@@ -434,7 +434,6 @@ const LibraryPage = () => {
       const { data: explicit, error: expErr } = await supabase
         .from("custom_albums")
         .select("*")
-        .eq("user_id", userId!)
         .order("created_at", { ascending: false });
       if (expErr) throw expErr;
 
