@@ -1282,6 +1282,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               key={currentSong.id + "-bg"}
               src={currentSong.coverUrl}
               alt=""
+              referrerPolicy="no-referrer"
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.35 }}
               exit={{ opacity: 0 }}
