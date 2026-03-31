@@ -782,7 +782,7 @@ const LibraryPage = () => {
   }, [recentlyPlayed]);
 
   // Dynamic header color from first song
-  const headerSong = tab === "recent" ? recentMusic[0] : tab === "liked" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
+  const headerSong = tab === "recent" ? recentMusic[0] : tab === "songs" ? likedSongs[0] : tab === "custom" ? customSongs[0] : null;
   const headerColor = useDominantColor(headerSong?.coverUrl);
 
   const allTabs: { key: Tab; label: string; icon: React.ElementType }[] = [
