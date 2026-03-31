@@ -70,7 +70,7 @@ const SearchPage = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const userId = usePlayerStore((s) => s.userId);
   const recentlyPlayed = usePlayerStore((s) => s.recentlyPlayed);
-  const { play, setQueue, currentSong, isPlaying, togglePlay, playlists, playlistSongs, addSongToPlaylist, createPlaylist } = usePlayerStore();
+  const { play, setQueue, currentSong, isPlaying, togglePlay, playlists, playlistSongs, addSongToPlaylist, createPlaylist, toggleLike, isLiked } = usePlayerStore();
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
