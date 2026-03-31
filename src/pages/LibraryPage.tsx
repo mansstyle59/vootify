@@ -1621,11 +1621,11 @@ const LibraryPage = () => {
               </div>
             )}
 
-            {/* ── SONGS (all catalog) ── */}
+            {/* ── SONGS (user's library = liked songs) ── */}
             {tab === "songs" && (
               <div>
-                {customSongs.length === 0 ? (
-                  <EmptyState icon={Music} title="Commencez votre bibliothèque" subtitle="Recherchez et ajoutez vos morceaux préférés" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
+                {filterFullStreams(likedSongs).length === 0 ? (
+                  <EmptyState icon={Music} title="Votre bibliothèque est vide" subtitle="Recherchez des morceaux et ajoutez-les à votre collection" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
                 ) : (
                   <>
                     {/* Search */}
