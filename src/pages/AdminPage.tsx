@@ -2472,7 +2472,7 @@ function SongPickerModal({
                         {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                       {track.cover_url ? (
-                        <img src={track.cover_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                        <img src={track.cover_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
                           <Music className="w-3.5 h-3.5 text-muted-foreground" />
