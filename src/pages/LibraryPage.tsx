@@ -483,9 +483,6 @@ const LibraryPage = () => {
       .sort((a, b) => a.name.localeCompare(b.name, "fr"));
   }, [likedSongs]);
   const loadingLibArtists = false;
-    staleTime: 2 * 60 * 1000,
-    enabled: tab === "artists" && !!userId,
-  });
 
   // Lightweight summary counts — based on liked songs (user's library)
   const libraryCounts = useMemo(() => {
