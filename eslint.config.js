@@ -21,6 +21,10 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-restricted-elements": ["error", {
+        "name": "img",
+        "message": "Utilise <SafeImage> depuis @/components/SafeImage au lieu de <img> pour garantir referrerPolicy=\"no-referrer\" automatiquement."
+      }],
     },
   },
 );
