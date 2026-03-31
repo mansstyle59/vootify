@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { offlineCache } from "@/lib/offlineCache";
 import { isCryptoAvailable, isEncryptionEnabled, setEncryptionEnabled } from "@/lib/cryptoCache";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -113,77 +113,88 @@ const ProfilePage = () => {
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pendingActions, setPendingActions] = useState(getPendingCount());
+  const storageRefreshKey = useRef(0);
 
   const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
   const [tracksPlayed, setTracksPlayed] = useState(0);
   const [likedCount, setLikedCount] = useState(0);
   const [playlistCount, setPlaylistCount] = useState(0);
 
-  useEffect(() => {
-    if ("caches" in window) {
-      (async () => {
-        try {
-          const cacheNames = await caches.keys();
-          let total = 0;
-          for (const name of cacheNames) {
-            const cache = await caches.open(name);
-            const keys = await cache.keys();
-            for (const req of keys) {
-              try {
-                const res = await cache.match(req);
-                if (res) { const blob = await res.clone().blob(); total += blob.size; }
-              } catch {}
-            }
-          }
-          setSwCacheSize(total);
-        } catch {}
-      })();
-      // Count cached page data (API responses for albums, artists, playlists)
-      (async () => {
-        try {
-          const cacheNames = await caches.keys();
-          let albums = 0, artists = 0, playlists = 0;
-          for (const name of cacheNames) {
-            const cache = await caches.open(name);
-            const keys = await cache.keys();
-            for (const req of keys) {
-              const url = req.url || "";
-              if (url.includes("custom_albums")) albums++;
-              else if (url.includes("custom_songs") || url.includes("artist_images")) artists++;
-              else if (url.includes("playlist_songs")) playlists++;
-            }
-          }
-          setPageCacheCount({ albums, artists, playlists });
-        } catch {}
-      })();
-    }
-    offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {});
-    offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {});
+  const refreshStorageStats = useCallback(async () => {
+    const promises: Promise<void>[] = [];
 
-    (async () => {
-      try {
-        const db = await new Promise<IDBDatabase>((resolve, reject) => {
-          const req = indexedDB.open("music-offline-cache", 2);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-        const tx = db.transaction("covers", "readonly");
-        const store = tx.objectStore("covers");
-        const allKeys = await new Promise<IDBValidKey[]>((resolve) => {
-          const r = store.getAllKeys();
-          r.onsuccess = () => resolve(r.result || []);
-          r.onerror = () => resolve([]);
-        });
-        setCoverCacheCount(allKeys.length);
-        const allBlobs = await new Promise<Blob[]>((resolve) => {
-          const r = store.getAll();
-          r.onsuccess = () => resolve(r.result || []);
-          r.onerror = () => resolve([]);
-        });
-        setCoverCacheSize(allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0));
-      } catch {}
-    })();
+    // SW cache size
+    if ("caches" in window) {
+      promises.push(
+        (async () => {
+          try {
+            const cacheNames = await caches.keys();
+            let total = 0;
+            let albums = 0, artists = 0, playlists = 0;
+            for (const name of cacheNames) {
+              const cache = await caches.open(name);
+              const keys = await cache.keys();
+              for (const req of keys) {
+                try {
+                  const res = await cache.match(req);
+                  if (res) { const blob = await res.clone().blob(); total += blob.size; }
+                } catch {}
+                const url = req.url || "";
+                if (url.includes("custom_albums")) albums++;
+                else if (url.includes("custom_songs") || url.includes("artist_images")) artists++;
+                else if (url.includes("playlist_songs")) playlists++;
+              }
+            }
+            setSwCacheSize(total);
+            setPageCacheCount({ albums, artists, playlists });
+          } catch {}
+        })()
+      );
+    }
+
+    // Offline audio cache
+    promises.push(
+      offlineCache.getCacheSize().then(setOfflineCacheSize).catch(() => {}),
+      offlineCache.getAllCached().then((songs) => setOfflineCount(songs.length)).catch(() => {}),
+    );
+
+    // Cover cache
+    promises.push(
+      (async () => {
+        try {
+          const db = await new Promise<IDBDatabase>((resolve, reject) => {
+            const req = indexedDB.open("music-offline-cache", 2);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          const tx = db.transaction("covers", "readonly");
+          const store = tx.objectStore("covers");
+          const allKeys = await new Promise<IDBValidKey[]>((resolve) => {
+            const r = store.getAllKeys();
+            r.onsuccess = () => resolve(r.result || []);
+            r.onerror = () => resolve([]);
+          });
+          setCoverCacheCount(allKeys.length);
+          const allBlobs = await new Promise<Blob[]>((resolve) => {
+            const r = store.getAll();
+            r.onsuccess = () => resolve(r.result || []);
+            r.onerror = () => resolve([]);
+          });
+          setCoverCacheSize(allBlobs.reduce((sum, b) => sum + (b instanceof Blob ? b.size : 0), 0));
+        } catch {}
+      })()
+    );
+
+    await Promise.all(promises);
+    setPendingActions(getPendingCount());
   }, []);
+
+  // Initial load + auto-refresh every 10s
+  useEffect(() => {
+    refreshStorageStats();
+    const interval = setInterval(refreshStorageStats, 10_000);
+    return () => clearInterval(interval);
+  }, [refreshStorageStats]);
 
   useEffect(() => {
     if (!user) return;
@@ -499,8 +510,8 @@ const ProfilePage = () => {
                   if (reg) await reg.update();
                   if (user) silentCacheRefresh(user.id);
                   const result = await flushQueue();
-                  setPendingActions(getPendingCount());
                   await queryClient.invalidateQueries();
+                  await refreshStorageStats();
                   toast.success(result.synced > 0 ? `${result.synced} action(s) synchronisée(s)` : "Données à jour !");
                 } catch { toast.error("Erreur"); }
                 finally { setIsRefreshing(false); }
@@ -600,11 +611,8 @@ const ProfilePage = () => {
                   const { silentCacheRefresh: refresh } = await import("@/lib/appCache");
                   refresh(user.id);
                 }
-                // Refresh stats
-                const allCached = await offlineCache.getAllCached();
-                setOfflineCount(allCached.length);
-                const newSize = await offlineCache.getCacheSize();
-                setOfflineCacheSize(newSize);
+                // Refresh all stats instantly
+                await refreshStorageStats();
                 toast.success("Cache, pochettes et pages téléchargés !");
               } catch (e) {
                 console.error("Cache all failed:", e);
@@ -627,7 +635,7 @@ const ProfilePage = () => {
               if (!("caches" in window)) return;
               const names = await caches.keys();
               await Promise.all(names.map((n) => caches.delete(n)));
-              setSwCacheSize(0);
+              await refreshStorageStats();
               toast.success("Cache vidé !");
             }}
             className="w-full py-2 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
