@@ -781,6 +781,7 @@ export function MiniPlayer() {
                         src={currentSong.coverUrl}
                         alt={currentSong.title}
                         className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
                         initial={{ opacity: 0, scale: 1.1 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.4 }}
