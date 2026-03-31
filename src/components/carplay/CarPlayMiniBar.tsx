@@ -67,7 +67,7 @@ export function CarPlayMiniBar({
               transition={{ duration: 0.3 }}
               className="w-full h-full"
             >
-              <LazyImage src={coverUrl} alt="" className="w-full h-full object-cover" fallback wrapperClassName="w-full h-full" />
+              <LazyImage src={coverUrl} alt="" className="w-full h-full object-cover" fallback wrapperClassName="w-full h-full" referrerPolicy="no-referrer" />
             </motion.div>
           </AnimatePresence>
           {isLiveRadio && isPlaying && (
