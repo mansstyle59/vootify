@@ -274,25 +274,27 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { userId } = get();
     const exists = get().likedSongs.some((ls) => ls.id === song.id);
 
-    // Optimistic update + toast
+    if (!userId) {
+      toast.error("Connectez-vous pour ajouter à votre bibliothèque");
+      return;
+    }
+
+    // Optimistic update
     set((s) => ({
       likedSongs: exists
         ? s.likedSongs.filter((ls) => ls.id !== song.id)
         : [...s.likedSongs, { ...song, liked: true }],
     }));
 
-    if (exists) {
-      toast.success("Retiré de la bibliothèque", { duration: 2000 });
-    } else {
-      toast.success("Ajouté à la bibliothèque", { duration: 2000 });
-    }
+    const operation = exists
+      ? musicDb.unlikeSong(userId, song.id)
+      : musicDb.likeSong(userId, song);
 
-    if (userId) {
-      const operation = exists
-        ? musicDb.unlikeSong(userId, song.id)
-        : musicDb.likeSong(userId, song);
-
-      operation.catch((e) => {
+    operation
+      .then(() => {
+        toast.success(exists ? "Retiré de la bibliothèque" : "Ajouté à la bibliothèque", { duration: 2000 });
+      })
+      .catch((e) => {
         console.error("Like operation failed:", e);
         // Rollback on failure
         set((s) => ({
@@ -300,9 +302,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
             ? [...s.likedSongs, { ...song, liked: true }]
             : s.likedSongs.filter((ls) => ls.id !== song.id),
         }));
-        toast.error(exists ? "Erreur lors de la suppression du favori" : "Erreur lors de l'ajout aux favoris");
+        toast.error(exists ? "Erreur lors du retrait" : "Erreur lors de l'ajout");
       });
-    }
   },
 
   isLiked: (songId) => get().likedSongs.some((s) => s.id === songId),
