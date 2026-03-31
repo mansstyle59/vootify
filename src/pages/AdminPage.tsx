@@ -4389,19 +4389,6 @@ function SharedPlaylistsTab() {
 }
 
 /* ── Search Page Config Tab ── */
-export interface SearchSectionsConfig {
-  artists: boolean;
-  genres: boolean;
-  stats: boolean;
-  suggestions: boolean;
-}
-
-const DEFAULT_SEARCH_SECTIONS: SearchSectionsConfig = {
-  artists: true,
-  genres: true,
-  stats: true,
-  suggestions: true,
-};
 
 function SearchConfigTab() {
   const { user } = useAuth();
