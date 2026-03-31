@@ -6,7 +6,7 @@
 
 export type PlanType = "premium" | "gold" | "vip" | "free";
 
-export type LibraryTab = "liked" | "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs";
+export type LibraryTab = "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs";
 
 interface PlanPermissions {
   allowedRoutes: string[];        // routes the plan can access
