@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { offlineCache } from "@/lib/offlineCache";
+import { isCryptoAvailable, isEncryptionEnabled, setEncryptionEnabled } from "@/lib/cryptoCache";
 import { useSubscription } from "@/hooks/useSubscription";
 import { normalizePlan, getPlanConfig } from "@/lib/subscriptionPermissions";
 import { useAuth } from "@/hooks/useAuth";
