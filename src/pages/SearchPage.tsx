@@ -79,8 +79,14 @@ const SearchPage = () => {
   const [artistFilter, setArtistFilter] = useState<string | null>(null);
   const { data: searchSections } = useSearchSections();
   const { data: suggestedSongs } = useRecommended(10);
-  const queryClient = useRef(usePlayerStore.getState()).current; // just for type, we use react-query's
+  const rqClient = useQueryClient();
   const [refreshingSuggestions, setRefreshingSuggestions] = useState(false);
+
+  const handleRefreshSuggestions = useCallback(async () => {
+    setRefreshingSuggestions(true);
+    await rqClient.invalidateQueries({ queryKey: ["local-recommended"] });
+    setTimeout(() => setRefreshingSuggestions(false), 600);
+  }, [rqClient]);
 
   interface DeezerNewRelease {
     id: number;
