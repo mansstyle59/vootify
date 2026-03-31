@@ -48,6 +48,7 @@ const AdminPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "stats", label: "Stats", icon: Shield },
     { key: "home", label: "Accueil", icon: LayoutDashboard },
+    { key: "search_config", label: "Recherche", icon: Search },
     { key: "theme", label: "Thème", icon: Palette },
     { key: "shared", label: "Partages", icon: Share2 },
     { key: "users", label: "Utilisateurs", icon: Users },
