@@ -156,8 +156,10 @@ export async function performInitialCache(
   preCacheFridayCovers().catch(() => {});
 }
 
+export type CoverProgressCallback = (done: number, total: number) => void;
+
 /** Pre-fetch ALL song covers into IndexedDB for offline display */
-async function preCacheCovers(_userId: string) {
+export async function preCacheCovers(_userId: string, onCoverProgress?: CoverProgressCallback) {
   const COVERS_CACHED_KEY = "vootify-covers-cached-v1";
   try {
     // Skip if already done this session
@@ -199,8 +201,12 @@ async function preCacheCovers(_userId: string) {
     const missing = songs.filter((s) => s.cover_url && !existingKeys.has(s.id));
     if (missing.length === 0) {
       sessionStorage.setItem(COVERS_CACHED_KEY, "1");
+      onCoverProgress?.(0, 0);
       return;
     }
+
+    let downloaded = 0;
+    onCoverProgress?.(0, missing.length);
 
     // Download in small batches to avoid overwhelming the network
     const BATCH = 6;
@@ -231,6 +237,9 @@ async function preCacheCovers(_userId: string) {
           tx.onerror = () => resolve();
         });
       }
+
+      downloaded += batch.length;
+      onCoverProgress?.(downloaded, missing.length);
 
       // Yield to main thread between batches
       if (i + BATCH < missing.length) {
