@@ -629,21 +629,100 @@ const ProfilePage = () => {
             {isCachingAll ? "Téléchargement en cours…" : "Tout télécharger (pochettes, pages, cache)"}
           </button>
 
-          {/* Clear cache */}
-          <button
-            onClick={async () => {
-              if (!("caches" in window)) return;
-              const names = await caches.keys();
-              await Promise.all(names.map((n) => caches.delete(n)));
-              await refreshStorageStats();
-              toast.success("Cache vidé !");
-            }}
-            className="w-full py-2 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
-            style={{ background: "hsl(var(--destructive) / 0.06)", color: "hsl(var(--destructive))" }}
-          >
-            <Trash2 className="w-3 h-3" />
-            Vider le cache
-          </button>
+          {/* Smart clear: covers, pages, cache */}
+          <div className="grid grid-cols-3 gap-2">
+            {/* Clear covers */}
+            <button
+              onClick={async () => {
+                try {
+                  const db = await new Promise<IDBDatabase>((res, rej) => {
+                    const req = indexedDB.open("music-offline-cache", 2);
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                  });
+                  await new Promise<void>((res, rej) => {
+                    const tx = db.transaction("covers", "readwrite");
+                    tx.objectStore("covers").clear();
+                    tx.oncomplete = () => res();
+                    tx.onerror = () => rej(tx.error);
+                  });
+                  db.close();
+                  // Also clear memory cover cache
+                  const { clearCoverCache } = await import("@/lib/coverMemoryCache");
+                  clearCoverCache();
+                  const { radioCoverCache } = await import("@/lib/radioCoverCache");
+                  radioCoverCache.clear();
+                  sessionStorage.removeItem("vootify-covers-cached-v1");
+                  sessionStorage.removeItem("vootify-friday-covers-cached-v1");
+                  await refreshStorageStats();
+                  toast.success("Pochettes vidées !");
+                } catch (e) {
+                  console.error(e);
+                  toast.error("Erreur");
+                }
+              }}
+              className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
+              style={{ background: "hsl(var(--destructive) / 0.06)", color: "hsl(var(--destructive))" }}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              Pochettes
+            </button>
+            {/* Clear pages / SW cache */}
+            <button
+              onClick={async () => {
+                if (!("caches" in window)) return;
+                const names = await caches.keys();
+                await Promise.all(names.map((n) => caches.delete(n)));
+                await refreshStorageStats();
+                toast.success("Pages en cache vidées !");
+              }}
+              className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
+              style={{ background: "hsl(var(--destructive) / 0.06)", color: "hsl(var(--destructive))" }}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Pages
+            </button>
+            {/* Clear all */}
+            <button
+              onClick={async () => {
+                // SW cache
+                if ("caches" in window) {
+                  const names = await caches.keys();
+                  await Promise.all(names.map((n) => caches.delete(n)));
+                }
+                // IndexedDB covers
+                try {
+                  const db = await new Promise<IDBDatabase>((res, rej) => {
+                    const req = indexedDB.open("music-offline-cache", 2);
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                  });
+                  await new Promise<void>((res, rej) => {
+                    const tx = db.transaction(["covers", "audio", "meta"], "readwrite");
+                    tx.objectStore("covers").clear();
+                    tx.objectStore("audio").clear();
+                    tx.objectStore("meta").clear();
+                    tx.oncomplete = () => res();
+                    tx.onerror = () => rej(tx.error);
+                  });
+                  db.close();
+                } catch {}
+                const { clearCoverCache } = await import("@/lib/coverMemoryCache");
+                clearCoverCache();
+                const { radioCoverCache } = await import("@/lib/radioCoverCache");
+                radioCoverCache.clear();
+                sessionStorage.removeItem("vootify-covers-cached-v1");
+                sessionStorage.removeItem("vootify-friday-covers-cached-v1");
+                await refreshStorageStats();
+                toast.success("Tout le cache vidé !");
+              }}
+              className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
+              style={{ background: "hsl(var(--destructive) / 0.10)", color: "hsl(var(--destructive))" }}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Tout
+            </button>
+          </div>
         </GlassCard>
 
         {/* ─── DÉCONNEXION ─── */}
