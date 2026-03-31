@@ -1530,6 +1530,23 @@ const LibraryPage = () => {
                     <ActionButtons
                       onPlayAll={() => { setQueue(sortedAllSongs); play(sortedAllSongs[0]); }}
                       onShuffle={() => { const s = [...sortedAllSongs].sort(() => Math.random() - 0.5); setQueue(s); play(s[0]); }}
+                      extra={
+                        <button
+                          disabled={downloadingAll}
+                          onClick={handleDownloadAllLibrary}
+                          className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium active:scale-95 transition-transform disabled:opacity-50"
+                          style={{
+                            background: "hsl(var(--primary) / 0.1)",
+                            color: "hsl(var(--primary))",
+                          }}
+                        >
+                          {downloadingAll ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin" />{downloadAllProgress.current}/{downloadAllProgress.total}</>
+                          ) : (
+                            <><Download className="w-3.5 h-3.5" />Tout télécharger</>
+                          )}
+                        </button>
+                      }
                     />
 
                     {/* Sort */}
