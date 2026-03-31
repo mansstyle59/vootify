@@ -201,8 +201,12 @@ export async function preCacheCovers(_userId: string, onCoverProgress?: CoverPro
     const missing = songs.filter((s) => s.cover_url && !existingKeys.has(s.id));
     if (missing.length === 0) {
       sessionStorage.setItem(COVERS_CACHED_KEY, "1");
+      onCoverProgress?.(0, 0);
       return;
     }
+
+    let downloaded = 0;
+    onCoverProgress?.(0, missing.length);
 
     // Download in small batches to avoid overwhelming the network
     const BATCH = 6;
