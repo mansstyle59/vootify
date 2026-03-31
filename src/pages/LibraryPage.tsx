@@ -1490,7 +1490,7 @@ const LibraryPage = () => {
                     ))}
                   </div>
                 ) : libraryArtists.length === 0 ? (
-                  <EmptyState icon={User} title="Aucun artiste" subtitle="Les artistes apparaîtront ici" />
+                  <EmptyState icon={User} title="Aucun artiste pour l'instant" subtitle="Vos artistes s'afficheront ici dès que vous ajouterez de la musique" actionLabel="Ajouter de la musique" onAction={() => navigate("/add")} />
                 ) : (
                   <>
                     <div className="relative mb-3">
