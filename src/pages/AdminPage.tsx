@@ -1791,9 +1791,13 @@ function HomeTab() {
   };
 
   const removeCustomSection = (id: string) => {
+    const cs = customSections.find((c) => c.id === id);
+    const itemCount = cs?.type === "albums" ? (cs?.albumIds?.length || 0) : cs?.type === "playlists" ? (cs?.playlistIds?.length || 0) : (cs?.songIds?.length || 0);
+    if (itemCount > 0 && !window.confirm(`Supprimer cette section (${itemCount} élément${itemCount > 1 ? "s" : ""}) ?`)) return;
     setCustomSections((prev) => prev.filter((c) => c.id !== id));
     setSections((prev) => prev.filter((s) => s.id !== id));
     if (editingCustom === id) setEditingCustom(null);
+    toast.success("Section supprimée");
   };
 
   const updateCustomTitle = (id: string, title: string) => {
