@@ -72,6 +72,7 @@ export function CarPlayNowPlaying({
             <img
               src={coverUrl}
               alt=""
+              referrerPolicy="no-referrer"
               className="absolute inset-0 w-full h-full object-cover"
               style={{ filter: "blur(100px) brightness(0.25) saturate(2.5)", transform: "scale(1.5)" }}
             />
@@ -79,6 +80,7 @@ export function CarPlayNowPlaying({
             <img
               src={coverUrl}
               alt=""
+              referrerPolicy="no-referrer"
               className="absolute inset-0 w-full h-full object-cover"
               style={{ filter: "blur(60px) brightness(0.15) saturate(3) hue-rotate(15deg)", transform: "scale(1.3)", opacity: 0.4 }}
             />
