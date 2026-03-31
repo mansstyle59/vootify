@@ -662,26 +662,39 @@ const ProfilePage = () => {
               onClick={async () => {
                 if (isCachingAll) return;
                 setIsCachingAll(true);
+                setCoverProgress({ done: 0, total: 0 });
                 try {
                   toast.info("Téléchargement complet…");
                   if (user) {
-                    const { performInitialCache, silentCacheRefresh } = await import("@/lib/appCache");
+                    const { performInitialCache, preCacheCovers, silentCacheRefresh } = await import("@/lib/appCache");
                     await performInitialCache(user.id);
                     sessionStorage.removeItem("vootify-covers-cached-v1");
                     sessionStorage.removeItem("vootify-friday-covers-cached-v1");
+                    await preCacheCovers(user.id, (done, total) => {
+                      setCoverProgress({ done, total });
+                    });
                     silentCacheRefresh(user.id);
                   }
                   await refreshStorageStats();
                   toast.success("Cache complet téléchargé !");
                 } catch { toast.error("Erreur"); }
-                finally { setIsCachingAll(false); }
+                finally { setIsCachingAll(false); setCoverProgress(null); }
               }}
               disabled={isCachingAll}
               className="py-2 rounded-xl text-[10px] font-semibold flex flex-col items-center justify-center gap-1 transition-colors active:scale-[0.97]"
               style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
             >
-              {isCachingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-              Tout
+              {isCachingAll && coverProgress ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {coverProgress.total > 0 ? `${coverProgress.done}/${coverProgress.total}` : "…"}
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  Tout
+                </>
+              )}
             </button>
           </div>
 
