@@ -215,7 +215,7 @@ const PlaylistDetailPage = () => {
       <div ref={heroRef} className="relative overflow-hidden">
         {/* Parallax blurred background */}
         <motion.div className="absolute inset-0 -top-20 -bottom-20" style={{ y: bgY }}>
-          <SafeImage src={coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover blur-[60px] scale-[1.8] opacity-40" />
+          <SafeImage src={coverUrl} alt="" className="w-full h-full object-cover blur-[60px] scale-[1.8] opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background" />
         </motion.div>
 
@@ -344,17 +344,17 @@ const PlaylistDetailPage = () => {
             {mosaicCovers.length === 4 ? (
               <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[20px] overflow-hidden shadow-[0_20px_80px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.08] grid grid-cols-2 grid-rows-2">
                 {mosaicCovers.map((url, i) => (
-                  <SafeImage key={i} src={url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  <SafeImage key={i} src={url} alt="" className="w-full h-full object-cover" />
                 ))}
               </div>
             ) : (
               <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[20px] overflow-hidden shadow-[0_20px_80px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.08]">
-                <SafeImage src={coverUrl} alt={playlist.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                <SafeImage src={coverUrl} alt={playlist.name} className="w-full h-full object-cover" />
               </div>
             )}
             {/* Reflection */}
             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-[85%] h-12 overflow-hidden opacity-20 blur-sm pointer-events-none">
-              <SafeImage src={coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover object-bottom scale-y-[-1]" />
+              <SafeImage src={coverUrl} alt="" className="w-full h-full object-cover object-bottom scale-y-[-1]" />
             </div>
           </motion.div>
 

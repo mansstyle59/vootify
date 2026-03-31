@@ -126,7 +126,7 @@ function PremiumSongRow({
         }}
       >
         {coverUrl ? (
-          <SafeImage src={coverUrl} alt={song.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" loading="lazy" />
+          <SafeImage src={coverUrl} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.5))" }}>
             <Music className="w-4 h-4 text-muted-foreground/25" />
@@ -1034,11 +1034,11 @@ const LibraryPage = () => {
                               {songCovers && songCovers.length >= 4 ? (
                                 <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
                                   {songCovers.map((url, ci) => (
-                                    <SafeImage key={ci} src={url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                    <SafeImage key={ci} src={url} alt="" className="w-full h-full object-cover" />
                                   ))}
                                 </div>
                               ) : (
-                                <SafeImage src={coverImg} alt={p.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                <SafeImage src={coverImg} alt={p.name} className="w-full h-full object-cover" />
                               )}
                               {cachedCount > 0 && (
                                 <div className={`absolute bottom-0.5 right-0.5 flex items-center justify-center rounded-full shadow-md ${
@@ -1108,7 +1108,7 @@ const LibraryPage = () => {
                             >
                               <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0">
                                 {coverImg ? (
-                                  <SafeImage src={coverImg} alt={sp.playlist_name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                  <SafeImage src={coverImg} alt={sp.playlist_name} className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                                     <ListMusic className="w-6 h-6 text-primary/30" />
@@ -1309,7 +1309,7 @@ const LibraryPage = () => {
                                         >
                                           <div className="aspect-square rounded-2xl overflow-hidden mb-1.5 relative" style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.1)" }}>
                                             {album.cover_url ? (
-                                              <SafeImage src={album.cover_url} alt={album.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
+                                              <SafeImage src={album.cover_url} alt={album.title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-300" />
                                             ) : (
                                               <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
                                                 <Disc3 className="w-8 h-8 text-primary/25" />
@@ -2158,7 +2158,7 @@ const LibraryPage = () => {
                                 >
                                   <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.1)" }}>
                                     {coverUrl ? (
-                                      <SafeImage src={coverUrl} alt={pl.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                      <SafeImage src={coverUrl} alt={pl.name} className="w-full h-full object-cover" />
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center bg-secondary">
                                         <ListMusic className="w-5 h-5 text-muted-foreground/25" />
@@ -2226,7 +2226,7 @@ const LibraryPage = () => {
                               >
                                 <div className="aspect-square w-full overflow-hidden">
                                   {album.coverUrl ? (
-                                    <SafeImage src={album.coverUrl} alt={album.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                    <SafeImage src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-secondary">
                                       <Disc3 className="w-8 h-8 text-muted-foreground/20" />
@@ -2456,7 +2456,7 @@ function ArtistLibraryCard({ artist, index, navigate }: {
         }}
       >
         {imageUrl ? (
-          <SafeImage src={imageUrl} alt={artist.name} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-300" />
+          <SafeImage src={imageUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04))" }}>
             <User className="w-6 h-6 text-primary/20" />

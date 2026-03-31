@@ -64,7 +64,6 @@ export const CoverCard = memo(function CoverCard({
               alt={title}
               loading="lazy"
               decoding="async"
-              referrerPolicy="no-referrer"
               onLoad={handleLoad}
               className={`w-full h-full transition-opacity duration-200 ease-out ${
                 imgLoaded ? "opacity-100" : "opacity-0"

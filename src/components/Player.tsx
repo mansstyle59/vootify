@@ -713,7 +713,6 @@ export function MiniPlayer() {
                           src={bubbleCover}
                           alt={currentSong.title}
                           className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
@@ -782,7 +781,6 @@ export function MiniPlayer() {
                         src={currentSong.coverUrl}
                         alt={currentSong.title}
                         className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
                         initial={{ opacity: 0, scale: 1.1 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.4 }}
@@ -1050,7 +1048,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       >
                         <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(var(--foreground) / 0.08)" }}>
                           {entry.coverUrl ? (
-                            <SafeImage src={entry.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <SafeImage src={entry.coverUrl} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Music className="w-5 h-5 text-foreground/20" />
@@ -1111,7 +1109,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     key={coverUrl}
                     src={coverUrl}
                     alt={stationName}
-                    referrerPolicy="no-referrer"
                     initial={{ opacity: 0, scale: 0.92 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.92 }}
@@ -1283,7 +1280,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               key={currentSong.id + "-bg"}
               src={currentSong.coverUrl}
               alt=""
-              referrerPolicy="no-referrer"
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.35 }}
               exit={{ opacity: 0 }}
@@ -1344,7 +1340,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/8" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.03))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.1)" }}>
                 <div className="relative">
                   {currentSong.coverUrl ? (
-                    <SafeImage src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" referrerPolicy="no-referrer" />
+                    <SafeImage src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" />
                   ) : (
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 shadow-2xl">
                       <Music className="w-6 h-6 text-primary/40" />
@@ -1389,7 +1385,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                               <GripVertical className="w-4 h-4 text-white/15 shrink-0 touch-none" />
                               <span className="w-4 text-center text-[11px] text-white/25 tabular-nums font-medium">{i + 1}</span>
                               {song.coverUrl ? (
-                                <SafeImage src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" referrerPolicy="no-referrer" />
+                                <SafeImage src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" />
                               ) : (
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                   <Music className="w-4 h-4 text-primary/40" />
@@ -1425,7 +1421,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                         {played.map((song) => (
                           <button key={song.id} onClick={() => { play(song); setQueue(queue); }} className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-white/5 transition-colors opacity-35 hover:opacity-60">
                             {song.coverUrl ? (
-                              <SafeImage src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" referrerPolicy="no-referrer" />
+                              <SafeImage src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
                             ) : (
                               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                 <Music className="w-4 h-4 text-primary/40" />
@@ -1459,7 +1455,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <div className="relative w-full max-w-[360px]">
                 {currentSong.coverUrl && (
                   <div className="absolute inset-0 scale-90 blur-[60px] opacity-40 rounded-3xl overflow-hidden">
-                    <SafeImage src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <SafeImage src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" />
                   </div>
                 )}
                 <AnimatePresence mode="popLayout">
@@ -1468,7 +1464,6 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                       key={currentSong.id}
                       src={currentSong.coverUrl}
                       alt={currentSong.title}
-                      referrerPolicy="no-referrer"
                       initial={{ opacity: 0, scale: 0.82, filter: "blur(12px)", y: 20 }}
                       animate={{ opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }}
                       exit={{ opacity: 0, scale: 0.88, filter: "blur(8px)", y: -15 }}

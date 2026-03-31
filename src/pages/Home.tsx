@@ -349,7 +349,7 @@ const HomePage = () => {
         {(homeConfig?.heroBgColor || homeConfig?.heroBgImage) && (
           <div className="absolute inset-0 overflow-hidden -z-10">
             {homeConfig?.heroBgImage ? (
-              <SafeImage src={homeConfig.heroBgImage} alt="" referrerPolicy="no-referrer" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+              <SafeImage src={homeConfig.heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
             ) : null}
             {homeConfig?.heroBgColor && !homeConfig?.heroBgImage ? (
               <div className="absolute inset-0 opacity-20" style={{ background: homeConfig.heroBgColor }} />
@@ -691,7 +691,6 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
               alt={artist.name}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              referrerPolicy="no-referrer"
               className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
@@ -820,7 +819,6 @@ function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; tit
               alt={album.title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              referrerPolicy="no-referrer"
               className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>

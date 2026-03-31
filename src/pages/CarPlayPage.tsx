@@ -189,7 +189,6 @@ const CarPlayPage = () => {
           <SafeImage
             src={currentSong.coverUrl}
             alt=""
-            referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover"
             style={{ filter: "blur(120px) brightness(0.15) saturate(2.5)", transform: "scale(1.5)", opacity: 0.6 }}
           />

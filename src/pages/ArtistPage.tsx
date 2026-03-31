@@ -199,7 +199,7 @@ const ArtistPage = () => {
       {/* Hero */}
       <motion.div style={{ y: bgY }} className="relative h-80 overflow-hidden">
         {coverUrl ? (
-          <SafeImage src={coverUrl} alt={artistName} referrerPolicy="no-referrer" className="w-full h-full object-cover scale-110 blur-sm" />
+          <SafeImage src={coverUrl} alt={artistName} className="w-full h-full object-cover scale-110 blur-sm" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/10 to-accent/20" />
         )}
@@ -210,7 +210,7 @@ const ArtistPage = () => {
         <div className="absolute bottom-6 left-4 right-4 flex items-end gap-4">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-background shadow-2xl flex-shrink-0">
             {coverUrl ? (
-              <SafeImage src={coverUrl} alt={artistName} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+              <SafeImage src={coverUrl} alt={artistName} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
                 <User className="w-10 h-10 text-primary/40" />
@@ -413,7 +413,7 @@ const ArtistPage = () => {
               >
                 <div className="w-36 h-36 rounded-xl overflow-hidden bg-secondary mb-2 shadow-lg group-hover:shadow-xl transition-shadow">
                   {album.coverUrl ? (
-                    <SafeImage src={album.coverUrl} alt={album.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                    <SafeImage src={album.coverUrl} alt={album.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                       <Music className="w-10 h-10 text-primary/30" />
@@ -450,7 +450,7 @@ const ArtistPage = () => {
               >
                 <div className="w-28 h-28 rounded-xl overflow-hidden bg-secondary mb-2 shadow-lg group-hover:shadow-xl transition-shadow">
                   {single.coverUrl ? (
-                    <SafeImage src={single.coverUrl} alt={single.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                    <SafeImage src={single.coverUrl} alt={single.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                       <Music className="w-8 h-8 text-primary/30" />

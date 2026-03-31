@@ -105,7 +105,6 @@ export function InitialCacheLoader({ children }: Props) {
                   alt="Vootify"
                   width={80}
                   height={80}
-        referrerPolicy="no-referrer"
                   className="w-[80px] h-[80px] rounded-[28px]"
                 />
               </div>
