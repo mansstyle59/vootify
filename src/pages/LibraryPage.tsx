@@ -548,8 +548,8 @@ const LibraryPage = () => {
   useEffect(() => {
     const allSongs = [
       ...(tab === "recent" ? recentlyPlayed : []),
-      ...(tab === "liked" ? likedSongs : []),
-      ...(tab === "custom" || tab === "songs" ? customSongs : []),
+      ...(tab === "songs" ? likedSongs : []),
+      ...(tab === "custom" ? customSongs : []),
     ];
     if (allSongs.length === 0) { setLibraryCachedIds(new Set()); return; }
     Promise.all(
