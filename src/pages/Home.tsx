@@ -29,6 +29,7 @@ import { HomeSkeleton } from "@/components/home/HomeSkeleton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
+import { SafeImage } from "@/components/SafeImage";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -348,7 +349,7 @@ const HomePage = () => {
         {(homeConfig?.heroBgColor || homeConfig?.heroBgImage) && (
           <div className="absolute inset-0 overflow-hidden -z-10">
             {homeConfig?.heroBgImage ? (
-              <img src={homeConfig.heroBgImage} alt="" referrerPolicy="no-referrer" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+              <SafeImage src={homeConfig.heroBgImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
             ) : null}
             {homeConfig?.heroBgColor && !homeConfig?.heroBgImage ? (
               <div className="absolute inset-0 opacity-20" style={{ background: homeConfig.heroBgColor }} />
@@ -685,12 +686,11 @@ function ArtistCoverCard({ artist, index, navigate }: { artist: { name: string; 
             {!imgLoaded && (
               <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.05)" }} />
             )}
-            <img
+            <SafeImage
               src={imageUrl}
               alt={artist.name}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              referrerPolicy="no-referrer"
               className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>
@@ -814,12 +814,11 @@ function AlbumOverlayCard({ album, index, navigate }: { album: { id: string; tit
             {!imgLoaded && (
               <div className="absolute inset-0" style={{ background: "hsl(var(--foreground) / 0.05)" }} />
             )}
-            <img
+            <SafeImage
               src={imageUrl}
               alt={album.title}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              referrerPolicy="no-referrer"
               className={`w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </>

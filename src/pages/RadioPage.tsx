@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { LazyImage } from "@/components/LazyImage";
+import { SafeImage } from "@/components/SafeImage";
 
 /* ── Marquee for long text ── */
 function MarqueeText({ text, className }: { text: string; className?: string }) {
@@ -396,7 +397,7 @@ function NowPlayingHero({
     >
       {/* BG */}
       <div className="absolute inset-0 transition-colors duration-1000" style={{ background: dominantColor || "hsl(var(--secondary))" }} />
-      <img src={coverUrl} alt="" referrerPolicy="no-referrer" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[60px] scale-[2]" />
+      <SafeImage src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[60px] scale-[2]" />
       <div
         className="absolute inset-0"
         style={{
@@ -409,10 +410,9 @@ function NowPlayingHero({
       <div className="relative z-10 flex items-center gap-4 p-4">
         {/* Cover */}
         <button onClick={onTogglePlay} className="relative flex-shrink-0 active:scale-95 transition-transform">
-          <img
+          <SafeImage
             src={coverUrl}
             alt={station.name}
-            referrerPolicy="no-referrer"
             className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover ring-1 ring-white/10"
             style={{ boxShadow: "0 6px 24px rgba(0,0,0,0.4)" }}
           />

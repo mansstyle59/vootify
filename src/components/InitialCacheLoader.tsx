@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isCacheReady, performInitialCache, type CacheProgress } from "@/lib/appCache";
 import { useAuth } from "@/hooks/useAuth";
+import { SafeImage } from "@/components/SafeImage";
 
 interface Props {
   children: React.ReactNode;
@@ -99,12 +100,11 @@ export function InitialCacheLoader({ children }: Props) {
               <div className="rounded-[28px] overflow-hidden shadow-2xl" style={{
                 boxShadow: "0 0 50px hsl(var(--primary) / 0.25), 0 16px 32px hsl(0 0% 0% / 0.35)",
               }}>
-                <img
+                <SafeImage
                   src="/pwa-icon-192.png"
                   alt="Vootify"
                   width={80}
                   height={80}
-        referrerPolicy="no-referrer"
                   className="w-[80px] h-[80px] rounded-[28px]"
                 />
               </div>

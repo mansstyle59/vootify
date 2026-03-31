@@ -3,6 +3,7 @@ import { Music } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { offlineCache } from "@/lib/offlineCache";
 import { getCachedCover, setCachedCover, markCoverLoaded, isCoverLoaded } from "@/lib/coverMemoryCache";
+import { SafeImage } from "@/components/SafeImage";
 
 interface LazyImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   /** Show music icon placeholder on error/missing src */
@@ -136,13 +137,12 @@ export function LazyImage({
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
         </div>
       )}
-      <img
+      <SafeImage
         ref={imgRef}
         src={resolvedSrc || src}
         alt={alt}
         loading="lazy"
         decoding="async"
-        referrerPolicy="no-referrer"
         onLoad={handleLoad}
         onError={handleError}
         className={cn(

@@ -17,6 +17,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import type { Song } from "@/data/mockData";
 import { formatDuration } from "@/data/mockData";
+import { SafeImage } from "@/components/SafeImage";
 
 const AlbumDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -144,7 +145,7 @@ const AlbumDetailPage = () => {
       <div ref={heroRef} className="relative overflow-hidden">
         {/* Parallax blurred background */}
         <motion.div className="absolute inset-0 -top-20 -bottom-20" style={{ y: bgY }}>
-          <img src={album.coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover blur-[60px] scale-[1.8] opacity-40" />
+          <SafeImage src={album.coverUrl} alt="" className="w-full h-full object-cover blur-[60px] scale-[1.8] opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background" />
         </motion.div>
 
@@ -253,11 +254,11 @@ const AlbumDetailPage = () => {
           {/* Cover with reflection */}
           <motion.div style={{ scale: coverScale, opacity: coverOpacity }} className="relative mb-6">
             <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[20px] overflow-hidden shadow-[0_20px_80px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.08]">
-              <img src={album.coverUrl} alt={album.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+              <SafeImage src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
             </div>
             {/* Reflection */}
             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-[85%] h-12 overflow-hidden opacity-20 blur-sm pointer-events-none">
-              <img src={album.coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover object-bottom scale-y-[-1]" />
+              <SafeImage src={album.coverUrl} alt="" className="w-full h-full object-cover object-bottom scale-y-[-1]" />
             </div>
           </motion.div>
 

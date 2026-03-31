@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
 import { useNavigate } from "react-router-dom";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import { SafeImage } from "@/components/SafeImage";
 
 interface LongPressMenuProps {
   song: Song;
@@ -190,12 +191,11 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
               {/* Header with cover */}
               <div className="flex items-center gap-3 p-4 border-b border-white/[0.06]">
                 {song.coverUrl ? (
-                  <img
+                  <SafeImage
                     src={song.coverUrl}
                     alt={song.title}
                     loading="lazy"
                     decoding="async"
-                    referrerPolicy="no-referrer"
                     className="w-12 h-12 rounded-xl object-cover shadow-lg"
                   />
                 ) : (

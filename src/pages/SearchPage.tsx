@@ -38,6 +38,7 @@ import type { Song } from "@/data/mockData";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { LazyImage } from "@/components/LazyImage";
 import { isFridayDataStale, markFridayRefreshed, getFridayCoverUrl } from "@/lib/appCache";
+import { SafeImage } from "@/components/SafeImage";
 
 /* ── Qobuz-inspired glass helpers ── */
 const glassCardStrong = {
@@ -519,7 +520,7 @@ const SearchPage = () => {
                     className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors"
                   >
                     {item.coverUrl ? (
-                      <img src={item.coverUrl} alt="" referrerPolicy="no-referrer" className={`w-10 h-10 object-cover flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`} />
+                      <SafeImage src={item.coverUrl} alt="" className={`w-10 h-10 object-cover flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`} />
                     ) : (
                       <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${item.type === "artist" ? "rounded-full" : "rounded-lg"}`} style={{ background: "hsl(var(--foreground) / 0.04)" }}>
                         {item.type === "artist" ? <User className="w-4 h-4 text-muted-foreground/30" /> : <Music className="w-4 h-4 text-muted-foreground/30" />}
@@ -630,7 +631,7 @@ const SearchPage = () => {
                       >
                         <div className="w-full h-full rounded-full overflow-hidden bg-background">
                           {(artistPhotos[artist.name] || artist.cover) ? (
-                            <img src={artistPhotos[artist.name] || artist.cover} alt={artist.name} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <SafeImage src={artistPhotos[artist.name] || artist.cover} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
                               <User className="w-5 h-5 text-muted-foreground/15" />
@@ -783,7 +784,7 @@ const SearchPage = () => {
                           >
                             <div className="w-full h-full rounded-full overflow-hidden bg-background">
                               {artist.coverUrl ? (
-                                <img src={artist.coverUrl} alt={artist.name} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <SafeImage src={artist.coverUrl} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
                                   <User className="w-7 h-7 text-muted-foreground/15" />
@@ -815,7 +816,7 @@ const SearchPage = () => {
                             style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.08)" }}
                           >
                             {album.coverUrl ? (
-                              <img src={album.coverUrl} alt={album.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                              <SafeImage src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--foreground) / 0.03)" }}>
                                 <Music className="w-7 h-7 text-muted-foreground/10" />
@@ -943,7 +944,7 @@ const SearchPage = () => {
             >
               <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor: "hsl(var(--border) / 0.15)" }}>
                 {addToPlaylistRelease.coverUrl && (
-                  <img src={addToPlaylistRelease.coverUrl} alt="" referrerPolicy="no-referrer" className="w-12 h-12 rounded-xl object-cover" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.15)" }} />
+                  <SafeImage src={addToPlaylistRelease.coverUrl} alt="" className="w-12 h-12 rounded-xl object-cover" style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.15)" }} />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground truncate">{addToPlaylistRelease.title}</p>
