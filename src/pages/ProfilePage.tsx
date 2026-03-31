@@ -498,10 +498,10 @@ const ProfilePage = () => {
                   const reg = await navigator.serviceWorker?.getRegistration();
                   if (reg) await reg.update();
                   if (user) silentCacheRefresh(user.id);
-                  const synced = await flushQueue();
+                  const result = await flushQueue();
                   setPendingActions(getPendingCount());
                   await queryClient.invalidateQueries();
-                  toast.success(synced > 0 ? `${synced} action(s) synchronisée(s)` : "Données à jour !");
+                  toast.success(result.synced > 0 ? `${result.synced} action(s) synchronisée(s)` : "Données à jour !");
                 } catch { toast.error("Erreur"); }
                 finally { setIsRefreshing(false); }
               }}
