@@ -23,6 +23,7 @@ import { useSubscriptionAccess } from "@/hooks/useSubscriptionAccess";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
+import { useLibraryTabsConfig } from "@/hooks/useAppSettings";
 
 type Tab = "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs" | null;
 type SortOption = "recent" | "alpha" | "artist" | "duration";
