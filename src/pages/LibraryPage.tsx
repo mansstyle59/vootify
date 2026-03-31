@@ -708,6 +708,7 @@ const LibraryPage = () => {
       const { data: allSongs } = await supabase
         .from("custom_songs")
         .select("id, title, artist, album, duration, cover_url, stream_url")
+        .eq("user_id", userId!)
         .not("stream_url", "is", null);
       const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       let matched = 0;
