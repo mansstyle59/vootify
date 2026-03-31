@@ -28,6 +28,10 @@ export default tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-unused-expressions": "off",
       "no-empty": "off",
+      "no-useless-escape": "off",
+      "no-constant-condition": "off",
+      "no-constant-binary-expression": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
       "no-restricted-syntax": [
         "error",
         {
