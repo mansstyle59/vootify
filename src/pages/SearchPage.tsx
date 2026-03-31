@@ -650,7 +650,7 @@ const SearchPage = () => {
                         key={song.id}
                         onClick={() => {
                           play(song);
-                          setQueue(suggestedSongs, suggestedSongs.indexOf(song));
+                          setQueue(suggestedSongs);
                         }}
                         className="flex-shrink-0 w-[130px] group text-left active:scale-[0.96] transition-transform"
                       >
