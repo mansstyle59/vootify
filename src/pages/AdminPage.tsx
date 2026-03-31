@@ -4528,21 +4528,31 @@ function LibraryConfigTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-[13px] text-muted-foreground/60">Réordonnez et activez/désactivez les onglets de la bibliothèque. Glissez pour réorganiser.</p>
+      <p className="text-[13px] text-muted-foreground/60">Utilisez les flèches pour réorganiser et les toggles pour activer/désactiver les onglets.</p>
 
       <div className="rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card) / 0.3)", border: "1px solid hsl(var(--border) / 0.08)" }}>
         {local.map((tab, i) => (
           <div
             key={tab.key}
-            draggable
-            onDragStart={() => handleDragStart(i)}
-            onDragEnter={() => handleDragEnter(i)}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => e.preventDefault()}
-            className="w-full flex items-center gap-3 px-4 py-3.5 cursor-grab active:cursor-grabbing transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-3.5 transition-colors"
             style={{ borderBottom: i < local.length - 1 ? "1px solid hsl(var(--border) / 0.06)" : "none" }}
           >
-            <GripVertical className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+            <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <button
+                onClick={() => moveItem(i, -1)}
+                disabled={i === 0}
+                className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground disabled:opacity-20 active:scale-90 transition-all"
+              >
+                <ChevronRight className="w-3.5 h-3.5 -rotate-90" />
+              </button>
+              <button
+                onClick={() => moveItem(i, 1)}
+                disabled={i === local.length - 1}
+                className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground disabled:opacity-20 active:scale-90 transition-all"
+              >
+                <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+              </button>
+            </div>
             <div className="flex-1 text-left">
               <p className="text-[13px] font-semibold text-foreground">{TAB_LABELS[tab.key] || tab.key}</p>
             </div>
