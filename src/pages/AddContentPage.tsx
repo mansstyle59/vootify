@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -137,7 +137,87 @@ function SongForm() {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [searchingCovers, setSearchingCovers] = useState(false);
   const [coverProgress, setCoverProgress] = useState({ done: 0, total: 0 });
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  /** Recursively extract audio files from DataTransferItem entries (supports folders) */
+  const extractFilesFromEntries = async (items: DataTransferItemList): Promise<File[]> => {
+    const audioExts = new Set(["mp3", "m4a", "aac", "ogg", "flac", "wav", "wma", "opus"]);
+    const files: File[] = [];
+
+    const readEntry = (entry: FileSystemEntry): Promise<void> => {
+      return new Promise((resolve) => {
+        if (entry.isFile) {
+          (entry as FileSystemFileEntry).file((f) => {
+            const ext = f.name.split(".").pop()?.toLowerCase() || "";
+            if (audioExts.has(ext)) files.push(f);
+            resolve();
+          }, () => resolve());
+        } else if (entry.isDirectory) {
+          const reader = (entry as FileSystemDirectoryEntry).createReader();
+          const readAll = () => {
+            reader.readEntries(async (entries) => {
+              if (entries.length === 0) { resolve(); return; }
+              for (const e of entries) await readEntry(e);
+              readAll(); // Read next batch (readEntries returns max 100)
+            }, () => resolve());
+          };
+          readAll();
+        } else {
+          resolve();
+        }
+      });
+    };
+
+    const entries: FileSystemEntry[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const entry = items[i].webkitGetAsEntry?.();
+      if (entry) entries.push(entry);
+    }
+    for (const entry of entries) await readEntry(entry);
+    return files;
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    if (processing) return;
+
+    let audioFiles: File[];
+    if (e.dataTransfer.items?.length) {
+      audioFiles = await extractFilesFromEntries(e.dataTransfer.items);
+    } else {
+      const audioExts = new Set(["mp3", "m4a", "aac", "ogg", "flac", "wav", "wma", "opus"]);
+      audioFiles = Array.from(e.dataTransfer.files).filter(f => {
+        const ext = f.name.split(".").pop()?.toLowerCase() || "";
+        return audioExts.has(ext);
+      });
+    }
+
+    if (audioFiles.length === 0) {
+      toast.error("Aucun fichier audio trouvé dans le dossier");
+      return;
+    }
+    toast.info(`${audioFiles.length} fichier${audioFiles.length > 1 ? "s" : ""} audio détecté${audioFiles.length > 1 ? "s" : ""}`);
+
+    // Create a synthetic FileList-like object
+    const dt = new DataTransfer();
+    audioFiles.forEach(f => dt.items.add(f));
+    processFiles(dt.files);
+  }, [processing]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }, []);
 
   const processFiles = async (files: FileList) => {
     setProcessing(true);
@@ -381,19 +461,28 @@ function SongForm() {
     <div className="space-y-4">
       <input ref={fileRef} type="file" accept={ACCEPTED_AUDIO} multiple onChange={(e) => e.target.files && processFiles(e.target.files)} className="hidden" />
       
-      <motion.button
-        type="button"
+      <motion.div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         whileTap={{ scale: 0.98 }}
         onClick={() => fileRef.current?.click()}
-        disabled={processing}
-        className="w-full flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border-2 border-dashed border-border/50 hover:border-primary/40 bg-secondary/20 hover:bg-secondary/30 transition-all"
+        role="button"
+        tabIndex={0}
+        className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
+          dragOver
+            ? "border-primary bg-primary/10 scale-[1.02]"
+            : "border-border/50 hover:border-primary/40 bg-secondary/20 hover:bg-secondary/30"
+        } ${processing ? "pointer-events-none opacity-60" : ""}`}
       >
-        <div className="p-3 rounded-2xl bg-primary/10">
+        <div className={`p-3 rounded-2xl transition-colors ${dragOver ? "bg-primary/20" : "bg-primary/10"}`}>
           {processing ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary" />}
         </div>
-        <span className="text-sm font-medium text-foreground">{processing ? "Analyse en cours..." : "Sélectionner des fichiers audio"}</span>
-        <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Max 50 Mo</span>
-      </motion.button>
+        <span className="text-sm font-medium text-foreground">
+          {processing ? "Analyse en cours..." : dragOver ? "Déposez ici !" : "Sélectionner ou glisser des fichiers / dossiers"}
+        </span>
+        <span className="text-[11px] text-muted-foreground/60">MP3, M4A, FLAC, WAV • Fichiers ou dossiers • Max 50 Mo</span>
+      </motion.div>
 
       {songs.length > 0 && (
         <div className="space-y-2">
