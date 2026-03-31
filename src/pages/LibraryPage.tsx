@@ -427,7 +427,6 @@ const LibraryPage = () => {
       const { data: songs, error: songsErr } = await supabase
         .from("custom_songs")
         .select("album, artist, cover_url, year")
-        .eq("user_id", userId!)
         .not("stream_url", "is", null)
         .not("album", "is", null);
       if (songsErr) throw songsErr;
