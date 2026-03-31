@@ -635,7 +635,7 @@ const ProfilePage = () => {
               if (!("caches" in window)) return;
               const names = await caches.keys();
               await Promise.all(names.map((n) => caches.delete(n)));
-              setSwCacheSize(0);
+              await refreshStorageStats();
               toast.success("Cache vidé !");
             }}
             className="w-full py-2 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
