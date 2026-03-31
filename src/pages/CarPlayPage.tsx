@@ -472,9 +472,6 @@ const CarPlayPage = () => {
                 </div>
               </motion.button>
             )}
-                </div>
-              </motion.button>
-            )}
           </div>
         </motion.div>
       )}
