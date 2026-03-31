@@ -133,7 +133,7 @@ export function useRecommended(limit = 20, seed?: number) {
           .map((s) => {
             const artists = s.artist.toLowerCase().split(",").map((a) => a.trim());
             const artistMatch = artists.some((a) => likedArtists.has(a));
-            const hash = (s.id.charCodeAt(0) * 31 + day) % 100;
+            const hash = (s.id.charCodeAt(0) * 31 + effectiveSeed) % 100;
             return { song: s, score: (artistMatch ? 100 : 0) + hash };
           })
           .sort((a, b) => b.score - a.score);
