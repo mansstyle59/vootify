@@ -39,7 +39,7 @@ async function deriveKey(seed: string): Promise<CryptoKey> {
   );
 
   const key = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: getSalt(), iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt: getSalt().buffer as ArrayBuffer, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
     keyMaterial,
     { name: ALGORITHM, length: KEY_LENGTH },
     false,
