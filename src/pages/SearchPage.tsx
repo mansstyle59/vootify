@@ -870,6 +870,25 @@ const SearchPage = () => {
                       <VirtualSongList
                         songs={filteredResults}
                         onClickSong={(song) => handlePlayTrack(song, filteredResults)}
+                        renderRow={(song, _i, songCard) => (
+                          <div className="flex items-center">
+                            <div className="flex-1">{songCard}</div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleLike(song); }}
+                              className="flex-shrink-0 p-2 mr-2 rounded-full transition-all active:scale-90"
+                              style={{
+                                background: isLiked(song.id) ? "hsl(var(--primary) / 0.12)" : "transparent",
+                              }}
+                              title={isLiked(song.id) ? "Retirer de la bibliothèque" : "Ajouter à la bibliothèque"}
+                            >
+                              {isLiked(song.id) ? (
+                                <Check className="w-4 h-4 text-primary" />
+                              ) : (
+                                <Plus className="w-4 h-4 text-muted-foreground/50" />
+                              )}
+                            </button>
+                          </div>
+                        )}
                         className=""
                       />
                     </div>
