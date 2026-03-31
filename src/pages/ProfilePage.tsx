@@ -108,8 +108,11 @@ const ProfilePage = () => {
   const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
   const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
   const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
+  const [isCachingCovers, setIsCachingCovers] = useState(false);
+  const [isCachingPages, setIsCachingPages] = useState(false);
   const [isCachingAll, setIsCachingAll] = useState(false);
   const [coverProgress, setCoverProgress] = useState<{ done: number; total: number } | null>(null);
+  const [pagesProgress, setPagesProgress] = useState<{ done: number; total: number } | null>(null);
   const biometricSupported = isBiometricAvailable();
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
