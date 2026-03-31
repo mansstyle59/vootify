@@ -397,7 +397,48 @@ const CarPlayPage = () => {
             </div>
           )}
 
-          {/* Quick access: Liked + Recent */}
+          {/* Smart Mix + Quick access */}
+          <div className="flex gap-2 mb-2">
+            {/* Smart Mix button */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const mix = buildSmartMix(songs, likedSongs, recentlyPlayed);
+                if (mix.length > 0) { setQueue(mix); play(mix[0]); }
+              }}
+              className="flex-1 flex items-center gap-2.5 px-3 py-3 rounded-2xl active:scale-95 transition-transform"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary)/0.15), hsl(var(--primary)/0.05))",
+                border: "0.5px solid hsl(var(--primary)/0.2)",
+                boxShadow: "0 4px 20px hsl(var(--primary)/0.1)",
+              }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary)/0.2)" }}>
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-[12px] font-bold text-white">{getSmartMixLabel()}</p>
+                <p className="text-[9px] text-white/30">Pour toi</p>
+              </div>
+            </motion.button>
+
+            {/* Shuffle all */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const shuffled = [...songs].sort(() => Math.random() - 0.5);
+                if (shuffled.length > 0) { setQueue(shuffled); play(shuffled[0]); }
+              }}
+              className="flex items-center gap-2 px-3 py-3 rounded-2xl active:scale-95 transition-transform"
+              style={GLASS_BG}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(0 0% 100%/0.08)" }}>
+                <Shuffle className="w-5 h-5 text-white/60" />
+              </div>
+            </motion.button>
+          </div>
+
+          {/* Liked + Recent row */}
           <div className="flex gap-2 mb-2">
             {likedSongs.length > 0 && (
               <motion.button
@@ -410,8 +451,8 @@ const CarPlayPage = () => {
                   <Heart className="w-5 h-5 text-red-400 fill-red-400" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="text-[13px] font-bold text-white">Favoris</p>
-                  <p className="text-[10px] text-white/30">{likedSongs.length} titres</p>
+                  <p className="text-[12px] font-bold text-white">Favoris</p>
+                  <p className="text-[9px] text-white/30">{likedSongs.length} titres</p>
                 </div>
               </motion.button>
             )}
@@ -426,8 +467,11 @@ const CarPlayPage = () => {
                   <Clock className="w-5 h-5 text-primary" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="text-[13px] font-bold text-white">Récents</p>
-                  <p className="text-[10px] text-white/30">{recentlyPlayed.length} titres</p>
+                  <p className="text-[12px] font-bold text-white">Récents</p>
+                  <p className="text-[9px] text-white/30">{recentlyPlayed.length} titres</p>
+                </div>
+              </motion.button>
+            )}
                 </div>
               </motion.button>
             )}
