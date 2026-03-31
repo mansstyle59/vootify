@@ -396,7 +396,7 @@ function NowPlayingHero({
     >
       {/* BG */}
       <div className="absolute inset-0 transition-colors duration-1000" style={{ background: dominantColor || "hsl(var(--secondary))" }} />
-      <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[60px] scale-[2]" />
+      <img src={coverUrl} alt="" referrerPolicy="no-referrer" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[60px] scale-[2]" />
       <div
         className="absolute inset-0"
         style={{
@@ -412,6 +412,7 @@ function NowPlayingHero({
           <img
             src={coverUrl}
             alt={station.name}
+            referrerPolicy="no-referrer"
             className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover ring-1 ring-white/10"
             style={{ boxShadow: "0 6px 24px rgba(0,0,0,0.4)" }}
           />

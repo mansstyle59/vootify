@@ -195,6 +195,7 @@ export function LongPressMenu({ song, children }: LongPressMenuProps) {
                     alt={song.title}
                     loading="lazy"
                     decoding="async"
+                    referrerPolicy="no-referrer"
                     className="w-12 h-12 rounded-xl object-cover shadow-lg"
                   />
                 ) : (
