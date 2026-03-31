@@ -612,7 +612,7 @@ const SearchPage = () => {
             {/* ── Trending Artists (premium circles) ── */}
             {searchSections?.artists && trendingArtists.length > 0 && (
               <section>
-                <SectionHeader title="Artistes populaires" action="Voir tout" onAction={() => navigate("/library")} />
+                <SectionHeader title="Artistes populaires" action="Voir tout" onAction={() => navigate("/library?tab=artists")} />
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                   {trendingArtists.slice(0, 10).map((artist) => (
                     <button
