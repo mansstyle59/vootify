@@ -231,7 +231,7 @@ function SongForm() {
       setAnalyzeProgress({ done: fi, total: fileArr.length });
       if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd (max 50 Mo)`); continue; }
       const id3 = await extractID3(file, file.name);
-      let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
+      const meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
       const id3Filled = new Set<string>();
       if (meta.title) id3Filled.add("title");
       if (meta.artist) id3Filled.add("artist");
@@ -860,7 +860,7 @@ function PlaylistForm() {
       if (file.size > 50 * 1024 * 1024) { toast.error(`${file.name} trop lourd`); continue; }
       const id3 = await extractID3(file, file.name);
       const id3Filled = new Set<string>();
-      let meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
+      const meta = { title: id3.title, artist: id3.artist, album: id3.album, coverUrl: id3.coverUrl };
       if (meta.title) id3Filled.add("title");
       if (meta.artist) id3Filled.add("artist");
 

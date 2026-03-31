@@ -64,7 +64,7 @@ export function normalizeArtist(artist: string): string {
  * Clean up album name: remove common noise like "(Deluxe)", "[Bonus Track]", etc.
  */
 export function normalizeAlbum(album: string): string {
-  let cleaned = normalizeText(album);
+  const cleaned = normalizeText(album);
   // Remove common edition suffixes for cleaner grouping
   // But keep them in display — only strip for matching
   return cleaned;

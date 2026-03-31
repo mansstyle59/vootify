@@ -83,7 +83,7 @@ export function usePlaylistDownload() {
 
         try {
           // Use the song's streamUrl directly
-          let resolved = song;
+          const resolved = song;
 
           if (!resolved.streamUrl) {
             updateSong(song.id, { status: "error" });

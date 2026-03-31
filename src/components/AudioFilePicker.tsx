@@ -68,7 +68,7 @@ const AudioFilePicker = ({ value, onChange, onDurationDetected, onMetadataExtrac
     }
 
     // Normalize extracted metadata
-    let finalMeta = {
+    const finalMeta = {
       title: id3.title ? cleanSongTitle(id3.title) : undefined,
       artist: id3.artist ? normalizeArtist(id3.artist) : undefined,
       album: id3.album || undefined,
