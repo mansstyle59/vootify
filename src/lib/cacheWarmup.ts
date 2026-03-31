@@ -5,6 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { autoCacheTopTracks } from "@/lib/smartPreload";
+import { prefetchCovers, setCachedCover } from "@/lib/coverMemoryCache";
 
 const WARMED_KEY = "cache-warmed-at";
 const WARMUP_INTERVAL = 1000 * 60 * 30; // re-warm every 30 min
