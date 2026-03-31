@@ -1637,7 +1637,7 @@ const LibraryPage = () => {
             {tab === "songs" && (
               <div>
                 {customSongs.length === 0 ? (
-                  <EmptyState icon={Music} title="Aucun morceau" subtitle="Vos morceaux ajoutés apparaîtront ici" />
+                  <EmptyState icon={Music} title="Commencez votre bibliothèque" subtitle="Ajoutez vos premiers morceaux pour créer votre collection personnelle" actionLabel="Ajouter de la musique" onAction={() => navigate("/add")} />
                 ) : (
                   <>
                     {/* Search */}
