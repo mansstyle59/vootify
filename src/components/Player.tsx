@@ -712,6 +712,7 @@ export function MiniPlayer() {
                           src={bubbleCover}
                           alt={currentSong.title}
                           className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
