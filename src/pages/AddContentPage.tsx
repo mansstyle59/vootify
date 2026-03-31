@@ -138,6 +138,7 @@ function SongForm() {
   const [searchingCovers, setSearchingCovers] = useState(false);
   const [coverProgress, setCoverProgress] = useState({ done: 0, total: 0 });
   const [dragOver, setDragOver] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState({ done: 0, total: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
 
   /** Recursively extract audio files from DataTransferItem entries (supports folders) */
