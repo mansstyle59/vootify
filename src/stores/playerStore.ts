@@ -4,6 +4,7 @@ import { musicDb } from "@/lib/musicDb";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { offlineCache } from "@/lib/offlineCache";
+import { prefetchQueueCovers } from "@/lib/coverMemoryCache";
 
 
 
@@ -308,7 +309,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   isLiked: (songId) => get().likedSongs.some((s) => s.id === songId),
 
-  setQueue: (songs) => set({ queue: songs }),
+  setQueue: (songs) => {
+    set({ queue: songs });
+    // Prefetch covers for next songs in queue
+    prefetchQueueCovers(songs.slice(0, 10));
+  },
 
   createPlaylist: async (name) => {
     const { userId } = get();

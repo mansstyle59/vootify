@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect, ImgHTMLAttributes } from "react";
+import { useState, useCallback, useEffect, useRef, ImgHTMLAttributes } from "react";
 import { Music } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { offlineCache } from "@/lib/offlineCache";
+import { getCachedCover, setCachedCover, markCoverLoaded, isCoverLoaded } from "@/lib/coverMemoryCache";
 
 interface LazyImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   /** Show music icon placeholder on error/missing src */
@@ -14,7 +15,8 @@ interface LazyImageProps extends ImgHTMLAttributes<HTMLImageElement> {
 
 /**
  * Lazy-loaded image with native loading="lazy", fade-in on load,
- * offline cache resolution, and optional music-icon fallback.
+ * in-memory LRU cache, offline cache resolution, shimmer skeleton,
+ * and optional music-icon fallback.
  */
 export function LazyImage({
   src,
@@ -27,17 +29,34 @@ export function LazyImage({
   onError,
   ...props
 }: LazyImageProps) {
-  const [loaded, setLoaded] = useState(false);
+  const cacheKey = songId || src || "";
+  const memCached = cacheKey ? getCachedCover(cacheKey) : null;
+  const alreadyLoaded = cacheKey ? isCoverLoaded(cacheKey) : false;
+
+  const [loaded, setLoaded] = useState(alreadyLoaded);
   const [errored, setErrored] = useState(false);
-  const [resolvedSrc, setResolvedSrc] = useState(src);
+  const [resolvedSrc, setResolvedSrc] = useState(memCached || src);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // Resolve cover from offline cache if songId provided
   useEffect(() => {
+    const memHit = cacheKey ? getCachedCover(cacheKey) : null;
+    if (memHit) {
+      setResolvedSrc(memHit);
+      setLoaded(isCoverLoaded(cacheKey));
+      setErrored(false);
+      return;
+    }
+
     setResolvedSrc(src);
     setErrored(false);
     setLoaded(false);
 
-    if (!songId) return;
+    if (!songId) {
+      // Cache the network URL for future hits
+      if (src && cacheKey) setCachedCover(cacheKey, src);
+      return;
+    }
 
     let revoked = false;
     let blobUrl: string | null = null;
@@ -50,6 +69,9 @@ export function LazyImage({
       if (cached) {
         blobUrl = cached;
         setResolvedSrc(cached);
+        setCachedCover(cacheKey, cached);
+      } else if (src) {
+        setCachedCover(cacheKey, src);
       }
     }).catch(() => {});
 
@@ -57,16 +79,16 @@ export function LazyImage({
       revoked = true;
       if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
-  }, [songId, src]);
+  }, [songId, src, cacheKey]);
 
   // On network error, try offline cache as fallback
   const handleError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       if (songId && resolvedSrc === src) {
-        // Try offline cache before giving up
         offlineCache.getCachedCoverUrl(songId).then((cached) => {
           if (cached) {
             setResolvedSrc(cached);
+            setCachedCover(cacheKey, cached);
           } else {
             setErrored(true);
           }
@@ -76,15 +98,16 @@ export function LazyImage({
       }
       onError?.(e);
     },
-    [onError, songId, resolvedSrc, src]
+    [onError, songId, resolvedSrc, src, cacheKey]
   );
 
   const handleLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       setLoaded(true);
+      if (cacheKey) markCoverLoaded(cacheKey);
       onLoad?.(e);
     },
-    [onLoad]
+    [onLoad, cacheKey]
   );
 
   if ((!resolvedSrc && !src) || errored) {
@@ -102,20 +125,33 @@ export function LazyImage({
   }
 
   return (
-    <img
-      src={resolvedSrc || src}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      referrerPolicy="no-referrer"
-      onLoad={handleLoad}
-      onError={handleError}
-      className={cn(
-        "transition-opacity duration-300",
-        loaded ? "opacity-100" : "opacity-0",
-        className
+    <>
+      {/* Shimmer skeleton while loading */}
+      {!loaded && (
+        <div
+          className={cn("absolute inset-0 overflow-hidden", className)}
+          style={{ background: "hsl(var(--foreground) / 0.04)" }}
+          aria-hidden
+        >
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+        </div>
       )}
-      {...props}
-    />
+      <img
+        ref={imgRef}
+        src={resolvedSrc || src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onLoad={handleLoad}
+        onError={handleError}
+        className={cn(
+          "transition-opacity duration-200",
+          loaded ? "opacity-100" : "opacity-0",
+          className
+        )}
+        {...props}
+      />
+    </>
   );
 }
