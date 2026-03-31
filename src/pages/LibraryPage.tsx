@@ -1254,7 +1254,7 @@ const LibraryPage = () => {
                     ))}
                   </div>
                 ) : libraryAlbums.length === 0 ? (
-                  <EmptyState icon={Disc3} title="Votre collection est vide" subtitle="Ajoutez des morceaux pour voir vos albums apparaître automatiquement ici" actionLabel="Ajouter de la musique" onAction={() => navigate("/add")} />
+                  <EmptyState icon={Disc3} title="Votre collection est vide" subtitle="Ajoutez des morceaux pour voir vos albums apparaître automatiquement ici" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
                 ) : (
                   <>
                     <p className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-2 px-1">
@@ -1490,7 +1490,7 @@ const LibraryPage = () => {
                     ))}
                   </div>
                 ) : libraryArtists.length === 0 ? (
-                  <EmptyState icon={User} title="Aucun artiste pour l'instant" subtitle="Vos artistes s'afficheront ici dès que vous ajouterez de la musique" actionLabel="Ajouter de la musique" onAction={() => navigate("/add")} />
+                  <EmptyState icon={User} title="Aucun artiste pour l'instant" subtitle="Vos artistes s'afficheront ici dès que vous ajouterez de la musique" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
                 ) : (
                   <>
                     <div className="relative mb-3">
@@ -1637,7 +1637,7 @@ const LibraryPage = () => {
             {tab === "songs" && (
               <div>
                 {customSongs.length === 0 ? (
-                  <EmptyState icon={Music} title="Commencez votre bibliothèque" subtitle="Ajoutez vos premiers morceaux pour créer votre collection personnelle" actionLabel="Ajouter de la musique" onAction={() => navigate("/add")} />
+                  <EmptyState icon={Music} title="Commencez votre bibliothèque" subtitle="Recherchez et ajoutez vos morceaux préférés" actionLabel="Rechercher de la musique" onAction={() => navigate("/search")} />
                 ) : (
                   <>
                     {/* Search */}
