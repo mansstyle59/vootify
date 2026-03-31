@@ -1424,7 +1424,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                         {played.map((song) => (
                           <button key={song.id} onClick={() => { play(song); setQueue(queue); }} className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-white/5 transition-colors opacity-35 hover:opacity-60">
                             {song.coverUrl ? (
-                              <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                              <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" referrerPolicy="no-referrer" />
                             ) : (
                               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                 <Music className="w-4 h-4 text-primary/40" />
