@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Link, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import { SafeImage } from "@/components/SafeImage";
 
 interface CoverImagePickerProps {
   value: string;
@@ -61,7 +62,7 @@ const CoverImagePicker = ({ value, onChange, className = "" }: CoverImagePickerP
 
       {value && (
         <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-secondary group">
-          <img src={value} alt="Cover" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <SafeImage src={value} alt="Cover" referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           <button
             type="button"
             onClick={() => onChange("")}

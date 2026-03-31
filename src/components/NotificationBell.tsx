@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Bell, Check, X, ListMusic, Music } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { SafeImage } from "@/components/SafeImage";
 
 interface PendingPlaylist {
   id: string;
@@ -130,7 +131,7 @@ export function NotificationBell() {
                       <div className="flex gap-3">
                         <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-secondary">
                           {pl.cover_url ? (
-                            <img src={pl.cover_url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                            <SafeImage src={pl.cover_url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                               <Music className="w-5 h-5 text-primary/30" />

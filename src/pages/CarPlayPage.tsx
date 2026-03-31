@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CarPlayNowPlaying } from "@/components/carplay/CarPlayNowPlaying";
 import { CarPlayMiniBar } from "@/components/carplay/CarPlayMiniBar";
 import { CarPlayRadioHistory } from "@/components/carplay/CarPlayRadioHistory";
+import { SafeImage } from "@/components/SafeImage";
 
 type CarPlayTab = "music" | "radio" | "recent";
 
@@ -185,7 +186,7 @@ const CarPlayPage = () => {
       {/* Ambient background glow from current cover */}
       {currentSong?.coverUrl && (
         <div className="absolute inset-0 pointer-events-none">
-          <img
+          <SafeImage
             src={currentSong.coverUrl}
             alt=""
             referrerPolicy="no-referrer"

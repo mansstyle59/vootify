@@ -22,6 +22,7 @@ import { preloadNextTrack } from "@/lib/smartPreload";
 import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool, getPreloadStatus } from "@/lib/queuePreloader";
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
+import { SafeImage } from "@/components/SafeImage";
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
@@ -708,7 +709,7 @@ export function MiniPlayer() {
                       style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
                     >
                       {bubbleCover ? (
-                        <img
+                        <SafeImage
                           src={bubbleCover}
                           alt={currentSong.title}
                           className="w-full h-full object-cover"
@@ -1049,7 +1050,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       >
                         <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(var(--foreground) / 0.08)" }}>
                           {entry.coverUrl ? (
-                            <img src={entry.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <SafeImage src={entry.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Music className="w-5 h-5 text-foreground/20" />
@@ -1343,7 +1344,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/8" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.03))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.1)" }}>
                 <div className="relative">
                   {currentSong.coverUrl ? (
-                    <img src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" referrerPolicy="no-referrer" />
+                    <SafeImage src={currentSong.coverUrl} alt="" className="w-14 h-14 rounded-xl object-cover shadow-2xl" referrerPolicy="no-referrer" />
                   ) : (
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 shadow-2xl">
                       <Music className="w-6 h-6 text-primary/40" />
@@ -1388,7 +1389,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                               <GripVertical className="w-4 h-4 text-white/15 shrink-0 touch-none" />
                               <span className="w-4 text-center text-[11px] text-white/25 tabular-nums font-medium">{i + 1}</span>
                               {song.coverUrl ? (
-                                <img src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" referrerPolicy="no-referrer" />
+                                <SafeImage src={song.coverUrl} alt="" className="w-10 h-10 rounded-lg object-cover shadow" referrerPolicy="no-referrer" />
                               ) : (
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                   <Music className="w-4 h-4 text-primary/40" />
@@ -1424,7 +1425,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                         {played.map((song) => (
                           <button key={song.id} onClick={() => { play(song); setQueue(queue); }} className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-white/5 transition-colors opacity-35 hover:opacity-60">
                             {song.coverUrl ? (
-                              <img src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" referrerPolicy="no-referrer" />
+                              <SafeImage src={song.coverUrl} alt="" className="w-9 h-9 rounded-lg object-cover" referrerPolicy="no-referrer" />
                             ) : (
                               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                                 <Music className="w-4 h-4 text-primary/40" />
@@ -1458,7 +1459,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
               <div className="relative w-full max-w-[360px]">
                 {currentSong.coverUrl && (
                   <div className="absolute inset-0 scale-90 blur-[60px] opacity-40 rounded-3xl overflow-hidden">
-                    <img src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <SafeImage src={currentSong.coverUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                 )}
                 <AnimatePresence mode="popLayout">

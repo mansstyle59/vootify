@@ -13,6 +13,7 @@ import { extractID3, crossReferenceBatch } from "@/lib/id3Utils";
 import { batchSearchCovers } from "@/lib/coverArtSearch";
 
 import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEnrich";
+import { SafeImage } from "@/components/SafeImage";
 
 type Tab = "song" | "playlist" | "radio";
 
@@ -77,7 +78,7 @@ function SongCoverThumb({ coverUrl, disabled, onChange }: { coverUrl: string; di
         className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 group"
       >
         {coverUrl ? (
-          <img src={coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+          <SafeImage src={coverUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-secondary flex items-center justify-center">
             <FileAudio className="w-5 h-5 text-muted-foreground/40" />

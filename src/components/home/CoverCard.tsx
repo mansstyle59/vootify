@@ -2,6 +2,7 @@ import { memo, useState, useEffect } from "react";
 import { Play, Pause, Music } from "lucide-react";
 import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
 import { getCachedCover, setCachedCover, isCoverLoaded, markCoverLoaded } from "@/lib/coverMemoryCache";
+import { SafeImage } from "@/components/SafeImage";
 
 interface CoverCardProps {
   title: string;
@@ -58,7 +59,7 @@ export const CoverCard = memo(function CoverCard({
                 <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
               </div>
             )}
-            <img
+            <SafeImage
               src={resolvedUrl}
               alt={title}
               loading="lazy"

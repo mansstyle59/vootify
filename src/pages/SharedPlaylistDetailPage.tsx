@@ -8,6 +8,7 @@ import { Song, formatDuration } from "@/data/mockData";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, Play, Shuffle, Music, Clock, ListMusic } from "lucide-react";
 import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
+import { SafeImage } from "@/components/SafeImage";
 
 /* ── Song Row ── */
 function SharedSongRow({ song, index, isActive, isPlaying, onClick }: {
@@ -41,7 +42,7 @@ function SharedSongRow({ song, index, isActive, isPlaying, onClick }: {
         style={{ boxShadow: isActive ? "0 4px 16px hsl(var(--primary) / 0.15)" : "0 2px 8px hsl(0 0% 0% / 0.08)" }}
       >
         {coverUrl ? (
-          <img src={coverUrl} alt={song.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" loading="lazy" />
+          <SafeImage src={coverUrl} alt={song.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.5))" }}>
             <Music className="w-4 h-4 text-muted-foreground/25" />
@@ -186,7 +187,7 @@ const SharedPlaylistDetailPage = () => {
       <div className="relative overflow-hidden">
         <motion.div style={{ y: bgY }} className="absolute inset-0 -top-20">
           {coverImg ? (
-            <img src={coverImg} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover scale-110" />
+            <SafeImage src={coverImg} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover scale-110" />
           ) : (
             <div className="w-full h-full" style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.15), hsl(var(--background)))" }} />
           )}
@@ -201,7 +202,7 @@ const SharedPlaylistDetailPage = () => {
               style={{ boxShadow: "0 16px 60px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(0 0% 100% / 0.06)" }}
             >
               {coverImg ? (
-                <img src={coverImg} alt={playlist?.playlist_name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                <SafeImage src={coverImg} alt={playlist?.playlist_name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05))" }}
