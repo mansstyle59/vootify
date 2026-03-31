@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,8 +6,10 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
 import { getStationLogo } from "@/lib/radioLogos";
 import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
+import { getGreeting, getSmartMixLabel, buildSmartMix, getTimeContext } from "@/lib/smartMix";
 import {
   Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User, Play,
+  Sparkles, Shuffle, Zap, Sun, Moon, Sunset,
 } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 import { motion, AnimatePresence } from "framer-motion";
