@@ -1756,9 +1756,15 @@ function HomeTab() {
     const id = `custom_${Date.now()}`;
     const labels = { songs: "Nouvelle section", albums: "Nouvelle section Albums", playlists: "Nouvelle section Playlists" };
     const emojis = { songs: "⭐", albums: "💿", playlists: "📋" };
+    const defaultTitle = `${labels[type]} ${emojis[type]}`;
+
+    // Check for duplicates with same default name
+    const existingCount = customSections.filter(c => c.type === type).length;
+    const title = existingCount > 0 ? `${labels[type]} ${existingCount + 1} ${emojis[type]}` : defaultTitle;
+
     const newCustom: CustomSection = {
       id,
-      title: labels[type],
+      title,
       songIds: [],
       type,
       albumIds: [],
@@ -1767,8 +1773,10 @@ function HomeTab() {
     setCustomSections((prev) => [...prev, newCustom]);
     setSections((prev) => [
       ...prev,
-      { id, title: `${labels[type]} ${emojis[type]}`, visible: true, order: prev.length },
+      { id, title, visible: true, order: prev.length },
     ]);
+    
+    // Auto-open the picker for immediate content selection
     if (type === "songs") {
       setEditingCustom(id);
       setSongPickerOpen(true);
@@ -1779,12 +1787,17 @@ function HomeTab() {
       setEditingPlaylistSection(id);
       setPlaylistPickerOpen(true);
     }
+    toast.success(`Section "${title}" ajoutée`);
   };
 
   const removeCustomSection = (id: string) => {
+    const cs = customSections.find((c) => c.id === id);
+    const itemCount = cs?.type === "albums" ? (cs?.albumIds?.length || 0) : cs?.type === "playlists" ? (cs?.playlistIds?.length || 0) : (cs?.songIds?.length || 0);
+    if (itemCount > 0 && !window.confirm(`Supprimer cette section (${itemCount} élément${itemCount > 1 ? "s" : ""}) ?`)) return;
     setCustomSections((prev) => prev.filter((c) => c.id !== id));
     setSections((prev) => prev.filter((s) => s.id !== id));
     if (editingCustom === id) setEditingCustom(null);
+    toast.success("Section supprimée");
   };
 
   const updateCustomTitle = (id: string, title: string) => {
@@ -2208,7 +2221,9 @@ function SongPickerModal({
 
   /** Fetch tracks from a Deezer link */
   const fetchDeezer = async () => {
+    if (deezerLoading) return;
     let urlToUse = deezerUrl.trim();
+    if (!urlToUse) return;
 
     // Resolve short links first
     if (isDeezerShortLink(urlToUse)) {
@@ -2302,24 +2317,32 @@ function SongPickerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-lg max-h-[80vh] rounded-2xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-lg max-h-[80vh] rounded-t-2xl sm:rounded-2xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-foreground">Choisir les morceaux</h3>
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Music className="w-4 h-4 text-primary" />
+              Choisir les morceaux
+            </h3>
             <p className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+              OK
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground active:scale-90 transition-transform" aria-label="Fermer">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Mode toggle */}
@@ -2505,7 +2528,7 @@ function SongPickerModal({
 
         {/* Footer */}
         <div className="p-3 border-t border-border flex items-center justify-between gap-3">
-          {(() => {
+          {mode === "deezer" && deezerTracks.length > 0 ? (() => {
             const selectableIds = deezerTracks.filter(t => t.dbSongId).map(t => t.dbSongId!);
             const allSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
             return (
@@ -2524,7 +2547,9 @@ function SongPickerModal({
                 {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
               </button>
             );
-          })()}
+          })() : (
+            <span className="text-xs text-muted-foreground">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</span>
+          )}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleDone}
@@ -2614,8 +2639,9 @@ function AlbumPickerModal({
 
   /** Fetch albums from a Deezer link */
   const fetchDeezer = async () => {
+    if (deezerLoading) return;
     let urlToUse = deezerUrl.trim();
-
+    if (!urlToUse) return;
     if (isDeezerShortLink(urlToUse)) {
       setDeezerError("");
       setDeezerLoading(true);
@@ -2712,8 +2738,9 @@ function AlbumPickerModal({
   const localCount = deezerAlbums.filter((a) => a.existsLocally).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <Disc3 className="w-4 h-4 text-primary" />
@@ -2724,8 +2751,8 @@ function AlbumPickerModal({
             <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
               OK
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-              <X className="w-4 h-4" />
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground active:scale-90 transition-transform" aria-label="Fermer">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -3048,7 +3075,9 @@ function PlaylistPickerModal({
 
   /** Fetch playlists from a Deezer link */
   const fetchDeezer = async () => {
+    if (deezerLoading) return;
     let urlToUse = deezerUrl.trim();
+    if (!urlToUse) return;
 
     if (isDeezerShortLink(urlToUse)) {
       setDeezerError("");
@@ -3161,8 +3190,9 @@ function PlaylistPickerModal({
   const localCount = deezerPlaylists.filter((p) => p.existsLocally).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <ListMusic className="w-4 h-4 text-primary" />
@@ -3173,8 +3203,8 @@ function PlaylistPickerModal({
             <button onClick={handleDone} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
               OK
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-              <X className="w-4 h-4" />
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground active:scale-90 transition-transform" aria-label="Fermer">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
