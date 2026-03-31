@@ -140,6 +140,85 @@ function SongForm() {
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  /** Recursively extract audio files from DataTransferItem entries (supports folders) */
+  const extractFilesFromEntries = async (items: DataTransferItemList): Promise<File[]> => {
+    const audioExts = new Set(["mp3", "m4a", "aac", "ogg", "flac", "wav", "wma", "opus"]);
+    const files: File[] = [];
+
+    const readEntry = (entry: FileSystemEntry): Promise<void> => {
+      return new Promise((resolve) => {
+        if (entry.isFile) {
+          (entry as FileSystemFileEntry).file((f) => {
+            const ext = f.name.split(".").pop()?.toLowerCase() || "";
+            if (audioExts.has(ext)) files.push(f);
+            resolve();
+          }, () => resolve());
+        } else if (entry.isDirectory) {
+          const reader = (entry as FileSystemDirectoryEntry).createReader();
+          const readAll = () => {
+            reader.readEntries(async (entries) => {
+              if (entries.length === 0) { resolve(); return; }
+              for (const e of entries) await readEntry(e);
+              readAll(); // Read next batch (readEntries returns max 100)
+            }, () => resolve());
+          };
+          readAll();
+        } else {
+          resolve();
+        }
+      });
+    };
+
+    const entries: FileSystemEntry[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const entry = items[i].webkitGetAsEntry?.();
+      if (entry) entries.push(entry);
+    }
+    for (const entry of entries) await readEntry(entry);
+    return files;
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    if (processing) return;
+
+    let audioFiles: File[];
+    if (e.dataTransfer.items?.length) {
+      audioFiles = await extractFilesFromEntries(e.dataTransfer.items);
+    } else {
+      const audioExts = new Set(["mp3", "m4a", "aac", "ogg", "flac", "wav", "wma", "opus"]);
+      audioFiles = Array.from(e.dataTransfer.files).filter(f => {
+        const ext = f.name.split(".").pop()?.toLowerCase() || "";
+        return audioExts.has(ext);
+      });
+    }
+
+    if (audioFiles.length === 0) {
+      toast.error("Aucun fichier audio trouvé dans le dossier");
+      return;
+    }
+    toast.info(`${audioFiles.length} fichier${audioFiles.length > 1 ? "s" : ""} audio détecté${audioFiles.length > 1 ? "s" : ""}`);
+
+    // Create a synthetic FileList-like object
+    const dt = new DataTransfer();
+    audioFiles.forEach(f => dt.items.add(f));
+    processFiles(dt.files);
+  }, [processing]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }, []);
+
   const processFiles = async (files: FileList) => {
     setProcessing(true);
     const entries: SongEntry[] = [];
