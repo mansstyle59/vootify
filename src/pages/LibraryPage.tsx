@@ -739,6 +739,7 @@ const LibraryPage = () => {
 
   const allTabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "songs", label: "Morceaux", icon: Music },
+    { key: "recent", label: "Écoutés récemment", icon: Clock },
     { key: "albums", label: "Albums", icon: Disc3 },
     { key: "artists", label: "Artistes", icon: User },
     { key: "playlists", label: "Playlists", icon: ListMusic },
