@@ -274,12 +274,18 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { userId } = get();
     const exists = get().likedSongs.some((ls) => ls.id === song.id);
 
-    // Optimistic update
+    // Optimistic update + toast
     set((s) => ({
       likedSongs: exists
         ? s.likedSongs.filter((ls) => ls.id !== song.id)
         : [...s.likedSongs, { ...song, liked: true }],
     }));
+
+    if (exists) {
+      toast.success("Retiré de la bibliothèque", { duration: 2000 });
+    } else {
+      toast.success("Ajouté à la bibliothèque", { duration: 2000 });
+    }
 
     if (userId) {
       const operation = exists
