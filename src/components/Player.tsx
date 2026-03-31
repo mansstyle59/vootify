@@ -1467,6 +1467,7 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
                       key={currentSong.id}
                       src={currentSong.coverUrl}
                       alt={currentSong.title}
+                      referrerPolicy="no-referrer"
                       initial={{ opacity: 0, scale: 0.82, filter: "blur(12px)", y: 20 }}
                       animate={{ opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }}
                       exit={{ opacity: 0, scale: 0.88, filter: "blur(8px)", y: -15 }}
