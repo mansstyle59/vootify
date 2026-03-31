@@ -637,7 +637,7 @@ const SearchPage = () => {
             )}
 
             {/* ── Genre Cards (premium glass) ── */}
-            {genreCards.length > 0 && (
+            {searchSections?.genres && genreCards.length > 0 && (
               <section>
                 <SectionHeader title="Explorer par genre" action="Voir tout" onAction={() => navigate("/library")} />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
