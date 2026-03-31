@@ -1,6 +1,7 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { Play, Pause, Music } from "lucide-react";
 import { useOfflineCoverUrl } from "@/hooks/useOfflineCoverUrl";
+import { getCachedCover, setCachedCover, isCoverLoaded, markCoverLoaded } from "@/lib/coverMemoryCache";
 
 interface CoverCardProps {
   title: string;
@@ -18,8 +19,22 @@ interface CoverCardProps {
 export const CoverCard = memo(function CoverCard({
   title, subtitle, imageUrl, songId, index = 0, isActive = false, onClick, rounded = false, preserveRatio = false, showPlay = false,
 }: CoverCardProps) {
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const resolvedUrl = useOfflineCoverUrl(songId, imageUrl);
+  const cacheKey = songId || imageUrl || "";
+  const memHit = cacheKey ? getCachedCover(cacheKey) : null;
+  const alreadyLoaded = cacheKey ? isCoverLoaded(cacheKey) : false;
+
+  const [imgLoaded, setImgLoaded] = useState(alreadyLoaded);
+  const resolvedUrl = useOfflineCoverUrl(songId, memHit || imageUrl);
+
+  // Store in memory cache when resolved
+  useEffect(() => {
+    if (resolvedUrl && cacheKey) setCachedCover(cacheKey, resolvedUrl);
+  }, [resolvedUrl, cacheKey]);
+
+  const handleLoad = () => {
+    setImgLoaded(true);
+    if (cacheKey) markCoverLoaded(cacheKey);
+  };
 
   return (
     <div
@@ -47,11 +62,14 @@ export const CoverCard = memo(function CoverCard({
               src={resolvedUrl}
               alt={title}
               loading="lazy"
+              decoding="async"
               referrerPolicy="no-referrer"
-              onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full transition-transform duration-300 ease-out group-hover:scale-[1.04] ${
+              onLoad={handleLoad}
+              className={`w-full h-full transition-opacity duration-200 ease-out ${
+                imgLoaded ? "opacity-100" : "opacity-0"
+              } ${
                 preserveRatio ? "object-contain p-2" : "object-cover"
-              } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              }`}
             />
           </>
         ) : (
