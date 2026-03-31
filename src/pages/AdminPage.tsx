@@ -1756,9 +1756,15 @@ function HomeTab() {
     const id = `custom_${Date.now()}`;
     const labels = { songs: "Nouvelle section", albums: "Nouvelle section Albums", playlists: "Nouvelle section Playlists" };
     const emojis = { songs: "⭐", albums: "💿", playlists: "📋" };
+    const defaultTitle = `${labels[type]} ${emojis[type]}`;
+
+    // Check for duplicates with same default name
+    const existingCount = customSections.filter(c => c.type === type).length;
+    const title = existingCount > 0 ? `${labels[type]} ${existingCount + 1} ${emojis[type]}` : defaultTitle;
+
     const newCustom: CustomSection = {
       id,
-      title: labels[type],
+      title,
       songIds: [],
       type,
       albumIds: [],
@@ -1767,8 +1773,10 @@ function HomeTab() {
     setCustomSections((prev) => [...prev, newCustom]);
     setSections((prev) => [
       ...prev,
-      { id, title: `${labels[type]} ${emojis[type]}`, visible: true, order: prev.length },
+      { id, title, visible: true, order: prev.length },
     ]);
+    
+    // Auto-open the picker for immediate content selection
     if (type === "songs") {
       setEditingCustom(id);
       setSongPickerOpen(true);
@@ -1779,6 +1787,7 @@ function HomeTab() {
       setEditingPlaylistSection(id);
       setPlaylistPickerOpen(true);
     }
+    toast.success(`Section "${title}" ajoutée`);
   };
 
   const removeCustomSection = (id: string) => {
