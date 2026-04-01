@@ -35,8 +35,8 @@ function formatPendingSummary(): string {
 
 export function NetworkStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showBanner, setShowBanner] = useState(false);
-  const [wasOffline, setWasOffline] = useState(false);
+  const [showBanner, setShowBanner] = useState(!navigator.onLine);
+  const [wasOffline, setWasOffline] = useState(!navigator.onLine);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ synced: number; failed: number } | null>(null);
 
@@ -79,6 +79,7 @@ export function NetworkStatus() {
         });
       }
 
+      // Auto-hide reconnection banner after sync
       setTimeout(() => setShowBanner(false), synced > 0 ? 2500 : 4000);
     };
 
@@ -86,6 +87,7 @@ export function NetworkStatus() {
     window.addEventListener("offline", goOffline);
     window.addEventListener("offline-sync-done", onSyncDone);
 
+    // Auto-hide only when back online (not syncing) — keep visible while offline
     let timer: ReturnType<typeof setTimeout>;
     if (showBanner && isOnline && !syncing) {
       timer = setTimeout(() => {
