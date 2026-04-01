@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const letters = "VOOTIFY".split("");
@@ -35,15 +35,20 @@ interface Props {
 
 export function SplashScreen({ onFinish, holdForCache }: Props) {
   const [visible, setVisible] = useState(true);
+  const skipRef = useRef(false);
+
+  const skip = useCallback(() => {
+    if (skipRef.current) return;
+    skipRef.current = true;
+    setVisible(false);
+    setTimeout(onFinish, 200);
+  }, [onFinish]);
 
   useEffect(() => {
     if (holdForCache) return;
-    const timer = setTimeout(() => {
-      setVisible(false);
-      setTimeout(onFinish, 300);
-    }, 1200);
+    const timer = setTimeout(skip, 1200);
     return () => clearTimeout(timer);
-  }, [onFinish, holdForCache]);
+  }, [skip, holdForCache]);
 
   return (
     <AnimatePresence>
@@ -51,8 +56,9 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform"
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          onClick={skip}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform cursor-pointer"
           style={{ background: "hsl(var(--background))" }}
         >
           {/* ── Liquid Glass ambient layer ── */}
