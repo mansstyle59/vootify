@@ -2195,6 +2195,7 @@ function SongPickerModal({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  useEffect(() => {
     (async () => {
       const PAGE = 1000;
       let all: any[] = [];
