@@ -19,16 +19,31 @@ const AdminAuthCtx = createContext<AdminAuthContext>({
 });
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
+  // Use cached admin status for instant startup
+  const cachedAdmin = (() => {
+    try {
+      const raw = localStorage.getItem("vootify-admin-cache");
+      if (!raw) return null;
+      const c = JSON.parse(raw);
+      if (Date.now() - c.ts > 3600_000) return null; // 1h expiry
+      return c as { userId: string; isAdmin: boolean; ts: number };
+    } catch { return null; }
+  })();
+
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(cachedAdmin?.isAdmin ?? false);
+  const [loading, setLoading] = useState(!cachedAdmin);
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase.rpc("has_role", {
       _user_id: userId,
       _role: "admin",
     });
-    return !!data;
+    const admin = !!data;
+    try {
+      localStorage.setItem("vootify-admin-cache", JSON.stringify({ userId, isAdmin: admin, ts: Date.now() }));
+    } catch { /* ignore */ }
+    return admin;
   };
 
   useEffect(() => {
@@ -40,12 +55,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        const admin = await checkAdmin(u.id);
-        if (mounted) setIsAdmin(admin);
+        // If cached matches this user, skip network on first load
+        if (cachedAdmin && cachedAdmin.userId === u.id) {
+          setIsAdmin(cachedAdmin.isAdmin);
+          setLoading(false);
+          // Background refresh
+          checkAdmin(u.id).then((admin) => { if (mounted) setIsAdmin(admin); });
+        } else {
+          const admin = await checkAdmin(u.id);
+          if (mounted) { setIsAdmin(admin); setLoading(false); }
+        }
       } else {
         setIsAdmin(false);
+        if (mounted) setLoading(false);
       }
-      if (mounted) setLoading(false);
     };
 
     // Set up listener FIRST

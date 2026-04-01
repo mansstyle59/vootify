@@ -27,7 +27,24 @@ const DEFAULT_THEME: ThemeSettings = {
   fontFamily: "Nunito",
 };
 
+const SETTINGS_CACHE_PREFIX = "vootify-setting-";
+
+function getCachedSetting<T>(key: string): T | undefined {
+  try {
+    const raw = localStorage.getItem(SETTINGS_CACHE_PREFIX + key);
+    if (raw) return JSON.parse(raw) as T;
+  } catch { /* ignore */ }
+  return undefined;
+}
+
+function setCachedSetting(key: string, value: unknown) {
+  try {
+    localStorage.setItem(SETTINGS_CACHE_PREFIX + key, JSON.stringify(value));
+  } catch { /* ignore */ }
+}
+
 export function useAppSettings<T>(key: string, defaultValue: T) {
+  const cached = getCachedSetting<T>(key);
   return useQuery({
     queryKey: ["app-settings", key],
     queryFn: async (): Promise<T> => {
@@ -37,10 +54,15 @@ export function useAppSettings<T>(key: string, defaultValue: T) {
         .eq("key", key)
         .maybeSingle();
       if (error) throw error;
-      if (!data) return defaultValue;
-      return data.value as T;
+      const val = data ? (data.value as T) : defaultValue;
+      setCachedSetting(key, val);
+      return val;
     },
-    staleTime: 60_000,
+    staleTime: 1000 * 60 * 60, // 1 hour — settings rarely change
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    initialData: cached ?? undefined,
   });
 }
 

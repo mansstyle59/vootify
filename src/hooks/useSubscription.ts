@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const SUB_CACHE_KEY = "vootify-sub-cache";
+
 interface Subscription {
   id: string;
   plan: string;
@@ -9,10 +11,36 @@ interface Subscription {
   expires_at: string | null;
 }
 
+interface SubCache {
+  userId: string;
+  sub: Subscription | null;
+  active: boolean;
+  ts: number;
+}
+
+function getCachedSub(uid: string): SubCache | null {
+  try {
+    const raw = localStorage.getItem(SUB_CACHE_KEY);
+    if (!raw) return null;
+    const c: SubCache = JSON.parse(raw);
+    if (c.userId !== uid) return null;
+    // Cache valid for 1 hour
+    if (Date.now() - c.ts > 3600_000) return null;
+    return c;
+  } catch { return null; }
+}
+
+function setCachedSub(uid: string, sub: Subscription | null, active: boolean) {
+  try {
+    localStorage.setItem(SUB_CACHE_KEY, JSON.stringify({ userId: uid, sub, active, ts: Date.now() }));
+  } catch { /* ignore */ }
+}
+
 export function useSubscription(userId: string | null) {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isActive, setIsActive] = useState(false);
+  const cached = userId ? getCachedSub(userId) : null;
+  const [subscription, setSubscription] = useState<Subscription | null>(cached?.sub ?? null);
+  const [loading, setLoading] = useState(!cached);
+  const [isActive, setIsActive] = useState(cached?.active ?? false);
 
   const fetchSub = useCallback(async (uid: string) => {
     const { data } = await supabase
@@ -24,14 +52,10 @@ export function useSubscription(userId: string | null) {
       .limit(1)
       .maybeSingle();
 
-    if (data) {
-      setSubscription(data);
-      const active = !data.expires_at || new Date(data.expires_at) > new Date();
-      setIsActive(active);
-    } else {
-      setSubscription(null);
-      setIsActive(false);
-    }
+    const active = data ? (!data.expires_at || new Date(data.expires_at) > new Date()) : false;
+    setSubscription(data);
+    setIsActive(active);
+    setCachedSub(uid, data, active);
     setLoading(false);
   }, []);
 
@@ -45,7 +69,8 @@ export function useSubscription(userId: string | null) {
 
     let mounted = true;
 
-    setLoading(true);
+    // If we have cache, don't show loading — refresh in background
+    if (!cached) setLoading(true);
     fetchSub(userId).then(() => { if (!mounted) return; });
 
     // Listen for realtime changes
