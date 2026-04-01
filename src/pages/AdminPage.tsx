@@ -2189,7 +2189,12 @@ function SongPickerModal({
   const [deezerTracks, setDeezerTracks] = useState<{ id: number; title: string; artist: string; cover_url: string; album: string; existsInDb: boolean; dbSongId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
 
+  // Lock body scroll when modal is open
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
     (async () => {
       const PAGE = 1000;
       let all: any[] = [];
