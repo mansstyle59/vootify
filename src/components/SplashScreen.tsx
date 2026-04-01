@@ -3,6 +3,31 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const letters = "VOOTIFY".split("");
 
+/** Inline fallback so the logo always renders, even offline before SW activates */
+function LogoImg({ className, width, height }: { className?: string; width: number; height: number }) {
+  const [error, setError] = useState(false);
+  if (error) {
+    return (
+      <div className={className} style={{ width, height, background: "hsl(var(--primary) / 0.15)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 28 }}>
+        <span style={{ fontSize: width * 0.35, fontWeight: 900, color: "hsl(var(--primary))" }}>V</span>
+      </div>
+    );
+  }
+  return (
+    <motion.img
+      src="/pwa-icon-192.png"
+      alt="Vootify"
+      width={width}
+      height={height}
+      className={className}
+      onError={() => setError(true)}
+      initial={{ filter: "brightness(0.4) saturate(0)" }}
+      animate={{ filter: "brightness(1) saturate(1.1)" }}
+      transition={{ delay: 0.3, duration: 0.9, ease: "easeOut" }}
+    />
+  );
+}
+
 interface Props {
   onFinish: () => void;
   holdForCache?: boolean;
