@@ -35,15 +35,20 @@ interface Props {
 
 export function SplashScreen({ onFinish, holdForCache }: Props) {
   const [visible, setVisible] = useState(true);
+  const skipRef = useRef(false);
+
+  const skip = useCallback(() => {
+    if (skipRef.current) return;
+    skipRef.current = true;
+    setVisible(false);
+    setTimeout(onFinish, 200);
+  }, [onFinish]);
 
   useEffect(() => {
     if (holdForCache) return;
-    const timer = setTimeout(() => {
-      setVisible(false);
-      setTimeout(onFinish, 300);
-    }, 1200);
+    const timer = setTimeout(skip, 1200);
     return () => clearTimeout(timer);
-  }, [onFinish, holdForCache]);
+  }, [skip, holdForCache]);
 
   return (
     <AnimatePresence>
