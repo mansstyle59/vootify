@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, X, Disc3,
+  ChevronDown, ListMusic, X, Disc3,
   Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal,
-  Music, Plus
+  Music, Plus, Radio
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -1080,7 +1080,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                             ) : isSaved ? (
                               <Check className="w-3.5 h-3.5 text-green-400" />
                             ) : (
-                              <Heart className="w-3.5 h-3.5 text-foreground/30" />
+                              <Plus className="w-3.5 h-3.5 text-foreground/30" />
                             )}
                           </button>
                           {i === 0 && (
@@ -1130,12 +1130,35 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     <SourceBadge source={radioMeta?.source} />
                   </div>
                 </div>
-                <button
-                  onClick={() => { if (!currentSong) return; toggleLike(currentSong); if (navigator.vibrate) navigator.vibrate(10); }}
-                  className="p-1 active:scale-90 transition-transform"
+                {/* Live recognition button — replaces old heart */}
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => setShowHistory(true)}
+                  className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.08))",
+                    border: "1px solid hsl(var(--primary) / 0.3)",
+                    boxShadow: "0 0 20px hsl(var(--primary) / 0.2), inset 0 0.5px 0 hsl(var(--primary) / 0.2)",
+                  }}
                 >
-                  <Heart className={`w-7 h-7 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} />
-                </button>
+                  {isPlaying && radioMeta?.title && (
+                    <>
+                      {[0, 1].map((i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute rounded-full border border-primary/30"
+                          animate={{
+                            width: [20, 56],
+                            height: [20, 56],
+                            opacity: [0.6, 0],
+                          }}
+                          transition={{ duration: 1.8, delay: i * 0.6, repeat: Infinity, ease: "easeOut" }}
+                        />
+                      ))}
+                    </>
+                  )}
+                  <Radio className="w-6 h-6 text-primary relative z-10" />
+                </motion.button>
               </div>
 
               <div className="flex items-center justify-center gap-8 w-full mb-6">
@@ -1173,9 +1196,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
               />
 
               <div className="flex items-center justify-between mt-3">
-                <button className="p-1 active:scale-90 transition-transform">
-                  <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} onClick={() => toggleLike(currentSong)} />
-                </button>
+                <AddToLibraryButton song={currentSong} />
                 <button
                   onClick={() => setShowHistory(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
