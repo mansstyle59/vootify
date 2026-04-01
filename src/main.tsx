@@ -8,6 +8,8 @@ import { initOfflineSync } from "@/lib/offlineQueue";
 // Prevent SW issues in preview/iframe contexts
 guardServiceWorker();
 
+document.documentElement.dataset.appMounted = "true";
+
 createRoot(document.getElementById("root")!).render(<App />);
 
 // Prefetch route chunks on interaction hints (after render)
