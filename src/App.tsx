@@ -183,8 +183,11 @@ function AppContent() {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [contentReady, setContentReady] = useState(false);
   const handleSplashFinish = useCallback(() => {
     startTransition(() => setShowSplash(false));
+    // Small delay so content fades in after splash exit completes
+    requestAnimationFrame(() => setContentReady(true));
   }, []);
 
   return (
