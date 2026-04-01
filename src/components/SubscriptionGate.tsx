@@ -16,22 +16,12 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { isAdmin, loading: adminLoading } = useAdminAuth();
   const { isActive, loading: subLoading } = useSubscription(user?.id ?? null);
   const location = useLocation();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const on = () => setIsOnline(true);
-    const off = () => setIsOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
-  }, []);
 
   // Allow auth-related routes to bypass the gate
   const publicPaths = ["/auth", "/reset-password", "/request-access"];
   if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
-  // Still loading → show skeleton instead of blank screen
-  if (!isOnline) return <>{children}</>;
+  // Still loading → show skeleton
   if (adminLoading || subLoading) return (
     <div className="min-h-screen bg-background animate-pulse flex items-center justify-center">
       <div className="w-16 h-16 rounded-2xl bg-muted/30" />
