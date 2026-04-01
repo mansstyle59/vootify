@@ -118,6 +118,7 @@ function AppContent() {
         silentCacheRefresh(userId);
       }
       startCacheWarmup(userId);
+      startDataPrefetch(queryClient, userId);
       initAutoDownload(() => user?.id || null);
     }
   }, [user, loading, loadUserData, setUserId]);
