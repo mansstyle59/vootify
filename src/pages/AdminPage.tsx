@@ -2579,7 +2579,8 @@ function SongPickerModal({
           </motion.button>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
