@@ -25,6 +25,7 @@ import { RouteGuard } from "@/components/RouteGuard";
 import { InitialCacheLoader } from "@/components/InitialCacheLoader";
 import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
+import { startDataPrefetch } from "@/lib/dataPrefetch";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { initAutoDownload } from "@/lib/autoDownload";
 import { MusicAssistantFAB } from "@/components/MusicAssistant";
@@ -117,6 +118,7 @@ function AppContent() {
         silentCacheRefresh(userId);
       }
       startCacheWarmup(userId);
+      startDataPrefetch(queryClient, userId);
       initAutoDownload(() => user?.id || null);
     }
   }, [user, loading, loadUserData, setUserId]);
