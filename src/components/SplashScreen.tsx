@@ -41,7 +41,7 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
     if (skipRef.current) return;
     skipRef.current = true;
     setVisible(false);
-    setTimeout(onFinish, 200);
+    setTimeout(onFinish, 150);
   }, [onFinish]);
 
   useEffect(() => {
@@ -50,13 +50,21 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
     return () => clearTimeout(timer);
   }, [skip, holdForCache]);
 
+  // Hard safety net — always dismiss after 2s no matter what
+  useEffect(() => {
+    const safety = setTimeout(() => {
+      if (!skipRef.current) skip();
+    }, 2000);
+    return () => clearTimeout(safety);
+  }, [skip]);
+
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.08, filter: "blur(16px)", y: -30 }}
-          transition={{ duration: 0.55, ease: [0.32, 0, 0.14, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
           onClick={skip}
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform cursor-pointer"
           style={{ background: "hsl(var(--background))" }}
