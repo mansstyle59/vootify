@@ -2,6 +2,15 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
+const ADMIN_CACHE_KEY = "vootify_is_admin";
+
+function readCachedAdmin(): boolean {
+  try { return localStorage.getItem(ADMIN_CACHE_KEY) === "true"; } catch { return false; }
+}
+function writeCachedAdmin(val: boolean) {
+  try { localStorage.setItem(ADMIN_CACHE_KEY, String(val)); } catch { /* */ }
+}
+
 interface AdminAuthContext {
   user: User | null;
   isAdmin: boolean;
@@ -19,16 +28,19 @@ const AdminAuthCtx = createContext<AdminAuthContext>({
 });
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
+  const cachedAdmin = readCachedAdmin();
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(cachedAdmin);
+  const [loading, setLoading] = useState(!cachedAdmin);
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase.rpc("has_role", {
       _user_id: userId,
       _role: "admin",
     });
-    return !!data;
+    const result = !!data;
+    writeCachedAdmin(result);
+    return result;
   };
 
   useEffect(() => {
@@ -96,6 +108,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setIsAdmin(false);
+    writeCachedAdmin(false);
   };
 
   return (
