@@ -8,6 +8,13 @@ import { prefetchQueueCovers } from "@/lib/coverMemoryCache";
 
 
 
+type StoredPlaylist = {
+  id: string;
+  name: string;
+  cover_url: string | null;
+  created_at: string;
+};
+
 interface PlayerState {
   currentSong: Song | null;
   queue: Song[];
@@ -18,7 +25,7 @@ interface PlayerState {
   repeat: "off" | "all" | "one";
   fullScreen: boolean;
   likedSongs: Song[];
-  playlists: Array<{ id: string; name: string; cover_url: string | null; created_at: string }>;
+  playlists: StoredPlaylist[];
   recentlyPlayed: Song[];
   playlistSongs: Record<string, Song[]>;
   userId: string | null;
@@ -50,7 +57,7 @@ interface PlayerState {
   toggleLike: (song: Song) => void;
   isLiked: (songId: string) => boolean;
   setQueue: (songs: Song[]) => void;
-  createPlaylist: (name: string) => void;
+  createPlaylist: (name: string) => Promise<StoredPlaylist | null>;
   deletePlaylist: (id: string) => void;
   addSongToPlaylist: (playlistId: string, song: Song) => void;
   removeSongFromPlaylist: (playlistId: string, songId: string) => void;
