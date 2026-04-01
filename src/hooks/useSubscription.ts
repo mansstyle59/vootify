@@ -45,8 +45,20 @@ export function useSubscription(userId: string | null) {
 
     let mounted = true;
 
+    // Safety timeout: don't block app forever if offline
+    const safetyTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("[Subscription] Timeout — resolving as inactive");
+        setLoading(false);
+      }
+    }, 2000);
+
     setLoading(true);
-    fetchSub(userId).then(() => { if (!mounted) return; });
+    fetchSub(userId).catch(() => {
+      if (mounted) setLoading(false);
+    }).finally(() => {
+      clearTimeout(safetyTimer);
+    });
 
     // Listen for realtime changes
     const channel = supabase
@@ -69,6 +81,7 @@ export function useSubscription(userId: string | null) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(channel);
     };
