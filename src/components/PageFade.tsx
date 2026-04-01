@@ -67,7 +67,7 @@ export function PageFade({ children }: { children: ReactNode }) {
   return (
     <div
       ref={ref}
-      className="min-h-screen will-change-[opacity,transform,filter]"
+      className="min-h-screen will-change-[opacity,transform]"
     >
       {children}
     </div>
