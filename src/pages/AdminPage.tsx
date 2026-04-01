@@ -2946,7 +2946,8 @@ function AlbumPickerModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
