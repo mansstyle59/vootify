@@ -54,7 +54,11 @@ export function useSubscription(userId: string | null) {
     }, 2000);
 
     setLoading(true);
-    fetchSub(userId).then(() => { if (!mounted) return; });
+    fetchSub(userId).catch(() => {
+      if (mounted) setLoading(false);
+    }).finally(() => {
+      clearTimeout(safetyTimer);
+    });
 
     // Listen for realtime changes
     const channel = supabase
