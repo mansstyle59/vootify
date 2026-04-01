@@ -2,7 +2,28 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isCacheReady, performInitialCache, type CacheProgress } from "@/lib/appCache";
 import { useAuth } from "@/hooks/useAuth";
-import { SafeImage } from "@/components/SafeImage";
+
+/** Inline fallback so the logo always renders, even offline */
+function LogoFallback({ size, className }: { size: number; className?: string }) {
+  const [error, setError] = useState(false);
+  if (error) {
+    return (
+      <div className={className} style={{ width: size, height: size, background: "hsl(var(--primary) / 0.15)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 28 }}>
+        <span style={{ fontSize: size * 0.35, fontWeight: 900, color: "hsl(var(--primary))" }}>V</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src="/pwa-icon-192.png"
+      alt="Vootify"
+      width={size}
+      height={size}
+      className={className}
+      onError={() => setError(true)}
+    />
+  );
+}
 
 interface Props {
   children: React.ReactNode;
@@ -100,13 +121,7 @@ export function InitialCacheLoader({ children }: Props) {
               <div className="rounded-[28px] overflow-hidden shadow-2xl" style={{
                 boxShadow: "0 0 50px hsl(var(--primary) / 0.25), 0 16px 32px hsl(0 0% 0% / 0.35)",
               }}>
-                <SafeImage
-                  src="/pwa-icon-192.png"
-                  alt="Vootify"
-                  width={80}
-                  height={80}
-                  className="w-[80px] h-[80px] rounded-[28px]"
-                />
+                <LogoFallback size={80} className="w-[80px] h-[80px] rounded-[28px]" />
               </div>
             </motion.div>
 
