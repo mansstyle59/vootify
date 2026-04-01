@@ -649,25 +649,25 @@ const LibraryPage = () => {
     setDeezerImporting(true);
     try {
       let resolvedUrl = deezerUrl.trim();
-      // Resolve short link
       if (/link\.deezer/i.test(resolvedUrl)) {
         const { data } = await supabase.functions.invoke("deezer-proxy", {
           body: { resolveUrl: resolvedUrl },
         });
         if (data?.resolvedUrl) resolvedUrl = data.resolvedUrl;
       }
-      // Extract playlist ID
+
       const playlistMatch = resolvedUrl.match(/playlist\/(\d+)/i);
       if (!playlistMatch) {
         toast.error("URL de playlist Deezer invalide");
         setDeezerImporting(false);
         return;
       }
+
       const playlistId = playlistMatch[1];
-      // Fetch playlist info
       const { data: plData } = await supabase.functions.invoke("deezer-proxy", {
         body: { path: `/playlist/${playlistId}` },
       });
+
       const playlistName = plData?.title || "Playlist Deezer";
       const deezerTracks = plData?.tracks?.data || [];
       if (deezerTracks.length === 0) {
@@ -675,26 +675,26 @@ const LibraryPage = () => {
         setDeezerImporting(false);
         return;
       }
-      // Create playlist
-      await createPlaylist(playlistName);
-      // Wait for state to update
-      await new Promise((r) => setTimeout(r, 300));
-      const newPlaylists = usePlayerStore.getState().playlists;
-      const newPl = newPlaylists.find((p) => p.name === playlistName);
+
+      const newPl = await createPlaylist(playlistName);
       if (!newPl) {
         toast.error("Erreur lors de la création");
         setDeezerImporting(false);
         return;
       }
-      // Match Deezer tracks with local library
+
       const { data: allSongs } = await supabase
         .from("custom_songs")
         .select("id, title, artist, album, duration, cover_url, stream_url")
         .eq("user_id", userId!)
         .not("stream_url", "is", null);
+
       const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       let matched = 0;
-      for (const dt of deezerTracks) {
+      let importedFromDeezer = 0;
+
+      for (let index = 0; index < deezerTracks.length; index++) {
+        const dt = deezerTracks[index];
         const dTitle = normalize(dt.title || "");
         const dArtist = normalize(dt.artist?.name || "");
         const match = (allSongs || []).find((s: any) => {
@@ -703,22 +703,36 @@ const LibraryPage = () => {
           return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
                  (sArtist.includes(dArtist) || dArtist.includes(sArtist));
         });
-        if (match) {
-          const song: Song = {
-            id: `custom-${match.id}`,
-            title: match.title,
-            artist: match.artist,
-            album: match.album || "",
-            duration: match.duration || 0,
-            coverUrl: match.cover_url || "",
-            streamUrl: match.stream_url || "",
-            liked: false,
-          };
-          await addSongToPlaylist(newPl.id, song);
-          matched++;
-        }
+
+        const song: Song = match
+          ? {
+              id: `custom-${match.id}`,
+              title: match.title,
+              artist: match.artist,
+              album: match.album || "",
+              duration: match.duration || 0,
+              coverUrl: match.cover_url || dt.album?.cover_medium || "",
+              streamUrl: match.stream_url || "",
+              liked: false,
+            }
+          : {
+              id: `deezer-${playlistId}-${index}`,
+              title: dt.title || "Titre inconnu",
+              artist: dt.artist?.name || "Artiste inconnu",
+              album: dt.album?.title || "",
+              duration: dt.duration || 0,
+              coverUrl: dt.album?.cover_xl || dt.album?.cover_big || dt.album?.cover_medium || "",
+              streamUrl: dt.preview || "",
+              liked: false,
+            };
+
+        if (!song.streamUrl) continue;
+        await addSongToPlaylist(newPl.id, song);
+        if (match) matched++;
+        else importedFromDeezer++;
       }
-      toast.success(`"${playlistName}" créée — ${matched}/${deezerTracks.length} morceaux trouvés localement`);
+
+      toast.success(`"${playlistName}" créée — ${matched} local + ${importedFromDeezer} Deezer`);
       setDeezerUrl("");
       setShowCreate(false);
     } catch (e) {
