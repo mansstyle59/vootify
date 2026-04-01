@@ -19,16 +19,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety timeout: if auth doesn't resolve in 3s (e.g. offline), stop loading
+    const authTimeout = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          console.warn("[Auth] Timeout — resolving as unauthenticated (likely offline)");
+          return false;
+        }
+        return prev;
+      });
+    }, 3000);
+
     // Set up listener BEFORE getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      clearTimeout(authTimeout);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(authTimeout);
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch(() => {
+      clearTimeout(authTimeout);
       setLoading(false);
     });
 
