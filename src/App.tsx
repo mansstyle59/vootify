@@ -215,37 +215,4 @@ const App = () => {
   );
 };
 
-/** Ultra-light skeleton shown while auth session is restoring */
-function AuthLoadingSkeleton() {
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top bar shimmer */}
-      <div className="flex items-center justify-between px-5 py-4 pt-[calc(env(safe-area-inset-top,0px)+16px)]">
-        <div className="h-6 w-24 rounded-lg bg-muted/40 animate-pulse" />
-        <div className="h-8 w-8 rounded-full bg-muted/30 animate-pulse" />
-      </div>
-      {/* Content shimmer rows */}
-      <div className="px-5 space-y-5 mt-4">
-        <div className="h-40 w-full rounded-2xl bg-muted/20 animate-pulse" />
-        <div className="space-y-3">
-          <div className="h-4 w-32 rounded bg-muted/30 animate-pulse" />
-          <div className="flex gap-3 overflow-hidden">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-36 w-28 rounded-xl bg-muted/20 animate-pulse flex-shrink-0" />
-            ))}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div className="h-4 w-40 rounded bg-muted/30 animate-pulse" />
-          <div className="flex gap-3 overflow-hidden">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-36 w-28 rounded-xl bg-muted/20 animate-pulse flex-shrink-0" />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default App;
