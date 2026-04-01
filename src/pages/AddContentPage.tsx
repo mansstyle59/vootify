@@ -1041,26 +1041,36 @@ function PlaylistForm() {
 
     let addedCount = 0;
 
-    // Upload local audio files
+    // Add songs to playlist (Deezer-matched or local files)
     for (let i = 0; i < songs.length; i++) {
       const song = songs[i];
       if (!song.title.trim() || !song.artist.trim()) continue;
       setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: true } : s));
 
-      const ext = song.file.name.split(".").pop()?.toLowerCase() || "mp3";
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("audio").upload(path, song.file, { contentType: song.file.type || "audio/mpeg" });
-      if (uploadErr) { setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
+      let streamUrl = song.streamUrl;
 
-      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
-      const streamUrl = urlData.publicUrl;
+      // If song already has a streamUrl (Deezer-matched from local library), skip upload
+      if (!streamUrl && song.file) {
+        const ext = song.file.name.split(".").pop()?.toLowerCase() || "mp3";
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("audio").upload(path, song.file, { contentType: song.file.type || "audio/mpeg" });
+        if (uploadErr) { setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s)); continue; }
 
-      await supabase.from("custom_songs").upsert({
-        user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
-        album: song.album.trim() || null, duration: song.duration || 0,
-        cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
-        year: song.year || null, genre: song.genre || null,
-      }, { onConflict: "title,artist" });
+        const { data: urlData } = supabase.storage.from("audio").getPublicUrl(path);
+        streamUrl = urlData.publicUrl;
+
+        await supabase.from("custom_songs").upsert({
+          user_id: effectiveUserId, title: song.title.trim(), artist: song.artist.trim(),
+          album: song.album.trim() || null, duration: song.duration || 0,
+          cover_url: song.coverUrl.trim() || null, stream_url: streamUrl,
+          year: song.year || null, genre: song.genre || null,
+        }, { onConflict: "title,artist" });
+      }
+
+      if (!streamUrl) {
+        setSongs((prev) => prev.map((s, j) => j === i ? { ...s, uploading: false } : s));
+        continue;
+      }
 
       await addSongToPlaylist(created.id, {
         id: `custom-${Date.now()}-${i}`, title: song.title.trim(), artist: song.artist.trim(),
