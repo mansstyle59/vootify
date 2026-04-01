@@ -136,15 +136,10 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
                   "0 0 60px hsl(var(--primary) / 0.2), 0 20px 50px hsl(0 0% 0% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.12), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
               }}
             >
-              <motion.img
-                src="/pwa-icon-192.png"
-                alt="Vootify"
+              <LogoImg
                 width={112}
                 height={112}
                 className="w-[112px] h-[112px] rounded-[28px]"
-                initial={{ filter: "brightness(0.4) saturate(0)" }}
-                animate={{ filter: "brightness(1) saturate(1.1)" }}
-                transition={{ delay: 0.3, duration: 0.9, ease: "easeOut" }}
               />
               {/* Glass glare overlay */}
               <motion.div
