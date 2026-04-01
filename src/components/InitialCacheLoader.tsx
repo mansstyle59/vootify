@@ -54,28 +54,24 @@ export function InitialCacheLoader({ children }: Props) {
       return;
     }
     if (!userId) {
-      // No user — skip cache, let them see auth
       setCacheReady(true);
       setShowLoader(false);
       return;
     }
 
     let cancelled = false;
-    // Add a safety timeout to never block more than 6s
+    // Safety timeout: never block more than 2s
     const safetyTimer = setTimeout(() => {
       if (!cancelled) {
         setCacheReady(true);
         setShowLoader(false);
       }
-    }, 6000);
+    }, 2000);
 
     performInitialCache(userId, handleProgress).then(() => {
       if (cancelled) return;
-      setFadeOut(true);
-      setTimeout(() => {
-        setCacheReady(true);
-        setShowLoader(false);
-      }, 500);
+      setCacheReady(true);
+      setShowLoader(false);
     });
 
     return () => { cancelled = true; clearTimeout(safetyTimer); };
