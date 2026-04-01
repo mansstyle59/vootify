@@ -183,8 +183,11 @@ function AppContent() {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [contentReady, setContentReady] = useState(false);
   const handleSplashFinish = useCallback(() => {
     startTransition(() => setShowSplash(false));
+    // Small delay so content fades in after splash exit completes
+    requestAnimationFrame(() => setContentReady(true));
   }, []);
 
   return (
@@ -198,12 +201,21 @@ const App = () => {
               <UpdateNotification />
               <IosPwaInstallBanner />
               <PushNotificationPrompt />
-               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+              <AnimatePresence mode="wait">
+                {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+              </AnimatePresence>
               <BrowserRouter>
                 <AuthGate>
                   <SubscriptionGate>
                     <BackgroundCacheLoader />
-                    <AppContent />
+                    <motion.div
+                      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                      animate={contentReady ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.98 }}
+                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+                      className="min-h-screen"
+                    >
+                      <AppContent />
+                    </motion.div>
                   </SubscriptionGate>
                 </AuthGate>
               </BrowserRouter>
