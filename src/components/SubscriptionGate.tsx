@@ -7,6 +7,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { ShieldX, Crown, Send, CheckCircle, Loader2, Mail, LogIn } from "lucide-react";
 
+function GateLoader() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Top bar skeleton */}
+      <div className="px-5 pt-14 pb-3 space-y-4 animate-pulse">
+        <div className="h-7 w-32 rounded-lg bg-muted/30" />
+        <div className="h-4 w-48 rounded bg-muted/20" />
+      </div>
+      {/* Cards row */}
+      <div className="flex gap-3 px-5 mt-4 animate-pulse">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex-shrink-0 space-y-2">
+            <div className="w-[120px] h-[120px] rounded-2xl bg-muted/20" />
+            <div className="h-3 w-20 rounded bg-muted/15" />
+          </div>
+        ))}
+      </div>
+      {/* Center spinner */}
+      <div className="flex-1 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="w-6 h-6 text-primary/40" />
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Blocks access to the app if the user has no active subscription.
  * Admins always bypass this gate.
