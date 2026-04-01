@@ -326,15 +326,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { userId } = get();
     if (!userId) {
       toast.error("Connectez-vous pour créer une playlist");
-      return;
+      return null;
     }
     try {
       const pl = await musicDb.createPlaylist(userId, name);
       set((s) => ({ playlists: [pl, ...s.playlists] }));
       toast.success(`Playlist "${name}" créée`);
+      return pl;
     } catch (e) {
       console.error("Failed to create playlist:", e);
       toast.error("Erreur lors de la création de la playlist");
+      return null;
     }
   },
 
