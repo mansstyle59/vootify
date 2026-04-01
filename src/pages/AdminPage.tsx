@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -2188,6 +2189,12 @@ function SongPickerModal({
   const [deezerTracks, setDeezerTracks] = useState<{ id: number; title: string; artist: string; cover_url: string; album: string; existsInDb: boolean; dbSongId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   useEffect(() => {
     (async () => {
       const PAGE = 1000;
@@ -2329,8 +2336,8 @@ function SongPickerModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -2572,7 +2579,8 @@ function SongPickerModal({
           </motion.button>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -2597,6 +2605,12 @@ function AlbumPickerModal({
   const [deezerLoading, setDeezerLoading] = useState(false);
   const [deezerAlbums, setDeezerAlbums] = useState<{ id: number; title: string; artist: string; cover_url: string; existsLocally: boolean; localId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -2750,8 +2764,8 @@ function AlbumPickerModal({
 
   const localCount = deezerAlbums.filter((a) => a.existsLocally).length;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -2932,7 +2946,8 @@ function AlbumPickerModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -2960,7 +2975,12 @@ function PlaylistPickerModal({
   const [deezerPlaylists, setDeezerPlaylists] = useState<{ id: number; title: string; cover_url: string; trackCount: number; existsLocally: boolean; localId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
 
-  /** Create a local playlist from a Deezer playlist */
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   const createFromDeezer = async (pl: { id: number; title: string; cover_url: string; trackCount: number }) => {
     if (!user?.id) return;
     setCreatingPlaylist(pl.id);
@@ -3202,8 +3222,8 @@ function PlaylistPickerModal({
 
   const localCount = deezerPlaylists.filter((p) => p.existsLocally).length;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -3411,7 +3431,8 @@ function PlaylistPickerModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
