@@ -760,74 +760,120 @@ function PlaylistForm() {
   const [deezerUrl, setDeezerUrl] = useState("");
   const [deezerImporting, setDeezerImporting] = useState(false);
 
+  const [deezerProgress, setDeezerProgress] = useState("");
+
   const handleDeezerImport = async () => {
     if (!deezerUrl.trim()) return;
     setDeezerImporting(true);
+    setDeezerProgress("Résolution du lien…");
     try {
       let resolvedUrl = deezerUrl.trim();
+
+      // Resolve short links (link.deezer.com, spotify.link, etc.)
       if (/link\.deezer/i.test(resolvedUrl)) {
         const { data } = await supabase.functions.invoke("deezer-proxy", {
           body: { resolveUrl: resolvedUrl },
         });
-        if (data?.resolved) resolvedUrl = data.resolved;
+        if (data?.resolvedUrl) resolvedUrl = data.resolvedUrl;
       }
+
       const playlistMatch = resolvedUrl.match(/playlist\/(\d+)/i);
       const albumMatch = resolvedUrl.match(/album\/(\d+)/i);
       if (!playlistMatch && !albumMatch) {
         toast.error("URL Deezer invalide (playlist ou album attendu)");
         setDeezerImporting(false);
+        setDeezerProgress("");
         return;
       }
+
       const isAlbum = !!albumMatch;
       const dId = isAlbum ? albumMatch![1] : playlistMatch![1];
-      const endpoint = isAlbum ? `album/${dId}` : `playlist/${dId}/tracks`;
-      const { data: proxyData } = await supabase.functions.invoke("deezer-proxy", {
-        body: { path: endpoint, limit: 200 },
+
+      // Fetch metadata (name + cover) first
+      setDeezerProgress("Récupération des métadonnées…");
+      const metaEndpoint = isAlbum ? `album/${dId}` : `playlist/${dId}`;
+      const { data: metaData } = await supabase.functions.invoke("deezer-proxy", {
+        body: { path: metaEndpoint },
       });
-      const tracks = isAlbum ? proxyData?.tracks?.data : proxyData?.data;
-      if (!tracks || tracks.length === 0) {
-        toast.error("Aucun morceau trouvé");
-        setDeezerImporting(false);
-        return;
-      }
-      // Auto-fill name if empty
-      if (!name.trim()) {
-        if (isAlbum && proxyData?.title) setName(proxyData.title);
-        else if (!isAlbum && proxyData?.title) setName(proxyData.title);
-        else {
-          const { data: plData } = await supabase.functions.invoke("deezer-proxy", {
-            body: { path: `playlist/${dId}` },
-          });
-          if (plData?.title) setName(plData.title);
-        }
-      }
-      // Auto-fill cover if empty
+
+      // Auto-fill name
+      if (!name.trim() && metaData?.title) setName(metaData.title);
+
+      // Auto-fill cover (album: cover_xl, playlist: picture_xl)
       if (!coverUrl.trim()) {
-        const cover = isAlbum ? proxyData?.cover_xl || proxyData?.cover_big : proxyData?.picture_xl || proxyData?.picture_big;
+        const cover = isAlbum
+          ? metaData?.cover_xl || metaData?.cover_big || metaData?.cover_medium
+          : metaData?.picture_xl || metaData?.picture_big || metaData?.picture_medium;
         if (cover) setCoverUrl(cover);
       }
-      // Match tracks with local library
+
+      // Fetch ALL tracks with pagination (Deezer returns max 25 per page)
+      setDeezerProgress("Chargement des morceaux…");
+      const allTracks: Array<{ title: string; artist?: { name: string }; album?: { cover_medium?: string; title?: string }; duration?: number }> = [];
+      let nextUrl: string | null = isAlbum ? `album/${dId}/tracks` : `playlist/${dId}/tracks`;
+
+      while (nextUrl) {
+        const { data: pageData } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: nextUrl },
+        });
+        const pageTracks = pageData?.data || [];
+        allTracks.push(...pageTracks);
+        setDeezerProgress(`Chargement… ${allTracks.length} morceaux`);
+
+        // Check for next page
+        if (pageData?.next) {
+          const nextParsed = new URL(pageData.next);
+          const index = nextParsed.searchParams.get("index");
+          nextUrl = isAlbum ? `album/${dId}/tracks?index=${index}` : `playlist/${dId}/tracks?index=${index}`;
+        } else {
+          nextUrl = null;
+        }
+      }
+
+      if (allTracks.length === 0) {
+        toast.error("Aucun morceau trouvé");
+        setDeezerImporting(false);
+        setDeezerProgress("");
+        return;
+      }
+
+      // Fetch local library for matching
+      setDeezerProgress(`Matching avec la bibliothèque locale…`);
       const { data: allSongs } = await supabase
         .from("custom_songs")
         .select("id, title, artist, album, duration, cover_url, stream_url, genre, year")
         .not("stream_url", "is", null);
       const localSongs = allSongs || [];
+
+      // Pre-normalize local songs for fast matching
+      const normalizedLocal = localSongs.map((s: { title: string; artist: string; id: string; album: string | null; duration: number; cover_url: string | null; stream_url: string | null; genre: string | null; year: number | null }) => ({
+        ...s,
+        nTitle: normalizeTitle(s.title).toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, ""),
+        nArtist: normalizeArtist(s.artist).toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, ""),
+      }));
+
       let matched = 0;
-      for (const t of tracks) {
-        const dTitle = (t.title || "").toLowerCase().trim();
-        const dArtist = (t.artist?.name || "").toLowerCase().trim();
-        const local = localSongs.find((s: any) => {
-          const lt = s.title.toLowerCase().trim();
-          const la = s.artist.toLowerCase().trim();
-          return (lt.includes(dTitle) || dTitle.includes(lt)) && (la.includes(dArtist) || dArtist.includes(la));
-        });
+      let notFound = 0;
+      const newSongs: SongEntry[] = [];
+
+      for (const t of allTracks) {
+        const dTitle = normalizeTitle(t.title || "").toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+        const dArtist = normalizeArtist(t.artist?.name || "").toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]/g, "");
+
+        // Smart matching: exact normalized match, then partial
+        const local = normalizedLocal.find((s) =>
+          (s.nTitle === dTitle && s.nArtist === dArtist) ||
+          (s.nTitle === dTitle && (s.nArtist.includes(dArtist) || dArtist.includes(s.nArtist))) ||
+          (dTitle.length > 4 && s.nTitle.includes(dTitle) && (s.nArtist.includes(dArtist) || dArtist.includes(s.nArtist)))
+        );
+
         if (local) {
           matched++;
-          setSongs(prev => [...prev, {
+          newSongs.push({
             file: null as unknown as File,
             title: local.title,
             artist: local.artist,
-            album: local.album || "",
+            album: local.album || t.album?.title || "",
             coverUrl: local.cover_url || t.album?.cover_medium || "",
             streamUrl: local.stream_url || "",
             duration: local.duration || t.duration || 0,
@@ -837,16 +883,28 @@ function PlaylistForm() {
             uploaded: false,
             uploading: false,
             skipped: false,
-          }]);
+          });
+        } else {
+          notFound++;
         }
       }
-      toast.success(`${matched}/${tracks.length} morceaux trouvés dans la bibliothèque`);
+
+      setSongs(prev => [...prev, ...newSongs]);
+
+      if (matched > 0 && notFound === 0) {
+        toast.success(`✅ ${matched}/${allTracks.length} morceaux trouvés !`);
+      } else if (matched > 0) {
+        toast.success(`${matched}/${allTracks.length} morceaux trouvés (${notFound} non disponibles)`);
+      } else {
+        toast.error(`Aucun des ${allTracks.length} morceaux n'est dans la bibliothèque`);
+      }
       setDeezerUrl("");
     } catch (e) {
       console.error("[deezer-import]", e);
       toast.error("Erreur lors de l'import Deezer");
     } finally {
       setDeezerImporting(false);
+      setDeezerProgress("");
     }
   };
 
@@ -1050,6 +1108,9 @@ function PlaylistForm() {
             {deezerImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </button>
         </div>
+        {deezerImporting && deezerProgress && (
+          <p className="text-[11px] text-primary/70 font-medium animate-pulse pl-1">{deezerProgress}</p>
+        )}
       </div>
 
       <div className="space-y-3">

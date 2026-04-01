@@ -69,7 +69,9 @@ Deno.serve(async (req) => {
 
     // Ensure path starts with /
     const safePath = path.startsWith('/') ? path : `/${path}`;
-    const apiUrl = `${DEEZER_API}${safePath}`;
+    // Preserve query params from path (e.g. ?index=25 for pagination)
+    const separator = safePath.includes('?') ? '&' : '?';
+    const apiUrl = `${DEEZER_API}${safePath}${separator}limit=100`;
 
     const res = await fetch(apiUrl, {
       headers: { 'User-Agent': 'Vootify/1.0' },
