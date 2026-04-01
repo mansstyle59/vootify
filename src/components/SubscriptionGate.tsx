@@ -16,12 +16,22 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { isAdmin, loading: adminLoading } = useAdminAuth();
   const { isActive, loading: subLoading } = useSubscription(user?.id ?? null);
   const location = useLocation();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
 
   // Allow auth-related routes to bypass the gate
   const publicPaths = ["/auth", "/reset-password", "/request-access"];
   if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
-  // Still loading → don't flash
+  // Still loading → don't flash (but only if online — offline should never block)
+  if (!isOnline) return <>{children}</>;
   if (adminLoading || subLoading) return null;
 
   // Admins always pass

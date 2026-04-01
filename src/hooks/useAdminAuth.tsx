@@ -108,6 +108,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setIsAdmin(false);
+    writeCachedAdmin(false);
   };
 
   return (
