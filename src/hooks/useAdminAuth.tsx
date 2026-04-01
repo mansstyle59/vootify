@@ -35,13 +35,26 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     let initialDone = false;
 
+    // Safety timeout: resolve as non-admin if offline/stuck
+    const safetyTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("[AdminAuth] Timeout — resolving as non-admin");
+        setLoading(false);
+      }
+    }, 2000);
+
     const resolve = async (session: import("@supabase/supabase-js").Session | null) => {
       if (!mounted) return;
+      clearTimeout(safetyTimer);
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        const admin = await checkAdmin(u.id);
-        if (mounted) setIsAdmin(admin);
+        try {
+          const admin = await checkAdmin(u.id);
+          if (mounted) setIsAdmin(admin);
+        } catch {
+          if (mounted) setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
@@ -61,10 +74,14 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       if (!initialDone) {
         await resolve(session);
       }
+    }).catch(() => {
+      clearTimeout(safetyTimer);
+      if (mounted) setLoading(false);
     });
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
