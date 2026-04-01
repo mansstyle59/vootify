@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+const CACHE_KEY = "vootify_sub_cache";
 
 interface Subscription {
   id: string;
@@ -9,10 +10,30 @@ interface Subscription {
   expires_at: string | null;
 }
 
+function readCachedSub(): { subscription: Subscription; isActive: boolean } | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as Subscription;
+    const active = !cached.expires_at || new Date(cached.expires_at) > new Date();
+    return { subscription: cached, isActive: active };
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedSub(sub: Subscription | null) {
+  try {
+    if (sub) localStorage.setItem(CACHE_KEY, JSON.stringify(sub));
+    else localStorage.removeItem(CACHE_KEY);
+  } catch { /* quota */ }
+}
+
 export function useSubscription(userId: string | null) {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isActive, setIsActive] = useState(false);
+  const cached = readCachedSub();
+  const [subscription, setSubscription] = useState<Subscription | null>(cached?.subscription ?? null);
+  const [loading, setLoading] = useState(!cached);
+  const [isActive, setIsActive] = useState(cached?.isActive ?? false);
 
   const fetchSub = useCallback(async (uid: string) => {
     const { data } = await supabase
