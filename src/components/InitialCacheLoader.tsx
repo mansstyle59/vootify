@@ -66,7 +66,7 @@ export function InitialCacheLoader({ children }: Props) {
         setCacheReady(true);
         setShowLoader(false);
       }
-    }, 2000);
+    }, 1000);
 
     performInitialCache(userId, handleProgress).then(() => {
       if (cancelled) return;
