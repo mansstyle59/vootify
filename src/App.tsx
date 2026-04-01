@@ -10,8 +10,7 @@ import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useState, useCallback, lazy, Suspense, startTransition, memo } from "react";
-import { SplashScreen } from "@/components/SplashScreen";
+import { useEffect, useState, useCallback, lazy, Suspense, memo } from "react";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { PageFade } from "@/components/PageFade";
@@ -182,11 +181,6 @@ function AppContent() {
 
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
-  const handleSplashFinish = useCallback(() => {
-    startTransition(() => setShowSplash(false));
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -198,7 +192,6 @@ const App = () => {
               <UpdateNotification />
               <IosPwaInstallBanner />
               <PushNotificationPrompt />
-              {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
                   <SubscriptionGate>
