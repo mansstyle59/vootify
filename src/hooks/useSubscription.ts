@@ -81,6 +81,7 @@ export function useSubscription(userId: string | null) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(channel);
     };
