@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -46,22 +47,48 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { isAdmin, loading: adminLoading } = useAdminAuth();
   const { isActive, loading: subLoading } = useSubscription(user?.id ?? null);
   const location = useLocation();
+  const isLoading = adminLoading || subLoading;
+  const wasLoading = useRef(true);
+
+  // Track if we transitioned from loading → loaded
+  const [showFade, setShowFade] = useState(false);
+  useEffect(() => {
+    if (wasLoading.current && !isLoading) {
+      setShowFade(true);
+      const t = setTimeout(() => setShowFade(false), 400);
+      return () => clearTimeout(t);
+    }
+    wasLoading.current = isLoading;
+  }, [isLoading]);
 
   // Allow auth-related routes to bypass the gate
   const publicPaths = ["/auth", "/reset-password", "/request-access"];
   if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
   // Still loading → show elegant skeleton
-  if (adminLoading || subLoading) return <GateLoader />;
+  if (isLoading) return <GateLoader />;
 
   // Admins always pass
-  if (isAdmin) return <>{children}</>;
+  if (isAdmin) return <FadeWrapper active={showFade}>{children}</FadeWrapper>;
 
   // Active subscription → pass
-  if (isActive) return <>{children}</>;
+  if (isActive) return <FadeWrapper active={showFade}>{children}</FadeWrapper>;
 
   // No active subscription → show block screen
   return <NoSubscriptionScreen onSignOut={signOut} user={user} />;
+}
+
+function FadeWrapper({ active, children }: { active: boolean; children: React.ReactNode }) {
+  if (!active) return <>{children}</>;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 function NoSubscriptionScreen({ onSignOut, user }: { onSignOut: () => void; user: any }) {
