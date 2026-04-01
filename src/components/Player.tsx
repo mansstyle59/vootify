@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, X, Disc3,
+  ChevronDown, ListMusic, X, Disc3,
   Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal,
-  Music, Plus
+  Music, Plus, Radio
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
