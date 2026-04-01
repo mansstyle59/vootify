@@ -45,7 +45,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let initialDone = false;
 
     // Safety timeout: resolve as non-admin if offline/stuck
     const safetyTimer = setTimeout(() => {
@@ -55,37 +54,42 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
     }, 2000);
 
-    const resolve = async (session: import("@supabase/supabase-js").Session | null) => {
+    const resolve = (session: import("@supabase/supabase-js").Session | null) => {
       if (!mounted) return;
-      clearTimeout(safetyTimer);
       const u = session?.user ?? null;
       setUser(u);
-      if (u) {
-        try {
-          const admin = await checkAdmin(u.id);
-          if (mounted) setIsAdmin(admin);
-        } catch {
-          if (mounted) setIsAdmin(false);
-        }
-      } else {
+      if (!u) {
         setIsAdmin(false);
+        setLoading(false);
+        return;
       }
-      if (mounted) setLoading(false);
+
+      setLoading(true);
+
+      checkAdmin(u.id)
+        .then((admin) => {
+          if (mounted) setIsAdmin(admin);
+        })
+        .catch(() => {
+          if (mounted) setIsAdmin(false);
+        })
+        .finally(() => {
+          clearTimeout(safetyTimer);
+          if (mounted) setLoading(false);
+        });
     };
 
     // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        initialDone = true;
-        await resolve(session);
+      (_event, session) => {
+        resolve(session);
       }
     );
 
-    // Then get session — skip if listener already fired
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!initialDone) {
-        await resolve(session);
-      }
+    // Then get session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(safetyTimer);
+      resolve(session);
     }).catch(() => {
       clearTimeout(safetyTimer);
       if (mounted) setLoading(false);
