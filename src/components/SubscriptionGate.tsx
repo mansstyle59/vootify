@@ -21,8 +21,8 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const publicPaths = ["/auth", "/reset-password", "/request-access"];
   if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
-  // Still loading → don't flash
-  if (adminLoading || subLoading) return null;
+  // Still loading → show children (splash/loader covers the visual)
+  if (adminLoading || subLoading) return <>{children}</>;
 
   // Admins always pass
   if (isAdmin) return <>{children}</>;
