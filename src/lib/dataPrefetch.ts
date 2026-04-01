@@ -128,6 +128,117 @@ async function prefetchRadio(qc: QueryClient, userId: string) {
   });
 }
 
+/** Prefetch Profile page data */
+async function prefetchProfile(qc: QueryClient, userId: string) {
+  qc.prefetchQuery({
+    queryKey: ["profile", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return data;
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
+  qc.prefetchQuery({
+    queryKey: ["subscription", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
+/** Prefetch recently visited artists & albums */
+async function prefetchRecentArtistsAlbums(qc: QueryClient, userId: string) {
+  // Get unique artists from recently played
+  const { data: recent } = await supabase
+    .from("recently_played")
+    .select("artist, album")
+    .eq("user_id", userId)
+    .order("played_at", { ascending: false })
+    .limit(30);
+
+  if (!recent || recent.length === 0) return;
+
+  // Top 5 unique artists
+  const seenArtists = new Set<string>();
+  const topArtists: string[] = [];
+  for (const r of recent) {
+    if (r.artist && !seenArtists.has(r.artist)) {
+      seenArtists.add(r.artist);
+      topArtists.push(r.artist);
+      if (topArtists.length >= 5) break;
+    }
+  }
+
+  // Prefetch artist songs for each top artist
+  for (const artist of topArtists) {
+    qc.prefetchQuery({
+      queryKey: ["artist-songs", artist],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from("custom_songs")
+          .select("id,title,artist,album,cover_url,stream_url,duration,genre,year")
+          .eq("artist", artist)
+          .order("created_at", { ascending: false });
+        return data || [];
+      },
+      staleTime: 1000 * 60 * 10,
+    });
+  }
+
+  // Prefetch artist images
+  if (topArtists.length > 0) {
+    qc.prefetchQuery({
+      queryKey: ["artist-images", topArtists],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from("artist_images")
+          .select("*")
+          .in("artist_name", topArtists);
+        return data || [];
+      },
+      staleTime: 1000 * 60 * 30,
+    });
+  }
+
+  // Top 5 unique albums
+  const seenAlbums = new Set<string>();
+  const topAlbumNames: string[] = [];
+  for (const r of recent) {
+    if (r.album && !seenAlbums.has(r.album)) {
+      seenAlbums.add(r.album);
+      topAlbumNames.push(r.album);
+      if (topAlbumNames.length >= 5) break;
+    }
+  }
+
+  // Prefetch album details
+  if (topAlbumNames.length > 0) {
+    qc.prefetchQuery({
+      queryKey: ["recent-album-details"],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from("custom_albums")
+          .select("*")
+          .in("title", topAlbumNames);
+        return data || [];
+      },
+      staleTime: 1000 * 60 * 10,
+    });
+  }
+}
+
 /** Main entry — call once after auth, runs in background */
 export function startDataPrefetch(qc: QueryClient, userId: string) {
   const last = localStorage.getItem(PREFETCHED_KEY);
@@ -135,11 +246,16 @@ export function startDataPrefetch(qc: QueryClient, userId: string) {
 
   const run = () => {
     localStorage.setItem(PREFETCHED_KEY, String(Date.now()));
+    // Phase 1: critical pages
     Promise.allSettled([
       prefetchHome(qc, userId),
       prefetchLibrary(qc, userId),
       prefetchRadio(qc, userId),
-    ]).catch(() => {});
+      prefetchProfile(qc, userId),
+    ]).then(() => {
+      // Phase 2: secondary data (artists/albums) after main pages are warm
+      prefetchRecentArtistsAlbums(qc, userId).catch(() => {});
+    }).catch(() => {});
   };
 
   if ("requestIdleCallback" in window) {
