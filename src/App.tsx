@@ -22,8 +22,7 @@ import { AuthGate } from "@/components/AuthGate";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { RouteGuard } from "@/components/RouteGuard";
-import { InitialCacheLoader } from "@/components/InitialCacheLoader";
-import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
+import { silentCacheRefresh, isCacheReady, performInitialCache } from "@/lib/appCache";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { initAutoDownload } from "@/lib/autoDownload";
@@ -93,6 +92,17 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
     </Suspense>
   );
 });
+
+/** Non-blocking background cache loader — no overlay, no delay */
+function BackgroundCacheLoader() {
+  const { user } = useAuth();
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId || isCacheReady()) return;
+    performInitialCache(userId, () => {}).catch(() => {});
+  }, [user?.id]);
+  return null;
+}
 
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
@@ -188,14 +198,13 @@ const App = () => {
               <UpdateNotification />
               <IosPwaInstallBanner />
               <PushNotificationPrompt />
-              {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
-                  <InitialCacheLoader>
-                    <SubscriptionGate>
-                      <AppContent />
-                    </SubscriptionGate>
-                  </InitialCacheLoader>
+                  <SubscriptionGate>
+                    <BackgroundCacheLoader />
+                    <AppContent />
+                  </SubscriptionGate>
                 </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
