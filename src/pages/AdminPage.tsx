@@ -2973,7 +2973,12 @@ function PlaylistPickerModal({
   const [deezerPlaylists, setDeezerPlaylists] = useState<{ id: number; title: string; cover_url: string; trackCount: number; existsLocally: boolean; localId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
 
-  /** Create a local playlist from a Deezer playlist */
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   const createFromDeezer = async (pl: { id: number; title: string; cover_url: string; trackCount: number }) => {
     if (!user?.id) return;
     setCreatingPlaylist(pl.id);
