@@ -2605,6 +2605,12 @@ function AlbumPickerModal({
   const [deezerAlbums, setDeezerAlbums] = useState<{ id: number; title: string; artist: string; cover_url: string; existsLocally: boolean; localId?: string }[]>([]);
   const [deezerError, setDeezerError] = useState("");
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   useEffect(() => {
     (async () => {
       const { data: explicit } = await supabase
