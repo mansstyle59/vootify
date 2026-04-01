@@ -2,7 +2,28 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isCacheReady, performInitialCache, type CacheProgress } from "@/lib/appCache";
 import { useAuth } from "@/hooks/useAuth";
-import { SafeImage } from "@/components/SafeImage";
+
+/** Inline fallback so the logo always renders, even offline */
+function LogoFallback({ size, className }: { size: number; className?: string }) {
+  const [error, setError] = useState(false);
+  if (error) {
+    return (
+      <div className={className} style={{ width: size, height: size, background: "hsl(var(--primary) / 0.15)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 28 }}>
+        <span style={{ fontSize: size * 0.35, fontWeight: 900, color: "hsl(var(--primary))" }}>V</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src="/pwa-icon-192.png"
+      alt="Vootify"
+      width={size}
+      height={size}
+      className={className}
+      onError={() => setError(true)}
+    />
+  );
+}
 
 interface Props {
   children: React.ReactNode;
