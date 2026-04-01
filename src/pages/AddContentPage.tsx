@@ -1108,6 +1108,9 @@ function PlaylistForm() {
             {deezerImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </button>
         </div>
+        {deezerImporting && deezerProgress && (
+          <p className="text-[11px] text-primary/70 font-medium animate-pulse pl-1">{deezerProgress}</p>
+        )}
       </div>
 
       <div className="space-y-3">
