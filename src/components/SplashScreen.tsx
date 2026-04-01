@@ -55,8 +55,8 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          exit={{ opacity: 0, scale: 1.08, filter: "blur(16px)", y: -30 }}
+          transition={{ duration: 0.55, ease: [0.32, 0, 0.14, 1] }}
           onClick={skip}
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform cursor-pointer"
           style={{ background: "hsl(var(--background))" }}
