@@ -93,6 +93,17 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
   );
 });
 
+/** Non-blocking background cache loader — no overlay, no delay */
+function BackgroundCacheLoader() {
+  const { user } = useAuth();
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId || isCacheReady()) return;
+    performInitialCache(userId, () => {}).catch(() => {});
+  }, [user?.id]);
+  return null;
+}
+
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
   const currentSong = usePlayerStore((s) => s.currentSong);

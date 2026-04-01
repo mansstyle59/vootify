@@ -46,7 +46,7 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
 
   useEffect(() => {
     if (holdForCache) return;
-    const timer = setTimeout(skip, 1200);
+    const timer = setTimeout(skip, 800);
     return () => clearTimeout(timer);
   }, [skip, holdForCache]);
 
