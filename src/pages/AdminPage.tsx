@@ -3431,7 +3431,8 @@ function PlaylistPickerModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
