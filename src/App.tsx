@@ -188,14 +188,13 @@ const App = () => {
               <UpdateNotification />
               <IosPwaInstallBanner />
               <PushNotificationPrompt />
-              {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
-                  <InitialCacheLoader>
-                    <SubscriptionGate>
-                      <AppContent />
-                    </SubscriptionGate>
-                  </InitialCacheLoader>
+                  <SubscriptionGate>
+                    <BackgroundCacheLoader />
+                    <AppContent />
+                  </SubscriptionGate>
                 </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>
