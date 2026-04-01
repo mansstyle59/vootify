@@ -38,11 +38,10 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
 
   useEffect(() => {
     if (holdForCache) return;
-    // Slightly longer to ensure auth + first render completes
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onFinish, 400);
-    }, 2200);
+      setTimeout(onFinish, 300);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [onFinish, holdForCache]);
 
