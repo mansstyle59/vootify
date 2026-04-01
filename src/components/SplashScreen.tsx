@@ -41,7 +41,7 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
     if (skipRef.current) return;
     skipRef.current = true;
     setVisible(false);
-    setTimeout(onFinish, 200);
+    setTimeout(onFinish, 150);
   }, [onFinish]);
 
   useEffect(() => {
@@ -49,6 +49,14 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
     const timer = setTimeout(skip, 800);
     return () => clearTimeout(timer);
   }, [skip, holdForCache]);
+
+  // Hard safety net — always dismiss after 2s no matter what
+  useEffect(() => {
+    const safety = setTimeout(() => {
+      if (!skipRef.current) skip();
+    }, 2000);
+    return () => clearTimeout(safety);
+  }, [skip]);
 
   return (
     <AnimatePresence>
