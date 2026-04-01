@@ -1080,7 +1080,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                             ) : isSaved ? (
                               <Check className="w-3.5 h-3.5 text-green-400" />
                             ) : (
-                              <Heart className="w-3.5 h-3.5 text-foreground/30" />
+                              <Plus className="w-3.5 h-3.5 text-foreground/30" />
                             )}
                           </button>
                           {i === 0 && (
