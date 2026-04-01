@@ -30,9 +30,13 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const publicPaths = ["/auth", "/reset-password", "/request-access"];
   if (publicPaths.includes(location.pathname)) return <>{children}</>;
 
-  // Still loading → don't flash (but only if online — offline should never block)
+  // Still loading → show skeleton instead of blank screen
   if (!isOnline) return <>{children}</>;
-  if (adminLoading || subLoading) return null;
+  if (adminLoading || subLoading) return (
+    <div className="min-h-screen bg-background animate-pulse flex items-center justify-center">
+      <div className="w-16 h-16 rounded-2xl bg-muted/30" />
+    </div>
+  );
 
   // Admins always pass
   if (isAdmin) return <>{children}</>;
