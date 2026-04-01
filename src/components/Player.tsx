@@ -1196,9 +1196,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
               />
 
               <div className="flex items-center justify-between mt-3">
-                <button className="p-1 active:scale-90 transition-transform">
-                  <Heart className={`w-5 h-5 ${liked ? "fill-primary text-primary" : "text-foreground/40"}`} onClick={() => toggleLike(currentSong)} />
-                </button>
+                <AddToLibraryButton song={currentSong} />
                 <button
                   onClick={() => setShowHistory(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
