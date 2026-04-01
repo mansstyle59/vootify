@@ -49,9 +49,11 @@ export function useSubscription(userId: string | null) {
       setSubscription(data);
       const active = !data.expires_at || new Date(data.expires_at) > new Date();
       setIsActive(active);
+      writeCachedSub(data);
     } else {
       setSubscription(null);
       setIsActive(false);
+      writeCachedSub(null);
     }
     setLoading(false);
   }, []);
