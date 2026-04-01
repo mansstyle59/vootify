@@ -757,97 +757,137 @@ function PlaylistForm() {
   const [songs, setSongs] = useState<SongEntry[]>([]);
   const [processing, setProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [deezerUrl, setDeezerUrl] = useState("");
-  const [deezerImporting, setDeezerImporting] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkImporting, setLinkImporting] = useState(false);
+  const [linkTab, setLinkTab] = useState<"deezer" | "spotify">("deezer");
 
-  const handleDeezerImport = async () => {
-    if (!deezerUrl.trim()) return;
-    setDeezerImporting(true);
+  /** Detect platform from URL */
+  const detectPlatform = (url: string): "deezer" | "spotify" | null => {
+    if (/deezer|dzcdn/i.test(url)) return "deezer";
+    if (/spotify/i.test(url)) return "spotify";
+    return null;
+  };
+
+  const handleLinkImport = async () => {
+    if (!linkUrl.trim()) return;
+    const detected = detectPlatform(linkUrl.trim());
+    const platform = detected || linkTab;
+    setLinkImporting(true);
     try {
-      let resolvedUrl = deezerUrl.trim();
-      if (/link\.deezer/i.test(resolvedUrl)) {
-        const { data } = await supabase.functions.invoke("deezer-proxy", {
-          body: { resolveUrl: resolvedUrl },
-        });
-        if (data?.resolved) resolvedUrl = data.resolved;
+      if (platform === "spotify") {
+        await handleSpotifyImport(linkUrl.trim());
+      } else {
+        await handleDeezerImport(linkUrl.trim());
       }
-      const playlistMatch = resolvedUrl.match(/playlist\/(\d+)/i);
-      const albumMatch = resolvedUrl.match(/album\/(\d+)/i);
-      if (!playlistMatch && !albumMatch) {
-        toast.error("URL Deezer invalide (playlist ou album attendu)");
-        setDeezerImporting(false);
-        return;
-      }
-      const isAlbum = !!albumMatch;
-      const dId = isAlbum ? albumMatch![1] : playlistMatch![1];
-      const endpoint = isAlbum ? `album/${dId}` : `playlist/${dId}/tracks`;
-      const { data: proxyData } = await supabase.functions.invoke("deezer-proxy", {
-        body: { path: endpoint, limit: 200 },
-      });
-      const tracks = isAlbum ? proxyData?.tracks?.data : proxyData?.data;
-      if (!tracks || tracks.length === 0) {
-        toast.error("Aucun morceau trouvé");
-        setDeezerImporting(false);
-        return;
-      }
-      // Auto-fill name if empty
-      if (!name.trim()) {
-        if (isAlbum && proxyData?.title) setName(proxyData.title);
-        else if (!isAlbum && proxyData?.title) setName(proxyData.title);
-        else {
-          const { data: plData } = await supabase.functions.invoke("deezer-proxy", {
-            body: { path: `playlist/${dId}` },
-          });
-          if (plData?.title) setName(plData.title);
-        }
-      }
-      // Auto-fill cover if empty
-      if (!coverUrl.trim()) {
-        const cover = isAlbum ? proxyData?.cover_xl || proxyData?.cover_big : proxyData?.picture_xl || proxyData?.picture_big;
-        if (cover) setCoverUrl(cover);
-      }
-      // Match tracks with local library
-      const { data: allSongs } = await supabase
-        .from("custom_songs")
-        .select("id, title, artist, album, duration, cover_url, stream_url, genre, year")
-        .not("stream_url", "is", null);
-      const localSongs = allSongs || [];
-      let matched = 0;
-      for (const t of tracks) {
-        const dTitle = (t.title || "").toLowerCase().trim();
-        const dArtist = (t.artist?.name || "").toLowerCase().trim();
-        const local = localSongs.find((s: any) => {
-          const lt = s.title.toLowerCase().trim();
-          const la = s.artist.toLowerCase().trim();
-          return (lt.includes(dTitle) || dTitle.includes(lt)) && (la.includes(dArtist) || dArtist.includes(la));
-        });
-        if (local) {
-          matched++;
-          setSongs(prev => [...prev, {
-            file: null as unknown as File,
-            title: local.title,
-            artist: local.artist,
-            album: local.album || "",
-            coverUrl: local.cover_url || t.album?.cover_medium || "",
-            streamUrl: local.stream_url || "",
-            duration: local.duration || t.duration || 0,
-            genre: local.genre || "",
-            year: local.year || undefined,
-            id3Filled: new Set(["title", "artist"]),
-            uploaded: false,
-            uploading: false,
-            skipped: false,
-          }]);
-        }
-      }
-      toast.success(`${matched}/${tracks.length} morceaux trouvés dans la bibliothèque`);
-      setDeezerUrl("");
+      setLinkUrl("");
     } catch (e) {
-      console.error("[deezer-import]", e);
-      toast.error("Erreur lors de l'import Deezer");
+      console.error(`[${platform}-import]`, e);
+      toast.error(`Erreur lors de l'import ${platform === "spotify" ? "Spotify" : "Deezer"}`);
     } finally {
-      setDeezerImporting(false);
+      setLinkImporting(false);
     }
+  };
+
+  const handleDeezerImport = async (inputUrl: string) => {
+    let resolvedUrl = inputUrl;
+    if (/link\.deezer/i.test(resolvedUrl)) {
+      const { data } = await supabase.functions.invoke("deezer-proxy", {
+        body: { resolveUrl: resolvedUrl },
+      });
+      if (data?.resolved) resolvedUrl = data.resolved;
+    }
+    const playlistMatch = resolvedUrl.match(/playlist\/(\d+)/i);
+    const albumMatch = resolvedUrl.match(/album\/(\d+)/i);
+    if (!playlistMatch && !albumMatch) {
+      toast.error("URL Deezer invalide (playlist ou album attendu)");
+      return;
+    }
+    const isAlbum = !!albumMatch;
+    const dId = isAlbum ? albumMatch![1] : playlistMatch![1];
+    const endpoint = isAlbum ? `album/${dId}` : `playlist/${dId}/tracks`;
+    const { data: proxyData } = await supabase.functions.invoke("deezer-proxy", {
+      body: { path: endpoint, limit: 200 },
+    });
+    const tracks = isAlbum ? proxyData?.tracks?.data : proxyData?.data;
+    if (!tracks || tracks.length === 0) {
+      toast.error("Aucun morceau trouvé");
+      return;
+    }
+    if (!name.trim()) {
+      if (isAlbum && proxyData?.title) setName(proxyData.title);
+      else if (!isAlbum && proxyData?.title) setName(proxyData.title);
+      else {
+        const { data: plData } = await supabase.functions.invoke("deezer-proxy", {
+          body: { path: `playlist/${dId}` },
+        });
+        if (plData?.title) setName(plData.title);
+      }
+    }
+    if (!coverUrl.trim()) {
+      const cover = isAlbum ? proxyData?.cover_xl || proxyData?.cover_big : proxyData?.picture_xl || proxyData?.picture_big;
+      if (cover) setCoverUrl(cover);
+    }
+    await matchTracksToLibrary(tracks.map((t: Record<string, unknown>) => ({
+      title: (t as { title?: string }).title || "",
+      artist: ((t as { artist?: { name?: string } }).artist?.name) || "",
+      album: ((t as { album?: { title?: string } }).album?.title) || "",
+      duration: (t as { duration?: number }).duration || 0,
+      coverUrl: ((t as { album?: { cover_medium?: string } }).album?.cover_medium) || "",
+    })));
+  };
+
+  const handleSpotifyImport = async (inputUrl: string) => {
+    const { data, error } = await supabase.functions.invoke("spotify-proxy", {
+      body: { url: inputUrl },
+    });
+    if (error || data?.error) {
+      toast.error(data?.error || "Erreur Spotify");
+      return;
+    }
+    if (!data?.tracks || data.tracks.length === 0) {
+      toast.error("Aucun morceau trouvé");
+      return;
+    }
+    if (!name.trim() && data.title) setName(data.title);
+    if (!coverUrl.trim() && data.coverUrl) setCoverUrl(data.coverUrl);
+    await matchTracksToLibrary(data.tracks);
+  };
+
+  const matchTracksToLibrary = async (tracks: { title: string; artist: string; album?: string; duration?: number; coverUrl?: string }[]) => {
+    const { data: allSongs } = await supabase
+      .from("custom_songs")
+      .select("id, title, artist, album, duration, cover_url, stream_url, genre, year")
+      .not("stream_url", "is", null);
+    const localSongs = allSongs || [];
+    let matched = 0;
+    for (const t of tracks) {
+      const dTitle = (t.title || "").toLowerCase().trim();
+      const dArtist = (t.artist || "").toLowerCase().trim();
+      const local = localSongs.find((s: Record<string, unknown>) => {
+        const lt = ((s.title as string) || "").toLowerCase().trim();
+        const la = ((s.artist as string) || "").toLowerCase().trim();
+        return (lt.includes(dTitle) || dTitle.includes(lt)) && (la.includes(dArtist) || dArtist.includes(la));
+      });
+      if (local) {
+        matched++;
+        setSongs(prev => [...prev, {
+          file: null as unknown as File,
+          title: local.title as string,
+          artist: local.artist as string,
+          album: (local.album as string) || "",
+          coverUrl: (local.cover_url as string) || t.coverUrl || "",
+          streamUrl: (local.stream_url as string) || "",
+          duration: (local.duration as number) || t.duration || 0,
+          genre: (local.genre as string) || "",
+          year: (local.year as number) || undefined,
+          id3Filled: new Set(["title", "artist"]),
+          uploaded: false,
+          uploading: false,
+          skipped: false,
+        }]);
+      }
+    }
+    toast.success(`${matched}/${tracks.length} morceaux trouvés dans la bibliothèque`);
   };
 
 
@@ -1026,28 +1066,45 @@ function PlaylistForm() {
       <FieldInput label="Nom de la playlist" value={name} onChange={setName} placeholder="Ma playlist" required />
       <CoverImagePicker value={coverUrl} onChange={setCoverUrl} />
 
-      {/* Deezer URL import */}
+      {/* Import from link (Deezer / Spotify) */}
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground flex items-center gap-2">
           <Link className="w-4 h-4 text-primary" />
-          Importer depuis Deezer
+          Importer depuis un lien
           <span className="text-[10px] text-muted-foreground/50">(optionnel)</span>
         </p>
+        {/* Platform tabs */}
+        <div className="flex gap-1 p-0.5 rounded-xl" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
+          <button
+            type="button"
+            onClick={() => setLinkTab("deezer")}
+            className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${linkTab === "deezer" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            🎵 Deezer
+          </button>
+          <button
+            type="button"
+            onClick={() => setLinkTab("spotify")}
+            className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${linkTab === "spotify" ? "bg-[#1DB954]/15 text-[#1DB954]" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            🎧 Spotify
+          </button>
+        </div>
         <div className="flex gap-2">
           <input
-            value={deezerUrl}
-            onChange={(e) => setDeezerUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleDeezerImport()}
-            placeholder="🔗 Lien Deezer playlist ou album..."
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLinkImport()}
+            placeholder={linkTab === "spotify" ? "🔗 Lien Spotify playlist ou album..." : "🔗 Lien Deezer playlist ou album..."}
             className="flex-1 px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           <button
-            onClick={handleDeezerImport}
-            disabled={deezerImporting || !deezerUrl.trim()}
+            onClick={handleLinkImport}
+            disabled={linkImporting || !linkUrl.trim()}
             className="px-4 py-3 rounded-full text-sm font-semibold active:scale-[0.97] transition-transform disabled:opacity-40"
             style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
           >
-            {deezerImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {linkImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </button>
         </div>
       </div>

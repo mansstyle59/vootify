@@ -44,14 +44,12 @@ export function PageFade({ children }: { children: ReactNode }) {
     el.style.transition = "none";
 
     if (isTabNav) {
-      const offsetX = goingForward ? 32 : -32;
+      const offsetX = goingForward ? 20 : -20;
       el.style.opacity = "0";
       el.style.transform = `translateX(${offsetX}px)`;
-      el.style.filter = "blur(4px)";
     } else {
       el.style.opacity = "0";
-      el.style.transform = "translateY(16px) scale(0.98)";
-      el.style.filter = "blur(2px)";
+      el.style.transform = "translateY(8px) scale(0.995)";
     }
 
     // Force reflow then animate in
@@ -59,18 +57,17 @@ export function PageFade({ children }: { children: ReactNode }) {
 
     // Re-enable transition — fast & snappy
     el.style.transition = isTabNav
-      ? "opacity 140ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1), filter 140ms ease-out"
-      : "opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 240ms cubic-bezier(0.22, 1, 0.36, 1), filter 180ms ease-out";
+      ? "opacity 100ms ease-out, transform 120ms cubic-bezier(0.22, 1, 0.36, 1)"
+      : "opacity 140ms ease-out, transform 160ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     el.style.opacity = "1";
     el.style.transform = "translateX(0) translateY(0) scale(1)";
-    el.style.filter = "blur(0px)";
   }, [location.pathname]);
 
   return (
     <div
       ref={ref}
-      className="min-h-screen will-change-[opacity,transform,filter]"
+      className="min-h-screen will-change-[opacity,transform]"
     >
       {children}
     </div>

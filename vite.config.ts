@@ -151,16 +151,10 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [200] },
             },
           },
-          // Supabase Auth — network first, short cache
+          // Supabase Auth — network only, never cache auth responses
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-auth",
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 },
-              networkTimeoutSeconds: 3,
-              cacheableResponse: { statuses: [0, 200] },
-            },
+            handler: "NetworkOnly",
           },
           // Supabase Storage (covers, avatars, audio thumbnails) — cache aggressively
           {
