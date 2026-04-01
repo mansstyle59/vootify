@@ -8,6 +8,13 @@ import { prefetchQueueCovers } from "@/lib/coverMemoryCache";
 
 
 
+type StoredPlaylist = {
+  id: string;
+  name: string;
+  cover_url: string | null;
+  created_at: string;
+};
+
 interface PlayerState {
   currentSong: Song | null;
   queue: Song[];
@@ -18,7 +25,7 @@ interface PlayerState {
   repeat: "off" | "all" | "one";
   fullScreen: boolean;
   likedSongs: Song[];
-  playlists: Array<{ id: string; name: string; cover_url: string | null; created_at: string }>;
+  playlists: StoredPlaylist[];
   recentlyPlayed: Song[];
   playlistSongs: Record<string, Song[]>;
   userId: string | null;
@@ -50,7 +57,7 @@ interface PlayerState {
   toggleLike: (song: Song) => void;
   isLiked: (songId: string) => boolean;
   setQueue: (songs: Song[]) => void;
-  createPlaylist: (name: string) => void;
+  createPlaylist: (name: string) => Promise<StoredPlaylist | null>;
   deletePlaylist: (id: string) => void;
   addSongToPlaylist: (playlistId: string, song: Song) => void;
   removeSongFromPlaylist: (playlistId: string, songId: string) => void;
@@ -319,15 +326,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { userId } = get();
     if (!userId) {
       toast.error("Connectez-vous pour créer une playlist");
-      return;
+      return null;
     }
     try {
       const pl = await musicDb.createPlaylist(userId, name);
       set((s) => ({ playlists: [pl, ...s.playlists] }));
       toast.success(`Playlist "${name}" créée`);
+      return pl;
     } catch (e) {
       console.error("Failed to create playlist:", e);
       toast.error("Erreur lors de la création de la playlist");
+      return null;
     }
   },
 

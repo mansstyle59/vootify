@@ -1047,9 +1047,7 @@ function PlaylistForm() {
     setLoading(true);
 
     // Create the playlist
-    await createPlaylist(name.trim());
-    const newPlaylists = usePlayerStore.getState().playlists;
-    const created = newPlaylists.find((p) => p.name === name.trim());
+    const created = await createPlaylist(name.trim());
     if (!created) { toast.error("Erreur création playlist"); setLoading(false); return; }
 
     // Update cover if provided
