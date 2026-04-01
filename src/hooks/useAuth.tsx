@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Safety timeout: if auth doesn't resolve in 3s (e.g. offline), stop loading
+    const authTimeout = setTimeout(() => {
     const authTimeout = setTimeout(() => {
       setLoading((prev) => {
         if (prev) {
