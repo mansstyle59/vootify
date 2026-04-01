@@ -46,10 +46,16 @@
   <body>
     <div id="root">
       <!-- Inline skeleton to eliminate white flash before React hydrates -->
-      <div style="min-height:100vh;background:#0b0e14;display:flex;align-items:center;justify-content:center">
-        <div style="width:96px;height:96px;border-radius:28px;background:#111622;animation:pulse 1.5s ease-in-out infinite"></div>
+      <div style="min-height:100vh;background:#0b0e14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+        <img src="/pwa-icon-192.png" alt="" width="96" height="96" style="border-radius:28px;box-shadow:0 0 40px rgba(34,197,94,.2)" />
+        <div style="display:flex;gap:3px">
+          <span style="color:#22c55e;font-size:28px;font-weight:900;letter-spacing:0.16em;font-family:system-ui">VOOTIFY</span>
+        </div>
+        <div style="width:80px;height:3px;border-radius:4px;background:#1a1f2e;overflow:hidden;margin-top:8px">
+          <div style="width:40%;height:100%;border-radius:4px;background:linear-gradient(90deg,transparent,rgba(34,197,94,.6),transparent);animation:slide 1.2s ease-in-out infinite"></div>
+        </div>
       </div>
-      <style>@keyframes pulse{0%,100%{opacity:.6}50%{opacity:.3}}</style>
+      <style>@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}</style>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
