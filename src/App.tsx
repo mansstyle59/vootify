@@ -9,8 +9,9 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { AnimatePresence } from "framer-motion";
-import { useEffect, useState, useCallback, lazy, Suspense, memo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState, useCallback, lazy, Suspense, startTransition, memo } from "react";
+import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { PageFade } from "@/components/PageFade";
@@ -21,7 +22,8 @@ import { AuthGate } from "@/components/AuthGate";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { RouteGuard } from "@/components/RouteGuard";
-import { silentCacheRefresh, isCacheReady, performInitialCache } from "@/lib/appCache";
+import { InitialCacheLoader } from "@/components/InitialCacheLoader";
+import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
 import { startCacheWarmup } from "@/lib/cacheWarmup";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { initAutoDownload } from "@/lib/autoDownload";
@@ -91,17 +93,6 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
     </Suspense>
   );
 });
-
-/** Non-blocking background cache loader — no overlay, no delay */
-function BackgroundCacheLoader() {
-  const { user } = useAuth();
-  useEffect(() => {
-    const userId = user?.id;
-    if (!userId || isCacheReady()) return;
-    performInitialCache(userId, () => {}).catch(() => {});
-  }, [user?.id]);
-  return null;
-}
 
 function AppContent() {
   const fullScreen = usePlayerStore((s) => s.fullScreen);
@@ -181,6 +172,11 @@ function AppContent() {
 
 
 const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => {
+    startTransition(() => setShowSplash(false));
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -192,12 +188,14 @@ const App = () => {
               <UpdateNotification />
               <IosPwaInstallBanner />
               <PushNotificationPrompt />
+              {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
-                  <SubscriptionGate>
-                    <BackgroundCacheLoader />
-                    <AppContent />
-                  </SubscriptionGate>
+                  <InitialCacheLoader>
+                    <SubscriptionGate>
+                      <AppContent />
+                    </SubscriptionGate>
+                  </InitialCacheLoader>
                 </AuthGate>
               </BrowserRouter>
             </AdminAuthProvider>

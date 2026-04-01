@@ -19,38 +19,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
-    const applySession = (nextSession: Session | null) => {
-      if (!mounted) return;
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-    };
-
-    // Safety timeout: if auth doesn't resolve in 1.5s (e.g. offline), stop loading
-    const authTimeout = setTimeout(() => {
-      if (!mounted) return;
-      setLoading((prev) => {
-        if (prev) {
-          console.warn("[Auth] Timeout — resolving as unauthenticated (likely offline)");
-          return false;
-        }
-        return prev;
-      });
-    }, 1500);
-
     // Set up listener BEFORE getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      applySession(session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      clearTimeout(authTimeout);
-      applySession(session);
-      if (mounted) setLoading(false);
-    }).catch(() => {
-      clearTimeout(authTimeout);
-      if (mounted) setLoading(false);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     // If "remember me" was unchecked, sign out when the browser/PWA closes
@@ -64,7 +43,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };

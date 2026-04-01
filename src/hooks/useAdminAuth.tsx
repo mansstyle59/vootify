@@ -2,15 +2,6 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-const ADMIN_CACHE_KEY = "vootify_is_admin";
-
-function readCachedAdmin(): boolean {
-  try { return localStorage.getItem(ADMIN_CACHE_KEY) === "true"; } catch { return false; }
-}
-function writeCachedAdmin(val: boolean) {
-  try { localStorage.setItem(ADMIN_CACHE_KEY, String(val)); } catch { /* */ }
-}
-
 interface AdminAuthContext {
   user: User | null;
   isAdmin: boolean;
@@ -28,76 +19,52 @@ const AdminAuthCtx = createContext<AdminAuthContext>({
 });
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const cachedAdmin = readCachedAdmin();
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(cachedAdmin);
-  const [loading, setLoading] = useState(!cachedAdmin);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase.rpc("has_role", {
       _user_id: userId,
       _role: "admin",
     });
-    const result = !!data;
-    writeCachedAdmin(result);
-    return result;
+    return !!data;
   };
 
   useEffect(() => {
     let mounted = true;
+    let initialDone = false;
 
-    // Safety timeout: resolve as non-admin if offline/stuck
-    const safetyTimer = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn("[AdminAuth] Timeout — resolving as non-admin");
-        setLoading(false);
-      }
-    }, 2000);
-
-    const resolve = (session: import("@supabase/supabase-js").Session | null) => {
+    const resolve = async (session: import("@supabase/supabase-js").Session | null) => {
       if (!mounted) return;
       const u = session?.user ?? null;
       setUser(u);
-      if (!u) {
+      if (u) {
+        const admin = await checkAdmin(u.id);
+        if (mounted) setIsAdmin(admin);
+      } else {
         setIsAdmin(false);
-        setLoading(false);
-        return;
       }
-
-      setLoading(true);
-
-      checkAdmin(u.id)
-        .then((admin) => {
-          if (mounted) setIsAdmin(admin);
-        })
-        .catch(() => {
-          if (mounted) setIsAdmin(false);
-        })
-        .finally(() => {
-          clearTimeout(safetyTimer);
-          if (mounted) setLoading(false);
-        });
+      if (mounted) setLoading(false);
     };
 
     // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        resolve(session);
+      async (_event, session) => {
+        initialDone = true;
+        await resolve(session);
       }
     );
 
-    // Then get session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      clearTimeout(safetyTimer);
-      resolve(session);
-    }).catch(() => {
-      clearTimeout(safetyTimer);
-      if (mounted) setLoading(false);
+    // Then get session — skip if listener already fired
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!initialDone) {
+        await resolve(session);
+      }
     });
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -112,7 +79,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setIsAdmin(false);
-    writeCachedAdmin(false);
   };
 
   return (

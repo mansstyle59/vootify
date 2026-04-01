@@ -63,10 +63,9 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-      navigateFallback: "/index.html",
-      navigateFallbackDenylist: [/^\/~oauth/],
-      importScripts: ["/sw-push.js"],
-      globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,woff,ttf,json}"],
+        navigateFallbackDenylist: [/^\/~oauth/],
+        importScripts: ["/sw-push.js"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,woff,ttf,json}"],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         skipWaiting: true,
         clientsClaim: true,
@@ -151,10 +150,16 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [200] },
             },
           },
-          // Supabase Auth — network only, never cache auth responses
+          // Supabase Auth — network first, short cache
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
-            handler: "NetworkOnly",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-auth",
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 3,
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
           // Supabase Storage (covers, avatars, audio thumbnails) — cache aggressively
           {

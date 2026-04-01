@@ -1,37 +1,6 @@
 // Custom SW logic injected alongside Workbox-generated SW
-// Handles push notifications, notification click events, and offline resilience
+// Handles push notifications and notification click events
 
-// ── Offline resilience: catch failed fetch responses from Workbox handlers ──
-// When Workbox's runtimeCaching handlers fail (e.g. opaque response errors),
-// return a fallback instead of letting the error propagate to FetchEvent.respondWith
-self.addEventListener("fetch", (event) => {
-  // Only handle navigation requests not already handled by Workbox
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        try {
-          // Try network first for navigation
-          const response = await fetch(event.request);
-          return response;
-        } catch {
-          // Network failed — serve cached index.html as SPA fallback
-          const cache = await caches.match("/index.html");
-          if (cache) return cache;
-          // Last resort: try any cached version
-          const keys = await caches.keys();
-          for (const name of keys) {
-            const c = await caches.open(name);
-            const match = await c.match("/index.html");
-            if (match) return match;
-          }
-          return new Response("Offline", { status: 503, statusText: "Service Unavailable" });
-        }
-      })()
-    );
-  }
-});
-
-// ── Push Notifications ──
 self.addEventListener("push", (event) => {
   if (!event.data) return;
 
@@ -68,12 +37,14 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      // Focus existing window if available
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
           client.navigate(url);
           return client.focus();
         }
       }
+      // Open new window
       return self.clients.openWindow(url);
     })
   );

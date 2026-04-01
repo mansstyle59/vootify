@@ -16,6 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Vootify" />
     <link rel="apple-touch-icon" href="/pwa-icon-192.png" />
+    <link rel="apple-touch-startup-image" href="/splash-screen.png" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Preconnect for critical origins -->
@@ -44,41 +45,12 @@
 
   <body>
     <div id="root">
-      <div aria-hidden="true" style="min-height:100vh;background:hsl(222 30% 7%)"></div>
+      <!-- Inline skeleton to eliminate white flash before React hydrates -->
+      <div style="min-height:100vh;background:#0b0e14;display:flex;align-items:center;justify-content:center">
+        <div style="width:96px;height:96px;border-radius:28px;background:#111622;animation:pulse 1.5s ease-in-out infinite"></div>
+      </div>
+      <style>@keyframes pulse{0%,100%{opacity:.6}50%{opacity:.3}}</style>
     </div>
-    <script>
-      (() => {
-        const RECOVERY_KEY = "vootify-inline-boot-recovery";
-        const RECOVERY_COOLDOWN = 15000;
-
-        setTimeout(async () => {
-          if (document.documentElement.dataset.appMounted === "true") return;
-
-          const isPreviewHost =
-            window.location.hostname.includes("id-preview--") ||
-            window.location.hostname.includes(".lovableproject.com");
-
-          if (isPreviewHost || !("serviceWorker" in navigator)) return;
-
-          const lastRecovery = Number(sessionStorage.getItem(RECOVERY_KEY) || 0);
-          if (Date.now() - lastRecovery < RECOVERY_COOLDOWN) return;
-
-          sessionStorage.setItem(RECOVERY_KEY, String(Date.now()));
-
-          try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-
-            if ("caches" in window) {
-              const cacheNames = await caches.keys();
-              await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-            }
-          } catch {}
-
-          window.location.reload();
-        }, 1800);
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

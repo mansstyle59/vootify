@@ -1,32 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const letters = "VOOTIFY".split("");
-
-/** Inline fallback so the logo always renders, even offline before SW activates */
-function LogoImg({ className, width, height }: { className?: string; width: number; height: number }) {
-  const [error, setError] = useState(false);
-  if (error) {
-    return (
-      <div className={className} style={{ width, height, background: "hsl(var(--primary) / 0.15)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 28 }}>
-        <span style={{ fontSize: width * 0.35, fontWeight: 900, color: "hsl(var(--primary))" }}>V</span>
-      </div>
-    );
-  }
-  return (
-    <motion.img
-      src="/pwa-icon-192.png"
-      alt="Vootify"
-      width={width}
-      height={height}
-      className={className}
-      onError={() => setError(true)}
-      initial={{ filter: "brightness(0.4) saturate(0)" }}
-      animate={{ filter: "brightness(1) saturate(1.1)" }}
-      transition={{ delay: 0.3, duration: 0.9, ease: "easeOut" }}
-    />
-  );
-}
 
 interface Props {
   onFinish: () => void;
@@ -35,38 +10,25 @@ interface Props {
 
 export function SplashScreen({ onFinish, holdForCache }: Props) {
   const [visible, setVisible] = useState(true);
-  const skipRef = useRef(false);
-
-  const skip = useCallback(() => {
-    if (skipRef.current) return;
-    skipRef.current = true;
-    setVisible(false);
-    setTimeout(onFinish, 150);
-  }, [onFinish]);
 
   useEffect(() => {
     if (holdForCache) return;
-    const timer = setTimeout(skip, 800);
+    // Slightly longer to ensure auth + first render completes
+    const timer = setTimeout(() => {
+      setVisible(false);
+      setTimeout(onFinish, 400);
+    }, 2200);
     return () => clearTimeout(timer);
-  }, [skip, holdForCache]);
-
-  // Hard safety net — always dismiss after 2s no matter what
-  useEffect(() => {
-    const safety = setTimeout(() => {
-      if (!skipRef.current) skip();
-    }, 2000);
-    return () => clearTimeout(safety);
-  }, [skip]);
+  }, [onFinish, holdForCache]);
 
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          onClick={skip}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform cursor-pointer"
+          exit={{ opacity: 0, scale: 1.06, filter: "blur(12px)" }}
+          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden will-change-transform"
           style={{ background: "hsl(var(--background))" }}
         >
           {/* ── Liquid Glass ambient layer ── */}
@@ -149,10 +111,15 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
                   "0 0 60px hsl(var(--primary) / 0.2), 0 20px 50px hsl(0 0% 0% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.12), inset 0 -0.5px 0 hsl(0 0% 0% / 0.2)",
               }}
             >
-              <LogoImg
+              <motion.img
+                src="/pwa-icon-192.png"
+                alt="Vootify"
                 width={112}
                 height={112}
                 className="w-[112px] h-[112px] rounded-[28px]"
+                initial={{ filter: "brightness(0.4) saturate(0)" }}
+                animate={{ filter: "brightness(1) saturate(1.1)" }}
+                transition={{ delay: 0.3, duration: 0.9, ease: "easeOut" }}
               />
               {/* Glass glare overlay */}
               <motion.div

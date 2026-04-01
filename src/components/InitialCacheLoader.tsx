@@ -2,28 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isCacheReady, performInitialCache, type CacheProgress } from "@/lib/appCache";
 import { useAuth } from "@/hooks/useAuth";
-
-/** Inline fallback so the logo always renders, even offline */
-function LogoFallback({ size, className }: { size: number; className?: string }) {
-  const [error, setError] = useState(false);
-  if (error) {
-    return (
-      <div className={className} style={{ width: size, height: size, background: "hsl(var(--primary) / 0.15)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 28 }}>
-        <span style={{ fontSize: size * 0.35, fontWeight: 900, color: "hsl(var(--primary))" }}>V</span>
-      </div>
-    );
-  }
-  return (
-    <img
-      src="/pwa-icon-192.png"
-      alt="Vootify"
-      width={size}
-      height={size}
-      className={className}
-      onError={() => setError(true)}
-    />
-  );
-}
+import { SafeImage } from "@/components/SafeImage";
 
 interface Props {
   children: React.ReactNode;
@@ -54,24 +33,28 @@ export function InitialCacheLoader({ children }: Props) {
       return;
     }
     if (!userId) {
+      // No user — skip cache, let them see auth
       setCacheReady(true);
       setShowLoader(false);
       return;
     }
 
     let cancelled = false;
-    // Safety timeout: never block more than 2s
+    // Add a safety timeout to never block more than 6s
     const safetyTimer = setTimeout(() => {
       if (!cancelled) {
         setCacheReady(true);
         setShowLoader(false);
       }
-    }, 1000);
+    }, 6000);
 
     performInitialCache(userId, handleProgress).then(() => {
       if (cancelled) return;
-      setCacheReady(true);
-      setShowLoader(false);
+      setFadeOut(true);
+      setTimeout(() => {
+        setCacheReady(true);
+        setShowLoader(false);
+      }, 500);
     });
 
     return () => { cancelled = true; clearTimeout(safetyTimer); };
@@ -117,7 +100,13 @@ export function InitialCacheLoader({ children }: Props) {
               <div className="rounded-[28px] overflow-hidden shadow-2xl" style={{
                 boxShadow: "0 0 50px hsl(var(--primary) / 0.25), 0 16px 32px hsl(0 0% 0% / 0.35)",
               }}>
-                <LogoFallback size={80} className="w-[80px] h-[80px] rounded-[28px]" />
+                <SafeImage
+                  src="/pwa-icon-192.png"
+                  alt="Vootify"
+                  width={80}
+                  height={80}
+                  className="w-[80px] h-[80px] rounded-[28px]"
+                />
               </div>
             </motion.div>
 
