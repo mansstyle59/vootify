@@ -44,14 +44,12 @@ export function PageFade({ children }: { children: ReactNode }) {
     el.style.transition = "none";
 
     if (isTabNav) {
-      const offsetX = goingForward ? 32 : -32;
+      const offsetX = goingForward ? 20 : -20;
       el.style.opacity = "0";
       el.style.transform = `translateX(${offsetX}px)`;
-      el.style.filter = "blur(4px)";
     } else {
       el.style.opacity = "0";
-      el.style.transform = "translateY(16px) scale(0.98)";
-      el.style.filter = "blur(2px)";
+      el.style.transform = "translateY(8px) scale(0.995)";
     }
 
     // Force reflow then animate in
