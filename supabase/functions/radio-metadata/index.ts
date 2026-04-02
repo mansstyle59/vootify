@@ -521,7 +521,16 @@ function detectNativeStation(url: string, stationName?: string): string | null {
 }
 
 // ─── Stations where radio.fr returns WRONG data ───
-const RADIO_FR_BLACKLIST = new Set(["mouv", "mouv'", "mouv'"]);
+const RADIO_FR_BLACKLIST = new Set<string>([]);
+
+// ─── Stations that should prioritize ICY stream metadata ───
+const ICY_PRIORITY_STATIONS = new Set(["mouv", "mouv'", "mouv'"]);
+
+function isIcyPriorityStation(stationName: string): boolean {
+  const n = stationName.toLowerCase().trim().replace(/['']/g, "'");
+  return ICY_PRIORITY_STATIONS.has(n);
+}
+
 
 // ─── Known station ID mappings for radio.fr ───
 const RADIO_FR_STATION_IDS: Record<string, string> = {
