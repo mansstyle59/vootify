@@ -205,22 +205,30 @@ export function MiniPlayer() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [showResumeBanner]);
 
-  // ── Play/Pause sync (same track) ──
+  // ── Play/Pause sync (same track) — robust bidirectional sync ──
   useEffect(() => {
     if (!currentSong || !audio.src) return;
-    if (lastSongIdRef.current === currentSong.id) {
-      if (isPlaying) {
-        if (audio.paused) {
-          audio.volume = volume;
-          audio.muted = false;
-          audio.play().then(() => {
-            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-          }).catch(console.error);
-        }
-      } else {
-        if (!audio.paused) audio.pause();
-        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+    if (lastSongIdRef.current !== currentSong.id) return;
+
+    if (isPlaying) {
+      if (audio.paused) {
+        audio.volume = volume;
+        audio.muted = false;
+        audio.play().then(() => {
+          audioManager['_explicitPause'] = false;
+          if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+        }).catch((err) => {
+          // If play fails (e.g. no user gesture), revert store state
+          console.warn("[Player] play() rejected:", err.message);
+          usePlayerStore.setState({ isPlaying: false });
+        });
       }
+    } else {
+      if (!audio.paused) {
+        audioManager['_explicitPause'] = true;
+        audio.pause();
+      }
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
     }
   }, [isPlaying]);
 
@@ -408,15 +416,23 @@ export function MiniPlayer() {
       setIsBuffering(false);
     };
     const handlePause = () => {
-      // Only sync pause state if user explicitly paused (not OS background interruption)
+      // Sync pause state — only if explicit user action (not OS background interruption)
       if (audioManager.wasExplicitlyPaused) {
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
         if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
       }
     };
+    // Also listen for 'playing' to ensure store reflects actual audio state
+    const handlePlaying = () => {
+      if (!usePlayerStore.getState().isPlaying) {
+        usePlayerStore.setState({ isPlaying: true });
+      }
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+    };
 
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
+    audio.addEventListener("playing", handlePlaying);
 
     // Buffering state from AudioManager
     const onBuffering = () => setIsBuffering(true);
@@ -465,6 +481,7 @@ export function MiniPlayer() {
       audio.removeEventListener("error", handleAudioError);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("playing", handlePlaying);
       window.removeEventListener("audio-buffering", onBuffering);
       window.removeEventListener("audio-ready", onReady);
       window.removeEventListener("audio-next", onAudioNext);

@@ -25,13 +25,43 @@ function getCached(key: string): any | null {
 
 function setCache(key: string, data: any) {
   metadataCache.set(key, { data, ts: Date.now() });
-  // Evict old entries if cache grows too large
   if (metadataCache.size > 200) {
     const now = Date.now();
     for (const [k, v] of metadataCache) {
       if (now - v.ts > CACHE_TTL_MS) metadataCache.delete(k);
     }
   }
+}
+
+// ─── AD-BLOCK: Detect and filter radio ads ───
+const AD_PATTERNS = [
+  /^pub\b/i, /\bpub\s/i, /\bpublicit[eé]/i,
+  /\bad\s*break/i, /\badvert/i, /\bcommercial/i,
+  /\bsponsored?\b/i, /\bsponsor\b/i,
+  /\bjingle\b/i, /\bstation\s*id\b/i,
+  /\bpromo(tion)?\b/i, /\bannonce\b/i,
+  /^\s*-\s*$/, /^[\s.]+$/,
+  /\bwww\.[a-z]/i, /\bhttps?:\/\//i,
+  /\b(achetez|abonnez|profitez|offre|reduction|remise|code\s*promo)\b/i,
+  /\b(appel|appelez|composez|sms|texto)\s*(le|au|now)?\s*\d/i,
+  /\bflash\s*(info|actu|traffic|m[eé]t[eé]o)/i,
+  /\bm[eé]t[eé]o\b/i, /\binfo\s*trafic/i, /\bhoroscope\b/i,
+  /\bchronique\b/i, /\bédito(rial)?\b/i,
+  /^\d{3,}\s*$/,  // just numbers
+  /^radio\s/i,    // "Radio XYZ" generic station ID
+];
+
+function isAd(text: string): boolean {
+  if (!text || text.length < 3) return true;
+  const t = text.trim();
+  // Pure URL
+  if (/^https?:\/\//i.test(t)) return true;
+  // Too short to be a song
+  if (t.length < 4 && !t.includes("-")) return true;
+  for (const p of AD_PATTERNS) {
+    if (p.test(t)) return true;
+  }
+  return false;
 }
 
 // ─── Radio France station mappings ───
@@ -86,7 +116,21 @@ function cleanIcyTitle(raw: string): { artist: string; title: string } {
   return { artist: "", title: cleaned };
 }
 
-// ─── Deezer search ───
+// ─── Normalize strings for fuzzy matching ───
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s*feat\.?\s+.*/i, "")
+    .replace(/\s*ft\.?\s+.*/i, "")
+    .replace(/\s*\(.*?\)/g, "")
+    .replace(/\s*\[.*?\]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ─── Deezer search — enhanced with multiple strategies ───
 async function searchDeezerCover(artist: string, title: string): Promise<{
   coverUrl: string; deezerArtist: string; deezerTitle: string; deezerAlbum: string;
 } | null> {
@@ -109,32 +153,72 @@ async function searchDeezerCover(artist: string, title: string): Promise<{
     .replace(/\s*-\s*(?:radio edit|single|remix|remaster|version|edit).*$/i, "")
     .trim();
 
+  // Multiple search strategies for better hit rate
   const queries = [
     `artist:"${cleanArtist}" track:"${cleanTitle}"`,
     `${cleanArtist} ${cleanTitle}`,
+    `${cleanTitle} ${cleanArtist}`,  // reversed order
   ];
+
+  // If title has parentheses content, also try without
+  const bareTitle = cleanTitle.replace(/\s*\(.*\)/, "").trim();
+  if (bareTitle !== cleanTitle && bareTitle.length > 2) {
+    queries.push(`${cleanArtist} ${bareTitle}`);
+  }
+
+  const normArtist = normalize(cleanArtist);
+  const normTitle = normalize(cleanTitle);
 
   for (const q of queries) {
     try {
-      const res = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(q)}&limit=3`, {
-        signal: AbortSignal.timeout(3000),
+      const res = await fetch(`${DEEZER_API}/search?q=${encodeURIComponent(q)}&limit=5`, {
+        signal: AbortSignal.timeout(3500),
       });
       if (!res.ok) continue;
       const data = await res.json();
       if (!data.data?.length) continue;
 
-      const artistLower = cleanArtist.toLowerCase();
-      const track = data.data.find((t: any) =>
-        t.artist?.name?.toLowerCase() === artistLower
-      ) || data.data[0];
+      // Score-based matching
+      let bestMatch = data.data[0];
+      let bestScore = 0;
 
-      const coverUrl = track.album?.cover_xl || track.album?.cover_big || track.album?.cover_medium || "";
+      for (const track of data.data) {
+        let score = 0;
+        const tArtist = normalize(track.artist?.name || "");
+        const tTitle = normalize(track.title_short || track.title || "");
+
+        // Exact match
+        if (tArtist === normArtist) score += 50;
+        else if (tArtist.includes(normArtist) || normArtist.includes(tArtist)) score += 30;
+
+        if (tTitle === normTitle) score += 50;
+        else if (tTitle.includes(normTitle) || normTitle.includes(tTitle)) score += 25;
+
+        // Word overlap
+        const artistWords = normArtist.split(" ").filter(w => w.length > 2);
+        const titleWords = normTitle.split(" ").filter(w => w.length > 2);
+        const matchedArtistWords = artistWords.filter(w => tArtist.includes(w));
+        const matchedTitleWords = titleWords.filter(w => tTitle.includes(w));
+        
+        if (artistWords.length > 0) score += (matchedArtistWords.length / artistWords.length) * 20;
+        if (titleWords.length > 0) score += (matchedTitleWords.length / titleWords.length) * 20;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = track;
+        }
+      }
+
+      // Only accept if minimum confidence
+      if (bestScore < 30 && queries.indexOf(q) < queries.length - 1) continue;
+
+      const coverUrl = bestMatch.album?.cover_xl || bestMatch.album?.cover_big || bestMatch.album?.cover_medium || "";
       if (coverUrl) {
         const result = {
           coverUrl,
-          deezerArtist: track.artist?.name || artist,
-          deezerTitle: track.title_short || track.title || title,
-          deezerAlbum: track.album?.title || "",
+          deezerArtist: bestMatch.artist?.name || artist,
+          deezerTitle: bestMatch.title_short || bestMatch.title || title,
+          deezerAlbum: bestMatch.album?.title || "",
         };
         setCache(cacheKey, result);
         return result;
@@ -181,6 +265,9 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       const title = current.title || "";
       const artist = current.authors || current.highlightedArtists?.[0] || "";
       const album = current.titreAlbum || "";
+
+      // Filter ads from Radio France
+      if (isAd(`${artist} - ${title}`)) continue;
 
       let coverUrl = current.visual || "";
       if (coverUrl && !coverUrl.startsWith("http")) {
@@ -243,6 +330,9 @@ async function fetchRadioFrMetadata(stationName: string): Promise<{
     const songArtist = npData.artist || npData.artistName || "";
 
     if (!songTitle && !songArtist) return null;
+
+    // Filter ads
+    if (isAd(`${songArtist} - ${songTitle}`)) return null;
 
     const coverUrl = npData.cover || npData.coverUrl || npData.albumCover || "";
     const nowPlaying = songArtist && songTitle ? `${songArtist} - ${songTitle}` : songTitle || songArtist;
@@ -318,20 +408,31 @@ serve(async (req) => {
   }
 
   try {
-    const { streamUrl, stationName, stationCover } = await req.json();
+    const { streamUrl, stationName, stationCover, force } = await req.json();
     if (!streamUrl) {
       return new Response(JSON.stringify({ success: false, error: "No streamUrl" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ── Check full-response cache first ──
+    // ── Check full-response cache first (skip if force refresh) ──
     const responseCacheKey = `resp:${streamUrl}:${stationName || ""}`;
-    const cachedResponse = getCached(responseCacheKey);
-    if (cachedResponse) {
-      return new Response(JSON.stringify(cachedResponse), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!force) {
+      const cachedResponse = getCached(responseCacheKey);
+      if (cachedResponse) {
+        return new Response(JSON.stringify(cachedResponse), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      // Force: invalidate cache for this key
+      metadataCache.delete(responseCacheKey);
+      // Also invalidate sub-caches
+      for (const [k] of metadataCache) {
+        if (k.startsWith(`rf:`) || k.startsWith(`radiofr:`) || k.startsWith(`resp:${streamUrl}`)) {
+          metadataCache.delete(k);
+        }
+      }
     }
 
     let nowPlaying = "";
@@ -357,7 +458,10 @@ serve(async (req) => {
 
         if (!coverUrl && artist && title) {
           const deezer = await searchDeezerCover(artist, title);
-          if (deezer) coverUrl = deezer.coverUrl;
+          if (deezer) {
+            coverUrl = deezer.coverUrl;
+            album = deezer.deezerAlbum || album;
+          }
         }
         if (!coverUrl) coverUrl = stationCover || "";
 
@@ -396,6 +500,24 @@ serve(async (req) => {
     if (!nowPlaying) {
       const icyRaw = await fetchIcyMetadata(streamUrl);
       if (icyRaw) {
+        // Ad-block: filter out ads from ICY stream
+        if (isAd(icyRaw)) {
+          // Return last known good metadata or station info
+          const responseData = {
+            success: true,
+            nowPlaying: `En direct sur ${resolvedStationName || "Radio"}`,
+            title: "En direct",
+            artist: resolvedStationName || "Radio",
+            coverUrl: stationCover || "",
+            album: "",
+            source: "none",
+            adFiltered: true,
+          };
+          return new Response(JSON.stringify(responseData), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         const parsed = cleanIcyTitle(icyRaw);
         artist = parsed.artist;
         title = parsed.title;
@@ -410,6 +532,16 @@ serve(async (req) => {
             if (deezer.deezerArtist) artist = deezer.deezerArtist;
             if (deezer.deezerTitle) title = deezer.deezerTitle;
             nowPlaying = `${artist} - ${title}`;
+          }
+        } else if (title && !artist) {
+          // Try searching with just the title
+          const deezer = await searchDeezerCover("", title);
+          if (deezer) {
+            coverUrl = deezer.coverUrl;
+            album = deezer.deezerAlbum;
+            artist = deezer.deezerArtist || "";
+            title = deezer.deezerTitle || title;
+            if (artist) nowPlaying = `${artist} - ${title}`;
           }
         }
       }
