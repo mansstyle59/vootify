@@ -14,6 +14,7 @@ export interface RadioMetadata {
   showName?: string;
   showCover?: string;
   isShow?: boolean;
+  adFiltered?: boolean;
 }
 
 export interface RadioHistoryEntry {
