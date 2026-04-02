@@ -742,6 +742,9 @@ export function MiniPlayer() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
+                      {radioMeta?.isShow && radioMeta?.showName && (
+                        <p className="text-[10px] truncate text-primary/70 leading-tight">{radioMeta.showName}</p>
+                      )}
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
                         <span>{radioArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
@@ -1146,6 +1149,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                   <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                     {radioMeta?.title || stationName}
                   </h2>
+                  {radioMeta?.isShow && radioMeta?.showName && (
+                    <p className="text-[13px] text-primary/70 truncate leading-tight mt-0.5">{radioMeta.showName}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
