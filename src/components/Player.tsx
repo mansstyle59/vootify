@@ -416,11 +416,18 @@ export function MiniPlayer() {
       setIsBuffering(false);
     };
     const handlePause = () => {
-      // Only sync pause state if user explicitly paused (not OS background interruption)
+      // Sync pause state — only if explicit user action (not OS background interruption)
       if (audioManager.wasExplicitlyPaused) {
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
         if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
       }
+    };
+    // Also listen for 'playing' to ensure store reflects actual audio state
+    const handlePlaying = () => {
+      if (!usePlayerStore.getState().isPlaying) {
+        usePlayerStore.setState({ isPlaying: true });
+      }
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
     };
 
     audio.addEventListener("play", handlePlay);
