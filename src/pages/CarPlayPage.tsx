@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
 import { getStationLogo } from "@/lib/radioLogos";
-import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
+
 import { getGreeting, getSmartMixLabel, buildSmartMix, getTimeContext } from "@/lib/smartMix";
 import {
   Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User, Play,
@@ -72,11 +72,8 @@ const CarPlayPage = () => {
   const TimeIcon = timeCtx === "morning" ? Sun : timeCtx === "night" ? Moon : Sunset;
 
   const isLiveRadio = currentSong?.album === "Radio en direct";
-  const radioMetadata = useRadioMetadata(
-    isLiveRadio ? currentSong?.streamUrl : undefined,
-    isLiveRadio, isPlaying, currentSong?.title, currentSong?.coverUrl
-  );
-  const radioHistory = useRadioHistory(isLiveRadio ? currentSong?.streamUrl : undefined);
+  const radioMetadata = null;
+  const radioHistory: any[] = [];
 
   const { data: songs = [] } = useQuery({
     queryKey: ["carplay-songs"],

@@ -1,7 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, X } from "lucide-react";
-import { RadioHistoryEntry } from "@/hooks/useRadioMetadata";
+
 import { LazyImage } from "@/components/LazyImage";
+
+interface RadioHistoryEntry {
+  title: string;
+  artist: string;
+  coverUrl: string;
+  playedAt: Date;
+}
 
 interface Props {
   history: RadioHistoryEntry[];

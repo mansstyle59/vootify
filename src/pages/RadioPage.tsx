@@ -9,7 +9,7 @@ import { usePlayerStore } from "@/stores/playerStore";
 import { Radio, Play, Pause, Search, Heart, Pencil, Trash2, Check, Volume2, ChevronRight, X, Headphones, Globe, Music2, Clock, TrendingUp } from "lucide-react";
 import { getStationLogo } from "@/lib/radioLogos";
 import { Input } from "@/components/ui/input";
-import { useRadioMetadata } from "@/hooks/useRadioMetadata";
+
 import { useDominantColor } from "@/hooks/useDominantColor";
 import CoverImagePicker from "@/components/CoverImagePicker";
 import { toast } from "sonner";
@@ -497,10 +497,7 @@ const RadioPage = () => {
   }, [searchQuery]);
 
   const isLiveRadio = currentSong?.album === "Radio en direct";
-  const radioMetadata = useRadioMetadata(
-    isLiveRadio ? currentSong?.streamUrl : undefined,
-    isLiveRadio, isPlaying, currentSong?.title, currentSong?.coverUrl
-  );
+  const radioMetadata = null;
 
   const playStation = (station: { id: string; name: string; genre: string; coverUrl: string; streamUrl: string }) => {
     if (currentSong?.id === station.id) { togglePlay(); return; }

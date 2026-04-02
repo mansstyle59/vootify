@@ -6,15 +6,13 @@ import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   ChevronDown, ListMusic, X, Disc3,
   Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal,
-  Music, Plus, Radio, ShieldCheck, Clock
+  Music, Plus, Radio, ShieldCheck
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
-import { useRadioMetadata, useRadioHistory, type RadioSource } from "@/hooks/useRadioMetadata";
-import { RadioRecognitionOverlay, PulseRings } from "./RadioRecognition";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
@@ -23,29 +21,6 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
-import shazamLogo from "@/assets/shazam-logo.png";
-
-/* ── Live metadata timestamp indicator ── */
-function MetaTimestamp({ ts }: { ts: number }) {
-  const [ago, setAgo] = useState("");
-  useEffect(() => {
-    const update = () => {
-      const s = Math.floor((Date.now() - ts) / 1000);
-      if (s < 5) setAgo("à l'instant");
-      else if (s < 60) setAgo(`il y a ${s}s`);
-      else setAgo(`il y a ${Math.floor(s / 60)}min`);
-    };
-    update();
-    const id = setInterval(update, 5000);
-    return () => clearInterval(id);
-  }, [ts]);
-  return (
-    <span className="inline-flex items-center gap-1 text-[9px] text-foreground/30 mt-0.5">
-      <Clock className="w-2.5 h-2.5" />
-      <span>{ago}</span>
-    </span>
-  );
-}
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
@@ -629,7 +604,6 @@ export function MiniPlayer() {
   }, [currentSong?.id, isPlaying]);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   // ── Media Session controls ──
   const queueLen = usePlayerStore((s) => s.queue.length);
@@ -689,18 +663,14 @@ export function MiniPlayer() {
   // ── Media Session metadata — use AudioManager ──
   useEffect(() => {
     if (!currentSong) return;
-    const title = isLive && radioMeta?.title ? radioMeta.title : currentSong.title;
-    const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
-    const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
-
     audioManager.updateMetadata({
-      title,
-      artist,
-      cover: artwork,
+      title: currentSong.title,
+      artist: currentSong.artist,
+      cover: currentSong.coverUrl,
       album: currentSong.album || (isLive ? "Radio" : undefined),
       isLive,
     });
-  }, [currentSong?.id, currentSong?.title, isLive, radioMeta?.title, radioMeta?.artist, radioMeta?.coverUrl]);
+  }, [currentSong?.id, currentSong?.title, isLive]);
 
   // ── Keep playback state in sync ──
   useEffect(() => {
@@ -758,9 +728,9 @@ export function MiniPlayer() {
 
   // ── Radio mini-player ──
   if (isLive) {
-    const bubbleCover = radioMeta?.coverUrl || currentSong.coverUrl;
-    const radioTitle = radioMeta?.title || currentSong.title;
-    const radioArtist = radioMeta?.artist || currentSong.artist || "Radio";
+    const bubbleCover = currentSong.coverUrl;
+    const radioTitle = currentSong.title;
+    const radioArtist = currentSong.artist || "Radio";
     const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
 
     return (
@@ -798,11 +768,6 @@ export function MiniPlayer() {
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
                         <span>{radioArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
-                        {radioMeta?.adFiltered && (
-                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium px-1 py-0.5 rounded-full bg-green-500/15 text-green-500" title="Publicité filtrée">
-                            <ShieldCheck className="w-2.5 h-2.5" />
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -909,160 +874,17 @@ export function MiniPlayer() {
   );
 }
 
-/* ── Source reliability badge ── */
-const SOURCE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  official:  { label: "Officielle", color: "text-green-400", bg: "bg-green-400/15 border-green-400/30" },
-  stream:    { label: "Flux",       color: "text-blue-400",  bg: "bg-blue-400/15 border-blue-400/30" },
-  radio_fr:  { label: "radio.fr",   color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/30" },
-  tunein:    { label: "TuneIn",     color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/30" },
-};
-
-function SourceBadge({ source }: { source?: RadioSource }) {
-  if (!source || source === "none") return null;
-  const cfg = SOURCE_CONFIG[source];
-  if (!cfg) return null;
-  return (
-    <span className={`shrink-0 inline-flex items-center gap-1 text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.bg} ${cfg.color} uppercase tracking-wider`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${source === "official" ? "bg-green-400" : source === "stream" ? "bg-blue-400" : "bg-amber-400"}`} />
-      {cfg.label}
-    </span>
-  );
-}
-
 /* ─────────────────────────────────────────────
-   Radio Fullscreen Player
+   Radio Fullscreen Player (simple — no metadata)
    ───────────────────────────────────────────── */
 function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked, next, previous, queue
   } = usePlayerStore();
-  const navigate = useNavigate();
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
-  const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
+  const coverUrl = currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
-  const history = useRadioHistory(currentSong?.streamUrl);
-  const [showHistory, setShowHistory] = useState(false);
-  const [savingAll, setSavingAll] = useState(false);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [shazamState, setShazamState] = useState<"idle" | "listening" | "found" | "notfound">("idle");
-  const [shazamResult, setShazamResult] = useState<{ title: string; artist: string; coverUrl: string } | null>(null);
-  const autoShazamRef = useRef<string>("");
-
-  // Auto-capture en arrière-plan — adaptive polling for accurate metadata
-  const autoShazamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastAutoChangeRef = useRef<number>(0);
-  const autoStableCountRef = useRef(0);
-
-  useEffect(() => {
-    if (!isPlaying || !currentSong?.streamUrl || (currentSong?.duration && currentSong.duration > 0)) return;
-    const streamUrl = currentSong.streamUrl;
-    const stName = currentSong.title || "";
-    const stCover = currentSong.coverUrl || "";
-    let cancelled = false;
-
-    const getInterval = () => {
-      const sinceChange = Date.now() - lastAutoChangeRef.current;
-      if (sinceChange < 60_000) return 12_000;   // Fast: 12s after song change
-      if (autoStableCountRef.current > 3) return 30_000; // Slow when stable
-      return 18_000; // Normal: 18s
-    };
-
-    const scheduleNext = () => {
-      if (autoShazamTimerRef.current) clearTimeout(autoShazamTimerRef.current);
-      autoShazamTimerRef.current = setTimeout(autoFetch, getInterval());
-    };
-
-    const autoFetch = async () => {
-      if (cancelled || shazamState === "listening") { if (!cancelled) scheduleNext(); return; }
-      try {
-        const { data } = await supabase.functions.invoke("radio-metadata", {
-          body: { streamUrl, stationName: stName, stationCover: stCover, force: true },
-        });
-        if (cancelled) return;
-        if (data?.success && data.title && data.artist) {
-          const key = `${data.artist}|||${data.title}`;
-          if (key !== autoShazamRef.current) {
-            autoShazamRef.current = key;
-            lastAutoChangeRef.current = Date.now();
-            autoStableCountRef.current = 0;
-            setShazamResult({ title: data.title, artist: data.artist, coverUrl: data.coverUrl || stCover || "" });
-            setShazamState("found");
-            if (navigator.vibrate) navigator.vibrate([15, 80, 15]);
-            setTimeout(() => setShazamState("idle"), 5000);
-          } else {
-            autoStableCountRef.current++;
-          }
-        }
-      } catch { /* silent */ }
-      if (!cancelled) scheduleNext();
-    };
-
-    const initTimer = setTimeout(autoFetch, 2000);
-    return () => {
-      cancelled = true;
-      clearTimeout(initTimer);
-      if (autoShazamTimerRef.current) clearTimeout(autoShazamTimerRef.current);
-    };
-  }, [isPlaying, currentSong?.streamUrl, currentSong?.duration]);
-
-  const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
-    const entryKey = `${entry.artist}|||${entry.title}`;
-    if (savedIds.has(entryKey)) return;
-    setSavingId(entryKey);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Connexion requise"); return; }
-      const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", entry.title).eq("artist", entry.artist).maybeSingle();
-      if (existing) {
-        setSavedIds(prev => new Set(prev).add(entryKey));
-        toast.info(`${entry.title} déjà dans la bibliothèque`);
-        return;
-      }
-      const { error } = await supabase.from("custom_songs").insert({
-        title: entry.title, artist: entry.artist, album: currentSong?.title || "Radio",
-        cover_url: entry.coverUrl || "", duration: 0, user_id: user.id, genre: "Radio",
-      });
-      if (error) throw error;
-      setSavedIds(prev => new Set(prev).add(entryKey));
-      toast.success(`${entry.title} ajouté`);
-      if (navigator.vibrate) navigator.vibrate(10);
-    } catch { toast.error("Erreur lors de l'ajout"); }
-    finally { setSavingId(null); }
-  };
-
-  const saveAllToLibrary = async () => {
-    if (history.length === 0) return;
-    setSavingAll(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Connexion requise"); return; }
-      let added = 0;
-      for (const entry of history) {
-        const entryKey = `${entry.artist}|||${entry.title}`;
-        if (savedIds.has(entryKey)) continue;
-        const { data: existing } = await supabase.from("custom_songs").select("id").eq("title", entry.title).eq("artist", entry.artist).maybeSingle();
-        if (existing) { setSavedIds(prev => new Set(prev).add(entryKey)); continue; }
-        const { error } = await supabase.from("custom_songs").insert({
-          title: entry.title, artist: entry.artist, album: currentSong?.title || "Radio",
-          cover_url: entry.coverUrl || "", duration: 0, user_id: user.id, genre: "Radio",
-        });
-        if (!error) { setSavedIds(prev => new Set(prev).add(entryKey)); added++; }
-      }
-      toast.success(`${added} morceau${added > 1 ? "x" : ""} ajouté${added > 1 ? "s" : ""}`);
-      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
-    } catch { toast.error("Erreur lors de la sauvegarde"); }
-    finally { setSavingAll(false); }
-  };
-
-  const searchEntry = (entry: { title: string; artist: string }) => {
-    const q = encodeURIComponent(`${entry.artist} ${entry.title}`.trim());
-    onClose();
-    setTimeout(() => navigate(`/search?q=${q}`), 150);
-  };
 
   if (!currentSong) return null;
-  const liked = isLiked(currentSong.id);
   const stationName = currentSong.title;
   const genre = currentSong.artist || "Radio";
   const bgColor = dominantColor || "hsl(0 0% 4%)";
@@ -1114,365 +936,66 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           </div>
           <p className="text-[12px] font-bold text-foreground/80 truncate">{stationName}</p>
         </div>
-        <button
-          onClick={() => {
-            const meta = radioMeta;
-            const q = encodeURIComponent(`${meta?.title || ""} ${meta?.artist || currentSong?.artist || ""}`.trim());
-            onClose();
-            setTimeout(() => navigate(`/search?q=${q}`), 150);
-          }}
-          className="p-1 active:scale-90 transition-transform"
-        >
-          <Search className="w-6 h-6 text-foreground/70" />
-        </button>
+        <div className="w-7" />
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col px-7 pb-8 overflow-hidden">
-        <AnimatePresence mode="wait">
-          {showHistory ? (
-            <motion.div
-              key="history"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="flex-1 flex flex-col overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-foreground">Historique</h3>
-                <div className="flex items-center gap-2">
-                  {history.length > 0 && (
-                    <button
-                      onClick={saveAllToLibrary}
-                      disabled={savingAll}
-                      className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-full active:scale-95 transition-transform"
-                      style={{ background: "hsl(142 70% 45% / 0.12)", color: "hsl(142 70% 45%)", border: "1px solid hsl(142 70% 45% / 0.2)" }}
-                    >
-                      {savingAll ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-                      {savingAll ? "Ajout…" : "Tout ajouter"}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowHistory(false)}
-                    className="text-xs font-semibold text-primary px-3 py-1.5 rounded-full active:scale-95 transition-transform"
-                    style={{ background: "hsl(var(--primary) / 0.15)" }}
-                  >
-                    Pochette
-                  </button>
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto -mx-1 px-1 scrollbar-hide space-y-1">
-                {history.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-3">
-                    <ListMusic className="w-10 h-10 text-foreground/15" />
-                    <p className="text-sm text-foreground/30">L'historique apparaîtra ici</p>
-                  </div>
-                ) : (
-                  history.map((entry, i) => {
-                    const entryKey = `${entry.artist}|||${entry.title}`;
-                    const isSaved = savedIds.has(entryKey);
-                    const isSaving = savingId === entryKey;
-                    return (
-                      <motion.div
-                        key={`${entry.title}-${entry.playedAt.getTime()}`}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.3 }}
-                        className="flex items-center gap-3 p-2.5 rounded-xl"
-                        style={{ background: i === 0 ? "hsl(var(--primary) / 0.1)" : "hsl(var(--foreground) / 0.04)" }}
-                      >
-                        <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(var(--foreground) / 0.08)" }}>
-                          {entry.coverUrl ? (
-                            <SafeImage src={entry.coverUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Music className="w-5 h-5 text-foreground/20" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1" onClick={() => searchEntry(entry)}>
-                          <p className={`text-[13px] font-semibold truncate ${i === 0 ? "text-primary" : "text-foreground"}`}>{entry.title}</p>
-                          <p className="text-[11px] text-foreground/40 truncate">{entry.artist}</p>
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {/* Search button */}
-                          <button
-                            onClick={() => searchEntry(entry)}
-                            className="p-1.5 rounded-full active:scale-90 transition-transform"
-                            title="Rechercher"
-                          >
-                            <Search className="w-3.5 h-3.5 text-foreground/30" />
-                          </button>
-                          {/* Save button */}
-                          <button
-                            onClick={() => saveEntryToLibrary(entry)}
-                            disabled={isSaved || isSaving}
-                            className="p-1.5 rounded-full active:scale-90 transition-transform"
-                            title={isSaved ? "Déjà ajouté" : "Ajouter à la bibliothèque"}
-                          >
-                            {isSaving ? (
-                              <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                            ) : isSaved ? (
-                              <Check className="w-3.5 h-3.5 text-green-400" />
-                            ) : (
-                              <Plus className="w-3.5 h-3.5 text-foreground/30" />
-                            )}
-                          </button>
-                          {i === 0 && (
-                            <span className="text-[9px] text-primary font-bold ml-0.5">EN COURS</span>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="cover"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 30 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="flex-1 flex flex-col"
-            >
-              <div className="flex-1 flex items-center justify-center py-4 relative">
-                <PulseRings active={isPlaying && !!radioMeta?.title} />
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={coverUrl}
-                    src={coverUrl}
-                    alt={stationName}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.92 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="w-full max-w-[340px] aspect-square rounded-xl object-cover relative z-10"
-                    style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
-                  />
-                </AnimatePresence>
-              </div>
+        <div className="flex-1 flex items-center justify-center py-4">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={coverUrl}
+              src={coverUrl}
+              alt={stationName}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="w-full max-w-[340px] aspect-square rounded-xl object-cover relative z-10"
+              style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+            />
+          </AnimatePresence>
+        </div>
 
-              <div className="flex items-center justify-between gap-3 mb-6">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
-                    {radioMeta?.title || stationName}
-                  </h2>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
-                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
-                    <SourceBadge source={radioMeta?.source} />
-                    {radioMeta?.adFiltered && (
-                      <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-500 border border-green-500/20" title="Publicité filtrée">
-                        <ShieldCheck className="w-3 h-3" />
-                        <span>Ad-block</span>
-                      </span>
-                    )}
-                  </div>
-                  {radioMeta?.lastUpdated && (
-                    <MetaTimestamp ts={radioMeta.lastUpdated} />
-                  )}
-                </div>
-                {/* Shazam recognition button */}
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={async () => {
-                    if (shazamState === "listening") return;
-                    const streamUrl = currentSong?.streamUrl;
-                    if (!streamUrl) return;
-                    setShazamState("listening");
-                    setShazamResult(null);
-                    if (navigator.vibrate) navigator.vibrate(10);
-                    try {
-                      const { data } = await supabase.functions.invoke("radio-metadata", {
-                        body: { streamUrl, stationName, stationCover: coverUrl, force: true },
-                      });
-                      if (data?.success && data.title && data.artist) {
-                        const result = { title: data.title, artist: data.artist, coverUrl: data.coverUrl || coverUrl || "" };
-                        setShazamResult(result);
-                        setShazamState("found");
-                        if (navigator.vibrate) navigator.vibrate([15, 80, 15]);
-                        setTimeout(() => setShazamState("idle"), 6000);
-                      } else {
-                        setShazamState("notfound");
-                        setTimeout(() => setShazamState("idle"), 3000);
-                      }
-                    } catch {
-                      setShazamState("notfound");
-                      setTimeout(() => setShazamState("idle"), 3000);
-                    }
-                  }}
-                  onDoubleClick={() => setShowHistory(true)}
-                  className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
-                  style={{
-                    background: shazamState === "listening"
-                      ? "linear-gradient(135deg, hsl(210 100% 50% / 0.35), hsl(210 100% 50% / 0.12))"
-                      : shazamState === "found"
-                        ? "linear-gradient(135deg, hsl(142 70% 45% / 0.3), hsl(142 70% 45% / 0.1))"
-                        : "linear-gradient(135deg, hsl(210 100% 50% / 0.25), hsl(210 100% 50% / 0.08))",
-                    border: shazamState === "found"
-                      ? "1px solid hsl(142 70% 45% / 0.4)"
-                      : "1px solid hsl(210 100% 50% / 0.3)",
-                    boxShadow: shazamState === "listening"
-                      ? "0 0 30px hsl(210 100% 50% / 0.3), inset 0 0.5px 0 hsl(210 100% 50% / 0.2)"
-                      : "0 0 16px hsl(210 100% 50% / 0.15), inset 0 0.5px 0 hsl(210 100% 50% / 0.2)",
-                    transition: "all 0.4s ease",
-                  }}
-                  title="Shazam · Double-tap: Historique"
-                >
-                  {shazamState === "listening" && (
-                    <>
-                      {[0, 1, 2].map((i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute rounded-full"
-                          style={{ border: "1.5px solid hsl(210 100% 55% / 0.4)" }}
-                          animate={{
-                            width: [16, 60 + i * 10],
-                            height: [16, 60 + i * 10],
-                            opacity: [0.7, 0],
-                          }}
-                          transition={{ duration: 1.5, delay: i * 0.35, repeat: Infinity, ease: "easeOut" }}
-                        />
-                      ))}
-                    </>
-                  )}
-                  {shazamState === "found" ? (
-                    <Check className="w-6 h-6 text-green-400 relative z-10" />
-                  ) : shazamState === "listening" ? (
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-                      <Disc3 className="w-6 h-6 relative z-10" style={{ color: "hsl(210 100% 55%)" }} />
-                    </motion.div>
-                  ) : (
-                    <img src={shazamLogo} alt="Shazam" className="w-8 h-8 relative z-10 rounded-full" style={{ filter: "drop-shadow(0 0 6px hsl(210 100% 55% / 0.5))" }} />
-                  )}
-                </motion.button>
-              </div>
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
+              {stationName}
+            </h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-[15px] text-foreground/60 truncate">{genre}</p>
+              <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
+            </div>
+          </div>
+        </div>
 
-              {/* Shazam result overlay */}
-              <AnimatePresence>
-                {shazamState === "found" && shazamResult && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="w-full flex items-center gap-3 p-3 rounded-2xl mt-3"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(var(--card) / 0.6), hsl(var(--card) / 0.3))",
-                      backdropFilter: "blur(40px) saturate(1.8)",
-                      WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-                      border: "0.5px solid hsl(210 100% 50% / 0.15)",
-                      boxShadow: "0 8px 32px hsl(0 0% 0% / 0.3), 0 0 20px hsl(210 100% 50% / 0.1)",
-                    }}
-                  >
-                    <motion.div
-                      className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative"
-                      initial={{ rotateY: 90 }}
-                      animate={{ rotateY: 0 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.15 }}
-                      style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.4)" }}
-                    >
-                      {shazamResult.coverUrl ? (
-                        <SafeImage src={shazamResult.coverUrl} alt={shazamResult.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(210 100% 50% / 0.2), hsl(210 100% 50% / 0.05))" }}>
-                          <Music className="w-6 h-6 text-foreground/30" />
-                        </div>
-                      )}
-                      <motion.div
-                        className="absolute inset-0"
-                        style={{ background: "linear-gradient(105deg, transparent 40%, hsl(0 0% 100% / 0.2) 50%, transparent 60%)" }}
-                        initial={{ x: "-100%" }}
-                        animate={{ x: "200%" }}
-                        transition={{ duration: 0.7, delay: 0.3, ease: "easeInOut" }}
-                      />
-                    </motion.div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: "hsl(142 70% 55%)" }}>
-                          <Check className="w-2.5 h-2.5" /> Identifié
-                        </span>
-                      </div>
-                      <p className="text-[15px] font-extrabold text-foreground truncate leading-tight">{shazamResult.title}</p>
-                      <p className="text-[12px] text-foreground/60 truncate">{shazamResult.artist}</p>
-                    </div>
-                  </motion.div>
-                )}
-                {shazamState === "notfound" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="w-full text-center py-2 mt-2"
-                  >
-                    <span className="text-[12px] text-foreground/40">Aucun titre détecté pour le moment</span>
-                  </motion.div>
-                )}
-                {shazamState === "listening" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="w-full flex items-center justify-center gap-2 py-2 mt-2"
-                  >
-                    <Disc3 className="w-3.5 h-3.5 animate-spin" style={{ color: "hsl(210 100% 55%)", animationDuration: "2s" }} />
-                    <span className="text-[11px] font-bold tracking-wide" style={{ color: "hsl(210 100% 55%)" }}>ÉCOUTE EN COURS…</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex items-center justify-center gap-8 w-full mb-6">
-                {queue.length > 1 && (
-                  <motion.button whileTap={{ scale: 0.75 }} onClick={previous} className="p-1">
-                    <SkipBack className="w-8 h-8 text-foreground/70 fill-current" />
-                  </motion.button>
-                )}
-                <button
-                  onClick={togglePlay}
-                  className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                  style={{
-                    background: "linear-gradient(135deg, hsl(var(--foreground) / 0.15), hsl(var(--foreground) / 0.06))",
-                    backdropFilter: "blur(80px) saturate(2.2)",
-                    WebkitBackdropFilter: "blur(80px) saturate(2.2)",
-                    border: "0.5px solid hsl(var(--foreground) / 0.12)",
-                    boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1)",
-                  }}
-                >
-                  {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-current" /> : <Play className="w-8 h-8 text-foreground fill-current ml-1" />}
-                </button>
-                {queue.length > 1 && (
-                  <motion.button whileTap={{ scale: 0.75 }} onClick={next} className="p-1">
-                    <SkipForward className="w-8 h-8 text-foreground/70 fill-current" />
-                  </motion.button>
-                )}
-              </div>
-
-              {/* Historique link — subtle, below controls */}
-              {history.length > 0 && (
-                <div className="flex items-center justify-center mt-1">
-                  <button
-                    onClick={() => setShowHistory(true)}
-                    className="text-[11px] font-medium text-foreground/40 active:scale-95 transition-transform"
-                  >
-                    Historique ({history.length})
-                  </button>
-                </div>
-              )}
-            </motion.div>
+        <div className="flex items-center justify-center gap-8 w-full mb-6">
+          {queue.length > 1 && (
+            <motion.button whileTap={{ scale: 0.75 }} onClick={previous} className="p-1">
+              <SkipBack className="w-8 h-8 text-foreground/70 fill-current" />
+            </motion.button>
           )}
-        </AnimatePresence>
+          <button
+            onClick={togglePlay}
+            className="w-[72px] h-[72px] rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--foreground) / 0.15), hsl(var(--foreground) / 0.06))",
+              backdropFilter: "blur(80px) saturate(2.2)",
+              WebkitBackdropFilter: "blur(80px) saturate(2.2)",
+              border: "0.5px solid hsl(var(--foreground) / 0.12)",
+              boxShadow: "0 4px 30px hsl(0 0% 0% / 0.3), inset 0 0.5px 0 hsl(var(--foreground) / 0.1)",
+            }}
+          >
+            {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-current" /> : <Play className="w-8 h-8 text-foreground fill-current ml-1" />}
+          </button>
+          {queue.length > 1 && (
+            <motion.button whileTap={{ scale: 0.75 }} onClick={next} className="p-1">
+              <SkipForward className="w-8 h-8 text-foreground/70 fill-current" />
+            </motion.button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
-}
-
-function formatTimeAgo(date: Date): string {
-  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diff < 60) return "À l'instant";
-  if (diff < 3600) return `il y a ${Math.floor(diff / 60)}min`;
-  return `il y a ${Math.floor(diff / 3600)}h`;
 }
 
 /* ─────────────────────────────────────────────
