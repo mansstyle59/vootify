@@ -1219,53 +1219,82 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     <MetaTimestamp ts={radioMeta.lastUpdated} />
                   )}
                 </div>
-                {/* Recognition button — single action button */}
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={async () => {
-                    const streamUrl = currentSong?.streamUrl;
-                    if (!streamUrl) return;
-                    toast.info("🔍 Reconnaissance en cours…");
-                    try {
-                      const { data } = await supabase.functions.invoke("radio-metadata", {
-                        body: { streamUrl, stationName, stationCover: coverUrl, force: true },
-                      });
-                      if (data?.success && data.title) {
-                        toast.success(`🎵 ${data.title} — ${data.artist}`);
+                {/* Recognition + Shazam buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Shazam button */}
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={() => {
+                      const title = radioMeta?.title || "";
+                      const artist = radioMeta?.artist || currentSong?.artist || "";
+                      if (title || artist) {
+                        const q = encodeURIComponent(`${title} ${artist}`.trim());
+                        window.open(`https://www.shazam.com/fr-fr/search/${q}`, "_blank", "noopener");
                       } else {
-                        toast.info("Aucun titre détecté pour le moment");
+                        window.open("https://www.shazam.com/fr-fr", "_blank", "noopener");
                       }
-                    } catch {
-                      toast.error("Erreur de reconnaissance");
-                    }
-                  }}
-                  onDoubleClick={() => setShowHistory(true)}
-                  className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
-                  style={{
-                    background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.08))",
-                    border: "1px solid hsl(var(--primary) / 0.3)",
-                    boxShadow: "0 0 20px hsl(var(--primary) / 0.2), inset 0 0.5px 0 hsl(var(--primary) / 0.2)",
-                  }}
-                  title="Tap: Reconnaissance · Double-tap: Historique"
-                >
-                  {isPlaying && radioMeta?.title && (
-                    <>
-                      {[0, 1].map((i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute rounded-full border border-primary/30"
-                          animate={{
-                            width: [20, 56],
-                            height: [20, 56],
-                            opacity: [0.6, 0],
-                          }}
-                          transition={{ duration: 1.8, delay: i * 0.6, repeat: Infinity, ease: "easeOut" }}
-                        />
-                      ))}
-                    </>
-                  )}
-                  <Radio className="w-6 h-6 text-primary relative z-10" />
-                </motion.button>
+                    }}
+                    className="relative w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden"
+                    style={{
+                      background: "linear-gradient(135deg, hsl(210 100% 50% / 0.25), hsl(210 100% 50% / 0.08))",
+                      border: "1px solid hsl(210 100% 50% / 0.3)",
+                      boxShadow: "0 0 16px hsl(210 100% 50% / 0.15), inset 0 0.5px 0 hsl(210 100% 50% / 0.2)",
+                    }}
+                    title="Ouvrir sur Shazam"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 relative z-10" fill="none">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 13.27c-.84 1.12-2.16 1.73-3.56 1.73-.96 0-1.88-.28-2.64-.8a4.54 4.54 0 01-1.72-2.16.75.75 0 111.4-.54c.28.72.76 1.28 1.36 1.6.56.32 1.2.44 1.84.36.64-.08 1.24-.36 1.72-.8a3.08 3.08 0 00.88-1.76c.08-.64-.04-1.28-.36-1.84-.32-.56-.8-1.04-1.36-1.36l-2.4-1.32c-.84-.48-1.52-1.2-1.92-2.04-.4-.88-.52-1.84-.32-2.76.2-.92.68-1.76 1.36-2.4.68-.64 1.52-1.04 2.44-1.16.92-.12 1.84.04 2.68.48a4.54 4.54 0 011.72 2.16.75.75 0 11-1.4.54 3.08 3.08 0 00-1.36-1.6c-.56-.32-1.2-.44-1.84-.36-.64.08-1.24.36-1.72.8-.48.44-.8 1.04-.88 1.72-.08.68.04 1.32.36 1.88.32.56.8 1.04 1.36 1.36l2.4 1.32c.84.48 1.52 1.2 1.92 2.04.4.84.52 1.8.32 2.72-.2.92-.68 1.72-1.36 2.36z" fill="hsl(210 100% 55%)" />
+                    </svg>
+                  </motion.button>
+
+                  {/* Recognition button */}
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={async () => {
+                      const streamUrl = currentSong?.streamUrl;
+                      if (!streamUrl) return;
+                      toast.info("🔍 Reconnaissance en cours…");
+                      try {
+                        const { data } = await supabase.functions.invoke("radio-metadata", {
+                          body: { streamUrl, stationName, stationCover: coverUrl, force: true },
+                        });
+                        if (data?.success && data.title) {
+                          toast.success(`🎵 ${data.title} — ${data.artist}`);
+                        } else {
+                          toast.info("Aucun titre détecté pour le moment");
+                        }
+                      } catch {
+                        toast.error("Erreur de reconnaissance");
+                      }
+                    }}
+                    onDoubleClick={() => setShowHistory(true)}
+                    className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
+                    style={{
+                      background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.08))",
+                      border: "1px solid hsl(var(--primary) / 0.3)",
+                      boxShadow: "0 0 20px hsl(var(--primary) / 0.2), inset 0 0.5px 0 hsl(var(--primary) / 0.2)",
+                    }}
+                    title="Tap: Reconnaissance · Double-tap: Historique"
+                  >
+                    {isPlaying && radioMeta?.title && (
+                      <>
+                        {[0, 1].map((i) => (
+                          <motion.div
+                            key={i}
+                            className="absolute rounded-full border border-primary/30"
+                            animate={{
+                              width: [20, 56],
+                              height: [20, 56],
+                              opacity: [0.6, 0],
+                            }}
+                            transition={{ duration: 1.8, delay: i * 0.6, repeat: Infinity, ease: "easeOut" }}
+                          />
+                        ))}
+                      </>
+                    )}
+                    <Radio className="w-6 h-6 text-primary relative z-10" />
+                  </motion.button>
+                </div>
               </div>
 
               <div className="flex items-center justify-center gap-8 w-full mb-6">
