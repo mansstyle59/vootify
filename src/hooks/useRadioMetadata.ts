@@ -161,6 +161,7 @@ export function useRadioMetadata(
               showCover: data.showCover || undefined,
               isShow: data.isShow || false,
               adFiltered: data.adFiltered || false,
+              lastUpdated: Date.now(),
             };
           });
         }
