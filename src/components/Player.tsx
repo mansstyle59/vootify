@@ -1193,6 +1193,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       </span>
                     )}
                   </div>
+                  {radioMeta?.lastUpdated && (
+                    <MetaTimestamp ts={radioMeta.lastUpdated} />
+                  )}
                 </div>
                 {/* Recognition button — single action button */}
                 <motion.button
