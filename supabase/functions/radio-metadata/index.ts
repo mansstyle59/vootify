@@ -382,6 +382,7 @@ async function searchiTunesCover(artist: string, title: string): Promise<string 
 async function fetchRadioFranceLive(stationId: number): Promise<{
   title: string; artist: string; coverUrl: string; album: string;
   showName?: string; showCover?: string; isShow?: boolean;
+  hasSongData?: boolean;
 } | null> {
   const cacheKey = `rf:${stationId}`;
   const cached = getCached(cacheKey);
@@ -431,6 +432,7 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
           showName,
           showCover: showCover || "",
           isShow: true,
+          hasSongData: false,
         };
         setCache(cacheKey, result);
         return result;
@@ -450,7 +452,7 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       }
 
       if (title || artist) {
-        const result = { title, artist, coverUrl, album, showName, showCover, isShow: false };
+        const result = { title, artist, coverUrl, album, showName, showCover, isShow: false, hasSongData: true };
         setCache(cacheKey, result);
         return result;
       }
