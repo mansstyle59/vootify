@@ -705,7 +705,7 @@ export function MiniPlayer() {
 
   // ── Radio mini-player ──
   if (isLive) {
-    const bubbleCover = radioMeta?.coverUrl || currentSong.coverUrl;
+    const bubbleCover = radioMeta?.coverUrl || (radioMeta?.isShow && radioMeta?.showCover) || currentSong.coverUrl;
     const radioTitle = radioMeta?.title || currentSong.title;
     const radioArtist = radioMeta?.artist || currentSong.artist || "Radio";
     const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
@@ -888,7 +888,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   } = usePlayerStore();
   const navigate = useNavigate();
   const radioMeta = useRadioMetadata(currentSong?.streamUrl, true, isPlaying, currentSong?.title, currentSong?.coverUrl);
-  const coverUrl = radioMeta?.coverUrl || currentSong?.coverUrl;
+  const coverUrl = radioMeta?.coverUrl || (radioMeta?.isShow && radioMeta?.showCover) || currentSong?.coverUrl;
   const dominantColor = useDominantColor(coverUrl);
   const history = useRadioHistory(currentSong?.streamUrl);
   const [showHistory, setShowHistory] = useState(false);
