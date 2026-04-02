@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { radioCoverCache } from "@/lib/radioCoverCache";
+import { audioManager } from "@/lib/audioManager";
 
 export type RadioSource = "official" | "stream" | "radio_fr" | "tunein" | "none";
 
@@ -36,7 +37,6 @@ export function useRadioHistory(streamUrl?: string): RadioHistoryEntry[] {
     setHistory(radioHistoryMap.get(streamUrl) || []);
   }, [streamUrl]);
 
-  // Subscribe to changes
   useEffect(() => {
     if (!streamUrl) return;
     const interval = setInterval(() => {
@@ -51,12 +51,17 @@ export function useRadioHistory(streamUrl?: string): RadioHistoryEntry[] {
 
 function addToHistory(streamUrl: string, entry: Omit<RadioHistoryEntry, "playedAt">) {
   const list = radioHistoryMap.get(streamUrl) || [];
-  // Don't add if same as last entry
   if (list.length > 0 && list[0].title === entry.title && list[0].artist === entry.artist) return;
   const newEntry = { ...entry, playedAt: new Date() };
   const updated = [newEntry, ...list].slice(0, MAX_HISTORY);
   radioHistoryMap.set(streamUrl, updated);
 }
+
+// ─── Adaptive polling intervals ───
+const POLL_FAST = 12_000;    // 12s right after a song change
+const POLL_NORMAL = 20_000;  // 20s steady state
+const POLL_SLOW = 30_000;    // 30s when nothing changes for a while
+const FAST_WINDOW = 60_000;  // Stay fast for 60s after a change
 
 export function useRadioMetadata(
   streamUrl?: string,
@@ -67,17 +72,31 @@ export function useRadioMetadata(
 ) {
   const [metadata, setMetadata] = useState<RadioMetadata | null>(null);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevStreamRef = useRef<string | undefined>();
   const isFetchingRef = useRef(false);
+  const lastChangeRef = useRef<number>(0);
+  const stableCountRef = useRef(0);
 
   useEffect(() => {
     if (!streamUrl || !isLive || !isPlaying) return;
 
     let isMounted = true;
 
+    const getInterval = () => {
+      const sinceLastChange = Date.now() - lastChangeRef.current;
+      if (sinceLastChange < FAST_WINDOW) return POLL_FAST;
+      if (stableCountRef.current > 4) return POLL_SLOW;
+      return POLL_NORMAL;
+    };
+
+    const scheduleNext = () => {
+      if (intervalRef.current) clearTimeout(intervalRef.current);
+      intervalRef.current = setTimeout(fetchMeta, getInterval());
+    };
+
     const fetchMeta = async () => {
-      if (isFetchingRef.current) return;
+      if (isFetchingRef.current || !isMounted) return;
       isFetchingRef.current = true;
 
       try {
@@ -92,7 +111,6 @@ export function useRadioMetadata(
 
           if (data.artist && data.title) {
             const cached = radioCoverCache.get(data.artist, data.title);
-
             if (cached) {
               coverUrl = cached;
             } else if (coverUrl) {
@@ -101,16 +119,33 @@ export function useRadioMetadata(
           }
 
           setMetadata((prev) => {
-            if (prev?.nowPlaying === data.nowPlaying && prev?.coverUrl === coverUrl) {
+            const changed = prev?.nowPlaying !== data.nowPlaying || prev?.coverUrl !== coverUrl;
+
+            if (!changed) {
+              stableCountRef.current++;
               return prev;
             }
 
-            // Track history when song changes
+            // Song changed — reset adaptive timers
+            stableCountRef.current = 0;
+            lastChangeRef.current = Date.now();
+
+            // Track history
             if (data.title && data.artist && streamUrl) {
               addToHistory(streamUrl, {
                 title: data.title,
                 artist: data.artist,
                 coverUrl,
+              });
+            }
+
+            // ── Sync MediaSession immediately ──
+            if (data.title || data.artist) {
+              audioManager.updateMetadata({
+                title: data.title || stationName || "Radio",
+                artist: data.artist || stationName || "",
+                cover: coverUrl || stationCover || "",
+                album: data.album || (data.isShow ? data.showName : "Radio") || "Radio",
               });
             }
 
@@ -132,17 +167,17 @@ export function useRadioMetadata(
         console.warn("Radio metadata error:", err);
       } finally {
         isFetchingRef.current = false;
+        if (isMounted) scheduleNext();
       }
     };
 
+    // Initial fetch immediately
     fetchMeta();
-    intervalRef.current = setInterval(fetchMeta, 30000);
 
     return () => {
       isMounted = false;
-
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
         intervalRef.current = null;
       }
     };
@@ -151,6 +186,8 @@ export function useRadioMetadata(
   useEffect(() => {
     if (prevStreamRef.current && streamUrl !== prevStreamRef.current) {
       setMetadata(null);
+      lastChangeRef.current = Date.now();
+      stableCountRef.current = 0;
     }
     prevStreamRef.current = streamUrl;
   }, [streamUrl]);
