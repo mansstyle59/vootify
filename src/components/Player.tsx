@@ -416,10 +416,20 @@ export function MiniPlayer() {
       setIsBuffering(false);
     };
     const handlePause = () => {
-      // Sync pause state — only if explicit user action (not OS background interruption)
       if (audioManager.wasExplicitlyPaused) {
+        // Immediate sync for user-initiated pause
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
         if (usePlayerStore.getState().isPlaying) usePlayerStore.setState({ isPlaying: false });
+      } else {
+        // OS interrupt (phone call, Siri, etc.) — wait briefly, then reconcile
+        // AudioManager's interrupt recovery will try to resume; if it can't, sync the store
+        setTimeout(() => {
+          if (audio.paused && !audioManager.wasExplicitlyPaused && usePlayerStore.getState().isPlaying) {
+            // Audio is still paused after recovery window — sync store
+            usePlayerStore.setState({ isPlaying: false });
+            if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+          }
+        }, 12000); // After all 3 interrupt recovery attempts (2s + 4s + 8s = ~14s, check at 12s)
       }
     };
     // Also listen for 'playing' to ensure store reflects actual audio state
@@ -433,6 +443,24 @@ export function MiniPlayer() {
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("playing", handlePlaying);
+
+    // ── Periodic reconciliation — ensure UI matches actual audio state ──
+    const reconcileInterval = setInterval(() => {
+      const state = usePlayerStore.getState();
+      if (!state.currentSong) return;
+      // If store says playing but audio is paused (and not buffering), sync
+      if (state.isPlaying && audio.paused && !audio.ended && audio.readyState >= 2) {
+        // Try to resume first
+        audio.play().catch(() => {
+          // Can't resume — sync store to paused
+          usePlayerStore.setState({ isPlaying: false });
+        });
+      }
+      // If store says paused but audio is actually playing, sync
+      if (!state.isPlaying && !audio.paused && audioManager.wasExplicitlyPaused) {
+        audio.pause();
+      }
+    }, 3000);
 
     // Buffering state from AudioManager
     const onBuffering = () => setIsBuffering(true);
@@ -488,6 +516,7 @@ export function MiniPlayer() {
       window.removeEventListener("audio-prev", onAudioPrev);
       window.removeEventListener("audio-seeked", onAudioSeeked);
       window.removeEventListener("online", handleOnline);
+      clearInterval(reconcileInterval);
     };
   }, [handleTimeUpdate, handleEnded, handleAudioError]);
 
@@ -593,17 +622,18 @@ export function MiniPlayer() {
     };
 
     safeSet("play", () => {
-      const store = usePlayerStore.getState();
-      if (!store.isPlaying) store.togglePlay();
+      usePlayerStore.setState({ isPlaying: true });
+      audioManager['_explicitPause'] = false;
       if (audio.paused && audio.src) {
-        audio.play().catch(console.error);
+        audio.play().catch(() => usePlayerStore.setState({ isPlaying: false }));
       }
       ms.playbackState = "playing";
     });
 
     safeSet("pause", () => {
-      const store = usePlayerStore.getState();
-      if (store.isPlaying) store.togglePlay();
+      usePlayerStore.setState({ isPlaying: false });
+      audioManager['_explicitPause'] = true;
+      audioManager['_cancelInterruptRecovery']();
       audio.pause();
       ms.playbackState = "paused";
     });
