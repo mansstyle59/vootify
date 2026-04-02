@@ -979,10 +979,10 @@ function RadioFullScreen({ onClose, radioMeta }: { onClose: () => void; radioMet
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="min-w-0 flex-1">
             <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
-              {stationName}
+              {displayTitle}
             </h2>
             <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-[15px] text-foreground/60 truncate">{genre}</p>
+              <p className="text-[15px] text-foreground/60 truncate">{displayArtist}</p>
               <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
             </div>
           </div>
