@@ -742,6 +742,9 @@ export function MiniPlayer() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
+                      {radioMeta?.isShow && radioMeta?.showName && (
+                        <p className="text-[10px] truncate text-primary/70 leading-tight">{radioMeta.showName}</p>
+                      )}
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
                         <span>{radioArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
