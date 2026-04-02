@@ -1407,16 +1407,47 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
           <p className="text-[10px] font-semibold text-white/40 tracking-[0.15em] uppercase">En lecture</p>
           <p className="text-[12px] font-bold text-white/70 truncate mt-0.5">{currentSong.album || "Ma bibliothèque"}</p>
         </div>
-        <div className="w-[72px] flex items-center justify-end gap-1.5">
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { onClose(); setTimeout(() => navigate("/audio-settings"), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
-            <SlidersHorizontal className="w-4 h-4 text-white/80" />
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { const q = encodeURIComponent(`${currentSong.title} ${currentSong.artist}`.trim()); onClose(); setTimeout(() => navigate(`/search?q=${q}`), 150); }} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
-            <Search className="w-4 h-4 text-white/80" />
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setShowQueue(!showQueue)} className="w-8 h-8 rounded-full flex items-center justify-center active:bg-white/20 transition-colors" style={{ background: "linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))", backdropFilter: "blur(80px) saturate(2.2)", WebkitBackdropFilter: "blur(80px) saturate(2.2)", border: "0.5px solid hsl(0 0% 100% / 0.1)", boxShadow: "inset 0 0.5px 0 hsl(0 0% 100% / 0.12)" }}>
-            {showQueue ? <X className="w-4 h-4 text-white/80" /> : <ListMusic className="w-4 h-4 text-white/80" />}
-          </motion.button>
+        <div className="flex items-center justify-end gap-1">
+          {[
+            {
+              icon: <SlidersHorizontal className="w-[18px] h-[18px]" />,
+              onClick: () => { onClose(); setTimeout(() => navigate("/audio-settings"), 150); },
+              active: false,
+            },
+            {
+              icon: <Search className="w-[18px] h-[18px]" />,
+              onClick: () => { const q = encodeURIComponent(`${currentSong.title} ${currentSong.artist}`.trim()); onClose(); setTimeout(() => navigate(`/search?q=${q}`), 150); },
+              active: false,
+            },
+            {
+              icon: showQueue ? <X className="w-[18px] h-[18px]" /> : <ListMusic className="w-[18px] h-[18px]" />,
+              onClick: () => setShowQueue(!showQueue),
+              active: showQueue,
+            },
+          ].map((btn, i) => (
+            <motion.button
+              key={i}
+              whileTap={{ scale: 0.88 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={btn.onClick}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${btn.active ? "text-primary" : "text-white/70"}`}
+              style={{
+                background: btn.active
+                  ? "linear-gradient(145deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.08))"
+                  : "linear-gradient(145deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.04))",
+                backdropFilter: "blur(40px) saturate(1.8)",
+                WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                border: btn.active
+                  ? "0.5px solid hsl(var(--primary) / 0.3)"
+                  : "0.5px solid hsl(0 0% 100% / 0.08)",
+                boxShadow: btn.active
+                  ? "0 2px 12px hsl(var(--primary) / 0.2), inset 0 0.5px 0 hsl(var(--primary) / 0.2)"
+                  : "0 2px 8px hsl(0 0% 0% / 0.2), inset 0 0.5px 0 hsl(0 0% 100% / 0.1)",
+              }}
+            >
+              {btn.icon}
+            </motion.button>
+          ))}
         </div>
       </div>
 
