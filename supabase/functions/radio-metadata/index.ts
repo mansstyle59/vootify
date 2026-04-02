@@ -382,6 +382,7 @@ async function searchiTunesCover(artist: string, title: string): Promise<string 
 async function fetchRadioFranceLive(stationId: number): Promise<{
   title: string; artist: string; coverUrl: string; album: string;
   showName?: string; showCover?: string; isShow?: boolean;
+  hasSongData?: boolean;
 } | null> {
   const cacheKey = `rf:${stationId}`;
   const cached = getCached(cacheKey);
@@ -431,6 +432,7 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
           showName,
           showCover: showCover || "",
           isShow: true,
+          hasSongData: false,
         };
         setCache(cacheKey, result);
         return result;
@@ -450,7 +452,7 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       }
 
       if (title || artist) {
-        const result = { title, artist, coverUrl, album, showName, showCover, isShow: false };
+        const result = { title, artist, coverUrl, album, showName, showCover, isShow: false, hasSongData: true };
         setCache(cacheKey, result);
         return result;
       }
@@ -729,16 +731,37 @@ serve(async (req) => {
       const progShowCover = progShow?.pictureUrl || "";
 
       if (rfLive) {
-        if (rfLive.isShow) {
-          title = rfLive.title;
+        if (rfLive.isShow && !rfLive.hasSongData) {
+          // Show/emission mode — no individual song data from livemeta
+          title = rfLive.title || progShowName || "";
           artist = rfStation.name;
           // Prefer programmes-radio.com HD cover > RF show cover > station logo
           showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
           coverUrl = showCover || rfStation.logo || stationCover || "";
-          showName = rfLive.showName || progShowName || "";
-          nowPlaying = `${rfStation.name} — ${rfLive.title}`;
+          showName = rfLive.showName || progShowName || title;
+          nowPlaying = `${rfStation.name} — ${title}`;
           isShow = true;
           source = "official";
+
+          // For stations like Mouv' where livemeta has no song data,
+          // DON'T return early — try radio.fr fallback for actual song info.
+          // Only return early if we're confident it's truly a talk show.
+          const isLikelyMusicShow = /playlist|mix|juice|dj|music|son|hit|top|groove|vib/i.test(title);
+
+          if (!isLikelyMusicShow) {
+            // It's a talk show — return show info
+            if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
+            const responseData = {
+              success: true, nowPlaying, title, artist, coverUrl, album, source,
+              showName, showCover, isShow,
+            };
+            setCache(responseCacheKey, responseData);
+            return new Response(JSON.stringify(responseData), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          // For music shows (like "La Playlist", "Le Wake-up mix"), fall through
+          // to try radio.fr for actual song metadata
         } else if (rfLive.title || rfLive.artist) {
           title = rfLive.title;
           artist = rfLive.artist || rfStation.name;
@@ -750,24 +773,24 @@ serve(async (req) => {
           nowPlaying = artist && title ? `${artist} - ${title}` : title || `En direct sur ${rfStation.name}`;
           source = "official";
 
-          // Enrich cover from multiple sources
-          if (!coverUrl && artist && title) {
-            const resolved = await resolveCoverArt(artist, title, stationCover);
-            coverUrl = resolved.coverUrl;
+          // ALWAYS try to get HD cover from Deezer when RF cover is missing or low-res
+          if (artist && title) {
+            const resolved = await resolveCoverArt(artist, title, coverUrl || stationCover);
+            if (resolved.coverUrl) coverUrl = resolved.coverUrl;
             album = resolved.album || album;
           }
-        }
 
-        if (source === "official") {
-          if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
-          const responseData = {
-            success: true, nowPlaying, title, artist, coverUrl, album, source,
-            showName, showCover, isShow,
-          };
-          setCache(responseCacheKey, responseData);
-          return new Response(JSON.stringify(responseData), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          if (source === "official") {
+            if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
+            const responseData = {
+              success: true, nowPlaying, title, artist, coverUrl, album, source,
+              showName, showCover, isShow,
+            };
+            setCache(responseCacheKey, responseData);
+            return new Response(JSON.stringify(responseData), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
         }
       }
     }
@@ -808,19 +831,34 @@ serve(async (req) => {
     }
 
     // ── Step 2: Try radio.fr API ──
-    if (!nowPlaying && resolvedStationName) {
-      const radioFr = await fetchRadioFrMetadata(resolvedStationName);
-      if (radioFr && (radioFr.title || radioFr.artist)) {
-        nowPlaying = radioFr.nowPlaying;
-        title = radioFr.title;
-        artist = radioFr.artist;
-        coverUrl = radioFr.coverUrl || "";
-        source = "radio_fr";
+    if (!nowPlaying || (isShow && /playlist|mix|juice|dj|music|son|hit|top|groove|vib/i.test(title))) {
+      const radioFrName = resolvedStationName || (rfStation?.name) || "";
+      if (radioFrName) {
+        const radioFr = await fetchRadioFrMetadata(radioFrName);
+        if (radioFr && (radioFr.title || radioFr.artist)) {
+          // We found actual song data — override the show-as-title
+          const prevShowName = showName;
+          const prevShowCover = showCover;
+          nowPlaying = radioFr.nowPlaying;
+          title = radioFr.title;
+          artist = radioFr.artist;
+          coverUrl = radioFr.coverUrl || "";
+          source = isShow ? "official" : "radio_fr"; // Keep "official" if RF station
+          isShow = false; // We now have a real song
+          // Preserve show context
+          showName = prevShowName;
+          showCover = prevShowCover;
 
-        if (!coverUrl && artist && title) {
-          const resolved = await resolveCoverArt(artist, title, stationCover);
-          coverUrl = resolved.coverUrl;
-          album = resolved.album;
+          if (!coverUrl && artist && title) {
+            const resolved = await resolveCoverArt(artist, title, stationCover);
+            coverUrl = resolved.coverUrl;
+            album = resolved.album;
+          } else if (coverUrl && artist && title) {
+            // Even if radio.fr has a cover, try Deezer for HD version
+            const resolved = await resolveCoverArt(artist, title, coverUrl);
+            if (resolved.coverUrl) coverUrl = resolved.coverUrl;
+            album = resolved.album || album;
+          }
         }
       }
     }
