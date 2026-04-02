@@ -952,7 +952,11 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const [shazamResult, setShazamResult] = useState<{ title: string; artist: string; coverUrl: string } | null>(null);
   const autoShazamRef = useRef<string>("");
 
-  // Auto-capture en arrière-plan pour identifier le titre en cours
+  // Auto-capture en arrière-plan — adaptive polling for accurate metadata
+  const autoShazamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoChangeRef = useRef<number>(0);
+  const autoStableCountRef = useRef(0);
+
   useEffect(() => {
     if (!isPlaying || !currentSong?.streamUrl || (currentSong?.duration && currentSong.duration > 0)) return;
     const streamUrl = currentSong.streamUrl;
@@ -960,8 +964,20 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
     const stCover = currentSong.coverUrl || "";
     let cancelled = false;
 
+    const getInterval = () => {
+      const sinceChange = Date.now() - lastAutoChangeRef.current;
+      if (sinceChange < 60_000) return 12_000;   // Fast: 12s after song change
+      if (autoStableCountRef.current > 3) return 30_000; // Slow when stable
+      return 18_000; // Normal: 18s
+    };
+
+    const scheduleNext = () => {
+      if (autoShazamTimerRef.current) clearTimeout(autoShazamTimerRef.current);
+      autoShazamTimerRef.current = setTimeout(autoFetch, getInterval());
+    };
+
     const autoFetch = async () => {
-      if (cancelled || shazamState === "listening") return;
+      if (cancelled || shazamState === "listening") { if (!cancelled) scheduleNext(); return; }
       try {
         const { data } = await supabase.functions.invoke("radio-metadata", {
           body: { streamUrl, stationName: stName, stationCover: stCover, force: true },
@@ -971,18 +987,26 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
           const key = `${data.artist}|||${data.title}`;
           if (key !== autoShazamRef.current) {
             autoShazamRef.current = key;
+            lastAutoChangeRef.current = Date.now();
+            autoStableCountRef.current = 0;
             setShazamResult({ title: data.title, artist: data.artist, coverUrl: data.coverUrl || stCover || "" });
             setShazamState("found");
             if (navigator.vibrate) navigator.vibrate([15, 80, 15]);
             setTimeout(() => setShazamState("idle"), 5000);
+          } else {
+            autoStableCountRef.current++;
           }
         }
       } catch { /* silent */ }
+      if (!cancelled) scheduleNext();
     };
 
-    const initTimer = setTimeout(autoFetch, 3000);
-    const interval = setInterval(autoFetch, 20_000);
-    return () => { cancelled = true; clearTimeout(initTimer); clearInterval(interval); };
+    const initTimer = setTimeout(autoFetch, 2000);
+    return () => {
+      cancelled = true;
+      clearTimeout(initTimer);
+      if (autoShazamTimerRef.current) clearTimeout(autoShazamTimerRef.current);
+    };
   }, [isPlaying, currentSong?.streamUrl, currentSong?.duration]);
 
   const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
