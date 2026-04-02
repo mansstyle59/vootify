@@ -747,9 +747,9 @@ export function MiniPlayer() {
 
   // ── Radio mini-player ──
   if (isLive) {
-    const bubbleCover = currentSong.coverUrl;
-    const radioTitle = currentSong.title;
-    const radioArtist = currentSong.artist || "Radio";
+    const displayTitle = radioMeta?.title || currentSong.title;
+    const displayArtist = radioMeta?.artist || currentSong.artist || "Radio";
+    const displayCover = radioMeta?.cover || currentSong.coverUrl;
     const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
 
     return (
