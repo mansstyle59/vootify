@@ -1494,11 +1494,14 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
 /* ─── Fullscreen Router ─── */
 export function FullScreenPlayer() {
-  const { currentSong, fullScreen, toggleFullScreen } = usePlayerStore();
+  const { currentSong, fullScreen, toggleFullScreen, isPlaying } = usePlayerStore();
+  const isLive = currentSong ? currentSong.duration === 0 : false;
+  const radioMeta = useRadioMetadata(
+    isLive ? currentSong?.title ?? null : null,
+    isPlaying
+  );
 
   if (!currentSong || !fullScreen) return null;
-
-  const isLive = currentSong.duration === 0;
 
   return isLive ? (
     <RadioFullScreen onClose={toggleFullScreen} radioMeta={radioMeta} />
