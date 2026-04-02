@@ -8,24 +8,22 @@ const corsHeaders = {
 const DEEZER_API = "https://api.deezer.com";
 const RF_LIVEMETA = "https://api.radiofrance.fr/livemeta/pull";
 const RADIO_FR_API = "https://prod.radio-api.net";
+const ITUNES_SEARCH = "https://itunes.apple.com/search";
 
-// ─── In-memory cache (TTL 25s) ───
+// ─── In-memory cache (TTL 20s) ───
 const metadataCache = new Map<string, { data: any; ts: number }>();
-const CACHE_TTL_MS = 25_000;
+const CACHE_TTL_MS = 20_000;
 
 function getCached(key: string): any | null {
   const entry = metadataCache.get(key);
   if (!entry) return null;
-  if (Date.now() - entry.ts > CACHE_TTL_MS) {
-    metadataCache.delete(key);
-    return null;
-  }
+  if (Date.now() - entry.ts > CACHE_TTL_MS) { metadataCache.delete(key); return null; }
   return entry.data;
 }
 
 function setCache(key: string, data: any) {
   metadataCache.set(key, { data, ts: Date.now() });
-  if (metadataCache.size > 200) {
+  if (metadataCache.size > 300) {
     const now = Date.now();
     for (const [k, v] of metadataCache) {
       if (now - v.ts > CACHE_TTL_MS) metadataCache.delete(k);
@@ -47,34 +45,31 @@ const AD_PATTERNS = [
   /\bflash\s*(info|actu|traffic|m[eé]t[eé]o)/i,
   /\bm[eé]t[eé]o\b/i, /\binfo\s*trafic/i, /\bhoroscope\b/i,
   /\bchronique\b/i, /\bédito(rial)?\b/i,
-  /^\d{3,}\s*$/,  // just numbers
-  /^radio\s/i,    // "Radio XYZ" generic station ID
+  /^\d{3,}\s*$/, /^radio\s/i,
+  /\b(ici|ceci est|vous écoutez|bienvenue sur)\b/i,
+  /\b(numéro|téléphone|gratuit|essai)\b/i,
 ];
 
 function isAd(text: string): boolean {
   if (!text || text.length < 3) return true;
   const t = text.trim();
-  // Pure URL
   if (/^https?:\/\//i.test(t)) return true;
-  // Too short to be a song
   if (t.length < 4 && !t.includes("-")) return true;
-  for (const p of AD_PATTERNS) {
-    if (p.test(t)) return true;
-  }
+  for (const p of AD_PATTERNS) { if (p.test(t)) return true; }
   return false;
 }
 
-// ─── Radio France station mappings ───
-const RADIO_FRANCE_STATIONS: Record<string, { name: string; stationId: number }> = {
-  franceinter:   { name: "France Inter",    stationId: 1 },
-  franceinfo:    { name: "franceinfo",      stationId: 2 },
+// ─── Radio France station mappings (with logo URLs) ───
+const RADIO_FRANCE_STATIONS: Record<string, { name: string; stationId: number; logo?: string }> = {
+  franceinter:   { name: "France Inter",    stationId: 1, logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/8a8e3e5a-e1e1-4f88-8d84-4b6e2e0dba95/200x200_rf_omm_0000026085_dnc.0057.jpg" },
+  franceinfo:    { name: "franceinfo",      stationId: 2, logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/87d93c76-b6db-43c4-a7e4-7e3c9e6d6c10/200x200_rf_omm_0000026086_dnc.0057.jpg" },
   franceculture: { name: "France Culture",  stationId: 3 },
   francemusique: { name: "France Musique",  stationId: 4 },
   fip:           { name: "FIP",             stationId: 5 },
   mouv:          { name: "Mouv'",           stationId: 6 },
 };
 
-function detectRadioFranceStation(url: string): { name: string; stationId: number } | null {
+function detectRadioFranceStation(url: string): { name: string; stationId: number; logo?: string } | null {
   if (!url.includes("radiofrance.fr")) return null;
   for (const [key, info] of Object.entries(RADIO_FRANCE_STATIONS)) {
     if (url.includes(key)) return info;
@@ -153,14 +148,12 @@ async function searchDeezerCover(artist: string, title: string): Promise<{
     .replace(/\s*-\s*(?:radio edit|single|remix|remaster|version|edit).*$/i, "")
     .trim();
 
-  // Multiple search strategies for better hit rate
   const queries = [
     `artist:"${cleanArtist}" track:"${cleanTitle}"`,
     `${cleanArtist} ${cleanTitle}`,
-    `${cleanTitle} ${cleanArtist}`,  // reversed order
+    `${cleanTitle} ${cleanArtist}`,
   ];
 
-  // If title has parentheses content, also try without
   const bareTitle = cleanTitle.replace(/\s*\(.*\)/, "").trim();
   if (bareTitle !== cleanTitle && bareTitle.length > 2) {
     queries.push(`${cleanArtist} ${bareTitle}`);
@@ -178,7 +171,6 @@ async function searchDeezerCover(artist: string, title: string): Promise<{
       const data = await res.json();
       if (!data.data?.length) continue;
 
-      // Score-based matching
       let bestMatch = data.data[0];
       let bestScore = 0;
 
@@ -187,29 +179,23 @@ async function searchDeezerCover(artist: string, title: string): Promise<{
         const tArtist = normalize(track.artist?.name || "");
         const tTitle = normalize(track.title_short || track.title || "");
 
-        // Exact match
         if (tArtist === normArtist) score += 50;
         else if (tArtist.includes(normArtist) || normArtist.includes(tArtist)) score += 30;
 
         if (tTitle === normTitle) score += 50;
         else if (tTitle.includes(normTitle) || normTitle.includes(tTitle)) score += 25;
 
-        // Word overlap
         const artistWords = normArtist.split(" ").filter(w => w.length > 2);
         const titleWords = normTitle.split(" ").filter(w => w.length > 2);
         const matchedArtistWords = artistWords.filter(w => tArtist.includes(w));
         const matchedTitleWords = titleWords.filter(w => tTitle.includes(w));
-        
+
         if (artistWords.length > 0) score += (matchedArtistWords.length / artistWords.length) * 20;
         if (titleWords.length > 0) score += (matchedTitleWords.length / titleWords.length) * 20;
 
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = track;
-        }
+        if (score > bestScore) { bestScore = score; bestMatch = track; }
       }
 
-      // Only accept if minimum confidence
       if (bestScore < 30 && queries.indexOf(q) < queries.length - 1) continue;
 
       const coverUrl = bestMatch.album?.cover_xl || bestMatch.album?.cover_big || bestMatch.album?.cover_medium || "";
@@ -228,9 +214,46 @@ async function searchDeezerCover(artist: string, title: string): Promise<{
   return null;
 }
 
-// ─── Radio France livemeta API ───
+// ─── iTunes / Apple Music search (fallback for cover art) ───
+async function searchiTunesCover(artist: string, title: string): Promise<string | null> {
+  if (!artist && !title) return null;
+  const cacheKey = `itunes:${artist}:${title}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const q = `${artist} ${title}`.trim();
+    const res = await fetch(
+      `${ITUNES_SEARCH}?term=${encodeURIComponent(q)}&media=music&entity=song&limit=3`,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.results?.length) return null;
+
+    const normA = normalize(artist);
+    const normT = normalize(title);
+
+    for (const r of data.results) {
+      const rA = normalize(r.artistName || "");
+      const rT = normalize(r.trackName || "");
+      if ((rA.includes(normA) || normA.includes(rA)) && (rT.includes(normT) || normT.includes(rT))) {
+        // Get high-res artwork (600x600)
+        const url = (r.artworkUrl100 || "").replace("100x100", "600x600");
+        if (url) { setCache(cacheKey, url); return url; }
+      }
+    }
+    // Fallback: return first result if no exact match
+    const url = (data.results[0].artworkUrl100 || "").replace("100x100", "600x600");
+    if (url) { setCache(cacheKey, url); return url; }
+  } catch { /* ignore */ }
+  return null;
+}
+
+// ─── Radio France livemeta API (enhanced: shows + songs) ───
 async function fetchRadioFranceLive(stationId: number): Promise<{
   title: string; artist: string; coverUrl: string; album: string;
+  showName?: string; showCover?: string; isShow?: boolean;
 } | null> {
   const cacheKey = `rf:${stationId}`;
   const cached = getCached(cacheKey);
@@ -250,14 +273,39 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       const steps = data.steps || {};
       const now = Date.now() / 1000;
       const allSteps = Object.values(steps) as any[];
+
+      // Get current show info (concept/expression)
+      const showSteps = allSteps.filter((s) => s?.embedType === "expression" || s?.embedType === "concept");
+      const currentShow = showSteps.find((s) => s.start <= now && s.end >= now)
+        || showSteps.filter((s) => s.start <= now).sort((a, b) => b.start - a.start)[0];
+
+      const showName = currentShow?.title || currentShow?.concept?.title || "";
+      let showCover = currentShow?.visual || currentShow?.concept?.visual || "";
+      if (showCover && !showCover.startsWith("http")) {
+        showCover = `https://www.radiofrance.fr/s3/cruiser-production-eu3/${showCover}`;
+      }
+
+      // Get current song
       const songSteps = allSteps.filter((step) => step?.embedType === "song");
-
       let current: any = songSteps.find((step) => step.start <= now && step.end >= now);
-
       if (!current) {
-        current = songSteps
-          .filter((step) => step.start <= now)
+        current = songSteps.filter((step) => step.start <= now)
           .sort((a, b) => b.start - a.start)[0] || songSteps[0] || null;
+      }
+
+      // If no song but we have a show → return show info (talk/emission)
+      if (!current && showName) {
+        const result = {
+          title: showName,
+          artist: "",
+          coverUrl: showCover || "",
+          album: "",
+          showName,
+          showCover: showCover || "",
+          isShow: true,
+        };
+        setCache(cacheKey, result);
+        return result;
       }
 
       if (!current) continue;
@@ -266,7 +314,6 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       const artist = current.authors || current.highlightedArtists?.[0] || "";
       const album = current.titreAlbum || "";
 
-      // Filter ads from Radio France
       if (isAd(`${artist} - ${title}`)) continue;
 
       let coverUrl = current.visual || "";
@@ -275,7 +322,7 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       }
 
       if (title || artist) {
-        const result = { title, artist, coverUrl, album };
+        const result = { title, artist, coverUrl, album, showName, showCover, isShow: false };
         setCache(cacheKey, result);
         return result;
       }
@@ -283,7 +330,6 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       console.error(`RF livemeta error (timeout ${timeoutMs}ms):`, (e as Error).message);
     }
   }
-
   return null;
 }
 
@@ -330,8 +376,6 @@ async function fetchRadioFrMetadata(stationName: string): Promise<{
     const songArtist = npData.artist || npData.artistName || "";
 
     if (!songTitle && !songArtist) return null;
-
-    // Filter ads
     if (isAd(`${songArtist} - ${songTitle}`)) return null;
 
     const coverUrl = npData.cover || npData.coverUrl || npData.albumCover || "";
@@ -399,6 +443,36 @@ async function fetchIcyMetadata(streamUrl: string): Promise<string> {
   return "";
 }
 
+// ─── Multi-source cover art resolution ───
+async function resolveCoverArt(artist: string, title: string, existingCover?: string): Promise<{
+  coverUrl: string; album: string; resolvedArtist: string; resolvedTitle: string;
+}> {
+  // 1. Try Deezer first (best cover quality)
+  const deezer = await searchDeezerCover(artist, title);
+  if (deezer?.coverUrl) {
+    return {
+      coverUrl: deezer.coverUrl,
+      album: deezer.deezerAlbum,
+      resolvedArtist: deezer.deezerArtist || artist,
+      resolvedTitle: deezer.deezerTitle || title,
+    };
+  }
+
+  // 2. Fallback to iTunes/Apple Music
+  const itunesCover = await searchiTunesCover(artist, title);
+  if (itunesCover) {
+    return { coverUrl: itunesCover, album: "", resolvedArtist: artist, resolvedTitle: title };
+  }
+
+  // 3. Use existing cover
+  return {
+    coverUrl: existingCover || "",
+    album: "",
+    resolvedArtist: artist,
+    resolvedTitle: title,
+  };
+}
+
 // ═══════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════
@@ -415,7 +489,7 @@ serve(async (req) => {
       });
     }
 
-    // ── Check full-response cache first (skip if force refresh) ──
+    // ── Check full-response cache first ──
     const responseCacheKey = `resp:${streamUrl}:${stationName || ""}`;
     if (!force) {
       const cachedResponse = getCached(responseCacheKey);
@@ -425,9 +499,7 @@ serve(async (req) => {
         });
       }
     } else {
-      // Force: invalidate cache for this key
       metadataCache.delete(responseCacheKey);
-      // Also invalidate sub-caches
       for (const [k] of metadataCache) {
         if (k.startsWith(`rf:`) || k.startsWith(`radiofr:`) || k.startsWith(`resp:${streamUrl}`)) {
           metadataCache.delete(k);
@@ -440,43 +512,61 @@ serve(async (req) => {
     let artist = "";
     let coverUrl = "";
     let album = "";
-    let source = "none"; // official | stream | radio_fr | none
+    let source = "none";
+    let showName = "";
+    let showCover = "";
+    let isShow = false;
 
     const rfStation = detectRadioFranceStation(streamUrl);
     const resolvedStationName = stationName || rfStation?.name || "";
 
-    // ── Step 1: Radio France → livemeta API (best source for RF stations) ──
+    // ── Step 1: Radio France → livemeta API ──
     if (rfStation) {
       const rfLive = await fetchRadioFranceLive(rfStation.stationId);
-      if (rfLive && (rfLive.title || rfLive.artist)) {
-        title = rfLive.title;
-        artist = rfLive.artist || rfStation.name;
-        album = rfLive.album;
-        coverUrl = rfLive.coverUrl || "";
-        nowPlaying = artist && title ? `${artist} - ${title}` : title || `En direct sur ${rfStation.name}`;
-        source = "official";
+      if (rfLive) {
+        if (rfLive.isShow) {
+          // Talk show / emission — use show cover
+          title = rfLive.title;
+          artist = rfStation.name;
+          coverUrl = rfLive.showCover || rfLive.coverUrl || rfStation.logo || stationCover || "";
+          nowPlaying = `${rfStation.name} — ${rfLive.title}`;
+          showName = rfLive.showName || "";
+          showCover = rfLive.showCover || "";
+          isShow = true;
+          source = "official";
+        } else if (rfLive.title || rfLive.artist) {
+          title = rfLive.title;
+          artist = rfLive.artist || rfStation.name;
+          album = rfLive.album;
+          coverUrl = rfLive.coverUrl || "";
+          showName = rfLive.showName || "";
+          showCover = rfLive.showCover || "";
+          nowPlaying = artist && title ? `${artist} - ${title}` : title || `En direct sur ${rfStation.name}`;
+          source = "official";
 
-        if (!coverUrl && artist && title) {
-          const deezer = await searchDeezerCover(artist, title);
-          if (deezer) {
-            coverUrl = deezer.coverUrl;
-            album = deezer.deezerAlbum || album;
+          // Enrich cover from multiple sources
+          if (!coverUrl && artist && title) {
+            const resolved = await resolveCoverArt(artist, title, stationCover);
+            coverUrl = resolved.coverUrl;
+            album = resolved.album || album;
           }
         }
-        if (!coverUrl) coverUrl = stationCover || "";
 
-        const responseData = { success: true, nowPlaying, title, artist, coverUrl, album, source };
-        setCache(responseCacheKey, responseData);
-
-        return new Response(JSON.stringify(responseData), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        if (source === "official") {
+          if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
+          const responseData = {
+            success: true, nowPlaying, title, artist, coverUrl, album, source,
+            showName, showCover, isShow,
+          };
+          setCache(responseCacheKey, responseData);
+          return new Response(JSON.stringify(responseData), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
-
-      console.log(`RF livemeta unavailable for ${rfStation.name}, fallback chain enabled`);
     }
 
-    // ── Step 2: Try radio.fr API (official metadata) ──
+    // ── Step 2: Try radio.fr API ──
     if (!nowPlaying && resolvedStationName) {
       const radioFr = await fetchRadioFrMetadata(resolvedStationName);
       if (radioFr && (radioFr.title || radioFr.artist)) {
@@ -487,11 +577,9 @@ serve(async (req) => {
         source = "radio_fr";
 
         if (!coverUrl && artist && title) {
-          const deezer = await searchDeezerCover(artist, title);
-          if (deezer) {
-            coverUrl = deezer.coverUrl;
-            album = deezer.deezerAlbum;
-          }
+          const resolved = await resolveCoverArt(artist, title, stationCover);
+          coverUrl = resolved.coverUrl;
+          album = resolved.album;
         }
       }
     }
@@ -500,18 +588,13 @@ serve(async (req) => {
     if (!nowPlaying) {
       const icyRaw = await fetchIcyMetadata(streamUrl);
       if (icyRaw) {
-        // Ad-block: filter out ads from ICY stream
         if (isAd(icyRaw)) {
-          // Return last known good metadata or station info
           const responseData = {
             success: true,
             nowPlaying: `En direct sur ${resolvedStationName || "Radio"}`,
-            title: "En direct",
-            artist: resolvedStationName || "Radio",
-            coverUrl: stationCover || "",
-            album: "",
-            source: "none",
-            adFiltered: true,
+            title: "En direct", artist: resolvedStationName || "Radio",
+            coverUrl: stationCover || "", album: "", source: "none",
+            adFiltered: true, showName: "", showCover: "", isShow: false,
           };
           return new Response(JSON.stringify(responseData), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -525,24 +608,19 @@ serve(async (req) => {
         source = "stream";
 
         if (artist && title) {
-          const deezer = await searchDeezerCover(artist, title);
-          if (deezer) {
-            coverUrl = deezer.coverUrl;
-            album = deezer.deezerAlbum;
-            if (deezer.deezerArtist) artist = deezer.deezerArtist;
-            if (deezer.deezerTitle) title = deezer.deezerTitle;
-            nowPlaying = `${artist} - ${title}`;
-          }
+          const resolved = await resolveCoverArt(artist, title, stationCover);
+          coverUrl = resolved.coverUrl;
+          album = resolved.album;
+          if (resolved.resolvedArtist) artist = resolved.resolvedArtist;
+          if (resolved.resolvedTitle) title = resolved.resolvedTitle;
+          nowPlaying = `${artist} - ${title}`;
         } else if (title && !artist) {
-          // Try searching with just the title
-          const deezer = await searchDeezerCover("", title);
-          if (deezer) {
-            coverUrl = deezer.coverUrl;
-            album = deezer.deezerAlbum;
-            artist = deezer.deezerArtist || "";
-            title = deezer.deezerTitle || title;
-            if (artist) nowPlaying = `${artist} - ${title}`;
-          }
+          const resolved = await resolveCoverArt("", title, stationCover);
+          coverUrl = resolved.coverUrl;
+          album = resolved.album;
+          artist = resolved.resolvedArtist || "";
+          title = resolved.resolvedTitle || title;
+          if (artist) nowPlaying = `${artist} - ${title}`;
         }
       }
     }
@@ -556,12 +634,14 @@ serve(async (req) => {
       source = "none";
     }
 
-    // Never return relative/broken paths
     if (!coverUrl || coverUrl.startsWith("/")) {
       coverUrl = stationCover || "";
     }
 
-    const responseData = { success: true, nowPlaying, title, artist, coverUrl, album, source };
+    const responseData = {
+      success: true, nowPlaying, title, artist, coverUrl, album, source,
+      showName, showCover, isShow,
+    };
     setCache(responseCacheKey, responseData);
 
     return new Response(JSON.stringify(responseData), {
