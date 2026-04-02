@@ -886,24 +886,7 @@ function PlaylistForm() {
           });
         } else {
           notFound++;
-          // Still add the track with Deezer metadata (preview URL, cover, etc.)
-          const deezerCover = (t as any).album?.cover_xl || (t as any).album?.cover_big || t.album?.cover_medium || "";
-          const deezerPreview = (t as any).preview || "";
-          newSongs.push({
-            file: null as unknown as File,
-            title: normalizeTitle(t.title || ""),
-            artist: normalizeArtist(t.artist?.name || ""),
-            album: t.album?.title || "",
-            coverUrl: deezerCover,
-            streamUrl: deezerPreview,
-            duration: t.duration || 0,
-            genre: "",
-            year: undefined,
-            id3Filled: new Set(["title", "artist"]),
-            uploaded: false,
-            uploading: false,
-            skipped: false,
-          });
+          // Local-only: skip tracks not found in library
         }
       }
 
