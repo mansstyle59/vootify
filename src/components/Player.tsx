@@ -481,6 +481,7 @@ export function MiniPlayer() {
       audio.removeEventListener("error", handleAudioError);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("playing", handlePlaying);
       window.removeEventListener("audio-buffering", onBuffering);
       window.removeEventListener("audio-ready", onReady);
       window.removeEventListener("audio-next", onAudioNext);
