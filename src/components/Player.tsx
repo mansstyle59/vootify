@@ -950,6 +950,40 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [shazamState, setShazamState] = useState<"idle" | "listening" | "found" | "notfound">("idle");
   const [shazamResult, setShazamResult] = useState<{ title: string; artist: string; coverUrl: string } | null>(null);
+  const autoShazamRef = useRef<string>("");
+
+  // Auto-capture en arrière-plan pour identifier le titre en cours
+  useEffect(() => {
+    if (!isPlaying || !currentSong?.streamUrl || (currentSong?.duration && currentSong.duration > 0)) return;
+    const streamUrl = currentSong.streamUrl;
+    const stName = currentSong.title || "";
+    const stCover = currentSong.coverUrl || "";
+    let cancelled = false;
+
+    const autoFetch = async () => {
+      if (cancelled || shazamState === "listening") return;
+      try {
+        const { data } = await supabase.functions.invoke("radio-metadata", {
+          body: { streamUrl, stationName: stName, stationCover: stCover, force: true },
+        });
+        if (cancelled) return;
+        if (data?.success && data.title && data.artist) {
+          const key = `${data.artist}|||${data.title}`;
+          if (key !== autoShazamRef.current) {
+            autoShazamRef.current = key;
+            setShazamResult({ title: data.title, artist: data.artist, coverUrl: data.coverUrl || stCover || "" });
+            setShazamState("found");
+            if (navigator.vibrate) navigator.vibrate([15, 80, 15]);
+            setTimeout(() => setShazamState("idle"), 5000);
+          }
+        }
+      } catch { /* silent */ }
+    };
+
+    const initTimer = setTimeout(autoFetch, 3000);
+    const interval = setInterval(autoFetch, 20_000);
+    return () => { cancelled = true; clearTimeout(initTimer); clearInterval(interval); };
+  }, [isPlaying, currentSong?.streamUrl, currentSong?.duration]);
 
   const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
     const entryKey = `${entry.artist}|||${entry.title}`;
