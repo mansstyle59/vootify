@@ -1293,7 +1293,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       <Disc3 className="w-6 h-6 relative z-10" style={{ color: "hsl(210 100% 55%)" }} />
                     </motion.div>
                   ) : (
-                    <img src={shazamIcon} alt="Shazam" className="w-7 h-7 relative z-10 brightness-0 invert" style={{ filter: "brightness(0) invert(1) drop-shadow(0 0 4px hsl(210 100% 55% / 0.5))" }} />
+                    <img src={shazamLogo} alt="Shazam" className="w-8 h-8 relative z-10 rounded-full" style={{ filter: "drop-shadow(0 0 6px hsl(210 100% 55% / 0.5))" }} />
                   )}
                 </motion.button>
               </div>
