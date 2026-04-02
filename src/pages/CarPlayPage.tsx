@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useAuth } from "@/hooks/useAuth";
 import { getStationLogo } from "@/lib/radioLogos";
-import { useRadioMetadata, useRadioHistory } from "@/hooks/useRadioMetadata";
+
 import { getGreeting, getSmartMixLabel, buildSmartMix, getTimeContext } from "@/lib/smartMix";
 import {
   Music, Radio, Search, X, ChevronLeft, Volume2, History, Clock, Disc3, Heart, Star, User, Play,
