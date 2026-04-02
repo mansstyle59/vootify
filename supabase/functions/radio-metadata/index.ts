@@ -188,37 +188,13 @@ async function fetchProgRadioSchedule(stationCode: string): Promise<ProgRadioSho
   }
 }
 
-// ─── programmes-radio.com now-playing (song-level) for commercial stations ───
+// ─── programmes-radio.com now-playing (song-level) via schedule parsing ───
 async function fetchProgRadioNowPlaying(stationCode: string): Promise<{
   title: string; artist: string; coverUrl: string;
 } | null> {
-  const cacheKey = `progradio:np:${stationCode}`;
-  const cached = getCached(cacheKey);
-  if (cached) return cached;
-
-  try {
-    // Try the "now" endpoint that many radios expose via programmes-radio
-    const resp = await fetch(`${PROGRADIO_API}/now/${stationCode}`, {
-      headers: { "User-Agent": "Vootify/1.0", "Referer": "https://www.programmes-radio.com/" },
-      signal: AbortSignal.timeout(4000),
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-
-    // The response usually has { song: { artist, title, cover }, ... }
-    const song = data?.now?.song || data?.song || data?.now;
-    if (!song) return null;
-
-    const title = song.title || song.name || "";
-    const artist = song.artist || song.interpreter || "";
-    const coverUrl = song.cover || song.thumbnail || song.img || "";
-
-    if (title && artist && !isAdContent(artist, title)) {
-      const result = { title, artist, coverUrl };
-      setCache(cacheKey, result);
-      return result;
-    }
-  } catch { /* silent */ }
+  // The /now/ endpoint doesn't exist on programmes-radio.com
+  // Instead we only have schedule data (show-level, not song-level)
+  // This function is kept as a stub for future API support
   return null;
 }
 
