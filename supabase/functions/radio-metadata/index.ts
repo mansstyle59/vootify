@@ -522,6 +522,7 @@ const RADIO_FR_STATION_IDS: Record<string, string> = {
   "france inter": "franceinter", "franceinfo": "franceinfofrance", "france info": "franceinfofrance",
   "france culture": "franceculture", "france musique": "francemusique",
   "fip": "fip",
+  "mouv": "lemouv", "mouv'": "lemouv",
   "contact fm": "contactfm", "voltage": "voltage",
   "ouï fm": "ouifm", "oui fm": "ouifm", "tsf jazz": "tsfjazz",
   "radio nova": "nova", "nova": "nova",
