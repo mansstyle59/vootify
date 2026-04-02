@@ -621,17 +621,18 @@ export function MiniPlayer() {
     };
 
     safeSet("play", () => {
-      const store = usePlayerStore.getState();
-      if (!store.isPlaying) store.togglePlay();
+      usePlayerStore.setState({ isPlaying: true });
+      audioManager['_explicitPause'] = false;
       if (audio.paused && audio.src) {
-        audio.play().catch(console.error);
+        audio.play().catch(() => usePlayerStore.setState({ isPlaying: false }));
       }
       ms.playbackState = "playing";
     });
 
     safeSet("pause", () => {
-      const store = usePlayerStore.getState();
-      if (store.isPlaying) store.togglePlay();
+      usePlayerStore.setState({ isPlaying: false });
+      audioManager['_explicitPause'] = true;
+      audioManager['_cancelInterruptRecovery']();
       audio.pause();
       ms.playbackState = "paused";
     });
