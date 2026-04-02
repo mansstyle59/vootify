@@ -1501,7 +1501,7 @@ export function FullScreenPlayer() {
   const isLive = currentSong.duration === 0;
 
   return isLive ? (
-    <RadioFullScreen onClose={toggleFullScreen} />
+    <RadioFullScreen onClose={toggleFullScreen} radioMeta={radioMeta} />
   ) : (
     <MusicFullScreen onClose={toggleFullScreen} />
   );
