@@ -639,7 +639,10 @@ serve(async (req) => {
     if (!nowPlaying) {
       const icyRaw = await fetchIcyMetadata(streamUrl);
       if (icyRaw) {
-        if (isAd(icyRaw)) {
+        const parsed = cleanIcyTitle(icyRaw);
+
+        // Check raw ICY string AND parsed artist/title for ads
+        if (isAd(icyRaw) || isAdContent(parsed.artist, parsed.title)) {
           const responseData = {
             success: true,
             nowPlaying: `En direct sur ${resolvedStationName || "Radio"}`,
@@ -647,12 +650,12 @@ serve(async (req) => {
             coverUrl: stationCover || "", album: "", source: "none",
             adFiltered: true, showName: "", showCover: "", isShow: false,
           };
+          setCache(responseCacheKey, responseData);
           return new Response(JSON.stringify(responseData), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        const parsed = cleanIcyTitle(icyRaw);
         artist = parsed.artist;
         title = parsed.title;
         nowPlaying = icyRaw;
@@ -674,6 +677,7 @@ serve(async (req) => {
           if (artist) nowPlaying = `${artist} - ${title}`;
         }
       }
+    }
     }
 
     // ── Step 4: Generic fallback ──
