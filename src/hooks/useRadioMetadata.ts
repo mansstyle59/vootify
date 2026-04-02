@@ -124,6 +124,7 @@ export function useRadioMetadata(
               showName: data.showName || undefined,
               showCover: data.showCover || undefined,
               isShow: data.isShow || false,
+              adFiltered: data.adFiltered || false,
             };
           });
         }
