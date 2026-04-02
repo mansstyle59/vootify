@@ -365,7 +365,7 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
       const artist = current.authors || current.highlightedArtists?.[0] || "";
       const album = current.titreAlbum || "";
 
-      if (isAd(`${artist} - ${title}`)) continue;
+      if (isAdContent(artist, title)) continue;
 
       let coverUrl = current.visual || "";
       if (coverUrl && !coverUrl.startsWith("http")) {
