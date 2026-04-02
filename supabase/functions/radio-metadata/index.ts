@@ -593,6 +593,10 @@ function resolveRadioFrStationId(stationName: string, streamUrl?: string): strin
 async function fetchRadioFrMetadata(stationName: string, streamUrl?: string): Promise<{
   nowPlaying: string; title: string; artist: string; coverUrl: string;
 } | null> {
+  // Skip stations known to return wrong data on radio.fr
+  const nameNormalized = stationName.toLowerCase().trim().replace(/['']/g, "'");
+  if (RADIO_FR_BLACKLIST.has(nameNormalized)) return null;
+
   // Step 1: Try the fast batch now-playing endpoint with known station ID
   const knownId = resolveRadioFrStationId(stationName, streamUrl);
   if (knownId) {
