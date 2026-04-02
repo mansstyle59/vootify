@@ -3,6 +3,13 @@ import { Clock, X } from "lucide-react";
 
 import { LazyImage } from "@/components/LazyImage";
 
+interface RadioHistoryEntry {
+  title: string;
+  artist: string;
+  coverUrl: string;
+  playedAt: Date;
+}
+
 interface Props {
   history: RadioHistoryEntry[];
   isOpen: boolean;
