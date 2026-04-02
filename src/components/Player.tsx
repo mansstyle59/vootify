@@ -928,8 +928,8 @@ function RadioFullScreen({ onClose, radioMeta }: { onClose: () => void; radioMet
       <div className="absolute inset-0 overflow-hidden">
         <AnimatePresence mode="popLayout">
           <motion.img
-            key={coverUrl}
-            src={coverUrl}
+            key={displayCover}
+            src={displayCover}
             alt=""
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.25 }}
