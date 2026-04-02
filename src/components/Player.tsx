@@ -705,7 +705,7 @@ export function MiniPlayer() {
 
   // ── Radio mini-player ──
   if (isLive) {
-    const bubbleCover = radioMeta?.coverUrl || currentSong.coverUrl;
+    const bubbleCover = radioMeta?.coverUrl || (radioMeta?.isShow && radioMeta?.showCover) || currentSong.coverUrl;
     const radioTitle = radioMeta?.title || currentSong.title;
     const radioArtist = radioMeta?.artist || currentSong.artist || "Radio";
     const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
