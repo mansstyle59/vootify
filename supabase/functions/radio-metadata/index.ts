@@ -548,7 +548,9 @@ const RADIO_FR_STATION_IDS: Record<string, string> = {
   // Radio France
   "france inter": "franceinter", "franceinfo": "franceinfofrance", "france info": "franceinfofrance",
   "france culture": "franceculture", "france musique": "francemusique",
-  "fip": "fip", "mouv": "lemouv", "mouv'": "lemouv",
+  "fip": "fip",
+  // NOTE: "lemouv" on radio.fr returns wrong data (Skyrock), so Mouv' is NOT mapped here.
+  // Mouv' metadata comes from RF livemeta + programmes-radio.com instead.
   // Others
   "contact fm": "contactfm", "voltage": "voltage",
   "ouï fm": "ouifm", "oui fm": "ouifm", "tsf jazz": "tsfjazz",
