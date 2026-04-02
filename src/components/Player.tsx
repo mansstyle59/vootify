@@ -21,6 +21,7 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
+import { useRadioMetadata } from "@/hooks/useRadioMetadata";
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
