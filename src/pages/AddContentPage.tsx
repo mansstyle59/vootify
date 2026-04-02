@@ -886,35 +886,20 @@ function PlaylistForm() {
           });
         } else {
           notFound++;
-          // Still add the track with Deezer metadata (preview URL, cover, etc.)
-          const deezerCover = (t as any).album?.cover_xl || (t as any).album?.cover_big || t.album?.cover_medium || "";
-          const deezerPreview = (t as any).preview || "";
-          newSongs.push({
-            file: null as unknown as File,
-            title: normalizeTitle(t.title || ""),
-            artist: normalizeArtist(t.artist?.name || ""),
-            album: t.album?.title || "",
-            coverUrl: deezerCover,
-            streamUrl: deezerPreview,
-            duration: t.duration || 0,
-            genre: "",
-            year: undefined,
-            id3Filled: new Set(["title", "artist"]),
-            uploaded: false,
-            uploading: false,
-            skipped: false,
-          });
+          // Local-only: skip tracks not found in library
         }
       }
 
       setSongs(prev => [...prev, ...newSongs]);
 
-      if (matched > 0 && notFound === 0) {
-        toast.success(`✅ ${allTracks.length} morceaux importés !`);
-      } else if (matched > 0) {
-        toast.success(`${matched} trouvés localement, ${notFound} depuis Deezer`);
-      } else {
-        toast.success(`${allTracks.length} morceaux importés depuis Deezer`);
+      if (matched > 0) {
+        toast.success(`✅ ${matched} titre${matched > 1 ? "s" : ""} trouvé${matched > 1 ? "s" : ""} localement`);
+      }
+      if (notFound > 0) {
+        toast.info(`${notFound} titre${notFound > 1 ? "s" : ""} non trouvé${notFound > 1 ? "s" : ""} dans ta bibliothèque`);
+      }
+      if (matched === 0 && notFound > 0) {
+        toast.warning("Aucun titre de cette playlist n'est dans ta bibliothèque");
       }
       setDeezerUrl("");
     } catch (e) {

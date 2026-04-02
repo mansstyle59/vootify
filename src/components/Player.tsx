@@ -1187,16 +1187,40 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                 )}
               </div>
 
-              {/* Recognition overlay */}
-              <RadioRecognitionOverlay
-                radioMeta={radioMeta}
-                isPlaying={isPlaying}
-                stationName={stationName}
-                coverUrl={coverUrl}
-              />
+              {/* Re-recognize button */}
+              <div className="flex items-center justify-center mt-3">
+                <motion.button
+                  whileTap={{ scale: 0.93 }}
+                  onClick={() => {
+                    // Force re-fetch metadata by clearing and re-triggering
+                    if (radioMeta?.title) {
+                      toast.info("Relance de la reconnaissance…");
+                      // Trigger a new metadata fetch by toggling
+                      const streamUrl = currentSong?.streamUrl;
+                      if (streamUrl) {
+                        supabase.functions.invoke("radio-metadata", {
+                          body: { streamUrl, stationName, stationCover: coverUrl, force: true },
+                        }).then(({ data }) => {
+                          if (data?.success && data.title) {
+                            toast.success(`🎵 ${data.title} — ${data.artist}`);
+                          }
+                        }).catch(() => {});
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full active:scale-95 transition-transform"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.08))",
+                    border: "1px solid hsl(var(--primary) / 0.25)",
+                    boxShadow: "0 0 20px hsl(var(--primary) / 0.15)",
+                  }}
+                >
+                  <Disc3 className="w-4 h-4 text-primary" style={{ animationDuration: "3s" }} />
+                  <span className="text-[12px] font-bold text-primary tracking-wide">Relancer la reconnaissance</span>
+                </motion.button>
+              </div>
 
-              <div className="flex items-center justify-between mt-3">
-                <AddToLibraryButton song={currentSong} />
+              <div className="flex items-center justify-center mt-3">
                 <button
                   onClick={() => setShowHistory(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
@@ -1205,7 +1229,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                   <ListMusic className="w-4 h-4 text-foreground/60" />
                   <span className="text-[11px] font-semibold text-foreground/60">Historique{history.length > 0 ? ` (${history.length})` : ""}</span>
                 </button>
-                <div />
               </div>
             </motion.div>
           )}

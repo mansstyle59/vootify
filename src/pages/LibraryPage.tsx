@@ -704,35 +704,33 @@ const LibraryPage = () => {
                  (sArtist.includes(dArtist) || dArtist.includes(sArtist));
         });
 
-        const song: Song = match
-          ? {
-              id: `custom-${match.id}`,
-              title: match.title,
-              artist: match.artist,
-              album: match.album || "",
-              duration: match.duration || 0,
-              coverUrl: match.cover_url || dt.album?.cover_medium || "",
-              streamUrl: match.stream_url || "",
-              liked: false,
-            }
-          : {
-              id: `deezer-${playlistId}-${index}`,
-              title: dt.title || "Titre inconnu",
-              artist: dt.artist?.name || "Artiste inconnu",
-              album: dt.album?.title || "",
-              duration: dt.duration || 0,
-              coverUrl: dt.album?.cover_xl || dt.album?.cover_big || dt.album?.cover_medium || "",
-              streamUrl: dt.preview || "",
-              liked: false,
-            };
+        if (!match) {
+          importedFromDeezer++;
+          continue;
+        }
+
+        matched++;
+        const song: Song = {
+          id: `custom-${match.id}`,
+          title: match.title,
+          artist: match.artist,
+          album: match.album || "",
+          duration: match.duration || 0,
+          coverUrl: match.cover_url || dt.album?.cover_medium || "",
+          streamUrl: match.stream_url || "",
+          liked: false,
+        };
 
         if (!song.streamUrl) continue;
         await addSongToPlaylist(newPl.id, song);
-        if (match) matched++;
-        else importedFromDeezer++;
       }
 
-      toast.success(`"${playlistName}" créée — ${matched} local + ${importedFromDeezer} Deezer`);
+      if (matched > 0) {
+        toast.success(`"${playlistName}" créée — ${matched} titre${matched > 1 ? "s" : ""} trouvé${matched > 1 ? "s" : ""} localement`);
+      }
+      if (importedFromDeezer > 0) {
+        toast.info(`${importedFromDeezer} titre${importedFromDeezer > 1 ? "s" : ""} non trouvé${importedFromDeezer > 1 ? "s" : ""} dans ta bibliothèque`);
+      }
       setDeezerUrl("");
       setShowCreate(false);
     } catch (e) {
