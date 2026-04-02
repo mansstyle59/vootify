@@ -816,12 +816,14 @@ serve(async (req) => {
     if (rfStation) {
       const stationKey = Object.entries(RADIO_FRANCE_STATIONS).find(([, v]) => v.stationId === rfStation.stationId)?.[0] || "";
       const icyPriority = isIcyPriorityStation(resolvedStationName) || isIcyPriorityStation(stationKey);
+      const progCode = resolveProgRadioCode(resolvedStationName) || stationKey;
 
-      // Fetch all sources in parallel for speed
-      const [rfLive, progShow, icyRaw] = await Promise.all([
+      // Fetch ALL sources in parallel: livemeta + schedule + ICY + programmes-radio now-playing
+      const [rfLive, progShow, icyRaw, progNp] = await Promise.all([
         fetchRadioFranceLive(rfStation.stationId),
         stationKey ? fetchProgRadioSchedule(stationKey) : Promise.resolve(null),
         icyPriority ? fetchIcyMetadata(streamUrl) : Promise.resolve(""),
+        progCode ? fetchProgRadioNowPlaying(progCode) : Promise.resolve(null),
       ]);
 
       const progShowName = progShow?.title || "";
