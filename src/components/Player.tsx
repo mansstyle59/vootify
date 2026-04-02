@@ -23,7 +23,7 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
-import shazamIcon from "@/assets/shazam-icon.png";
+import shazamLogo from "@/assets/shazam-logo.png";
 
 /* ── Live metadata timestamp indicator ── */
 function MetaTimestamp({ ts }: { ts: number }) {
@@ -950,6 +950,40 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [shazamState, setShazamState] = useState<"idle" | "listening" | "found" | "notfound">("idle");
   const [shazamResult, setShazamResult] = useState<{ title: string; artist: string; coverUrl: string } | null>(null);
+  const autoShazamRef = useRef<string>("");
+
+  // Auto-capture en arrière-plan pour identifier le titre en cours
+  useEffect(() => {
+    if (!isPlaying || !currentSong?.streamUrl || (currentSong?.duration && currentSong.duration > 0)) return;
+    const streamUrl = currentSong.streamUrl;
+    const stName = currentSong.title || "";
+    const stCover = currentSong.coverUrl || "";
+    let cancelled = false;
+
+    const autoFetch = async () => {
+      if (cancelled || shazamState === "listening") return;
+      try {
+        const { data } = await supabase.functions.invoke("radio-metadata", {
+          body: { streamUrl, stationName: stName, stationCover: stCover, force: true },
+        });
+        if (cancelled) return;
+        if (data?.success && data.title && data.artist) {
+          const key = `${data.artist}|||${data.title}`;
+          if (key !== autoShazamRef.current) {
+            autoShazamRef.current = key;
+            setShazamResult({ title: data.title, artist: data.artist, coverUrl: data.coverUrl || stCover || "" });
+            setShazamState("found");
+            if (navigator.vibrate) navigator.vibrate([15, 80, 15]);
+            setTimeout(() => setShazamState("idle"), 5000);
+          }
+        }
+      } catch { /* silent */ }
+    };
+
+    const initTimer = setTimeout(autoFetch, 3000);
+    const interval = setInterval(autoFetch, 20_000);
+    return () => { cancelled = true; clearTimeout(initTimer); clearInterval(interval); };
+  }, [isPlaying, currentSong?.streamUrl, currentSong?.duration]);
 
   const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
     const entryKey = `${entry.artist}|||${entry.title}`;
@@ -1293,7 +1327,7 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       <Disc3 className="w-6 h-6 relative z-10" style={{ color: "hsl(210 100% 55%)" }} />
                     </motion.div>
                   ) : (
-                    <img src={shazamIcon} alt="Shazam" className="w-7 h-7 relative z-10 brightness-0 invert" style={{ filter: "brightness(0) invert(1) drop-shadow(0 0 4px hsl(210 100% 55% / 0.5))" }} />
+                    <img src={shazamLogo} alt="Shazam" className="w-8 h-8 relative z-10 rounded-full" style={{ filter: "drop-shadow(0 0 6px hsl(210 100% 55% / 0.5))" }} />
                   )}
                 </motion.button>
               </div>
