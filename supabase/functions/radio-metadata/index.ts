@@ -104,6 +104,8 @@ const PROGRADIO_STATION_MAP: Record<string, string> = {
   mouv: "mouv",
   nrj: "nrj",
   skyrock: "skyrock",
+  "skyrock klassiks": "skyrockklassiks",
+  "skyrock 100% français": "skyrockfrancais",
   "fun radio": "funradio",
   funradio: "funradio",
   nostalgie: "nostalgie",
@@ -489,10 +491,14 @@ async function fetchSkyrockMetadata(streamUrl: string): Promise<{
 }
 
 // ─── Native station detection ───
+// Only match MAIN Skyrock, not sub-stations like Skyrock Klassiks
 function detectNativeStation(url: string, stationName?: string): string | null {
   const u = url.toLowerCase();
   const n = (stationName || "").toLowerCase();
-  if (u.includes("skyrock") || n.includes("skyrock")) return "skyrock";
+  // Exclude sub-stations (klassiks, 100% français, etc.)
+  const isSubStation = /skyrock\s*(klassiks|classique|100|fran[cç]ais|la\s*radio)/i.test(n) ||
+                       /skyrock[-_]?(klassiks|classique|100|francais)/i.test(u);
+  if (!isSubStation && (u.includes("skyrock") || n.includes("skyrock"))) return "skyrock";
   return null;
 }
 
@@ -500,7 +506,6 @@ function detectNativeStation(url: string, stationName?: string): string | null {
 const RADIO_FR_BLACKLIST = new Set<string>([]);
 
 // ─── Stations that should prioritize ICY stream metadata ───
-// NOTE: Mouv' REMOVED — its ICY returns show names, not songs. RF livemeta is better.
 const ICY_PRIORITY_STATIONS = new Set<string>([]);
 
 function isIcyPriorityStation(stationName: string): boolean {
@@ -515,7 +520,8 @@ const RADIO_FR_STATION_IDS: Record<string, string> = {
   "nrj french hits": "nrjfrenchhits", "nostalgie": "nostalgie",
   "cherie fm": "cheriefm", "chérie fm": "cheriefm", "rire et chansons": "rireetchansons",
   "rtl2": "rtl2", "rtl": "rtlfrance",
-  "skyrock": "skyrock",
+  "skyrock": "skyrock", "skyrock klassiks": "skyrockklassiks",
+  "skyrock 100% français": "skyrockfrancais", "skyrock francais": "skyrockfrancais",
   "europe 1": "europe1", "europe1": "europe1", "virgin radio": "virginradio",
   "rfm": "rfm", "rmc": "rmc",
   "fun radio": "funradio",
