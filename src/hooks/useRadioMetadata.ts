@@ -6,8 +6,8 @@ export interface RadioMeta {
   cover: string | null;
 }
 
-const POLL_INTERVAL = 8000;
-const INITIAL_DELAY = 5000;
+const POLL_INTERVAL = 5000;
+const INITIAL_DELAY = 3000;
 
 function isSupportedStation(name: string): boolean {
   return /mouv|skyrock/i.test(name);
