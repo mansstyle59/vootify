@@ -530,6 +530,9 @@ function detectNativeStation(url: string, stationName?: string): string | null {
   return null;
 }
 
+// ─── Stations where radio.fr returns WRONG data — skip entirely ───
+const RADIO_FR_BLACKLIST = new Set(["mouv", "mouv'", "mouv'"]);
+
 // ─── Known station ID mappings for radio.fr batch now-playing API ───
 const RADIO_FR_STATION_IDS: Record<string, string> = {
   // NRJ group
