@@ -831,19 +831,34 @@ serve(async (req) => {
     }
 
     // ── Step 2: Try radio.fr API ──
-    if (!nowPlaying && resolvedStationName) {
-      const radioFr = await fetchRadioFrMetadata(resolvedStationName);
-      if (radioFr && (radioFr.title || radioFr.artist)) {
-        nowPlaying = radioFr.nowPlaying;
-        title = radioFr.title;
-        artist = radioFr.artist;
-        coverUrl = radioFr.coverUrl || "";
-        source = "radio_fr";
+    if (!nowPlaying || (isShow && /playlist|mix|juice|dj|music|son|hit|top|groove|vib/i.test(title))) {
+      const radioFrName = resolvedStationName || (rfStation?.name) || "";
+      if (radioFrName) {
+        const radioFr = await fetchRadioFrMetadata(radioFrName);
+        if (radioFr && (radioFr.title || radioFr.artist)) {
+          // We found actual song data — override the show-as-title
+          const prevShowName = showName;
+          const prevShowCover = showCover;
+          nowPlaying = radioFr.nowPlaying;
+          title = radioFr.title;
+          artist = radioFr.artist;
+          coverUrl = radioFr.coverUrl || "";
+          source = isShow ? "official" : "radio_fr"; // Keep "official" if RF station
+          isShow = false; // We now have a real song
+          // Preserve show context
+          showName = prevShowName;
+          showCover = prevShowCover;
 
-        if (!coverUrl && artist && title) {
-          const resolved = await resolveCoverArt(artist, title, stationCover);
-          coverUrl = resolved.coverUrl;
-          album = resolved.album;
+          if (!coverUrl && artist && title) {
+            const resolved = await resolveCoverArt(artist, title, stationCover);
+            coverUrl = resolved.coverUrl;
+            album = resolved.album;
+          } else if (coverUrl && artist && title) {
+            // Even if radio.fr has a cover, try Deezer for HD version
+            const resolved = await resolveCoverArt(artist, title, coverUrl);
+            if (resolved.coverUrl) coverUrl = resolved.coverUrl;
+            album = resolved.album || album;
+          }
         }
       }
     }
