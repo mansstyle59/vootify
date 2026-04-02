@@ -767,9 +767,9 @@ export function MiniPlayer() {
                       className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
                       style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
                     >
-                      {bubbleCover ? (
+                      {displayCover ? (
                         <SafeImage
-                          src={bubbleCover}
+                          src={displayCover}
                           alt={currentSong.title}
                           className="w-full h-full object-cover"
                         />
@@ -783,9 +783,9 @@ export function MiniPlayer() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
+                      <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{displayTitle}</p>
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
-                        <span>{radioArtist}</span>
+                        <span>{displayArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
                       </div>
                     </div>
