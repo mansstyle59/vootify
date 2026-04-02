@@ -683,25 +683,43 @@ const LibraryPage = () => {
         return;
       }
 
-      const { data: allSongs } = await supabase
-        .from("custom_songs")
-        .select("id, title, artist, album, duration, cover_url, stream_url")
-        .eq("user_id", userId!)
-        .not("stream_url", "is", null);
+      // Fetch ALL custom songs (paginated, no user filter)
+      const PAGE = 1000;
+      let allSongs: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("custom_songs")
+          .select("id, title, artist, album, duration, cover_url, stream_url")
+          .not("stream_url", "is", null)
+          .range(from, from + PAGE - 1);
+        if (error || !data || data.length === 0) break;
+        allSongs = allSongs.concat(data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
 
-      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "")
+        .replace(/\bfeat\.?\s*/gi, "").replace(/\bft\.?\s*/gi, "")
+        .replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
       let matched = 0;
       let importedFromDeezer = 0;
 
       for (let index = 0; index < deezerTracks.length; index++) {
         const dt = deezerTracks[index];
-        const dTitle = normalize(dt.title || "");
-        const dArtist = normalize(dt.artist?.name || "");
-        const match = (allSongs || []).find((s: any) => {
-          const sTitle = normalize(s.title);
-          const sArtist = normalize(s.artist);
-          return (sTitle.includes(dTitle) || dTitle.includes(sTitle)) &&
-                 (sArtist.includes(dArtist) || dArtist.includes(sArtist));
+        const dTitle = norm(dt.title || "");
+        const dArtist = norm(dt.artist?.name || "");
+        const match = allSongs.find((s: any) => {
+          const sTitle = norm(s.title);
+          const sArtist = norm(s.artist);
+          // Title match: substring or close
+          const titleOk = sTitle.includes(dTitle) || dTitle.includes(sTitle) ||
+            sTitle.split(" ").every((w: string) => w.length < 3 || dTitle.includes(w));
+          // Artist match: any artist word overlap
+          const dWords = dArtist.split(" ").filter((w: string) => w.length > 2);
+          const artistOk = dWords.length === 0 || dWords.some((w: string) => sArtist.includes(w));
+          return titleOk && artistOk;
         });
 
         if (!match) {
