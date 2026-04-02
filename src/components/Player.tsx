@@ -963,9 +963,9 @@ function RadioFullScreen({ onClose, radioMeta }: { onClose: () => void; radioMet
         <div className="flex-1 flex items-center justify-center py-4">
           <AnimatePresence mode="wait">
             <motion.img
-              key={coverUrl}
-              src={coverUrl}
-              alt={stationName}
+              key={displayCover}
+              src={displayCover}
+              alt={displayTitle}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
