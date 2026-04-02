@@ -16,6 +16,7 @@ export interface RadioMetadata {
   showCover?: string;
   isShow?: boolean;
   adFiltered?: boolean;
+  lastUpdated?: number; // timestamp ms
 }
 
 export interface RadioHistoryEntry {
@@ -160,6 +161,7 @@ export function useRadioMetadata(
               showCover: data.showCover || undefined,
               isShow: data.isShow || false,
               adFiltered: data.adFiltered || false,
+              lastUpdated: Date.now(),
             };
           });
         }

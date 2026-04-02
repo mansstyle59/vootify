@@ -6,7 +6,7 @@ import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   ChevronDown, ListMusic, X, Disc3,
   Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal,
-  Music, Plus, Radio, ShieldCheck
+  Music, Plus, Radio, ShieldCheck, Clock
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -23,6 +23,28 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
+
+/* ── Live metadata timestamp indicator ── */
+function MetaTimestamp({ ts }: { ts: number }) {
+  const [ago, setAgo] = useState("");
+  useEffect(() => {
+    const update = () => {
+      const s = Math.floor((Date.now() - ts) / 1000);
+      if (s < 5) setAgo("à l'instant");
+      else if (s < 60) setAgo(`il y a ${s}s`);
+      else setAgo(`il y a ${Math.floor(s / 60)}min`);
+    };
+    update();
+    const id = setInterval(update, 5000);
+    return () => clearInterval(id);
+  }, [ts]);
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-foreground/30 mt-0.5">
+      <Clock className="w-2.5 h-2.5" />
+      <span>{ago}</span>
+    </span>
+  );
+}
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
@@ -1193,6 +1215,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                       </span>
                     )}
                   </div>
+                  {radioMeta?.lastUpdated && (
+                    <MetaTimestamp ts={radioMeta.lastUpdated} />
+                  )}
                 </div>
                 {/* Recognition button — single action button */}
                 <motion.button
