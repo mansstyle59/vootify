@@ -23,7 +23,7 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
-import shazamIcon from "@/assets/shazam-icon.png";
+import shazamLogo from "@/assets/shazam-logo.png";
 
 /* ── Live metadata timestamp indicator ── */
 function MetaTimestamp({ ts }: { ts: number }) {
