@@ -1150,9 +1150,12 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
                     <SourceBadge source={radioMeta?.source} />
-                  </div>
-                </div>
-                {/* Recognition button — single action button */}
+                    {radioMeta?.adFiltered && (
+                      <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-500 border border-green-500/20" title="Publicité filtrée">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>Ad-block</span>
+                      </span>
+                    )}
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={async () => {
