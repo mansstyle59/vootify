@@ -947,6 +947,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const [savingAll, setSavingAll] = useState(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [shazamState, setShazamState] = useState<"idle" | "listening" | "found" | "notfound">("idle");
+  const [shazamResult, setShazamResult] = useState<{ title: string; artist: string; coverUrl: string } | null>(null);
 
   const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
     const entryKey = `${entry.artist}|||${entry.title}`;
@@ -1219,83 +1221,156 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     <MetaTimestamp ts={radioMeta.lastUpdated} />
                   )}
                 </div>
-                {/* Recognition + Shazam buttons */}
-                <div className="flex items-center gap-2">
-                  {/* Shazam button */}
-                  <motion.button
-                    whileTap={{ scale: 0.85 }}
-                    onClick={() => {
-                      const title = radioMeta?.title || "";
-                      const artist = radioMeta?.artist || currentSong?.artist || "";
-                      if (title || artist) {
-                        const q = encodeURIComponent(`${title} ${artist}`.trim());
-                        window.open(`https://www.shazam.com/fr-fr/search/${q}`, "_blank", "noopener");
+                {/* Shazam recognition button */}
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={async () => {
+                    if (shazamState === "listening") return;
+                    const streamUrl = currentSong?.streamUrl;
+                    if (!streamUrl) return;
+                    setShazamState("listening");
+                    setShazamResult(null);
+                    if (navigator.vibrate) navigator.vibrate(10);
+                    try {
+                      const { data } = await supabase.functions.invoke("radio-metadata", {
+                        body: { streamUrl, stationName, stationCover: coverUrl, force: true },
+                      });
+                      if (data?.success && data.title && data.artist) {
+                        const result = { title: data.title, artist: data.artist, coverUrl: data.coverUrl || coverUrl || "" };
+                        setShazamResult(result);
+                        setShazamState("found");
+                        if (navigator.vibrate) navigator.vibrate([15, 80, 15]);
+                        setTimeout(() => setShazamState("idle"), 6000);
                       } else {
-                        window.open("https://www.shazam.com/fr-fr", "_blank", "noopener");
+                        setShazamState("notfound");
+                        setTimeout(() => setShazamState("idle"), 3000);
                       }
-                    }}
-                    className="relative w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(210 100% 50% / 0.25), hsl(210 100% 50% / 0.08))",
-                      border: "1px solid hsl(210 100% 50% / 0.3)",
-                      boxShadow: "0 0 16px hsl(210 100% 50% / 0.15), inset 0 0.5px 0 hsl(210 100% 50% / 0.2)",
-                    }}
-                    title="Ouvrir sur Shazam"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 relative z-10" fill="none">
+                    } catch {
+                      setShazamState("notfound");
+                      setTimeout(() => setShazamState("idle"), 3000);
+                    }
+                  }}
+                  onDoubleClick={() => setShowHistory(true)}
+                  className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
+                  style={{
+                    background: shazamState === "listening"
+                      ? "linear-gradient(135deg, hsl(210 100% 50% / 0.35), hsl(210 100% 50% / 0.12))"
+                      : shazamState === "found"
+                        ? "linear-gradient(135deg, hsl(142 70% 45% / 0.3), hsl(142 70% 45% / 0.1))"
+                        : "linear-gradient(135deg, hsl(210 100% 50% / 0.25), hsl(210 100% 50% / 0.08))",
+                    border: shazamState === "found"
+                      ? "1px solid hsl(142 70% 45% / 0.4)"
+                      : "1px solid hsl(210 100% 50% / 0.3)",
+                    boxShadow: shazamState === "listening"
+                      ? "0 0 30px hsl(210 100% 50% / 0.3), inset 0 0.5px 0 hsl(210 100% 50% / 0.2)"
+                      : "0 0 16px hsl(210 100% 50% / 0.15), inset 0 0.5px 0 hsl(210 100% 50% / 0.2)",
+                    transition: "all 0.4s ease",
+                  }}
+                  title="Shazam · Double-tap: Historique"
+                >
+                  {shazamState === "listening" && (
+                    <>
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute rounded-full"
+                          style={{ border: "1.5px solid hsl(210 100% 55% / 0.4)" }}
+                          animate={{
+                            width: [16, 60 + i * 10],
+                            height: [16, 60 + i * 10],
+                            opacity: [0.7, 0],
+                          }}
+                          transition={{ duration: 1.5, delay: i * 0.35, repeat: Infinity, ease: "easeOut" }}
+                        />
+                      ))}
+                    </>
+                  )}
+                  {shazamState === "found" ? (
+                    <Check className="w-6 h-6 text-green-400 relative z-10" />
+                  ) : shazamState === "listening" ? (
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                      <Disc3 className="w-6 h-6 relative z-10" style={{ color: "hsl(210 100% 55%)" }} />
+                    </motion.div>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 relative z-10" fill="none">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 13.27c-.84 1.12-2.16 1.73-3.56 1.73-.96 0-1.88-.28-2.64-.8a4.54 4.54 0 01-1.72-2.16.75.75 0 111.4-.54c.28.72.76 1.28 1.36 1.6.56.32 1.2.44 1.84.36.64-.08 1.24-.36 1.72-.8a3.08 3.08 0 00.88-1.76c.08-.64-.04-1.28-.36-1.84-.32-.56-.8-1.04-1.36-1.36l-2.4-1.32c-.84-.48-1.52-1.2-1.92-2.04-.4-.88-.52-1.84-.32-2.76.2-.92.68-1.76 1.36-2.4.68-.64 1.52-1.04 2.44-1.16.92-.12 1.84.04 2.68.48a4.54 4.54 0 011.72 2.16.75.75 0 11-1.4.54 3.08 3.08 0 00-1.36-1.6c-.56-.32-1.2-.44-1.84-.36-.64.08-1.24.36-1.72.8-.48.44-.8 1.04-.88 1.72-.08.68.04 1.32.36 1.88.32.56.8 1.04 1.36 1.36l2.4 1.32c.84.48 1.52 1.2 1.92 2.04.4.84.52 1.8.32 2.72-.2.92-.68 1.72-1.36 2.36z" fill="hsl(210 100% 55%)" />
                     </svg>
-                  </motion.button>
-
-                  {/* Recognition button */}
-                  <motion.button
-                    whileTap={{ scale: 0.85 }}
-                    onClick={async () => {
-                      const streamUrl = currentSong?.streamUrl;
-                      if (!streamUrl) return;
-                      toast.info("🔍 Reconnaissance en cours…");
-                      try {
-                        const { data } = await supabase.functions.invoke("radio-metadata", {
-                          body: { streamUrl, stationName, stationCover: coverUrl, force: true },
-                        });
-                        if (data?.success && data.title) {
-                          toast.success(`🎵 ${data.title} — ${data.artist}`);
-                        } else {
-                          toast.info("Aucun titre détecté pour le moment");
-                        }
-                      } catch {
-                        toast.error("Erreur de reconnaissance");
-                      }
-                    }}
-                    onDoubleClick={() => setShowHistory(true)}
-                    className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.08))",
-                      border: "1px solid hsl(var(--primary) / 0.3)",
-                      boxShadow: "0 0 20px hsl(var(--primary) / 0.2), inset 0 0.5px 0 hsl(var(--primary) / 0.2)",
-                    }}
-                    title="Tap: Reconnaissance · Double-tap: Historique"
-                  >
-                    {isPlaying && radioMeta?.title && (
-                      <>
-                        {[0, 1].map((i) => (
-                          <motion.div
-                            key={i}
-                            className="absolute rounded-full border border-primary/30"
-                            animate={{
-                              width: [20, 56],
-                              height: [20, 56],
-                              opacity: [0.6, 0],
-                            }}
-                            transition={{ duration: 1.8, delay: i * 0.6, repeat: Infinity, ease: "easeOut" }}
-                          />
-                        ))}
-                      </>
-                    )}
-                    <Radio className="w-6 h-6 text-primary relative z-10" />
-                  </motion.button>
-                </div>
+                  )}
+                </motion.button>
               </div>
+
+              {/* Shazam result overlay */}
+              <AnimatePresence>
+                {shazamState === "found" && shazamResult && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="w-full flex items-center gap-3 p-3 rounded-2xl mt-3"
+                    style={{
+                      background: "linear-gradient(135deg, hsl(var(--card) / 0.6), hsl(var(--card) / 0.3))",
+                      backdropFilter: "blur(40px) saturate(1.8)",
+                      WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                      border: "0.5px solid hsl(210 100% 50% / 0.15)",
+                      boxShadow: "0 8px 32px hsl(0 0% 0% / 0.3), 0 0 20px hsl(210 100% 50% / 0.1)",
+                    }}
+                  >
+                    <motion.div
+                      className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative"
+                      initial={{ rotateY: 90 }}
+                      animate={{ rotateY: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.15 }}
+                      style={{ boxShadow: "0 4px 16px hsl(0 0% 0% / 0.4)" }}
+                    >
+                      {shazamResult.coverUrl ? (
+                        <SafeImage src={shazamResult.coverUrl} alt={shazamResult.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(210 100% 50% / 0.2), hsl(210 100% 50% / 0.05))" }}>
+                          <Music className="w-6 h-6 text-foreground/30" />
+                        </div>
+                      )}
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{ background: "linear-gradient(105deg, transparent 40%, hsl(0 0% 100% / 0.2) 50%, transparent 60%)" }}
+                        initial={{ x: "-100%" }}
+                        animate={{ x: "200%" }}
+                        transition={{ duration: 0.7, delay: 0.3, ease: "easeInOut" }}
+                      />
+                    </motion.div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: "hsl(142 70% 55%)" }}>
+                          <Check className="w-2.5 h-2.5" /> Identifié
+                        </span>
+                      </div>
+                      <p className="text-[15px] font-extrabold text-foreground truncate leading-tight">{shazamResult.title}</p>
+                      <p className="text-[12px] text-foreground/60 truncate">{shazamResult.artist}</p>
+                    </div>
+                  </motion.div>
+                )}
+                {shazamState === "notfound" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full text-center py-2 mt-2"
+                  >
+                    <span className="text-[12px] text-foreground/40">Aucun titre détecté pour le moment</span>
+                  </motion.div>
+                )}
+                {shazamState === "listening" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full flex items-center justify-center gap-2 py-2 mt-2"
+                  >
+                    <Disc3 className="w-3.5 h-3.5 animate-spin" style={{ color: "hsl(210 100% 55%)", animationDuration: "2s" }} />
+                    <span className="text-[11px] font-bold tracking-wide" style={{ color: "hsl(210 100% 55%)" }}>ÉCOUTE EN COURS…</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="flex items-center justify-center gap-8 w-full mb-6">
                 {queue.length > 1 && (
