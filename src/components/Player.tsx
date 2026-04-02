@@ -604,7 +604,6 @@ export function MiniPlayer() {
   }, [currentSong?.id, isPlaying]);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
-  const radioMeta = useRadioMetadata(currentSong?.streamUrl, isLive, isPlaying, currentSong?.title, currentSong?.coverUrl);
 
   // ── Media Session controls ──
   const queueLen = usePlayerStore((s) => s.queue.length);
