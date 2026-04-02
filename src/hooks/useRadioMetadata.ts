@@ -60,10 +60,10 @@ function addToHistory(streamUrl: string, entry: Omit<RadioHistoryEntry, "playedA
 
 // ─── Adaptive polling intervals ───
 const POLL_FAST = 5_000;     // 5s right after a song change
-const POLL_NORMAL = 8_000;   // 8s steady state
-const POLL_SLOW = 15_000;    // 15s when nothing changes for a while
-const FAST_WINDOW = 60_000;  // Stay fast for 60s after a change
-const INITIAL_DELAY = 5_000; // Wait 5s after stream starts before first fetch
+const POLL_NORMAL = 7_000;   // 7s steady state
+const POLL_SLOW = 12_000;    // 12s when nothing changes for a while
+const FAST_WINDOW = 90_000;  // Stay fast for 90s after a change
+const INITIAL_DELAY = 3_000; // Wait 3s after stream starts before first fetch
 
 export function useRadioMetadata(
   streamUrl?: string,
