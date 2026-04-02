@@ -11,6 +11,9 @@ export interface RadioMetadata {
   coverUrl: string;
   album?: string;
   source: RadioSource;
+  showName?: string;
+  showCover?: string;
+  isShow?: boolean;
 }
 
 export interface RadioHistoryEntry {
@@ -117,6 +120,9 @@ export function useRadioMetadata(
               coverUrl,
               album: data.album || undefined,
               source: data.source || "none",
+              showName: data.showName || undefined,
+              showCover: data.showCover || undefined,
+              isShow: data.isShow || false,
             };
           });
         }
