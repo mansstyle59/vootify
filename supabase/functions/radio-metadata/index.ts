@@ -60,19 +60,13 @@ async function fetchMouvMetadata(): Promise<{
     if (!songTitle || songTitle.length < 2) return null;
 
     // Extract cover URL for the first song
-    // The visual src appears right after the titleProps in the data
-    const firstSongStart = html.indexOf(matches[0][0]);
-    // Look for the visual.src near this song entry
-    const searchRegion = html.substring(
-      Math.max(0, firstSongStart - 600),
-      firstSongStart + 200
-    );
+    // The visual.src appears right AFTER the titleProps in the data
+    const firstSongEnd = html.indexOf(matches[0][0]) + matches[0][0].length;
+    const searchRegion = html.substring(firstSongEnd, firstSongEnd + 400);
     const coverMatch = searchRegion.match(
       /src:"(https:\/\/www\.radiofrance\.fr\/pikapi\/images\/[^"]+)"/
     );
-    const coverUrl = coverMatch
-      ? coverMatch[1] + "/600x600"
-      : null;
+    const coverUrl = coverMatch ? coverMatch[1] + "/600x600" : null;
 
     return {
       title: songTitle,
