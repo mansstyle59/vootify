@@ -11,6 +11,9 @@ export interface RadioMetadata {
   coverUrl: string;
   album?: string;
   source: RadioSource;
+  showName?: string;
+  showCover?: string;
+  isShow?: boolean;
 }
 
 export interface RadioHistoryEntry {
