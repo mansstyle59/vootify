@@ -606,6 +606,24 @@ export function MiniPlayer() {
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
 
+  // ── Radio metadata (Mouv') ──
+  const radioMeta = useRadioMetadata(
+    isLive ? currentSong?.title ?? null : null,
+    isPlaying
+  );
+
+  // Update media session when radio metadata changes
+  useEffect(() => {
+    if (!radioMeta || !currentSong || !isLive) return;
+    audioManager.updateMetadata({
+      title: radioMeta.title,
+      artist: radioMeta.artist,
+      cover: radioMeta.cover || currentSong.coverUrl,
+      album: currentSong.title,
+      isLive: true,
+    });
+  }, [radioMeta?.title, radioMeta?.artist]);
+
   // ── Media Session controls ──
   const queueLen = usePlayerStore((s) => s.queue.length);
 
