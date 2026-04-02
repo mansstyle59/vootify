@@ -936,7 +936,7 @@ serve(async (req) => {
     if (!nowPlaying || (isShow && /playlist|mix|juice|dj|music|son|hit|top|groove|vib/i.test(title))) {
       const radioFrName = resolvedStationName || (rfStation?.name) || "";
       if (radioFrName) {
-        const radioFr = await fetchRadioFrMetadata(radioFrName);
+        const radioFr = await fetchRadioFrMetadata(radioFrName, streamUrl);
         if (radioFr && (radioFr.title || radioFr.artist)) {
           // We found actual song data — override the show-as-title
           const prevShowName = showName;
