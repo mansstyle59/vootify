@@ -9,8 +9,8 @@ export interface RadioMeta {
 const POLL_INTERVAL = 8000;
 const INITIAL_DELAY = 5000;
 
-function isMouvStation(name: string): boolean {
-  return /mouv/i.test(name);
+function isSupportedStation(name: string): boolean {
+  return /mouv|skyrock/i.test(name);
 }
 
 export function useRadioMetadata(
@@ -23,7 +23,7 @@ export function useRadioMetadata(
   const initialDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchMeta = useCallback(async () => {
-    if (!stationName || !isMouvStation(stationName)) return;
+    if (!stationName || !isSupportedStation(stationName)) return;
 
     try {
       const resp = await fetch(
@@ -51,7 +51,7 @@ export function useRadioMetadata(
   }, [stationName]);
 
   useEffect(() => {
-    if (!stationName || !isPlaying || !isMouvStation(stationName)) {
+    if (!stationName || !isPlaying || !isSupportedStation(stationName)) {
       setMeta(null);
       lastTitleRef.current = "";
       return;
