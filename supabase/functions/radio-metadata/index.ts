@@ -461,7 +461,74 @@ async function fetchRadioFranceLive(stationId: number): Promise<{
   return null;
 }
 
-// ─── radio.fr API (prod.radio-api.net) ───
+// ─── Skyrock API (native) ───
+async function fetchSkyrockMetadata(streamUrl: string): Promise<{
+  nowPlaying: string; title: string; artist: string; coverUrl: string;
+  showName?: string; showCover?: string; isShow?: boolean;
+} | null> {
+  const cacheKey = `skyrock:now`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const resp = await fetch("https://skyrock.fm/api/v3/player/onair", {
+      headers: { "User-Agent": "Vootify/1.0", "Accept": "application/json" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+
+    const showName = data.on_air_program?.title || "";
+    const showCover = data.on_air_program?.cover_uri_640 || data.on_air_program?.cover_uri || "";
+
+    // Get current song from schedule
+    const schedule = data.schedule || [];
+    const now = Math.floor(Date.now() / 1000);
+    const currentSong = schedule.find((s: any) =>
+      s.type === "record" && s.info && parseInt(s.info.start_ts) <= now && parseInt(s.info.end_ts) >= now
+    ) || (schedule.length > 0 && schedule[0].type === "record" ? schedule[0] : null);
+
+    if (currentSong?.info) {
+      const title = currentSong.info.title || "";
+      const artistName = currentSong.artists?.[0]?.name || "";
+      const coverUrl = currentSong.info.cover_big_uri || currentSong.info.cover_uri || "";
+
+      if (title && artistName && !isAdContent(artistName, title)) {
+        const result = {
+          nowPlaying: `${artistName} - ${title}`,
+          title, artist: artistName, coverUrl,
+          showName, showCover, isShow: false,
+        };
+        setCache(cacheKey, result);
+        return result;
+      }
+    }
+
+    // No song playing — return show info
+    if (showName) {
+      const result = {
+        nowPlaying: `Skyrock — ${showName}`,
+        title: showName, artist: "Skyrock", coverUrl: showCover,
+        showName, showCover, isShow: true,
+      };
+      setCache(cacheKey, result);
+      return result;
+    }
+  } catch (e) {
+    console.log("Skyrock API error:", (e as Error).message);
+  }
+  return null;
+}
+
+// ─── Station URL pattern matching for native APIs ───
+function detectNativeStation(url: string, stationName?: string): string | null {
+  const u = url.toLowerCase();
+  const n = (stationName || "").toLowerCase();
+  if (u.includes("skyrock") || n.includes("skyrock")) return "skyrock";
+  return null;
+}
+
+
 async function fetchRadioFrMetadata(stationName: string): Promise<{
   nowPlaying: string; title: string; artist: string; coverUrl: string;
 } | null> {
