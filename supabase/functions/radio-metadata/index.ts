@@ -427,7 +427,7 @@ async function fetchRadioFrMetadata(stationName: string): Promise<{
     const songArtist = npData.artist || npData.artistName || "";
 
     if (!songTitle && !songArtist) return null;
-    if (isAd(`${songArtist} - ${songTitle}`)) return null;
+    if (isAdContent(songArtist, songTitle)) return null;
 
     const coverUrl = npData.cover || npData.coverUrl || npData.albumCover || "";
     const nowPlaying = songArtist && songTitle ? `${songArtist} - ${songTitle}` : songTitle || songArtist;
