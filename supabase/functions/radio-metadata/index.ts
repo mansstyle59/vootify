@@ -530,11 +530,106 @@ function detectNativeStation(url: string, stationName?: string): string | null {
   return null;
 }
 
+// ─── Known station ID mappings for radio.fr batch now-playing API ───
+const RADIO_FR_STATION_IDS: Record<string, string> = {
+  // NRJ group
+  "nrj": "nrjfrance", "nrj hits": "nrjhits", "nrj ibiza": "nrjibizafr",
+  "nrj french hits": "nrjfrenchhits", "nostalgie": "nostalgie",
+  "cherie fm": "cheriefm", "chérie fm": "cheriefm", "rire et chansons": "rireetchansons",
+  // RTL group
+  "rtl2": "rtl2", "rtl": "rtlfrance",
+  // Skyrock
+  "skyrock": "skyrock",
+  // Lagardère
+  "europe 1": "europe1", "europe1": "europe1", "virgin radio": "virginradio",
+  "rfm": "rfm", "rmc": "rmc",
+  // Fun Radio
+  "fun radio": "funradio",
+  // Radio France
+  "france inter": "franceinter", "franceinfo": "franceinfofrance", "france info": "franceinfofrance",
+  "france culture": "franceculture", "france musique": "francemusique",
+  "fip": "fip", "mouv": "lemouv", "mouv'": "lemouv",
+  // Others
+  "contact fm": "contactfm", "voltage": "voltage",
+  "ouï fm": "ouifm", "oui fm": "ouifm", "tsf jazz": "tsfjazz",
+  "radio nova": "nova", "nova": "nova",
+  "radio classique": "radioclassique", "classique": "radioclassique",
+  "sud radio": "sudradio", "bfm business": "bfmbusiness",
+  "rfi": "rfi", "france 24": "france24",
+  "radio meuh": "radiomeuh", "generations": "generations",
+  "latina": "radiolatinaparis", "radio latina": "radiolatinaparis",
+};
 
-async function fetchRadioFrMetadata(stationName: string): Promise<{
+function resolveRadioFrStationId(stationName: string, streamUrl?: string): string | null {
+  const n = stationName.toLowerCase().trim()
+    .replace(/['']/g, "'")
+    .replace(/\s+/g, " ");
+
+  // Direct match
+  if (RADIO_FR_STATION_IDS[n]) return RADIO_FR_STATION_IDS[n];
+
+  // Partial match
+  for (const [key, id] of Object.entries(RADIO_FR_STATION_IDS)) {
+    if (n.includes(key) || key.includes(n)) return id;
+  }
+
+  // Try from stream URL
+  if (streamUrl) {
+    const u = streamUrl.toLowerCase();
+    for (const [key, id] of Object.entries(RADIO_FR_STATION_IDS)) {
+      const slug = key.replace(/\s+/g, "").replace(/['']/g, "");
+      if (u.includes(slug)) return id;
+    }
+  }
+
+  return null;
+}
+
+async function fetchRadioFrMetadata(stationName: string, streamUrl?: string): Promise<{
   nowPlaying: string; title: string; artist: string; coverUrl: string;
 } | null> {
-  const cacheKey = `radiofr:${stationName}`;
+  // Step 1: Try the fast batch now-playing endpoint with known station ID
+  const knownId = resolveRadioFrStationId(stationName, streamUrl);
+  if (knownId) {
+    const cacheKey = `radiofr:np:${knownId}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const resp = await fetch(
+        `${RADIO_FR_API}/stations/now-playing?stationIds=${knownId}`,
+        {
+          headers: { "User-Agent": "Mozilla/5.0 Vootify/1.0", "Accept": "application/json" },
+          signal: AbortSignal.timeout(4000),
+        }
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        if (Array.isArray(data) && data.length > 0 && data[0].title) {
+          const raw = data[0].title as string;
+          // Format: "ARTIST - TITLE" or "ARTIST - TITLE (YEAR)" or with § suffix
+          const cleaned = raw.replace(/\s*§\d+$/, "").trim();
+          const parsed = cleanIcyTitle(cleaned);
+
+          if (parsed.artist && parsed.title && !isAdContent(parsed.artist, parsed.title)) {
+            const result = {
+              nowPlaying: `${parsed.artist} - ${parsed.title}`,
+              title: parsed.title,
+              artist: parsed.artist,
+              coverUrl: "",
+            };
+            setCache(cacheKey, result);
+            return result;
+          }
+        }
+      }
+    } catch (e) {
+      console.log("radio.fr batch now-playing error:", (e as Error).message);
+    }
+  }
+
+  // Step 2: Fallback — search + station detail endpoint
+  const cacheKey = `radiofr:search:${stationName}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
@@ -542,7 +637,7 @@ async function fetchRadioFrMetadata(stationName: string): Promise<{
     const searchResp = await fetch(
       `${RADIO_FR_API}/stations/search?query=${encodeURIComponent(stationName)}&limit=5&pageIndex=0`,
       {
-        headers: { "User-Agent": "Vootify/1.0", "Accept": "application/json" },
+        headers: { "User-Agent": "Mozilla/5.0 Vootify/1.0", "Accept": "application/json" },
         signal: AbortSignal.timeout(4000),
       }
     );
@@ -561,30 +656,37 @@ async function fetchRadioFrMetadata(stationName: string): Promise<{
     const stationId = station.id || station.systemName;
     if (!stationId) return null;
 
-    const npResp = await fetch(`${RADIO_FR_API}/stations/${stationId}/now-playing`, {
-      headers: { "User-Agent": "Vootify/1.0", "Accept": "application/json" },
-      signal: AbortSignal.timeout(4000),
-    });
-
+    // Use batch now-playing with the discovered ID
+    const npResp = await fetch(
+      `${RADIO_FR_API}/stations/now-playing?stationIds=${stationId}`,
+      {
+        headers: { "User-Agent": "Mozilla/5.0 Vootify/1.0", "Accept": "application/json" },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
     if (!npResp.ok) return null;
     const npData = await npResp.json();
 
-    const songTitle = npData.title || npData.songTitle || "";
-    const songArtist = npData.artist || npData.artistName || "";
+    if (Array.isArray(npData) && npData.length > 0 && npData[0].title) {
+      const raw = npData[0].title as string;
+      const cleaned = raw.replace(/\s*§\d+$/, "").trim();
+      const parsed = cleanIcyTitle(cleaned);
 
-    if (!songTitle && !songArtist) return null;
-    if (isAdContent(songArtist, songTitle)) return null;
-
-    const coverUrl = npData.cover || npData.coverUrl || npData.albumCover || "";
-    const nowPlaying = songArtist && songTitle ? `${songArtist} - ${songTitle}` : songTitle || songArtist;
-
-    const result = { nowPlaying, title: songTitle, artist: songArtist, coverUrl };
-    setCache(cacheKey, result);
-    return result;
+      if (parsed.artist && parsed.title && !isAdContent(parsed.artist, parsed.title)) {
+        const result = {
+          nowPlaying: `${parsed.artist} - ${parsed.title}`,
+          title: parsed.title,
+          artist: parsed.artist,
+          coverUrl: "",
+        };
+        setCache(cacheKey, result);
+        return result;
+      }
+    }
   } catch (e) {
-    console.log("radio.fr API error:", (e as Error).message);
-    return null;
+    console.log("radio.fr search+NP error:", (e as Error).message);
   }
+  return null;
 }
 
 // ─── ICY metadata extraction from stream ───
