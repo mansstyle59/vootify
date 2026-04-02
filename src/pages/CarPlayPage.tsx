@@ -71,12 +71,8 @@ const CarPlayPage = () => {
   const greeting = getGreeting(profile?.display_name);
   const TimeIcon = timeCtx === "morning" ? Sun : timeCtx === "night" ? Moon : Sunset;
 
-  const isLiveRadio = currentSong?.album === "Radio en direct";
-  const radioMetadata = useRadioMetadata(
-    isLiveRadio ? currentSong?.streamUrl : undefined,
-    isLiveRadio, isPlaying, currentSong?.title, currentSong?.coverUrl
-  );
-  const radioHistory = useRadioHistory(isLiveRadio ? currentSong?.streamUrl : undefined);
+  const radioMetadata = null;
+  const radioHistory: any[] = [];
 
   const { data: songs = [] } = useQuery({
     queryKey: ["carplay-songs"],
