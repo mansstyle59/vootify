@@ -894,18 +894,19 @@ export function MiniPlayer() {
 }
 
 /* ─────────────────────────────────────────────
-   Radio Fullscreen Player (simple — no metadata)
+   Radio Fullscreen Player
    ───────────────────────────────────────────── */
-function RadioFullScreen({ onClose }: { onClose: () => void }) {
+function RadioFullScreen({ onClose, radioMeta }: { onClose: () => void; radioMeta: RadioMeta | null }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked, next, previous, queue
   } = usePlayerStore();
-  const coverUrl = currentSong?.coverUrl;
-  const dominantColor = useDominantColor(coverUrl);
+  const displayTitle = radioMeta?.title || currentSong?.title || "";
+  const displayArtist = radioMeta?.artist || currentSong?.artist || "Radio";
+  const displayCover = radioMeta?.cover || currentSong?.coverUrl;
+  const dominantColor = useDominantColor(displayCover);
 
   if (!currentSong) return null;
   const stationName = currentSong.title;
-  const genre = currentSong.artist || "Radio";
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
   return (
