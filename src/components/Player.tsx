@@ -947,6 +947,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
   const [savingAll, setSavingAll] = useState(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [shazamState, setShazamState] = useState<"idle" | "listening" | "found" | "notfound">("idle");
+  const [shazamResult, setShazamResult] = useState<{ title: string; artist: string; coverUrl: string } | null>(null);
 
   const saveEntryToLibrary = async (entry: { title: string; artist: string; coverUrl: string }) => {
     const entryKey = `${entry.artist}|||${entry.title}`;
