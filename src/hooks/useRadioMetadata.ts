@@ -16,6 +16,7 @@ export interface RadioMetadata {
   showCover?: string;
   isShow?: boolean;
   adFiltered?: boolean;
+  lastUpdated?: number; // timestamp ms
 }
 
 export interface RadioHistoryEntry {
