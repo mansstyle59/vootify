@@ -1156,6 +1156,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                         <span>Ad-block</span>
                       </span>
                     )}
+                  </div>
+                </div>
+                {/* Recognition button — single action button */}
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={async () => {
