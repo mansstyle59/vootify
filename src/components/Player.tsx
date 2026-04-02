@@ -728,9 +728,9 @@ export function MiniPlayer() {
 
   // ── Radio mini-player ──
   if (isLive) {
-    const bubbleCover = radioMeta?.coverUrl || currentSong.coverUrl;
-    const radioTitle = radioMeta?.title || currentSong.title;
-    const radioArtist = radioMeta?.artist || currentSong.artist || "Radio";
+    const bubbleCover = currentSong.coverUrl;
+    const radioTitle = currentSong.title;
+    const radioArtist = currentSong.artist || "Radio";
     const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
 
     return (
@@ -768,11 +768,6 @@ export function MiniPlayer() {
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
                         <span>{radioArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
-                        {radioMeta?.adFiltered && (
-                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium px-1 py-0.5 rounded-full bg-green-500/15 text-green-500" title="Publicité filtrée">
-                            <ShieldCheck className="w-2.5 h-2.5" />
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
