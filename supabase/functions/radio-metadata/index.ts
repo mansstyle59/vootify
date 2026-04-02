@@ -648,18 +648,28 @@ serve(async (req) => {
     const rfStation = detectRadioFranceStation(streamUrl);
     const resolvedStationName = stationName || rfStation?.name || "";
 
-    // ── Step 1: Radio France → livemeta API ──
+    // ── Step 1: Radio France → livemeta API + programmes-radio.com enrichment ──
     if (rfStation) {
-      const rfLive = await fetchRadioFranceLive(rfStation.stationId);
+      // Fetch livemeta and schedule in parallel for speed
+      const stationKey = Object.entries(RADIO_FRANCE_STATIONS).find(([, v]) => v.stationId === rfStation.stationId)?.[0] || "";
+      const [rfLive, progShow] = await Promise.all([
+        fetchRadioFranceLive(rfStation.stationId),
+        stationKey ? fetchProgRadioSchedule(stationKey) : Promise.resolve(null),
+      ]);
+
+      // Use programmes-radio.com HD cover as enrichment for show info
+      const progShowName = progShow?.title || "";
+      const progShowCover = progShow?.pictureUrl || "";
+
       if (rfLive) {
         if (rfLive.isShow) {
-          // Talk show / emission — use show cover
           title = rfLive.title;
           artist = rfStation.name;
-          coverUrl = rfLive.showCover || rfLive.coverUrl || rfStation.logo || stationCover || "";
+          // Prefer programmes-radio.com HD cover > RF show cover > station logo
+          showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
+          coverUrl = showCover || rfStation.logo || stationCover || "";
+          showName = rfLive.showName || progShowName || "";
           nowPlaying = `${rfStation.name} — ${rfLive.title}`;
-          showName = rfLive.showName || "";
-          showCover = rfLive.showCover || "";
           isShow = true;
           source = "official";
         } else if (rfLive.title || rfLive.artist) {
@@ -667,8 +677,9 @@ serve(async (req) => {
           artist = rfLive.artist || rfStation.name;
           album = rfLive.album;
           coverUrl = rfLive.coverUrl || "";
-          showName = rfLive.showName || "";
-          showCover = rfLive.showCover || "";
+          // Enrich show info from programmes-radio.com
+          showName = rfLive.showName || progShowName || "";
+          showCover = progShowCover || rfLive.showCover || "";
           nowPlaying = artist && title ? `${artist} - ${title}` : title || `En direct sur ${rfStation.name}`;
           source = "official";
 
