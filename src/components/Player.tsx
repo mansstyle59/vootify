@@ -21,6 +21,7 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
+import { useRadioMetadata, type RadioMeta } from "@/hooks/useRadioMetadata";
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
@@ -605,6 +606,24 @@ export function MiniPlayer() {
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
 
+  // ── Radio metadata (Mouv') ──
+  const radioMeta = useRadioMetadata(
+    isLive ? currentSong?.title ?? null : null,
+    isPlaying
+  );
+
+  // Update media session when radio metadata changes
+  useEffect(() => {
+    if (!radioMeta || !currentSong || !isLive) return;
+    audioManager.updateMetadata({
+      title: radioMeta.title,
+      artist: radioMeta.artist,
+      cover: radioMeta.cover || currentSong.coverUrl,
+      album: currentSong.title,
+      isLive: true,
+    });
+  }, [radioMeta?.title, radioMeta?.artist]);
+
   // ── Media Session controls ──
   const queueLen = usePlayerStore((s) => s.queue.length);
 
@@ -728,9 +747,9 @@ export function MiniPlayer() {
 
   // ── Radio mini-player ──
   if (isLive) {
-    const bubbleCover = currentSong.coverUrl;
-    const radioTitle = currentSong.title;
-    const radioArtist = currentSong.artist || "Radio";
+    const displayTitle = radioMeta?.title || currentSong.title;
+    const displayArtist = radioMeta?.artist || currentSong.artist || "Radio";
+    const displayCover = radioMeta?.cover || currentSong.coverUrl;
     const hasMultipleStations = usePlayerStore.getState().queue.length > 1;
 
     return (
@@ -748,9 +767,9 @@ export function MiniPlayer() {
                       className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
                       style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.5)" }}
                     >
-                      {bubbleCover ? (
+                      {displayCover ? (
                         <SafeImage
-                          src={bubbleCover}
+                          src={displayCover}
                           alt={currentSong.title}
                           className="w-full h-full object-cover"
                         />
@@ -764,9 +783,9 @@ export function MiniPlayer() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{radioTitle}</p>
+                      <p className="text-[13px] font-semibold truncate text-foreground leading-tight">{displayTitle}</p>
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
-                        <span>{radioArtist}</span>
+                        <span>{displayArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
                       </div>
                     </div>
@@ -875,18 +894,19 @@ export function MiniPlayer() {
 }
 
 /* ─────────────────────────────────────────────
-   Radio Fullscreen Player (simple — no metadata)
+   Radio Fullscreen Player
    ───────────────────────────────────────────── */
-function RadioFullScreen({ onClose }: { onClose: () => void }) {
+function RadioFullScreen({ onClose, radioMeta }: { onClose: () => void; radioMeta: RadioMeta | null }) {
   const {
     currentSong, isPlaying, togglePlay, toggleLike, isLiked, next, previous, queue
   } = usePlayerStore();
-  const coverUrl = currentSong?.coverUrl;
-  const dominantColor = useDominantColor(coverUrl);
+  const displayTitle = radioMeta?.title || currentSong?.title || "";
+  const displayArtist = radioMeta?.artist || currentSong?.artist || "Radio";
+  const displayCover = radioMeta?.cover || currentSong?.coverUrl;
+  const dominantColor = useDominantColor(displayCover);
 
   if (!currentSong) return null;
   const stationName = currentSong.title;
-  const genre = currentSong.artist || "Radio";
   const bgColor = dominantColor || "hsl(0 0% 4%)";
 
   return (
@@ -908,8 +928,8 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
       <div className="absolute inset-0 overflow-hidden">
         <AnimatePresence mode="popLayout">
           <motion.img
-            key={coverUrl}
-            src={coverUrl}
+            key={displayCover}
+            src={displayCover}
             alt=""
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.25 }}
@@ -943,9 +963,9 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         <div className="flex-1 flex items-center justify-center py-4">
           <AnimatePresence mode="wait">
             <motion.img
-              key={coverUrl}
-              src={coverUrl}
-              alt={stationName}
+              key={displayCover}
+              src={displayCover}
+              alt={displayTitle}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
@@ -959,10 +979,10 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="min-w-0 flex-1">
             <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
-              {stationName}
+              {displayTitle}
             </h2>
             <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-[15px] text-foreground/60 truncate">{genre}</p>
+              <p className="text-[15px] text-foreground/60 truncate">{displayArtist}</p>
               <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
             </div>
           </div>
@@ -1474,14 +1494,17 @@ function MusicFullScreen({ onClose }: { onClose: () => void }) {
 
 /* ─── Fullscreen Router ─── */
 export function FullScreenPlayer() {
-  const { currentSong, fullScreen, toggleFullScreen } = usePlayerStore();
+  const { currentSong, fullScreen, toggleFullScreen, isPlaying } = usePlayerStore();
+  const isLive = currentSong ? currentSong.duration === 0 : false;
+  const radioMeta = useRadioMetadata(
+    isLive ? currentSong?.title ?? null : null,
+    isPlaying
+  );
 
   if (!currentSong || !fullScreen) return null;
 
-  const isLive = currentSong.duration === 0;
-
   return isLive ? (
-    <RadioFullScreen onClose={toggleFullScreen} />
+    <RadioFullScreen onClose={toggleFullScreen} radioMeta={radioMeta} />
   ) : (
     <MusicFullScreen onClose={toggleFullScreen} />
   );
