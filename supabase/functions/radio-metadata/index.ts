@@ -530,6 +530,9 @@ function detectNativeStation(url: string, stationName?: string): string | null {
   return null;
 }
 
+// ─── Stations where radio.fr returns WRONG data — skip entirely ───
+const RADIO_FR_BLACKLIST = new Set(["mouv", "mouv'", "mouv'"]);
+
 // ─── Known station ID mappings for radio.fr batch now-playing API ───
 const RADIO_FR_STATION_IDS: Record<string, string> = {
   // NRJ group
@@ -548,7 +551,9 @@ const RADIO_FR_STATION_IDS: Record<string, string> = {
   // Radio France
   "france inter": "franceinter", "franceinfo": "franceinfofrance", "france info": "franceinfofrance",
   "france culture": "franceculture", "france musique": "francemusique",
-  "fip": "fip", "mouv": "lemouv", "mouv'": "lemouv",
+  "fip": "fip",
+  // NOTE: "lemouv" on radio.fr returns wrong data (Skyrock), so Mouv' is NOT mapped here.
+  // Mouv' metadata comes from RF livemeta + programmes-radio.com instead.
   // Others
   "contact fm": "contactfm", "voltage": "voltage",
   "ouï fm": "ouifm", "oui fm": "ouifm", "tsf jazz": "tsfjazz",
@@ -588,6 +593,10 @@ function resolveRadioFrStationId(stationName: string, streamUrl?: string): strin
 async function fetchRadioFrMetadata(stationName: string, streamUrl?: string): Promise<{
   nowPlaying: string; title: string; artist: string; coverUrl: string;
 } | null> {
+  // Skip stations known to return wrong data on radio.fr
+  const nameNormalized = stationName.toLowerCase().trim().replace(/['']/g, "'");
+  if (RADIO_FR_BLACKLIST.has(nameNormalized)) return null;
+
   // Step 1: Try the fast batch now-playing endpoint with known station ID
   const knownId = resolveRadioFrStationId(stationName, streamUrl);
   if (knownId) {
