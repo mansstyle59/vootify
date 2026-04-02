@@ -516,6 +516,7 @@ export function MiniPlayer() {
       window.removeEventListener("audio-prev", onAudioPrev);
       window.removeEventListener("audio-seeked", onAudioSeeked);
       window.removeEventListener("online", handleOnline);
+      clearInterval(reconcileInterval);
     };
   }, [handleTimeUpdate, handleEnded, handleAudioError]);
 
