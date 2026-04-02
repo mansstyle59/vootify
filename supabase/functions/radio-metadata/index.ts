@@ -934,7 +934,6 @@ serve(async (req) => {
         }
       }
     }
-    }
 
     // ── Step 1.5: Native station APIs (Skyrock) ──
     if (!nowPlaying) {
