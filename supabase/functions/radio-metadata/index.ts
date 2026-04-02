@@ -935,8 +935,15 @@ serve(async (req) => {
             });
           }
         } else if (rfLive.title || rfLive.artist) {
-          title = rfLive.title;
-          artist = rfLive.artist || rfStation.name;
+          // Cross-validate with programmes-radio now-playing
+          let rfSong = { artist: rfLive.artist || rfStation.name, title: rfLive.title };
+          let progSong: { artist: string; title: string } | null = null;
+          if (progNp?.artist && progNp?.title && !isAdContent(progNp.artist, progNp.title)) {
+            progSong = { artist: progNp.artist, title: progNp.title };
+          }
+          const validated = crossValidate(rfSong, progSong);
+          title = validated.title || rfLive.title;
+          artist = validated.artist || rfLive.artist || rfStation.name;
           album = rfLive.album;
           coverUrl = rfLive.coverUrl || "";
           showName = rfLive.showName || progShowName || "";
