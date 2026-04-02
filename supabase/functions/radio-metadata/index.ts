@@ -524,7 +524,8 @@ function detectNativeStation(url: string, stationName?: string): string | null {
 const RADIO_FR_BLACKLIST = new Set<string>([]);
 
 // ─── Stations that should prioritize ICY stream metadata ───
-const ICY_PRIORITY_STATIONS = new Set(["mouv", "mouv'", "mouv'"]);
+// NOTE: Mouv' REMOVED — its ICY returns show names, not songs. RF livemeta is better.
+const ICY_PRIORITY_STATIONS = new Set<string>([]);
 
 function isIcyPriorityStation(stationName: string): boolean {
   const n = stationName.toLowerCase().trim().replace(/['']/g, "'");
@@ -815,12 +816,14 @@ serve(async (req) => {
     if (rfStation) {
       const stationKey = Object.entries(RADIO_FRANCE_STATIONS).find(([, v]) => v.stationId === rfStation.stationId)?.[0] || "";
       const icyPriority = isIcyPriorityStation(resolvedStationName) || isIcyPriorityStation(stationKey);
+      const progCode = resolveProgRadioCode(resolvedStationName) || stationKey;
 
-      // Fetch all sources in parallel for speed
-      const [rfLive, progShow, icyRaw] = await Promise.all([
+      // Fetch ALL sources in parallel: livemeta + schedule + ICY + programmes-radio now-playing
+      const [rfLive, progShow, icyRaw, progNp] = await Promise.all([
         fetchRadioFranceLive(rfStation.stationId),
         stationKey ? fetchProgRadioSchedule(stationKey) : Promise.resolve(null),
         icyPriority ? fetchIcyMetadata(streamUrl) : Promise.resolve(""),
+        progCode ? fetchProgRadioNowPlaying(progCode) : Promise.resolve(null),
       ]);
 
       const progShowName = progShow?.title || "";
@@ -876,8 +879,40 @@ serve(async (req) => {
 
       if (rfLive) {
         if (rfLive.isShow && !rfLive.hasSongData) {
-          // For ICY-priority stations during shows with no song, try ICY first
-          // (icyParsed was null if we got here, so show info is all we have)
+          // Show mode with no song data — check programmes-radio now-playing for actual song
+          if (progNp?.title && progNp?.artist && !isAdContent(progNp.artist, progNp.title)) {
+            // programmes-radio found a song playing during the show!
+            artist = progNp.artist;
+            title = progNp.title;
+            nowPlaying = `${artist} - ${title}`;
+            showName = rfLive.showName || progShowName || rfLive.title || "";
+            showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
+            source = "official";
+            isShow = false;
+
+            const resolved = await resolveCoverArt(artist, title, progNp.coverUrl || stationCover);
+            coverUrl = resolved.coverUrl || progNp.coverUrl || "";
+            album = resolved.album || "";
+            if (resolved.resolvedArtist && normalize(resolved.resolvedArtist) === normalize(artist)) {
+              artist = resolved.resolvedArtist;
+            }
+            if (resolved.resolvedTitle && normalize(resolved.resolvedTitle) === normalize(title)) {
+              title = resolved.resolvedTitle;
+            }
+            nowPlaying = `${artist} - ${title}`;
+
+            if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
+            const responseData = {
+              success: true, nowPlaying, title, artist, coverUrl, album, source,
+              showName, showCover, isShow,
+            };
+            setCache(responseCacheKey, responseData);
+            return new Response(JSON.stringify(responseData), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          // No song found — show info only
           title = rfLive.title || progShowName || "";
           artist = rfStation.name;
           showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
@@ -900,8 +935,15 @@ serve(async (req) => {
             });
           }
         } else if (rfLive.title || rfLive.artist) {
-          title = rfLive.title;
-          artist = rfLive.artist || rfStation.name;
+          // Cross-validate with programmes-radio now-playing
+          let rfSong = { artist: rfLive.artist || rfStation.name, title: rfLive.title };
+          let progSong: { artist: string; title: string } | null = null;
+          if (progNp?.artist && progNp?.title && !isAdContent(progNp.artist, progNp.title)) {
+            progSong = { artist: progNp.artist, title: progNp.title };
+          }
+          const validated = crossValidate(rfSong, progSong);
+          title = validated.title || rfLive.title;
+          artist = validated.artist || rfLive.artist || rfStation.name;
           album = rfLive.album;
           coverUrl = rfLive.coverUrl || "";
           showName = rfLive.showName || progShowName || "";
