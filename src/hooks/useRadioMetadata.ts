@@ -144,7 +144,7 @@ export function useRadioMetadata(
                 title: data.title || stationName || "Radio",
                 artist: data.artist || stationName || "",
                 cover: coverUrl || stationCover || "",
-                album: data.album || (data.isShow ? data.showName : "Radio") || "Radio",
+                album: data.album || "Radio",
               });
             }
 
