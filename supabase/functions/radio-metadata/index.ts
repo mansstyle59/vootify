@@ -772,6 +772,41 @@ serve(async (req) => {
       }
     }
 
+    // ── Step 1.5: Native station APIs (Skyrock, etc.) ──
+    if (!nowPlaying) {
+      const nativeStation = detectNativeStation(streamUrl, stationName);
+      if (nativeStation === "skyrock") {
+        const skyData = await fetchSkyrockMetadata(streamUrl);
+        if (skyData) {
+          nowPlaying = skyData.nowPlaying;
+          title = skyData.title;
+          artist = skyData.artist;
+          coverUrl = skyData.coverUrl;
+          showName = skyData.showName || "";
+          showCover = skyData.showCover || "";
+          isShow = skyData.isShow || false;
+          source = "official";
+
+          // Enrich cover if missing
+          if (!coverUrl && artist && title && !isShow) {
+            const resolved = await resolveCoverArt(artist, title, stationCover);
+            coverUrl = resolved.coverUrl;
+            album = resolved.album;
+          }
+
+          if (!coverUrl) coverUrl = stationCover || "";
+          const responseData = {
+            success: true, nowPlaying, title, artist, coverUrl, album, source,
+            showName, showCover, isShow,
+          };
+          setCache(responseCacheKey, responseData);
+          return new Response(JSON.stringify(responseData), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
     // ── Step 2: Try radio.fr API ──
     if (!nowPlaying && resolvedStationName) {
       const radioFr = await fetchRadioFrMetadata(resolvedStationName);
