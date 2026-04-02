@@ -12,9 +12,6 @@ export interface RadioMetadata {
   coverUrl: string;
   album?: string;
   source: RadioSource;
-  showName?: string;
-  showCover?: string;
-  isShow?: boolean;
   adFiltered?: boolean;
   lastUpdated?: number; // timestamp ms
 }
