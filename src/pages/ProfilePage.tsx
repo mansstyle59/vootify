@@ -736,8 +736,6 @@ const ProfilePage = () => {
                   // Also clear memory cover cache
                   const { clearCoverCache } = await import("@/lib/coverMemoryCache");
                   clearCoverCache();
-                  const { radioCoverCache } = await import("@/lib/radioCoverCache");
-                  radioCoverCache.clear();
                   sessionStorage.removeItem("vootify-covers-cached-v1");
                   sessionStorage.removeItem("vootify-friday-covers-cached-v1");
                   await refreshStorageStats();
