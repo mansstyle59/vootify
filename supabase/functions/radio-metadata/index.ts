@@ -678,7 +678,6 @@ serve(async (req) => {
         }
       }
     }
-    }
 
     // ── Step 4: Generic fallback ──
     if (!nowPlaying && resolvedStationName) {
