@@ -179,6 +179,7 @@ export function useRadioMetadata(
 
     return () => {
       isMounted = false;
+      clearTimeout(initialTimer);
       if (intervalRef.current) {
         clearTimeout(intervalRef.current);
         intervalRef.current = null;
