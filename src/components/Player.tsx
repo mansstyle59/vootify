@@ -1259,9 +1259,6 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                   <h2 className="text-[22px] font-extrabold text-foreground truncate leading-tight">
                     {radioMeta?.title || stationName}
                   </h2>
-                  {radioMeta?.isShow && radioMeta?.showName && (
-                    <p className="text-[13px] text-primary/70 truncate leading-tight mt-0.5">{radioMeta.showName}</p>
-                  )}
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>

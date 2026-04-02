@@ -155,9 +155,6 @@ export function useRadioMetadata(
               coverUrl,
               album: data.album || undefined,
               source: data.source || "none",
-              showName: data.showName || undefined,
-              showCover: data.showCover || undefined,
-              isShow: data.isShow || false,
               adFiltered: data.adFiltered || false,
               lastUpdated: Date.now(),
             };
