@@ -432,6 +432,7 @@ export function MiniPlayer() {
 
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
+    audio.addEventListener("playing", handlePlaying);
 
     // Buffering state from AudioManager
     const onBuffering = () => setIsBuffering(true);
