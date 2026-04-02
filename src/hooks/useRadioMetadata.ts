@@ -12,9 +12,6 @@ export interface RadioMetadata {
   coverUrl: string;
   album?: string;
   source: RadioSource;
-  showName?: string;
-  showCover?: string;
-  isShow?: boolean;
   adFiltered?: boolean;
   lastUpdated?: number; // timestamp ms
 }
@@ -147,7 +144,7 @@ export function useRadioMetadata(
                 title: data.title || stationName || "Radio",
                 artist: data.artist || stationName || "",
                 cover: coverUrl || stationCover || "",
-                album: data.album || (data.isShow ? data.showName : "Radio") || "Radio",
+                album: data.album || "Radio",
               });
             }
 
@@ -158,9 +155,6 @@ export function useRadioMetadata(
               coverUrl,
               album: data.album || undefined,
               source: data.source || "none",
-              showName: data.showName || undefined,
-              showCover: data.showCover || undefined,
-              isShow: data.isShow || false,
               adFiltered: data.adFiltered || false,
               lastUpdated: Date.now(),
             };
