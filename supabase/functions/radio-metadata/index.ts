@@ -31,31 +31,82 @@ function setCache(key: string, data: any) {
   }
 }
 
-// ─── AD-BLOCK: Detect and filter radio ads ───
-const AD_PATTERNS = [
-  /^pub\b/i, /\bpub\s/i, /\bpublicit[eé]/i,
-  /\bad\s*break/i, /\badvert/i, /\bcommercial/i,
-  /\bsponsored?\b/i, /\bsponsor\b/i,
-  /\bjingle\b/i, /\bstation\s*id\b/i,
+// ─── AD-BLOCK: Intelligent radio ad filtering ───
+
+// Known ad/jingle artist names
+const AD_ARTISTS = new Set([
+  "pub", "publicité", "jingle", "radio", "station id", "promo",
+  "annonce", "sponsor", "advertisement", "commercial break",
+  "flash info", "météo", "horoscope", "trafic", "info trafic",
+]);
+
+// Known ad network / syndication patterns in titles
+const AD_TITLE_PATTERNS = [
+  /^pub\b/i, /\bpub\s/i, /\bpub$/i, /\bpublicit[eé]/i,
+  /\bad[\s_-]*break/i, /\badvert(isement)?/i, /\bcommercial/i,
+  /\bsponsore?d?\b/i, /\bsponsor\b/i,
+  /\bjingle\b/i, /\bstation[\s_-]*id\b/i,
   /\bpromo(tion)?\b/i, /\bannonce\b/i,
-  /^\s*-\s*$/, /^[\s.]+$/,
+  /^\s*-\s*$/, /^[\s.]+$/, /^[*_#~]+$/,
   /\bwww\.[a-z]/i, /\bhttps?:\/\//i,
-  /\b(achetez|abonnez|profitez|offre|reduction|remise|code\s*promo)\b/i,
+  // French CTA / commerce
+  /\b(achetez|abonnez|profitez|offre|r[eé]duction|remise|code[\s_]*promo)\b/i,
   /\b(appel|appelez|composez|sms|texto)\s*(le|au|now)?\s*\d/i,
+  /\b(num[eé]ro|t[eé]l[eé]phone|gratuit|essai\s*gratuit)\b/i,
+  /\b(livraison|commandez|code\s*\w{3,8})\b/i,
+  // News / info breaks
   /\bflash\s*(info|actu|traffic|m[eé]t[eé]o)/i,
-  /\bm[eé]t[eé]o\b/i, /\binfo\s*trafic/i, /\bhoroscope\b/i,
-  /\bchronique\b/i, /\bédito(rial)?\b/i,
+  /\bm[eé]t[eé]o\b/i, /\binfo[\s_-]*trafic/i, /\bhoroscope\b/i,
+  /\bchronique\b/i, /\b[eé]dito(rial)?\b/i,
+  /\bbulletin\b/i, /\bjournal\b/i,
+  // Station self-promo
   /^\d{3,}\s*$/, /^radio\s/i,
-  /\b(ici|ceci est|vous écoutez|bienvenue sur)\b/i,
-  /\b(numéro|téléphone|gratuit|essai)\b/i,
+  /\b(ici|ceci est|vous [eé]coutez|bienvenue sur|restez [aà] l'[eé]coute)\b/i,
+  /\b(on continue|apr[eè]s la pause|tout de suite|dans un instant)\b/i,
+  // English ad patterns
+  /\b(buy now|shop now|limited offer|click here|subscribe now|free trial)\b/i,
+  /\b(call now|text\s+\d|dial\s+\d)\b/i,
+  /\b(brought to you|presented by|powered by)\b/i,
 ];
 
+// Heuristic: ultra-short titles or titles with only numbers/symbols
+const SUSPICIOUS_LENGTH_MIN = 3;
+const SUSPICIOUS_LENGTH_MAX_NO_SPACE = 2; // Single words under 3 chars
+
 function isAd(text: string): boolean {
-  if (!text || text.length < 3) return true;
+  if (!text || text.length < SUSPICIOUS_LENGTH_MIN) return true;
   const t = text.trim();
   if (/^https?:\/\//i.test(t)) return true;
-  if (t.length < 4 && !t.includes("-")) return true;
-  for (const p of AD_PATTERNS) { if (p.test(t)) return true; }
+  if (t.length <= SUSPICIOUS_LENGTH_MAX_NO_SPACE && !t.includes("-")) return true;
+
+  // Check if it's ONLY numbers, symbols, or whitespace
+  if (/^[\d\s\W]+$/.test(t) && t.length < 20) return true;
+
+  // Check known ad artist names
+  const lower = t.toLowerCase();
+  for (const adArtist of AD_ARTISTS) {
+    if (lower === adArtist || lower.startsWith(adArtist + " ") || lower.endsWith(" " + adArtist)) return true;
+  }
+
+  // Check patterns
+  for (const p of AD_TITLE_PATTERNS) { if (p.test(t)) return true; }
+
+  // Heuristic: too many uppercase words in short text = likely station ID / promo
+  const words = t.split(/\s+/);
+  if (words.length <= 3) {
+    const upperWords = words.filter(w => w === w.toUpperCase() && w.length > 1);
+    if (upperWords.length === words.length && !t.includes("-")) return true;
+  }
+
+  return false;
+}
+
+/** Check both artist and title separately for ad content */
+function isAdContent(artist: string, title: string): boolean {
+  if (isAd(`${artist} - ${title}`)) return true;
+  // Also check them individually — a known ad artist with any title = ad
+  if (artist && AD_ARTISTS.has(artist.toLowerCase().trim())) return true;
+  if (title && isAd(title)) return true;
   return false;
 }
 
