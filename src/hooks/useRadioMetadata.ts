@@ -174,8 +174,8 @@ export function useRadioMetadata(
       }
     };
 
-    // Initial fetch immediately
-    fetchMeta();
+    // Initial fetch with delay to let stream start
+    const initialTimer = setTimeout(fetchMeta, INITIAL_DELAY);
 
     return () => {
       isMounted = false;
