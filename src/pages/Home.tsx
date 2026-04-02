@@ -250,7 +250,7 @@ const HomePage = () => {
   }), [recentlyAdded, loadingAdded, recentlyListened, loadingListened, mostPlayed, loadingMost, recommended, loadingRecommended]);
 
   const adminSections = useMemo(() => {
-    if (!homeConfig) return [];
+    if (!homeConfig?.sections || !Array.isArray(homeConfig.sections)) return [];
     return [...homeConfig.sections].sort((a, b) => a.order - b.order);
   }, [homeConfig]);
 
