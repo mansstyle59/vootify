@@ -6,15 +6,13 @@ import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   ChevronDown, ListMusic, X, Disc3,
   Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal,
-  Music, Plus, Radio, ShieldCheck, Clock
+  Music, Plus, Radio, ShieldCheck
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AudioVisualizer } from "./AudioVisualizer";
-import { useRadioMetadata, useRadioHistory, type RadioSource } from "@/hooks/useRadioMetadata";
-import { RadioRecognitionOverlay, PulseRings } from "./RadioRecognition";
 import { offlineCache } from "@/lib/offlineCache";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { audioManager } from "@/lib/audioManager";
@@ -23,29 +21,6 @@ import { updateQueuePreload, getPreloadedUrl, consumePreloaded, clearPreloadPool
 import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade } from "@/lib/crossfadeEngine";
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
-import shazamLogo from "@/assets/shazam-logo.png";
-
-/* ── Live metadata timestamp indicator ── */
-function MetaTimestamp({ ts }: { ts: number }) {
-  const [ago, setAgo] = useState("");
-  useEffect(() => {
-    const update = () => {
-      const s = Math.floor((Date.now() - ts) / 1000);
-      if (s < 5) setAgo("à l'instant");
-      else if (s < 60) setAgo(`il y a ${s}s`);
-      else setAgo(`il y a ${Math.floor(s / 60)}min`);
-    };
-    update();
-    const id = setInterval(update, 5000);
-    return () => clearInterval(id);
-  }, [ts]);
-  return (
-    <span className="inline-flex items-center gap-1 text-[9px] text-foreground/30 mt-0.5">
-      <Clock className="w-2.5 h-2.5" />
-      <span>{ago}</span>
-    </span>
-  );
-}
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
