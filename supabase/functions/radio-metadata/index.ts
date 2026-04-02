@@ -489,10 +489,14 @@ async function fetchSkyrockMetadata(streamUrl: string): Promise<{
 }
 
 // ─── Native station detection ───
+// Only match MAIN Skyrock, not sub-stations like Skyrock Klassiks
 function detectNativeStation(url: string, stationName?: string): string | null {
   const u = url.toLowerCase();
   const n = (stationName || "").toLowerCase();
-  if (u.includes("skyrock") || n.includes("skyrock")) return "skyrock";
+  // Exclude sub-stations (klassiks, 100% français, etc.)
+  const isSubStation = /skyrock\s*(klassiks|classique|100|fran[cç]ais|la\s*radio)/i.test(n) ||
+                       /skyrock[-_]?(klassiks|classique|100|francais)/i.test(u);
+  if (!isSubStation && (u.includes("skyrock") || n.includes("skyrock"))) return "skyrock";
   return null;
 }
 
@@ -500,7 +504,6 @@ function detectNativeStation(url: string, stationName?: string): string | null {
 const RADIO_FR_BLACKLIST = new Set<string>([]);
 
 // ─── Stations that should prioritize ICY stream metadata ───
-// NOTE: Mouv' REMOVED — its ICY returns show names, not songs. RF livemeta is better.
 const ICY_PRIORITY_STATIONS = new Set<string>([]);
 
 function isIcyPriorityStation(stationName: string): boolean {
