@@ -6,7 +6,7 @@ import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   ChevronDown, ListMusic, X, Disc3,
   Download, Check, Loader2, WifiOff, GripVertical, Trash2, Search, SlidersHorizontal,
-  Music, Plus, Radio
+  Music, Plus, Radio, ShieldCheck
 } from "lucide-react";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -745,6 +745,11 @@ export function MiniPlayer() {
                       <div className="text-[11px] truncate text-muted-foreground leading-tight mt-0.5 inline-flex items-center gap-1.5">
                         <span>{radioArtist}</span>
                         <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary" style={{ boxShadow: "0 0 6px hsl(var(--primary) / 0.3)" }}>LIVE</span>
+                        {radioMeta?.adFiltered && (
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium px-1 py-0.5 rounded-full bg-green-500/15 text-green-500" title="Publicité filtrée">
+                            <ShieldCheck className="w-2.5 h-2.5" />
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1145,6 +1150,12 @@ function RadioFullScreen({ onClose }: { onClose: () => void }) {
                     <p className="text-[15px] text-foreground/60 truncate">{radioMeta?.artist || genre}</p>
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">LIVE</span>
                     <SourceBadge source={radioMeta?.source} />
+                    {radioMeta?.adFiltered && (
+                      <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-500 border border-green-500/20" title="Publicité filtrée">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>Ad-block</span>
+                      </span>
+                    )}
                   </div>
                 </div>
                 {/* Recognition button — single action button */}

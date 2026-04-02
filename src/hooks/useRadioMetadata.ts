@@ -14,6 +14,7 @@ export interface RadioMetadata {
   showName?: string;
   showCover?: string;
   isShow?: boolean;
+  adFiltered?: boolean;
 }
 
 export interface RadioHistoryEntry {
@@ -123,6 +124,7 @@ export function useRadioMetadata(
               showName: data.showName || undefined,
               showCover: data.showCover || undefined,
               isShow: data.isShow || false,
+              adFiltered: data.adFiltered || false,
             };
           });
         }
