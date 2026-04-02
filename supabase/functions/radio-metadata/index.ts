@@ -524,7 +524,8 @@ function detectNativeStation(url: string, stationName?: string): string | null {
 const RADIO_FR_BLACKLIST = new Set<string>([]);
 
 // ─── Stations that should prioritize ICY stream metadata ───
-const ICY_PRIORITY_STATIONS = new Set(["mouv", "mouv'", "mouv'"]);
+// NOTE: Mouv' REMOVED — its ICY returns show names, not songs. RF livemeta is better.
+const ICY_PRIORITY_STATIONS = new Set<string>([]);
 
 function isIcyPriorityStation(stationName: string): boolean {
   const n = stationName.toLowerCase().trim().replace(/['']/g, "'");
