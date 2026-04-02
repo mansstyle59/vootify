@@ -110,14 +110,91 @@ function isAdContent(artist: string, title: string): boolean {
   return false;
 }
 
+// ─── programmes-radio.com API (HD show covers & schedule) ───
+const PROGRADIO_API = "https://api.programmes-radio.com";
+const PROGRADIO_CDN = "https://cdn.radio-addict.com/media/cache/page_thumb/media/program";
+
+// Map Radio France station codes to programmes-radio codes
+const PROGRADIO_STATION_MAP: Record<string, string> = {
+  franceinter: "franceinter",
+  franceinfo: "franceinfo",
+  franceculture: "franceculture",
+  francemusique: "francemusique",
+  fip: "fip",
+  mouv: "mouv",
+};
+
+interface ProgRadioShow {
+  title: string;
+  description: string;
+  pictureUrl: string;
+  startAt: string;
+  endAt: string;
+}
+
+async function fetchProgRadioSchedule(stationCode: string): Promise<ProgRadioShow | null> {
+  const progCode = PROGRADIO_STATION_MAP[stationCode];
+  if (!progCode) return null;
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const cacheKey = `progradio:${progCode}:${today}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const resp = await fetch(`${PROGRADIO_API}/schedule/${today}?r=${progCode}`, {
+      headers: {
+        "User-Agent": "Vootify/1.0",
+        "Referer": "https://www.programmes-radio.com/",
+      },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    const schedule = data?.schedule?.[progCode]?.[progCode];
+    if (!schedule || typeof schedule !== "object") return null;
+
+    const now = new Date();
+    const shows = Object.values(schedule) as any[];
+
+    // Find the show currently airing
+    const currentShow = shows.find((show: any) => {
+      const start = new Date(show.start_at);
+      const end = new Date(show.end_at);
+      return start <= now && now <= end;
+    });
+
+    if (!currentShow) return null;
+
+    const pictureUrl = currentShow.picture_url
+      ? `${PROGRADIO_CDN}/${currentShow.picture_url}`
+      : "";
+
+    const result: ProgRadioShow = {
+      title: currentShow.title || "",
+      description: currentShow.description || "",
+      pictureUrl,
+      startAt: currentShow.start_at,
+      endAt: currentShow.end_at,
+    };
+
+    setCache(cacheKey, result);
+    return result;
+  } catch (e) {
+    console.log("programmes-radio.com API error:", (e as Error).message);
+    return null;
+  }
+}
+
 // ─── Radio France station mappings (with logo URLs) ───
-const RADIO_FRANCE_STATIONS: Record<string, { name: string; stationId: number; logo?: string }> = {
-  franceinter:   { name: "France Inter",    stationId: 1, logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/8a8e3e5a-e1e1-4f88-8d84-4b6e2e0dba95/200x200_rf_omm_0000026085_dnc.0057.jpg" },
-  franceinfo:    { name: "franceinfo",      stationId: 2, logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/87d93c76-b6db-43c4-a7e4-7e3c9e6d6c10/200x200_rf_omm_0000026086_dnc.0057.jpg" },
-  franceculture: { name: "France Culture",  stationId: 3 },
-  francemusique: { name: "France Musique",  stationId: 4 },
-  fip:           { name: "FIP",             stationId: 5 },
-  mouv:          { name: "Mouv'",           stationId: 6 },
+const RADIO_FRANCE_STATIONS: Record<string, { name: string; stationId: number; logo?: string; progCode?: string }> = {
+  franceinter:   { name: "France Inter",    stationId: 1, progCode: "franceinter", logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/8a8e3e5a-e1e1-4f88-8d84-4b6e2e0dba95/200x200_rf_omm_0000026085_dnc.0057.jpg" },
+  franceinfo:    { name: "franceinfo",      stationId: 2, progCode: "franceinfo", logo: "https://www.radiofrance.fr/s3/cruiser-production/2022/05/87d93c76-b6db-43c4-a7e4-7e3c9e6d6c10/200x200_rf_omm_0000026086_dnc.0057.jpg" },
+  franceculture: { name: "France Culture",  stationId: 3, progCode: "franceculture" },
+  francemusique: { name: "France Musique",  stationId: 4, progCode: "francemusique" },
+  fip:           { name: "FIP",             stationId: 5, progCode: "fip" },
+  mouv:          { name: "Mouv'",           stationId: 6, progCode: "mouv" },
 };
 
 function detectRadioFranceStation(url: string): { name: string; stationId: number; logo?: string } | null {
