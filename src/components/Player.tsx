@@ -663,18 +663,14 @@ export function MiniPlayer() {
   // ── Media Session metadata — use AudioManager ──
   useEffect(() => {
     if (!currentSong) return;
-    const title = isLive && radioMeta?.title ? radioMeta.title : currentSong.title;
-    const artist = isLive && radioMeta?.artist ? radioMeta.artist : currentSong.artist;
-    const artwork = radioMeta?.coverUrl || currentSong.coverUrl;
-
     audioManager.updateMetadata({
-      title,
-      artist,
-      cover: artwork,
+      title: currentSong.title,
+      artist: currentSong.artist,
+      cover: currentSong.coverUrl,
       album: currentSong.album || (isLive ? "Radio" : undefined),
       isLive,
     });
-  }, [currentSong?.id, currentSong?.title, isLive, radioMeta?.title, radioMeta?.artist, radioMeta?.coverUrl]);
+  }, [currentSong?.id, currentSong?.title, isLive]);
 
   // ── Keep playback state in sync ──
   useEffect(() => {
