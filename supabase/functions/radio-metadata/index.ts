@@ -811,19 +811,73 @@ serve(async (req) => {
     const rfStation = detectRadioFranceStation(streamUrl);
     const resolvedStationName = stationName || rfStation?.name || "";
 
-    // ── Step 1: Radio France → livemeta + programmes-radio enrichment ──
+    // ── Step 1: Radio France → livemeta + programmes-radio + ICY enrichment ──
     if (rfStation) {
       const stationKey = Object.entries(RADIO_FRANCE_STATIONS).find(([, v]) => v.stationId === rfStation.stationId)?.[0] || "";
-      const [rfLive, progShow] = await Promise.all([
+      const icyPriority = isIcyPriorityStation(resolvedStationName) || isIcyPriorityStation(stationKey);
+
+      // Fetch all sources in parallel for speed
+      const [rfLive, progShow, icyRaw] = await Promise.all([
         fetchRadioFranceLive(rfStation.stationId),
         stationKey ? fetchProgRadioSchedule(stationKey) : Promise.resolve(null),
+        icyPriority ? fetchIcyMetadata(streamUrl) : Promise.resolve(""),
       ]);
 
       const progShowName = progShow?.title || "";
       const progShowCover = progShow?.pictureUrl || "";
 
+      // Parse ICY result
+      let icyParsed: { artist: string; title: string } | null = null;
+      if (icyRaw && !isAd(icyRaw)) {
+        const parsed = cleanIcyTitle(icyRaw);
+        if (parsed.artist && parsed.title && parsed.artist.length >= 2 && parsed.title.length >= 3
+            && !isAdContent(parsed.artist, parsed.title)) {
+          icyParsed = parsed;
+        }
+      }
+
+      // For ICY-priority stations (Mouv'), prefer ICY metadata when it has song data
+      if (icyPriority && icyParsed) {
+        // Cross-validate ICY with livemeta if available
+        let rfSong: { artist: string; title: string } | null = null;
+        if (rfLive && !rfLive.isShow && rfLive.title && rfLive.artist) {
+          rfSong = { artist: rfLive.artist, title: rfLive.title };
+        }
+        const validated = crossValidate(icyParsed, rfSong);
+        artist = validated.artist;
+        title = validated.title;
+        nowPlaying = `${artist} - ${title}`;
+        showName = rfLive?.showName || progShowName || "";
+        showCover = progShowCover || rfLive?.showCover || "";
+        source = "stream";
+
+        // Resolve HD cover
+        const resolved = await resolveCoverArt(artist, title, stationCover);
+        coverUrl = resolved.coverUrl || "";
+        album = resolved.album || rfLive?.album || "";
+        if (resolved.resolvedArtist && normalize(resolved.resolvedArtist) === normalize(artist)) {
+          artist = resolved.resolvedArtist;
+        }
+        if (resolved.resolvedTitle && normalize(resolved.resolvedTitle) === normalize(title)) {
+          title = resolved.resolvedTitle;
+        }
+        nowPlaying = `${artist} - ${title}`;
+
+        if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
+        const responseData = {
+          success: true, nowPlaying, title, artist, coverUrl, album, source,
+          showName, showCover, isShow: false,
+        };
+        setCache(responseCacheKey, responseData);
+        return new Response(JSON.stringify(responseData), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (rfLive) {
         if (rfLive.isShow && !rfLive.hasSongData) {
+          // For ICY-priority stations during shows with no song, try ICY first
+          // (icyParsed was null if we got here, so show info is all we have)
           title = rfLive.title || progShowName || "";
           artist = rfStation.name;
           showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
@@ -859,7 +913,6 @@ serve(async (req) => {
             const resolved = await resolveCoverArt(artist, title, coverUrl || stationCover);
             if (resolved.coverUrl) coverUrl = resolved.coverUrl;
             album = resolved.album || album;
-            // Use Deezer-corrected names if available
             if (resolved.resolvedArtist && normalize(resolved.resolvedArtist) === normalize(artist)) {
               artist = resolved.resolvedArtist;
             }
@@ -880,6 +933,7 @@ serve(async (req) => {
           });
         }
       }
+    }
     }
 
     // ── Step 1.5: Native station APIs (Skyrock) ──
