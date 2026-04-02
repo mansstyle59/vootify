@@ -496,6 +496,7 @@ const RadioPage = () => {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [searchQuery]);
 
+  const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = null;
 
   const playStation = (station: { id: string; name: string; genre: string; coverUrl: string; streamUrl: string }) => {

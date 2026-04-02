@@ -71,6 +71,7 @@ const CarPlayPage = () => {
   const greeting = getGreeting(profile?.display_name);
   const TimeIcon = timeCtx === "morning" ? Sun : timeCtx === "night" ? Moon : Sunset;
 
+  const isLiveRadio = currentSong?.album === "Radio en direct";
   const radioMetadata = null;
   const radioHistory: any[] = [];
 

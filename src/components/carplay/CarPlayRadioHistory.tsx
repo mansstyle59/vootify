@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, X } from "lucide-react";
-import { RadioHistoryEntry } from "@/hooks/useRadioMetadata";
+
 import { LazyImage } from "@/components/LazyImage";
 
 interface Props {
