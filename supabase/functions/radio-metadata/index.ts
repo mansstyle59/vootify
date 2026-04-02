@@ -104,6 +104,8 @@ const PROGRADIO_STATION_MAP: Record<string, string> = {
   mouv: "mouv",
   nrj: "nrj",
   skyrock: "skyrock",
+  "skyrock klassiks": "skyrockklassiks",
+  "skyrock 100% français": "skyrockfrancais",
   "fun radio": "funradio",
   funradio: "funradio",
   nostalgie: "nostalgie",
