@@ -879,8 +879,40 @@ serve(async (req) => {
 
       if (rfLive) {
         if (rfLive.isShow && !rfLive.hasSongData) {
-          // For ICY-priority stations during shows with no song, try ICY first
-          // (icyParsed was null if we got here, so show info is all we have)
+          // Show mode with no song data — check programmes-radio now-playing for actual song
+          if (progNp?.title && progNp?.artist && !isAdContent(progNp.artist, progNp.title)) {
+            // programmes-radio found a song playing during the show!
+            artist = progNp.artist;
+            title = progNp.title;
+            nowPlaying = `${artist} - ${title}`;
+            showName = rfLive.showName || progShowName || rfLive.title || "";
+            showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
+            source = "official";
+            isShow = false;
+
+            const resolved = await resolveCoverArt(artist, title, progNp.coverUrl || stationCover);
+            coverUrl = resolved.coverUrl || progNp.coverUrl || "";
+            album = resolved.album || "";
+            if (resolved.resolvedArtist && normalize(resolved.resolvedArtist) === normalize(artist)) {
+              artist = resolved.resolvedArtist;
+            }
+            if (resolved.resolvedTitle && normalize(resolved.resolvedTitle) === normalize(title)) {
+              title = resolved.resolvedTitle;
+            }
+            nowPlaying = `${artist} - ${title}`;
+
+            if (!coverUrl) coverUrl = rfStation.logo || stationCover || "";
+            const responseData = {
+              success: true, nowPlaying, title, artist, coverUrl, album, source,
+              showName, showCover, isShow,
+            };
+            setCache(responseCacheKey, responseData);
+            return new Response(JSON.stringify(responseData), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          // No song found — show info only
           title = rfLive.title || progShowName || "";
           artist = rfStation.name;
           showCover = progShowCover || rfLive.showCover || rfLive.coverUrl || "";
