@@ -10,7 +10,7 @@ const ICY_STREAMS: Record<string, string> = {
   "skyrock klassiks": "https://icecast.skyrock.net/s/klassiks_mp3_128k",
 };
 
-const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop|mouv['']?\s*(actu|morning|rap club|13h|midi)/i;
+const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop/i;
 
 /* ── ICY metadata reader ── */
 async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
