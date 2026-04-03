@@ -1,0 +1,8 @@
+git clone https://github.com/mansstyle59/vootify.git
+cd vootify
+npm install
+npx cap add ios
+npx cap sync
+/io/ios
+/www
+/capacitor.config.ts
