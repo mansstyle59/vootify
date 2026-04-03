@@ -1,0 +1,64 @@
+name: Build Vootify iOS IPA
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    env:
+      CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      # --- Decode certificates & provisioning ---
+      - name: Decode certificate
+        run: |
+          echo ${{ secrets.IOS_CERTIFICATE }} | base64 --decode > certificate.p12
+          security import certificate.p12 -P $CERT_PASSWORD -T /usr/bin/codesign
+
+      - name: Decode provisioning profile
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo ${{ secrets.IOS_PROVISION_PROFILE }} | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      # --- Build archive ---
+      - name: Build iOS Archive
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath App.xcarchive archive
+
+      # --- Export IPA ---
+      - name: Export IPA
+        run: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath App.xcarchive \
+            -exportOptionsPlist exportOptions.plist \
+            -exportPath build
+
+      # --- Upload IPA artifact ---
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: vootify-ipa
+          path: ios/App/build/*.ipa
