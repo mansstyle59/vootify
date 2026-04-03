@@ -6,3 +6,6 @@ npx cap sync
 /io/ios
 /www
 /capacitor.config.ts
+git add .
+git commit -m "iOS ready"
+git push
