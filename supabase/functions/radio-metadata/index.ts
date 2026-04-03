@@ -11,7 +11,7 @@ const ICY_STREAMS: Record<string, string> = {
   mouv: "http://icecast.radiofrance.fr/mouv-midfi.mp3",
 };
 
-const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop/i;
+const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop|mouv['']?\s*(actu|morning|rap club|13h|midi)/i;
 
 /* ── ICY metadata reader ── */
 async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
