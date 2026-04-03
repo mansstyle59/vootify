@@ -8,6 +8,7 @@ const corsHeaders = {
 const ICY_STREAMS: Record<string, string> = {
   skyrock: "https://icecast.skyrock.net/s/natio_mp3_128k",
   "skyrock klassiks": "https://icecast.skyrock.net/s/klassiks_mp3_128k",
+  mouv: "http://icecast.radiofrance.fr/mouv-midfi.mp3",
 };
 
 const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop/i;
