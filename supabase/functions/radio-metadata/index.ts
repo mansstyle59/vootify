@@ -94,7 +94,6 @@ async function searchDeezerCover(title: string, artist: string): Promise<string 
 /* ── Station matcher ── */
 function detectStation(name: string): string | null {
   const n = name.toLowerCase().trim();
-  if (/mouv/i.test(n)) return "mouv";
   if (/skyrock\s*klassiks/i.test(n)) return "skyrock klassiks";
   if (/skyrock/i.test(n)) return "skyrock";
   return null;
