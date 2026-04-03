@@ -8,9 +8,10 @@ const corsHeaders = {
 const ICY_STREAMS: Record<string, string> = {
   skyrock: "https://icecast.skyrock.net/s/natio_mp3_128k",
   "skyrock klassiks": "https://icecast.skyrock.net/s/klassiks_mp3_128k",
+  mouv: "http://icecast.radiofrance.fr/mouv-midfi.mp3",
 };
 
-const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop/i;
+const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop|mouv['']?\s*(actu|morning|rap club|13h|midi)/i;
 
 /* ── ICY metadata reader ── */
 async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
@@ -91,51 +92,6 @@ async function searchDeezerCover(title: string, artist: string): Promise<string 
   }
 }
 
-/* ── Mouv' via Radio France page scraping ── */
-async function fetchMouvMetadata(): Promise<{ title: string; artist: string; cover: string | null } | null> {
-  try {
-    const resp = await fetch("https://www.radiofrance.fr/mouv/titres-diffuses", {
-      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36", Accept: "text/html" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!resp.ok) return null;
-    const html = await resp.text();
-
-    const songPattern = /__typename:"Song".*?deezerLink:(?:"https:\/\/www\.deezer\.com\/track\/(\d+)"|void 0).*?titleProps:\{href:"[^"]*",text:"([^"]*)",title:"([^"]*)"\}.*?src:"(https:\/\/www\.radiofrance\.fr\/pikapi\/images\/[^"]+)"/g;
-    const match = songPattern.exec(html);
-    if (!match) return null;
-
-    const [, deezerTrackId, songTitle, artistFromTitle, coverSrc] = match;
-    const fallbackCover = coverSrc ? coverSrc + "/600x600" : null;
-
-    if (deezerTrackId) {
-      try {
-        const dResp = await fetch(`https://api.deezer.com/track/${deezerTrackId}`, { signal: AbortSignal.timeout(4000) });
-        if (dResp.ok) {
-          const d = await dResp.json();
-          if (d?.title) {
-            return {
-              title: d.title,
-              artist: d.artist?.name || artistFromTitle || "Mouv'",
-              cover: d.album?.cover_big || d.album?.cover_medium || fallbackCover,
-            };
-          }
-        }
-      } catch { /* fall through */ }
-    }
-
-    if (artistFromTitle && songTitle) {
-      const cover = await searchDeezerCover(songTitle, artistFromTitle) || fallbackCover;
-      return { title: songTitle, artist: artistFromTitle, cover };
-    }
-
-    return songTitle ? { title: songTitle, artist: "Mouv'", cover: fallbackCover } : null;
-  } catch (e) {
-    console.error("[radio-metadata] Mouv fetch error:", e);
-    return null;
-  }
-}
-
 /* ── Station matcher ── */
 function detectStation(name: string): string | null {
   const n = name.toLowerCase().trim();
@@ -165,17 +121,13 @@ Deno.serve(async (req) => {
 
     let data: { title: string; artist: string; cover: string | null } | null = null;
 
-    if (detected === "mouv") {
-      data = await fetchMouvMetadata();
-    } else {
-      // Skyrock / Skyrock Klassiks via ICY
-      const raw = await fetchIcyMetadata(ICY_STREAMS[detected]);
-      if (raw) {
-        const parsed = parseIcyTitle(raw);
-        if (parsed) {
-          const cover = await searchDeezerCover(parsed.title, parsed.artist);
-          data = { ...parsed, cover };
-        }
+    // All stations use ICY metadata
+    const raw = await fetchIcyMetadata(ICY_STREAMS[detected]);
+    if (raw) {
+      const parsed = parseIcyTitle(raw);
+      if (parsed) {
+        const cover = await searchDeezerCover(parsed.title, parsed.artist);
+        data = { ...parsed, cover };
       }
     }
 
