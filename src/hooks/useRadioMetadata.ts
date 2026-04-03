@@ -10,7 +10,7 @@ const POLL_INTERVAL = 5000;
 const INITIAL_DELAY = 3000;
 
 function isSupportedStation(name: string): boolean {
-  return /mouv|skyrock/i.test(name);
+  return /skyrock/i.test(name);
 }
 
 export function useRadioMetadata(

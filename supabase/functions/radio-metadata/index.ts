@@ -8,10 +8,9 @@ const corsHeaders = {
 const ICY_STREAMS: Record<string, string> = {
   skyrock: "https://icecast.skyrock.net/s/natio_mp3_128k",
   "skyrock klassiks": "https://icecast.skyrock.net/s/klassiks_mp3_128k",
-  mouv: "http://icecast.radiofrance.fr/mouv-midfi.mp3",
 };
 
-const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop|mouv['']?\s*(actu|morning|rap club|13h|midi)/i;
+const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop/i;
 
 /* ── ICY metadata reader ── */
 async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
@@ -95,7 +94,6 @@ async function searchDeezerCover(title: string, artist: string): Promise<string 
 /* ── Station matcher ── */
 function detectStation(name: string): string | null {
   const n = name.toLowerCase().trim();
-  if (/mouv/i.test(n)) return "mouv";
   if (/skyrock\s*klassiks/i.test(n)) return "skyrock klassiks";
   if (/skyrock/i.test(n)) return "skyrock";
   return null;
