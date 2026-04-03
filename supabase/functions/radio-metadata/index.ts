@@ -4,27 +4,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-type MetaResult = { title: string; artist: string; cover: string | null } | null;
-
-/* ── ICY metadata reader ── */
-const SKYROCK_STREAMS: Record<string, string> = {
+/* ── Stream URLs for ICY ── */
+const ICY_STREAMS: Record<string, string> = {
   skyrock: "https://icecast.skyrock.net/s/natio_mp3_128k",
   "skyrock klassiks": "https://icecast.skyrock.net/s/klassiks_mp3_128k",
 };
 
-// Show/program names to skip — only real songs
 const SHOW_PATTERNS = /^skyrock\b|difool|radio libre|morning|planète rap|urban klassiks non stop/i;
 
+/* ── ICY metadata reader ── */
 async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
 
     const resp = await fetch(streamUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Icy-MetaData": "1",
-      },
+      headers: { "User-Agent": "Mozilla/5.0", "Icy-MetaData": "1" },
       signal: controller.signal,
     });
 
@@ -53,14 +48,11 @@ async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
     clearTimeout(timeout);
 
     if (buffer.length <= metaint) return null;
-
     const metaLength = buffer[metaint] * 16;
     if (metaLength === 0) return null;
 
     const metaBytes = buffer.slice(metaint + 1, metaint + 1 + metaLength);
     const metaStr = new TextDecoder("utf-8").decode(metaBytes).replace(/\0+$/, "");
-
-    // Extract StreamTitle='...'
     const match = metaStr.match(/StreamTitle='([^']*)'/);
     return match ? match[1] : null;
   } catch (e) {
@@ -70,47 +62,24 @@ async function fetchIcyMetadata(streamUrl: string): Promise<string | null> {
 }
 
 function parseIcyTitle(raw: string): { title: string; artist: string } | null {
-  // Remove trailing §ID suffix (e.g. "§5790287")
   const cleaned = raw.replace(/\s*§\d+$/, "").trim();
   if (!cleaned || cleaned.length < 3) return null;
-
-  // Skip shows/programs
   if (SHOW_PATTERNS.test(cleaned)) return null;
 
-  // Format: "Artist - Title"
   const sep = cleaned.indexOf(" - ");
   if (sep > 0) {
-    return {
-      artist: cleaned.substring(0, sep).trim(),
-      title: cleaned.substring(sep + 3).trim(),
-    };
+    return { artist: cleaned.substring(0, sep).trim(), title: cleaned.substring(sep + 3).trim() };
   }
-
   return { artist: "Inconnu", title: cleaned };
 }
 
-/* ── Deezer helpers ── */
-async function fetchDeezerTrack(trackId: string): Promise<MetaResult> {
-  try {
-    const resp = await fetch(`https://api.deezer.com/track/${trackId}`, {
-      signal: AbortSignal.timeout(4000),
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    if (!data?.title) return null;
-    return {
-      title: data.title,
-      artist: data.artist?.name || "Inconnu",
-      cover: data.album?.cover_big || data.album?.cover_medium || null,
-    };
-  } catch {
-    return null;
-  }
-}
-
+/* ── Deezer cover search ── */
 async function searchDeezerCover(title: string, artist: string): Promise<string | null> {
   try {
-    const q = encodeURIComponent(`${artist} ${title}`);
+    // Clean title: remove suffixes like "- Inédit", "(feat. ...)" for better search
+    const cleanTitle = title.replace(/\s*[-–]\s*(inédit|bonus|remix)$/i, "").replace(/\s*\(feat\.?[^)]*\)/i, "").trim();
+    const cleanArtist = artist.split(",")[0].trim(); // Use first artist only
+    const q = encodeURIComponent(`${cleanArtist} ${cleanTitle}`);
     const resp = await fetch(`https://api.deezer.com/search?q=${q}&limit=1`, {
       signal: AbortSignal.timeout(4000),
     });
@@ -122,45 +91,8 @@ async function searchDeezerCover(title: string, artist: string): Promise<string 
   }
 }
 
-async function searchDeezerFull(title: string): Promise<MetaResult> {
-  try {
-    const q = encodeURIComponent(title);
-    const resp = await fetch(`https://api.deezer.com/search?q=${q}&limit=1`, {
-      signal: AbortSignal.timeout(4000),
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const track = data?.data?.[0];
-    if (!track) return null;
-    return {
-      title: track.title || title,
-      artist: track.artist?.name || "Inconnu",
-      cover: track.album?.cover_big || track.album?.cover_medium || null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/* ── Skyrock via ICY stream ── */
-async function fetchSkyrockMetadata(station: string): Promise<MetaResult> {
-  const streamUrl = SKYROCK_STREAMS[station];
-  if (!streamUrl) return null;
-
-  const raw = await fetchIcyMetadata(streamUrl);
-  if (!raw) return null;
-
-  const parsed = parseIcyTitle(raw);
-  if (!parsed) return null;
-
-  // Get HD cover from Deezer
-  const cover = await searchDeezerCover(parsed.title, parsed.artist);
-
-  return { title: parsed.title, artist: parsed.artist, cover };
-}
-
-/* ── Mouv' via RadioFrance titres-diffusés ── */
-async function fetchMouvMetadata(): Promise<MetaResult> {
+/* ── Mouv' via Radio France page scraping ── */
+async function fetchMouvMetadata(): Promise<{ title: string; artist: string; cover: string | null } | null> {
   try {
     const resp = await fetch("https://www.radiofrance.fr/mouv/titres-diffuses", {
       headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36", Accept: "text/html" },
@@ -171,36 +103,33 @@ async function fetchMouvMetadata(): Promise<MetaResult> {
 
     const songPattern = /__typename:"Song".*?deezerLink:(?:"https:\/\/www\.deezer\.com\/track\/(\d+)"|void 0).*?titleProps:\{href:"[^"]*",text:"([^"]*)",title:"([^"]*)"\}.*?src:"(https:\/\/www\.radiofrance\.fr\/pikapi\/images\/[^"]+)"/g;
     const match = songPattern.exec(html);
-
     if (!match) return null;
 
     const [, deezerTrackId, songTitle, artistFromTitle, coverSrc] = match;
     const fallbackCover = coverSrc ? coverSrc + "/600x600" : null;
 
-    // Strategy 1: Deezer track ID for exact metadata
     if (deezerTrackId) {
-      const deezerMeta = await fetchDeezerTrack(deezerTrackId);
-      if (deezerMeta) {
-        return { ...deezerMeta, cover: deezerMeta.cover || fallbackCover };
-      }
+      try {
+        const dResp = await fetch(`https://api.deezer.com/track/${deezerTrackId}`, { signal: AbortSignal.timeout(4000) });
+        if (dResp.ok) {
+          const d = await dResp.json();
+          if (d?.title) {
+            return {
+              title: d.title,
+              artist: d.artist?.name || artistFromTitle || "Mouv'",
+              cover: d.album?.cover_big || d.album?.cover_medium || fallbackCover,
+            };
+          }
+        }
+      } catch { /* fall through */ }
     }
 
-    // Strategy 2: Artist in titleProps.title
-    if (artistFromTitle && artistFromTitle.length > 1) {
+    if (artistFromTitle && songTitle) {
       const cover = await searchDeezerCover(songTitle, artistFromTitle) || fallbackCover;
       return { title: songTitle, artist: artistFromTitle, cover };
     }
 
-    // Strategy 3: Search Deezer by title
-    if (songTitle && songTitle.length > 2) {
-      const deezerResult = await searchDeezerFull(songTitle);
-      if (deezerResult) {
-        return { ...deezerResult, cover: deezerResult.cover || fallbackCover };
-      }
-      return { title: songTitle, artist: "Mouv'", cover: fallbackCover };
-    }
-
-    return null;
+    return songTitle ? { title: songTitle, artist: "Mouv'", cover: fallbackCover } : null;
   } catch (e) {
     console.error("[radio-metadata] Mouv fetch error:", e);
     return null;
@@ -227,22 +156,31 @@ Deno.serve(async (req) => {
     const station = url.searchParams.get("station") || "";
     const detected = detectStation(station);
 
-    let meta: MetaResult = null;
-
-    if (detected === "mouv") {
-      meta = await fetchMouvMetadata();
-    } else if (detected === "skyrock" || detected === "skyrock klassiks") {
-      meta = await fetchSkyrockMetadata(detected);
+    if (!detected) {
+      return new Response(
+        JSON.stringify({ success: true, data: null, reason: "unsupported_station" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (detected) {
-      return new Response(JSON.stringify({ success: true, data: meta }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let data: { title: string; artist: string; cover: string | null } | null = null;
+
+    if (detected === "mouv") {
+      data = await fetchMouvMetadata();
+    } else {
+      // Skyrock / Skyrock Klassiks via ICY
+      const raw = await fetchIcyMetadata(ICY_STREAMS[detected]);
+      if (raw) {
+        const parsed = parseIcyTitle(raw);
+        if (parsed) {
+          const cover = await searchDeezerCover(parsed.title, parsed.artist);
+          data = { ...parsed, cover };
+        }
+      }
     }
 
     return new Response(
-      JSON.stringify({ success: true, data: null, reason: "unsupported_station" }),
+      JSON.stringify({ success: true, data }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
