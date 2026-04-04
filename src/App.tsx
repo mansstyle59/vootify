@@ -170,7 +170,7 @@ function AppContent() {
       </PullToRefresh>
       {isCarPlay ? <div className="hidden"><MiniPlayer /></div> : <MiniPlayer />}
       {!isCarPlay && <MobileNav />}
-      {!isCarPlay && <MusicAssistantFAB />}
+      {!isCarPlay && <Suspense fallback={null}><MusicAssistantFAB /></Suspense>}
       <AnimatePresence>
         {fullScreen && !isCarPlay && <FullScreenPlayer />}
       </AnimatePresence>
