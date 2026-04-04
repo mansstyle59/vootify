@@ -22,6 +22,12 @@ import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade }
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
 import { useRadioMetadata, type RadioMeta } from "@/hooks/useRadioMetadata";
+import {
+  queueAutoCache, isOffline, shouldActivateOfflineRadio,
+  getOfflineRadioQueue, activateOfflineRadio, isOfflineRadioActive,
+  onNetworkChange, onOfflineRadioChange, resolveOfflineUrl,
+  prebufferNext,
+} from "@/lib/offlineRadio";
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
@@ -321,13 +327,20 @@ export function MiniPlayer() {
     }
   }, [setProgress]);
 
-  // ── Ended handler ──
+  // ── Ended handler — auto-cache finished song + offline radio ──
   const handleEnded = useCallback(() => {
     // Skip if crossfade already handled the transition
     if (crossfadeTriggeredRef.current || isCrossfading()) {
       crossfadeTriggeredRef.current = false;
       return;
     }
+
+    // Auto-cache the song that just finished (background, no UI change)
+    const finishedSong = usePlayerStore.getState().currentSong;
+    if (finishedSong && finishedSong.duration > 0 && finishedSong.streamUrl && !finishedSong.streamUrl.startsWith("blob:")) {
+      queueAutoCache(finishedSong);
+    }
+
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
       audio.currentTime = 0;
@@ -382,14 +395,24 @@ export function MiniPlayer() {
     }
 
     if (currentSong.streamUrl && !navigator.onLine) {
-      // Offline and no cache — wait for network
-      const waitOnline = () => {
-        window.removeEventListener("online", waitOnline);
-        if (usePlayerStore.getState().currentSong?.id !== currentSong.id) return;
-        audio.src = currentSong.streamUrl!;
-        audio.play().catch(() => usePlayerStore.getState().next());
-      };
-      window.addEventListener("online", waitOnline);
+      // Offline — try to switch to offline radio mode
+      shouldActivateOfflineRadio(currentSong).then((offlineQueue) => {
+        if (offlineQueue && offlineQueue.length > 0) {
+          activateOfflineRadio();
+          usePlayerStore.setState({ queue: offlineQueue });
+          usePlayerStore.getState().play(offlineQueue[0]);
+          console.log("[player] Switched to offline radio mode");
+        } else {
+          // No cache — wait for network
+          const waitOnline = () => {
+            window.removeEventListener("online", waitOnline);
+            if (usePlayerStore.getState().currentSong?.id !== currentSong.id) return;
+            audio.src = currentSong.streamUrl!;
+            audio.play().catch(() => usePlayerStore.getState().next());
+          };
+          window.addEventListener("online", waitOnline);
+        }
+      });
       return;
     }
 
@@ -599,10 +622,57 @@ export function MiniPlayer() {
     // Start deep preloading after 3 seconds of stable playback
     const timer = setTimeout(() => {
       updateQueuePreload(currentSong.id, queue, shuffle);
+      // Also resolve cached URLs for upcoming tracks
+      const idx = queue.findIndex((s) => s.id === currentSong.id);
+      if (idx !== -1) prebufferNext(queue, idx);
     }, 3000);
 
     return () => clearTimeout(timer);
   }, [currentSong?.id, isPlaying]);
+
+  // ── Offline radio: auto-switch & smooth reconnection ──
+  useEffect(() => {
+    // When network drops during playback, check if we need offline radio
+    const unsubNetwork = onNetworkChange(async (offline) => {
+      if (!offline) {
+        // Network restored — if we were in offline radio, smoothly transition back
+        if (isOfflineRadioActive()) {
+          console.log("[player] Network back — transitioning from offline radio");
+          // Don't abruptly stop — let current cached song finish naturally
+          // The next() call will pick up live content again
+        }
+        return;
+      }
+
+      // Network dropped — check if current song is still playing
+      const state = usePlayerStore.getState();
+      if (!state.currentSong || !state.isPlaying) return;
+
+      // If currently playing from cache, no action needed
+      if (state.currentSong.streamUrl?.startsWith("blob:")) return;
+
+      // Check if audio buffer is sufficient to continue
+      if (audio.buffered.length > 0) {
+        const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
+        const remaining = bufferedEnd - audio.currentTime;
+        if (remaining > 10) {
+          // Enough buffer — wait for it to run out, then switch
+          console.log(`[player] ${Math.round(remaining)}s buffer remaining, will switch later if needed`);
+          return;
+        }
+      }
+
+      // Switch to offline radio immediately
+      const offlineQueue = await getOfflineRadioQueue();
+      if (offlineQueue.length > 0) {
+        activateOfflineRadio();
+        usePlayerStore.setState({ queue: offlineQueue });
+        usePlayerStore.getState().play(offlineQueue[0]);
+      }
+    });
+
+    return () => unsubNetwork();
+  }, []);
 
   const isLive = currentSong ? currentSong.duration === 0 : false;
 
