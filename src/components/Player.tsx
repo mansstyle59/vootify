@@ -395,14 +395,24 @@ export function MiniPlayer() {
     }
 
     if (currentSong.streamUrl && !navigator.onLine) {
-      // Offline and no cache — wait for network
-      const waitOnline = () => {
-        window.removeEventListener("online", waitOnline);
-        if (usePlayerStore.getState().currentSong?.id !== currentSong.id) return;
-        audio.src = currentSong.streamUrl!;
-        audio.play().catch(() => usePlayerStore.getState().next());
-      };
-      window.addEventListener("online", waitOnline);
+      // Offline — try to switch to offline radio mode
+      shouldActivateOfflineRadio(currentSong).then((offlineQueue) => {
+        if (offlineQueue && offlineQueue.length > 0) {
+          activateOfflineRadio();
+          usePlayerStore.setState({ queue: offlineQueue });
+          usePlayerStore.getState().play(offlineQueue[0]);
+          console.log("[player] Switched to offline radio mode");
+        } else {
+          // No cache — wait for network
+          const waitOnline = () => {
+            window.removeEventListener("online", waitOnline);
+            if (usePlayerStore.getState().currentSong?.id !== currentSong.id) return;
+            audio.src = currentSong.streamUrl!;
+            audio.play().catch(() => usePlayerStore.getState().next());
+          };
+          window.addEventListener("online", waitOnline);
+        }
+      });
       return;
     }
 
