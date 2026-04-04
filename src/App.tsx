@@ -9,26 +9,25 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { MiniPlayer, FullScreenPlayer } from "@/components/Player";
 import { usePlayerStore } from "@/stores/playerStore";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback, lazy, Suspense, startTransition, memo } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { PageLoader } from "@/components/PageLoader";
 import { PageFade } from "@/components/PageFade";
-import { NetworkStatus } from "@/components/NetworkStatus";
-import { UpdateNotification } from "@/components/UpdateNotification";
-import IosPwaInstallBanner from "@/components/IosPwaInstallBanner";
 import { AuthGate } from "@/components/AuthGate";
-import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { InitialCacheLoader } from "@/components/InitialCacheLoader";
 import { silentCacheRefresh, isCacheReady } from "@/lib/appCache";
-import { startCacheWarmup } from "@/lib/cacheWarmup";
-import { startDataPrefetch } from "@/lib/dataPrefetch";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
-import { initAutoDownload } from "@/lib/autoDownload";
-import { MusicAssistantFAB } from "@/components/MusicAssistant";
+
+// Lazy load non-critical overlay components (not needed for first paint)
+const NetworkStatus = lazy(() => import("@/components/NetworkStatus").then(m => ({ default: m.NetworkStatus })));
+const UpdateNotification = lazy(() => import("@/components/UpdateNotification").then(m => ({ default: m.UpdateNotification })));
+const IosPwaInstallBanner = lazy(() => import("@/components/IosPwaInstallBanner"));
+const PushNotificationPrompt = lazy(() => import("@/components/PushNotificationPrompt").then(m => ({ default: m.PushNotificationPrompt })));
+const MusicAssistantFAB = lazy(() => import("@/components/MusicAssistant").then(m => ({ default: m.MusicAssistantFAB })));
 
 // Lazy load all pages for faster initial load & smooth transitions
 const Home = lazy(() => import("./pages/Home"));

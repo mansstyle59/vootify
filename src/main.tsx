@@ -2,16 +2,22 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { guardServiceWorker } from "@/lib/swGuard";
-import { initRoutePrefetch } from "@/lib/prefetchRoutes";
-import { initOfflineSync } from "@/lib/offlineQueue";
 
 // Prevent SW issues in preview/iframe contexts
 guardServiceWorker();
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Prefetch route chunks on interaction hints (after render)
-initRoutePrefetch();
+// Defer non-critical modules to idle time
+const deferInit = (fn: () => void) => {
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(fn, { timeout: 3000 });
+  } else {
+    setTimeout(fn, 1500);
+  }
+};
 
-// Start offline action sync listener
-initOfflineSync();
+deferInit(() => {
+  import("@/lib/prefetchRoutes").then((m) => m.initRoutePrefetch());
+  import("@/lib/offlineQueue").then((m) => m.initOfflineSync());
+});
