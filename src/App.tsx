@@ -192,10 +192,12 @@ const App = () => {
           <AuthProvider>
             <AdminAuthProvider>
               <Sonner />
-              <NetworkStatus />
-              <UpdateNotification />
-              <IosPwaInstallBanner />
-              <PushNotificationPrompt />
+              <Suspense fallback={null}>
+                <NetworkStatus />
+                <UpdateNotification />
+                <IosPwaInstallBanner />
+                <PushNotificationPrompt />
+              </Suspense>
               {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
               <BrowserRouter>
                 <AuthGate>
