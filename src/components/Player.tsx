@@ -22,6 +22,12 @@ import { startCrossfade, shouldStartCrossfade, isCrossfading, cleanupCrossfade }
 import type { Song } from "@/data/mockData";
 import { SafeImage } from "@/components/SafeImage";
 import { useRadioMetadata, type RadioMeta } from "@/hooks/useRadioMetadata";
+import {
+  queueAutoCache, isOffline, shouldActivateOfflineRadio,
+  getOfflineRadioQueue, activateOfflineRadio, isOfflineRadioActive,
+  onNetworkChange, onOfflineRadioChange, resolveOfflineUrl,
+  prebufferNext,
+} from "@/lib/offlineRadio";
 
 /* ── Add to Library Button (synced with store) ── */
 function AddToLibraryButton({ song }: { song: Song }) {
