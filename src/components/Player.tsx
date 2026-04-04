@@ -327,13 +327,20 @@ export function MiniPlayer() {
     }
   }, [setProgress]);
 
-  // ── Ended handler ──
+  // ── Ended handler — auto-cache finished song + offline radio ──
   const handleEnded = useCallback(() => {
     // Skip if crossfade already handled the transition
     if (crossfadeTriggeredRef.current || isCrossfading()) {
       crossfadeTriggeredRef.current = false;
       return;
     }
+
+    // Auto-cache the song that just finished (background, no UI change)
+    const finishedSong = usePlayerStore.getState().currentSong;
+    if (finishedSong && finishedSong.duration > 0 && finishedSong.streamUrl && !finishedSong.streamUrl.startsWith("blob:")) {
+      queueAutoCache(finishedSong);
+    }
+
     const { repeat } = usePlayerStore.getState();
     if (repeat === "one") {
       audio.currentTime = 0;
