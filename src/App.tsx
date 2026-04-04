@@ -116,9 +116,16 @@ function AppContent() {
       if (isCacheReady()) {
         silentCacheRefresh(userId);
       }
-      startCacheWarmup(userId);
-      startDataPrefetch(queryClient, userId);
-      initAutoDownload(() => user?.id || null);
+      // Defer heavy background tasks to idle time
+      const deferBg = (fn: () => void) => {
+        if ("requestIdleCallback" in window) requestIdleCallback(fn, { timeout: 5000 });
+        else setTimeout(fn, 2000);
+      };
+      deferBg(() => {
+        import("@/lib/cacheWarmup").then((m) => m.startCacheWarmup(userId));
+        import("@/lib/dataPrefetch").then((m) => m.startDataPrefetch(queryClient, userId));
+        import("@/lib/autoDownload").then((m) => m.initAutoDownload(() => user?.id || null));
+      });
     }
   }, [user, loading, loadUserData, setUserId]);
 
