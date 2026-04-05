@@ -16,7 +16,7 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
     // Slightly longer to ensure auth + first render completes
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onFinish, 400);
+      setTimeout(onFinish, 300);
     }, 2200);
     return () => clearTimeout(timer);
   }, [onFinish, holdForCache]);
