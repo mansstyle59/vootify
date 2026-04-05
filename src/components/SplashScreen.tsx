@@ -17,7 +17,7 @@ export function SplashScreen({ onFinish, holdForCache }: Props) {
     const timer = setTimeout(() => {
       setVisible(false);
       setTimeout(onFinish, 300);
-    }, 2200);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [onFinish, holdForCache]);
 
