@@ -22,16 +22,18 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Add iOS platform
-        run: npx cap add ios || true
+      - name: Prepare iOS platform
+        run: |
+          if [ -d "ios" ] && [ ! -f "ios/App/Podfile" ]; then
+            rm -rf ios
+          fi
+          npx cap add ios
 
       - name: Install CocoaPods
         run: sudo gem install cocoapods
 
       - name: Sync Capacitor
-        run: |
-          npx cap add ios || true
-          npx cap sync ios
+        run: npx cap sync ios
 
       - name: Build unsigned .app
         working-directory: ios/App
