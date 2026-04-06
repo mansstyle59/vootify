@@ -25,6 +25,9 @@ jobs:
       - name: Add iOS platform
         run: npx cap add ios || true
 
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
       - name: Sync Capacitor
         run: |
           npx cap add ios || true
