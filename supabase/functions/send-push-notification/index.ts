@@ -52,8 +52,8 @@ async function createVapidJwt(
   const publicKeyBytes = urlBase64ToUint8Array(publicKeyB64url);
 
   // Uncompressed public key: 0x04 || x (32 bytes) || y (32 bytes)
-  const x = toB64url(publicKeyBytes.slice(1, 33));
-  const y = toB64url(publicKeyBytes.slice(33, 65));
+  const x = toB64url(publicKeyBytes.slice(1, 33).buffer as ArrayBuffer);
+  const y = toB64url(publicKeyBytes.slice(33, 65).buffer as ArrayBuffer);
 
   const key = await crypto.subtle.importKey(
     "jwk",
@@ -72,7 +72,7 @@ async function createVapidJwt(
   // Convert DER signature to raw r||s format expected by WebPush
   const sigBytes = new Uint8Array(signature);
   // crypto.subtle already returns r||s for ECDSA (64 bytes)
-  const sigB64 = toB64url(sigBytes);
+  const sigB64 = toB64url(sigBytes.buffer as ArrayBuffer);
 
   return `${unsigned}.${sigB64}`;
 }
@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("Error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
