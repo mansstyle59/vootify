@@ -34,8 +34,8 @@ async function createVapidJwt(
 
   const publicKeyB64url = Deno.env.get("VAPID_PUBLIC_KEY")!;
   const publicKeyBytes = urlBase64ToUint8Array(publicKeyB64url);
-  const x = toB64url(publicKeyBytes.slice(1, 33));
-  const y = toB64url(publicKeyBytes.slice(33, 65));
+  const x = toB64url(publicKeyBytes.slice(1, 33).buffer as ArrayBuffer);
+  const y = toB64url(publicKeyBytes.slice(33, 65).buffer as ArrayBuffer);
 
   const key = await crypto.subtle.importKey(
     "jwk",
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
