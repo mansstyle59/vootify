@@ -27,11 +27,8 @@ jobs:
 
       - name: Sync Capacitor
         run: |
-         if [ -f "ios/App/Podfile" ]; then
-           npx cap sync ios
-         else
-          npx cap add ios --force
-         fi
+          npx cap add ios || true
+          npx cap sync ios
 
       - name: Build unsigned .app
         working-directory: ios/App
