@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.3897df85e2e740d2830358cb60035834',
+  appId: 'app.lovable.vootify',
   appName: 'Vootify',
   webDir: 'dist',
   // Pour le dev live-reload, décommenter :
