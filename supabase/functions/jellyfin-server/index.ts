@@ -14,6 +14,28 @@ const FAKE_USER_ID = "f0e1d2c3b4a5f0e1d2c3b4a5f0e1d2c3";
 const FAKE_USER_NAME = "vootify";
 const API_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
+/* ── QuickConnect in-memory store ── */
+interface QuickConnectEntry {
+  Code: string;
+  Secret: string;
+  DateAdded: string;
+  Authenticated: boolean;
+}
+const quickConnectCodes = new Map<string, QuickConnectEntry>();
+
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+function generateSecret(): string {
+  return crypto.randomUUID().replace(/-/g, "");
+}
+function cleanExpiredCodes() {
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  for (const [secret, entry] of quickConnectCodes) {
+    if (new Date(entry.DateAdded).getTime() < fiveMinAgo) quickConnectCodes.delete(secret);
+  }
+}
+
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
