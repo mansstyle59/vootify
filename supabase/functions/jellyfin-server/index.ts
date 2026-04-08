@@ -214,6 +214,34 @@ async function handleLatestItems(params: URLSearchParams) {
   return json(items); // /Items/Latest returns a flat array, not wrapped
 }
 
+/* ── /Items/Filters ── */
+async function handleItemsFilters() {
+  const sb = getSupabase();
+  const { data: songs } = await sb.from("custom_songs").select("genre, year, artist");
+
+  const genres = new Set<string>();
+  const years = new Set<number>();
+  const artists = new Set<string>();
+
+  for (const s of songs || []) {
+    if (s.genre) genres.add(s.genre);
+    if (s.year) years.add(s.year);
+    if (s.artist) artists.add(s.artist);
+  }
+
+  const sortedYears = [...years].sort((a, b) => b - a);
+
+  return json({
+    Genres: [...genres].sort(),
+    Years: sortedYears,
+    Tags: [],
+    OfficialRatings: [],
+    Features: [],
+    GenreItems: [...genres].sort().map(g => ({ Name: g, Id: slugify(g) })),
+    ArtistItems: [...artists].sort().map(a => ({ Name: a, Id: slugify(a) })),
+  });
+}
+
 /* ── /Items ── */
 async function handleItems(params: URLSearchParams) {
   const sb = getSupabase();
