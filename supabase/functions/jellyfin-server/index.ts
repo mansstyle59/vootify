@@ -600,7 +600,47 @@ async function handleStats() {
   });
 }
 
-/* ── Main router ── */
+/* ── Similar Items ── */
+async function handleSimilar(itemId: string, params: URLSearchParams) {
+  const sb = getSupabase();
+  const limit = parseInt(params.get("Limit") || params.get("limit") || "20");
+
+  // Find the source song
+  const { data: source } = await sb.from("custom_songs").select("*").eq("id", itemId).maybeSingle();
+  if (!source) return json({ Items: [], TotalRecordCount: 0, StartIndex: 0 });
+
+  // Strategy: find songs by same artist OR same genre, excluding the source
+  const filters: string[] = [];
+  if (source.artist) filters.push(`artist.eq.${source.artist}`);
+  if (source.genre) filters.push(`genre.eq.${source.genre}`);
+  if (source.album) filters.push(`album.eq.${source.album}`);
+
+  if (filters.length === 0) return json({ Items: [], TotalRecordCount: 0, StartIndex: 0 });
+
+  const { data: candidates } = await sb.from("custom_songs").select("*")
+    .or(filters.join(","))
+    .neq("id", itemId)
+    .limit(200);
+
+  if (!candidates || candidates.length === 0) return json({ Items: [], TotalRecordCount: 0, StartIndex: 0 });
+
+  // Score candidates: same artist=3, same genre=2, same album=1
+  const scored = candidates.map((c: any) => {
+    let score = 0;
+    if (c.artist === source.artist) score += 3;
+    if (c.genre && c.genre === source.genre) score += 2;
+    if (c.album && c.album === source.album) score += 1;
+    return { song: c, score };
+  });
+
+  // Sort by score desc, then shuffle within same score for variety
+  scored.sort((a, b) => b.score - a.score || Math.random() - 0.5);
+
+  const items = scored.slice(0, limit).map((s, i) => toJellyfinItem(s.song, i));
+  return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
