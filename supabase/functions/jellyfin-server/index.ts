@@ -30,6 +30,134 @@ function getSupabase() {
 /* ── Helpers ── */
 function slugify(s: string) { return s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""); }
 
+/* ── /web/ Login page for Fintunes/Jellyfin clients ── */
+function handleWebLogin(serverBaseUrl: string) {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vootify – Sign In</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.card{background:#1a1a1a;border-radius:16px;padding:40px 32px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+h1{font-size:24px;font-weight:700;text-align:center;margin-bottom:8px}
+.sub{text-align:center;color:#888;font-size:14px;margin-bottom:32px}
+label{display:block;font-size:13px;color:#aaa;margin-bottom:6px;margin-top:16px}
+input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;font-size:16px;outline:none;transition:border .2s}
+input:focus{border-color:#e94560}
+button{width:100%;margin-top:28px;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#e94560,#c73a54);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:opacity .2s}
+button:disabled{opacity:.5;cursor:not-allowed}
+.error{color:#e94560;font-size:13px;margin-top:12px;text-align:center;display:none}
+.spinner{display:none;text-align:center;margin-top:12px;color:#888}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>🎵 Vootify</h1>
+<p class="sub">Connectez-vous à votre bibliothèque musicale</p>
+<form id="loginForm">
+<label>Nom d'utilisateur</label>
+<input id="username" type="text" value="vootify" autocomplete="username" autocapitalize="off"/>
+<label>Mot de passe</label>
+<input id="password" type="password" value="vootify" autocomplete="current-password"/>
+<button type="submit" id="btn">Se connecter</button>
+<div class="spinner" id="spinner">Connexion…</div>
+<div class="error" id="error"></div>
+</form>
+</div>
+<script>
+const SERVER = "${serverBaseUrl}";
+const SERVER_ID = "${SERVER_ID}";
+const FAKE_USER_ID = "${FAKE_USER_ID}";
+
+function generateDeviceId(){
+  let id = localStorage.getItem('_deviceId2');
+  if(!id){id='fintunes_'+Math.random().toString(36).substr(2,16);localStorage.setItem('_deviceId2',id)}
+  return id;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async(e)=>{
+  e.preventDefault();
+  const btn=document.getElementById('btn');
+  const spinner=document.getElementById('spinner');
+  const error=document.getElementById('error');
+  btn.disabled=true; spinner.style.display='block'; error.style.display='none';
+  
+  try{
+    const username=document.getElementById('username').value;
+    const pw=document.getElementById('password').value;
+    const deviceId=generateDeviceId();
+    
+    const res=await fetch(SERVER+'/Users/AuthenticateByName',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Emby-Authorization':'MediaBrowser Client="Fintunes", Device="Web", DeviceId="'+deviceId+'", Version="1.0.0"'
+      },
+      body:JSON.stringify({Username:username,Pw:pw})
+    });
+    
+    if(!res.ok) throw new Error('Identifiants invalides');
+    const data=await res.json();
+    
+    // Store credentials in the format Fintunes expects (jellyfin format)
+    const creds={
+      Servers:[{
+        ManualAddress:SERVER,
+        manualAddressOnly:true,
+        DateLastAccessed:Date.now(),
+        LastConnectionMode:2,
+        Name:"${SERVER_NAME}",
+        Id:SERVER_ID,
+        UserId:data.User?.Id||FAKE_USER_ID,
+        AccessToken:data.AccessToken||"${API_KEY}",
+        LocalAddress:SERVER
+      }]
+    };
+    localStorage.setItem('jellyfin_credentials',JSON.stringify(creds));
+    localStorage.setItem('_deviceId2',deviceId);
+    
+    // Also set Emby format just in case
+    const embyCreds={
+      Servers:[{
+        ManualAddress:SERVER,
+        ManualAddressOnly:true,
+        IsLocalServer:false,
+        DateLastAccessed:Date.now(),
+        LastConnectionMode:2,
+        Type:"jellyfin",
+        Name:"${SERVER_NAME}",
+        Id:SERVER_ID,
+        UserId:data.User?.Id||FAKE_USER_ID,
+        AccessToken:data.AccessToken||"${API_KEY}",
+        Users:[{UserId:data.User?.Id||FAKE_USER_ID,AccessToken:data.AccessToken||"${API_KEY}"}],
+        LocalAddress:SERVER,
+        RemoteAddress:SERVER
+      }]
+    };
+    localStorage.setItem('servercredentials3',JSON.stringify(embyCreds));
+    
+    spinner.textContent='✅ Connecté ! Redirection…';
+  }catch(err){
+    error.textContent=err.message||'Erreur de connexion';
+    error.style.display='block';
+    btn.disabled=false; spinner.style.display='none';
+  }
+});
+</script>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/xhtml+xml; charset=utf-8",
+    },
+  });
+}
+
 /* ── /System/Info ── */
 function handleSystemInfo() {
   return json({
@@ -790,9 +918,19 @@ Deno.serve(async (req) => {
     const fullPath = url.pathname;
     const apiPath = fullPath.replace(/^.*\/jellyfin-server\/?/, "/");
 
+    // Compute server base URL for the web login page (always https)
+    const origin = url.origin.replace(/^http:/, "https:");
+    const serverBaseUrl = fullPath.includes("/jellyfin-server")
+      ? origin + fullPath.substring(0, fullPath.indexOf("/jellyfin-server") + "/jellyfin-server".length)
+      : origin;
+
+    // Web UI (login page for Fintunes / Jellyfin clients)
+    if (apiPath.match(/^\/web\//i) || apiPath.match(/^\/web$/i)) return handleWebLogin(serverBaseUrl);
+
     // System
     if (apiPath.match(/^\/System\/Info\/Public/i)) return handleSystemInfoPublic();
     if (apiPath.match(/^\/System\/Info/i)) return handleSystemInfo();
+    if (apiPath.match(/^\/System\/Ping/i)) return json("Jellyfin Server");
 
     // Auth
     if (apiPath.match(/^\/Users\/AuthenticateByName/i)) return handleAuth();
@@ -927,8 +1065,12 @@ Deno.serve(async (req) => {
       if (idMatch) return await handleItemById(idMatch[1]);
     }
 
-    // Root
-    if (apiPath === "/" || apiPath === "") return handleSystemInfoPublic();
+    // Root — serve login page for WebView clients, JSON for API clients
+    if (apiPath === "/" || apiPath === "") {
+      const accept = req.headers.get("accept") || "";
+      if (accept.includes("text/html")) return handleWebLogin(serverBaseUrl);
+      return handleSystemInfoPublic();
+    }
 
     // Fallback
     return json({});
