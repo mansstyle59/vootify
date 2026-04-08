@@ -491,9 +491,11 @@ const ProfilePage = () => {
               />
             </button>
           </div>
+          <Divider />
+          <MenuRow icon={Smartphone} title="QuickConnect" subtitle="Autoriser un appareil Jellyfin" onClick={() => setQuickConnectOpen(true)} />
         </GlassCard>
 
-        {/* ─── STOCKAGE COMPACT ─── */}
+        <QuickConnectDialog open={quickConnectOpen} onOpenChange={setQuickConnectOpen} />
         <GlassCard className="p-4 space-y-3" delay={0.12}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
