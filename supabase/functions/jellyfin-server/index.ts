@@ -719,6 +719,10 @@ async function handleInstantMix(itemId: string, params: URLSearchParams) {
     // Users/:id
     if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleAuth();
 
+    // Items/:id/InstantMix
+    const mixMatch = apiPath.match(/^\/Items\/([^/]+)\/InstantMix/i);
+    if (mixMatch) return await handleInstantMix(mixMatch[1], url.searchParams);
+
     // Items/:id/Similar
     const similarMatch = apiPath.match(/^\/Items\/([^/]+)\/Similar/i);
     if (similarMatch) return await handleSimilar(similarMatch[1], url.searchParams);
