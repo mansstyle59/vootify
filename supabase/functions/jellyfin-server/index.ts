@@ -885,13 +885,32 @@ async function handleImage(itemId: string) {
 function handleViews() {
   return json({
     Items: [{
-      Name: "Music", ServerId: SERVER_ID, Id: "music-library", Etag: "music",
-      CollectionType: "music", Type: "CollectionFolder", IsFolder: true,
+      Name: "Music",
+      ServerId: SERVER_ID,
+      Id: "music-library",
+      Etag: "music-library",
+      CollectionType: "music",
+      Type: "CollectionFolder",
+      IsFolder: true,
+      SortName: "music",
+      ChildCount: 4,
+      RecursiveItemCount: 4,
       UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
-      ImageTags: {}, BackdropImageTags: [], LocationType: "FileSystem", MediaType: "",
+      ImageTags: {},
+      BackdropImageTags: [],
+      LocationType: "FileSystem",
+      MediaType: "Audio",
+      DisplayPreferencesId: "music-library",
+      PresentationUniqueKey: "music-library",
     }],
     TotalRecordCount: 1, StartIndex: 0,
   });
+}
+
+function handleGroupingOptions() {
+  return json([
+    { Name: "Music", Id: "music-library" },
+  ]);
 }
 
 function handleVirtualFolders() {
@@ -904,7 +923,7 @@ function handleVirtualFolders() {
 
 function handleMediaFolders() {
   return json({
-    Items: [{ Name: "Music", ServerId: SERVER_ID, Id: "music-library", CollectionType: "music", Type: "CollectionFolder", IsFolder: true, ImageTags: {}, BackdropImageTags: [] }],
+    Items: [{ Name: "Music", ServerId: SERVER_ID, Id: "music-library", CollectionType: "music", Type: "CollectionFolder", IsFolder: true, MediaType: "Audio", ChildCount: 4, RecursiveItemCount: 4, ImageTags: {}, BackdropImageTags: [] }],
     TotalRecordCount: 1, StartIndex: 0,
   });
 }
