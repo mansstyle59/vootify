@@ -153,8 +153,7 @@ document.getElementById('loginForm').addEventListener('submit', async(e)=>{
     status: 200,
     headers: {
       ...corsHeaders,
-      "Content-Type": "text/html; charset=utf-8",
-      "Content-Security-Policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src *;",
+      "Content-Type": "application/xhtml+xml; charset=utf-8",
     },
   });
 }
