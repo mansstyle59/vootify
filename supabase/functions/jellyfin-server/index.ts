@@ -1154,7 +1154,8 @@ Deno.serve(async (req) => {
     if (apiPath.match(/^\/Users\/Me\/?$/i)) return handleUserMe();
     if (apiPath.match(/^\/Users\/Public/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/?$/i)) return handleUsers();
-    if (apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
+    if (apiPath.match(/^\/UserViews\/GroupingOptions/i) || apiPath.match(/^\/Users\/[^/]+\/GroupingOptions/i)) return handleGroupingOptions();
+    if (apiPath.match(/^\/UserViews/i) || apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
     if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleUserMe();
 
     // Playlists/:id/Items
