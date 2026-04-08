@@ -1009,9 +1009,11 @@ Deno.serve(async (req) => {
         return json({ error: "QuickConnect not authorized" }, 401);
       } catch { return json({ error: "Invalid body" }, 400); }
     }
+    if (apiPath.match(/^\/Users\/Me\/?$/i)) return handleUserMe();
     if (apiPath.match(/^\/Users\/Public/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/?$/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
+    if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleUserMe();
 
     // Playlists/:id/Items
     const plItemsMatch = apiPath.match(/^\/Playlists\/([^/]+)\/Items/i);
