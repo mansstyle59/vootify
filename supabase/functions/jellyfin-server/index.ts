@@ -198,20 +198,61 @@ function handleSystemInfoPublic() {
 }
 
 /* ── Auth ── */
+function getJellyfinUser() {
+  return {
+    Name: FAKE_USER_NAME,
+    ServerId: SERVER_ID,
+    Id: FAKE_USER_ID,
+    HasPassword: true,
+    HasConfiguredPassword: true,
+    HasConfiguredEasyPassword: false,
+    EnableAutoLogin: false,
+    LastLoginDate: new Date().toISOString(),
+    LastActivityDate: new Date().toISOString(),
+    Configuration: {
+      PlayDefaultAudioTrack: true,
+      DisplayMissingEpisodes: false,
+      SubtitleMode: "Default",
+    },
+    Policy: {
+      IsAdministrator: true,
+      IsHidden: false,
+      IsDisabled: false,
+      EnableAllFolders: true,
+      EnableMediaPlayback: true,
+      EnableAudioPlaybackTranscoding: false,
+      EnableVideoPlaybackTranscoding: false,
+      EnableContentDeletion: false,
+    },
+  };
+}
+
 function handleAuth() {
   return json({
-    User: {
-      Name: FAKE_USER_NAME, ServerId: SERVER_ID, Id: FAKE_USER_ID,
-      HasPassword: true, HasConfiguredPassword: true, HasConfiguredEasyPassword: false,
-      Policy: { IsAdministrator: true, IsHidden: false, IsDisabled: false, EnableAllFolders: true, EnableMediaPlayback: true, EnableAudioPlaybackTranscoding: false, EnableVideoPlaybackTranscoding: false, EnableContentDeletion: false },
-      Configuration: { PlayDefaultAudioTrack: true, DisplayMissingEpisodes: false, SubtitleMode: "Default" },
+    User: getJellyfinUser(),
+    SessionInfo: {
+      Id: crypto.randomUUID(),
+      UserId: FAKE_USER_ID,
+      UserName: FAKE_USER_NAME,
+      Client: "Finamp",
+      DeviceName: "Vootify",
+      DeviceId: "vootify-device",
+      ApplicationVersion: SERVER_VERSION,
+      IsActive: true,
+      SupportsRemoteControl: false,
+      SupportsMediaControl: true,
     },
-    AccessToken: API_KEY, ServerId: SERVER_ID,
+    AccessToken: API_KEY,
+    ServerId: SERVER_ID,
   });
 }
 
 function handleUsers() {
-  return json([{ Name: FAKE_USER_NAME, ServerId: SERVER_ID, Id: FAKE_USER_ID, HasPassword: true, HasConfiguredPassword: true, Policy: { IsAdministrator: true } }]);
+  return json([getJellyfinUser()]);
+}
+
+function handleUserMe() {
+  return json(getJellyfinUser());
 }
 
 /* ── Map DB → Jellyfin ── */
