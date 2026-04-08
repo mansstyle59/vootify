@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2, Image as ImageIcon, FileText,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi, Lock, LockOpen
+  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi, Lock, LockOpen, Smartphone
 } from "lucide-react";
 import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
@@ -24,6 +24,7 @@ import {
   disableBiometric,
 } from "@/lib/biometricAuth";
 import { isAutoDownloadEnabled, setAutoDownloadEnabled } from "@/lib/autoDownload";
+import { QuickConnectDialog } from "@/components/QuickConnectDialog";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
@@ -117,6 +118,7 @@ const ProfilePage = () => {
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pendingActions, setPendingActions] = useState(getPendingCount());
+  const [quickConnectOpen, setQuickConnectOpen] = useState(false);
   const storageRefreshKey = useRef(0);
 
   const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
@@ -489,9 +491,11 @@ const ProfilePage = () => {
               />
             </button>
           </div>
+          <Divider />
+          <MenuRow icon={Smartphone} title="QuickConnect" subtitle="Autoriser un appareil Jellyfin" onClick={() => setQuickConnectOpen(true)} />
         </GlassCard>
 
-        {/* ─── STOCKAGE COMPACT ─── */}
+        <QuickConnectDialog open={quickConnectOpen} onOpenChange={setQuickConnectOpen} />
         <GlassCard className="p-4 space-y-3" delay={0.12}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
