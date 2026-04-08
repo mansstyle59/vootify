@@ -14,6 +14,28 @@ const FAKE_USER_ID = "f0e1d2c3b4a5f0e1d2c3b4a5f0e1d2c3";
 const FAKE_USER_NAME = "vootify";
 const API_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
+/* ── QuickConnect in-memory store ── */
+interface QuickConnectEntry {
+  Code: string;
+  Secret: string;
+  DateAdded: string;
+  Authenticated: boolean;
+}
+const quickConnectCodes = new Map<string, QuickConnectEntry>();
+
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+function generateSecret(): string {
+  return crypto.randomUUID().replace(/-/g, "");
+}
+function cleanExpiredCodes() {
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  for (const [secret, entry] of quickConnectCodes) {
+    if (new Date(entry.DateAdded).getTime() < fiveMinAgo) quickConnectCodes.delete(secret);
+  }
+}
+
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -934,6 +956,18 @@ Deno.serve(async (req) => {
 
     // Auth
     if (apiPath.match(/^\/Users\/AuthenticateByName/i)) return handleAuth();
+    if (apiPath.match(/^\/Users\/AuthenticateByQuickConnect/i)) {
+      try {
+        const body = await req.json();
+        const secret = body.Secret || body.secret || "";
+        const entry = quickConnectCodes.get(secret);
+        if (entry && entry.Authenticated) {
+          quickConnectCodes.delete(secret);
+          return handleAuth();
+        }
+        return json({ error: "QuickConnect not authorized" }, 401);
+      } catch { return json({ error: "Invalid body" }, 400); }
+    }
     if (apiPath.match(/^\/Users\/Public/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/?$/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
@@ -941,6 +975,34 @@ Deno.serve(async (req) => {
     // Playlists/:id/Items
     const plItemsMatch = apiPath.match(/^\/Playlists\/([^/]+)\/Items/i);
     if (plItemsMatch) return await handlePlaylistSongs(plItemsMatch[1], url.searchParams);
+
+    // QuickConnect
+    if (apiPath.match(/^\/QuickConnect\/Enabled/i)) return json(true);
+    if (apiPath.match(/^\/QuickConnect\/Initiate/i)) {
+      cleanExpiredCodes();
+      const code = generateCode();
+      const secret = generateSecret();
+      const entry: QuickConnectEntry = { Code: code, Secret: secret, DateAdded: new Date().toISOString(), Authenticated: false };
+      quickConnectCodes.set(secret, entry);
+      return json(entry);
+    }
+    if (apiPath.match(/^\/QuickConnect\/Connect/i)) {
+      const secret = url.searchParams.get("Secret") || url.searchParams.get("secret") || "";
+      const entry = quickConnectCodes.get(secret);
+      if (!entry) return json({ error: "Unknown secret" }, 404);
+      return json(entry);
+    }
+    if (apiPath.match(/^\/QuickConnect\/Authorize/i)) {
+      const code = url.searchParams.get("Code") || url.searchParams.get("code") || "";
+      if (!code) return json({ error: "Code required" }, 400);
+      for (const [secret, entry] of quickConnectCodes) {
+        if (entry.Code === code) {
+          entry.Authenticated = true;
+          return json({ ...entry, AccessToken: API_KEY, User: { Name: FAKE_USER_NAME, Id: FAKE_USER_ID, ServerId: SERVER_ID } });
+        }
+      }
+      return json({ error: "Invalid code" }, 404);
+    }
 
     // Users/:id/Items/:itemId
     const userItemMatch = apiPath.match(/^\/Users\/[^/]+\/Items\/([^/?]+)/i);
