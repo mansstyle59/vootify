@@ -673,6 +673,10 @@ Deno.serve(async (req) => {
     // Users/:id
     if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleAuth();
 
+    // Items/:id/Similar
+    const similarMatch = apiPath.match(/^\/Items\/([^/]+)\/Similar/i);
+    if (similarMatch) return await handleSimilar(similarMatch[1], url.searchParams);
+
     // Items/:id/Images
     const imageMatch = apiPath.match(/^\/Items\/([^/]+)\/Images/i);
     if (imageMatch) return await handleImage(imageMatch[1]);
