@@ -466,6 +466,44 @@ async function handleGenres() {
   return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
 }
 
+/* ── Statistics ── */
+async function handleStats() {
+  const sb = getSupabase();
+  const [songsRes, albumsRes, artistsRes] = await Promise.all([
+    sb.from("custom_songs").select("duration, artist, album", { count: "exact" }),
+    sb.from("custom_albums").select("id", { count: "exact", head: true }),
+    sb.from("custom_songs").select("artist"),
+  ]);
+
+  const songs = songsRes.data || [];
+  const totalSongs = songsRes.count || songs.length;
+  const totalDurationSeconds = songs.reduce((sum: number, s: any) => sum + (s.duration || 0), 0);
+
+  // Albums: prefer custom_albums count, fallback to distinct from songs
+  let totalAlbums = albumsRes.count || 0;
+  if (totalAlbums === 0) {
+    const albumSet = new Set(songs.map((s: any) => s.album).filter(Boolean));
+    totalAlbums = albumSet.size;
+  }
+
+  const artistSet = new Set((artistsRes.data || []).map((s: any) => s.artist).filter(Boolean));
+  const totalArtists = artistSet.size;
+
+  const hours = Math.floor(totalDurationSeconds / 3600);
+  const minutes = Math.floor((totalDurationSeconds % 3600) / 60);
+
+  return json({
+    TotalSongs: totalSongs,
+    TotalAlbums: totalAlbums,
+    TotalArtists: totalArtists,
+    TotalDurationSeconds: totalDurationSeconds,
+    TotalDurationTicks: totalDurationSeconds * 10_000_000,
+    TotalDurationFormatted: `${hours}h ${minutes}m`,
+    ServerName: SERVER_NAME,
+    ServerVersion: SERVER_VERSION,
+  });
+}
+
 /* ── Main router ── */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -545,6 +583,9 @@ Deno.serve(async (req) => {
     // Library
     if (apiPath.match(/^\/Library\/VirtualFolders/i)) return handleVirtualFolders();
     if (apiPath.match(/^\/Library\/MediaFolders/i)) return handleMediaFolders();
+
+    // Stats
+    if (apiPath.match(/^\/Library\/Stats/i) || apiPath.match(/^\/Stats/i)) return await handleStats();
 
     // Branding
     if (apiPath.match(/^\/Branding/i)) return json({ LoginDisclaimer: "", CustomCss: "", SplashscreenEnabled: false });
