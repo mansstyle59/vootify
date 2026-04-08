@@ -408,6 +408,51 @@ function handleMediaFolders() {
   });
 }
 
+/* ── Playback Reporting (Scrobbling) ── */
+async function handlePlaybackStart(req: Request) {
+  try {
+    const body = await req.json();
+    const itemId = body.ItemId || body.itemId;
+    if (!itemId) return json({ ok: true });
+
+    const sb = getSupabase();
+    const { data: song } = await sb.from("custom_songs").select("*").eq("id", itemId).maybeSingle();
+    if (!song) return json({ ok: true });
+
+    // Skip radio streams
+    if (song.album === "Radio en direct") return json({ ok: true });
+
+    // Get first user to attribute the play (service role, pick first user)
+    const userId = song.user_id;
+
+    // Remove previous entry for same song
+    await sb.from("recently_played").delete().eq("user_id", userId).eq("song_id", song.id);
+
+    // Insert new entry
+    await sb.from("recently_played").insert({
+      user_id: userId,
+      song_id: song.id,
+      title: song.title,
+      artist: song.artist,
+      album: song.album || "",
+      duration: song.duration || 0,
+      cover_url: song.cover_url || "",
+      stream_url: song.stream_url || "",
+    });
+
+    console.log(`[scrobble] Started: ${song.artist} - ${song.title}`);
+  } catch (e) {
+    console.error("Playback report error:", e);
+  }
+  return json({ ok: true });
+}
+
+async function handlePlaybackStopped(req: Request) {
+  // Just acknowledge — the start already recorded the play
+  try { await req.json(); } catch {}
+  return json({ ok: true });
+}
+
 /* ── Genres ── */
 async function handleGenres() {
   const sb = getSupabase();
@@ -468,6 +513,14 @@ Deno.serve(async (req) => {
     // Audio stream
     const audioMatch = apiPath.match(/^\/Audio\/([^/]+)\/(universal|stream)/i);
     if (audioMatch) return await handleAudioStream(audioMatch[1]);
+
+    // Playback reporting (scrobbling)
+    if (apiPath.match(/^\/Sessions\/Playing\/Stopped/i)) return await handlePlaybackStopped(req);
+    if (apiPath.match(/^\/Sessions\/Playing\/(Progress)?/i)) return await handlePlaybackStart(req);
+    if (apiPath.match(/^\/Sessions\/Playing$/i)) return await handlePlaybackStart(req);
+
+    // Users/:id/PlayedItems/:itemId (mark as played)
+    if (apiPath.match(/^\/Users\/[^/]+\/PlayedItems\/([^/]+)/i)) return json({ ok: true });
 
     // Search/Hints
     if (apiPath.match(/^\/Search\/Hints/i)) {
