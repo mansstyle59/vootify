@@ -210,7 +210,7 @@ async function handleLatestItems(params: URLSearchParams) {
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  const items = (songs || []).map((s: any, i: number) => toJellyfinSong(s, i));
+  const items = (songs || []).map((s: any, i: number) => toJellyfinItem(s, i));
   return json(items); // /Items/Latest returns a flat array, not wrapped
 }
 
