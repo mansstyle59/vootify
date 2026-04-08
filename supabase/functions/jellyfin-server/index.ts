@@ -485,6 +485,16 @@ Deno.serve(async (req) => {
       return json({ SearchHints: hints, TotalRecordCount: hints.length });
     }
 
+    // /Library/VirtualFolders
+    if (apiPath.match(/^\/Library\/VirtualFolders/i)) {
+      return handleVirtualFolders();
+    }
+
+    // /Library/MediaFolders
+    if (apiPath.match(/^\/Library\/MediaFolders/i)) {
+      return handleMediaFolders();
+    }
+
     // /Branding/Configuration
     if (apiPath.match(/^\/Branding/i)) {
       return json({ LoginDisclaimer: "", CustomCss: "", SplashscreenEnabled: false });
