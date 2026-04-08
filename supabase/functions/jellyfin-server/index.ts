@@ -687,7 +687,8 @@ async function handleInstantMix(itemId: string, params: URLSearchParams) {
   return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
 }
 
-
+/* ── Main router ── */
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
