@@ -584,6 +584,9 @@ Deno.serve(async (req) => {
     if (apiPath.match(/^\/Library\/VirtualFolders/i)) return handleVirtualFolders();
     if (apiPath.match(/^\/Library\/MediaFolders/i)) return handleMediaFolders();
 
+    // Stats
+    if (apiPath.match(/^\/Library\/Stats/i) || apiPath.match(/^\/Stats/i)) return await handleStats();
+
     // Branding
     if (apiPath.match(/^\/Branding/i)) return json({ LoginDisclaimer: "", CustomCss: "", SplashscreenEnabled: false });
 
