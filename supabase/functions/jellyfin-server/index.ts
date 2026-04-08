@@ -282,15 +282,22 @@ async function handleAlbumsList(sb: any, startIndex: number, limit: number, sort
   );
 
   if (albums && albums.length > 0) {
-    // Get song counts per album
-    const { data: songs } = await sb.from("custom_songs").select("album");
+    // Get song counts and genres per album
+    const { data: songs } = await sb.from("custom_songs").select("album, genre");
     const countMap = new Map<string, number>();
+    const genreMap = new Map<string, Set<string>>();
     for (const s of songs || []) {
       const key = (s.album || "").toLowerCase();
       countMap.set(key, (countMap.get(key) || 0) + 1);
+      if (s.genre) {
+        if (!genreMap.has(key)) genreMap.set(key, new Set());
+        genreMap.get(key)!.add(s.genre);
+      }
     }
 
-    let items = albums.map((a: any) => toJellyfinAlbum(a, countMap.get(a.title.toLowerCase()) || 0));
+    let items = albums.map((a: any) => toJellyfinAlbum(
+      a, countMap.get(a.title.toLowerCase()) || 0, [...(genreMap.get(a.title.toLowerCase()) || [])]
+    ));
     
     // Filter by genre if requested
     if (genres) {
