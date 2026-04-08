@@ -919,10 +919,11 @@ Deno.serve(async (req) => {
     const fullPath = url.pathname;
     const apiPath = fullPath.replace(/^.*\/jellyfin-server\/?/, "/");
 
-    // Compute server base URL for the web login page
+    // Compute server base URL for the web login page (always https)
+    const origin = url.origin.replace(/^http:/, "https:");
     const serverBaseUrl = fullPath.includes("/jellyfin-server")
-      ? url.origin + fullPath.substring(0, fullPath.indexOf("/jellyfin-server") + "/jellyfin-server".length)
-      : url.origin;
+      ? origin + fullPath.substring(0, fullPath.indexOf("/jellyfin-server") + "/jellyfin-server".length)
+      : origin;
 
     // Web UI (login page for Fintunes / Jellyfin clients)
     if (apiPath.match(/^\/web\//i) || apiPath.match(/^\/web$/i)) return handleWebLogin(serverBaseUrl);
