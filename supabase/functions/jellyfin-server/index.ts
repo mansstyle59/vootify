@@ -956,6 +956,18 @@ Deno.serve(async (req) => {
 
     // Auth
     if (apiPath.match(/^\/Users\/AuthenticateByName/i)) return handleAuth();
+    if (apiPath.match(/^\/Users\/AuthenticateByQuickConnect/i)) {
+      try {
+        const body = await req.json();
+        const secret = body.Secret || body.secret || "";
+        const entry = quickConnectCodes.get(secret);
+        if (entry && entry.Authenticated) {
+          quickConnectCodes.delete(secret);
+          return handleAuth();
+        }
+        return json({ error: "QuickConnect not authorized" }, 401);
+      } catch { return json({ error: "Invalid body" }, 400); }
+    }
     if (apiPath.match(/^\/Users\/Public/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/?$/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
