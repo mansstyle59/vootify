@@ -461,12 +461,109 @@ async function handleItems(params: URLSearchParams) {
   const sortOrder = (sortOrderRaw[0] || "ascending").toLowerCase();
   const ascending = sortOrder !== "descending";
 
+  const isLibraryRoot = parentId === "music-library";
+  const isTracksFolder = parentId === "music-tracks";
+  const isAlbumsFolder = parentId === "music-albums";
+  const isArtistsFolder = parentId === "music-artists";
+  const isPlaylistsFolder = parentId === "music-playlists";
+
+  if (isLibraryRoot && !includeItemTypes.length && !albumId && !artistIds && !searchTerm) {
+    const [{ count: trackCount }, { count: albumCount }, { data: artistRows }, { count: playlistCount }] = await Promise.all([
+      sb.from("custom_songs").select("id", { count: "exact", head: true }),
+      sb.from("custom_albums").select("id", { count: "exact", head: true }),
+      sb.from("custom_songs").select("artist"),
+      sb.from("playlists").select("id", { count: "exact", head: true }),
+    ]);
+
+    const artistCount = new Set((artistRows || []).map((row: any) => row.artist).filter(Boolean)).size;
+    const items = [
+      {
+        Name: "Songs",
+        ServerId: SERVER_ID,
+        Id: "music-tracks",
+        Type: "Folder",
+        IsFolder: true,
+        CollectionType: "music",
+        MediaType: "Audio",
+        SortName: "songs",
+        ChildCount: trackCount || 0,
+        RecursiveItemCount: trackCount || 0,
+        UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
+        ImageTags: {},
+        BackdropImageTags: [],
+        LocationType: "Virtual",
+      },
+      {
+        Name: "Albums",
+        ServerId: SERVER_ID,
+        Id: "music-albums",
+        Type: "Folder",
+        IsFolder: true,
+        CollectionType: "music",
+        MediaType: "Audio",
+        SortName: "albums",
+        ChildCount: albumCount || 0,
+        RecursiveItemCount: albumCount || 0,
+        UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
+        ImageTags: {},
+        BackdropImageTags: [],
+        LocationType: "Virtual",
+      },
+      {
+        Name: "Artists",
+        ServerId: SERVER_ID,
+        Id: "music-artists",
+        Type: "Folder",
+        IsFolder: true,
+        CollectionType: "music",
+        MediaType: "Audio",
+        SortName: "artists",
+        ChildCount: artistCount,
+        RecursiveItemCount: artistCount,
+        UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
+        ImageTags: {},
+        BackdropImageTags: [],
+        LocationType: "Virtual",
+      },
+      {
+        Name: "Playlists",
+        ServerId: SERVER_ID,
+        Id: "music-playlists",
+        Type: "Folder",
+        IsFolder: true,
+        CollectionType: "playlists",
+        MediaType: "Audio",
+        SortName: "playlists",
+        ChildCount: playlistCount || 0,
+        RecursiveItemCount: playlistCount || 0,
+        UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
+        ImageTags: {},
+        BackdropImageTags: [],
+        LocationType: "Virtual",
+      },
+    ];
+
+    return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
+  }
+
+  if (isAlbumsFolder) {
+    return await handleAlbumsList(sb, startIndex, limit, sortBy, ascending, genres || genreIds);
+  }
+
+  if (isArtistsFolder) {
+    return await handleArtistsList(sb, startIndex, limit, sortBy, ascending);
+  }
+
+  if (isPlaylistsFolder) {
+    return await handlePlaylistsList(sb, startIndex, limit, sortBy, ascending);
+  }
+
   // Songs for a specific album
-  if (albumId || (parentId && parentId !== "root" && parentId !== "music-library")) {
+  if (albumId || (parentId && !["root", "music-library", "music-tracks", "music-albums", "music-artists", "music-playlists"].includes(parentId))) {
     const targetId = albumId || parentId;
     const { data: albumRow } = await sb.from("custom_albums").select("title").eq("id", targetId).maybeSingle();
-    let albumFilter = albumRow ? albumRow.title : targetId.replace(/-/g, " ");
-    
+    const albumFilter = albumRow ? albumRow.title : targetId.replace(/-/g, " ");
+
     let q = sb.from("custom_songs").select("*", { count: "exact" });
     if (albumRow) {
       q = q.eq("album", albumRow.title);
@@ -788,13 +885,32 @@ async function handleImage(itemId: string) {
 function handleViews() {
   return json({
     Items: [{
-      Name: "Music", ServerId: SERVER_ID, Id: "music-library", Etag: "music",
-      CollectionType: "music", Type: "CollectionFolder", IsFolder: true,
+      Name: "Music",
+      ServerId: SERVER_ID,
+      Id: "music-library",
+      Etag: "music-library",
+      CollectionType: "music",
+      Type: "CollectionFolder",
+      IsFolder: true,
+      SortName: "music",
+      ChildCount: 4,
+      RecursiveItemCount: 4,
       UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
-      ImageTags: {}, BackdropImageTags: [], LocationType: "FileSystem", MediaType: "",
+      ImageTags: {},
+      BackdropImageTags: [],
+      LocationType: "FileSystem",
+      MediaType: "Audio",
+      DisplayPreferencesId: "music-library",
+      PresentationUniqueKey: "music-library",
     }],
     TotalRecordCount: 1, StartIndex: 0,
   });
+}
+
+function handleGroupingOptions() {
+  return json([
+    { Name: "Music", Id: "music-library" },
+  ]);
 }
 
 function handleVirtualFolders() {
@@ -807,7 +923,7 @@ function handleVirtualFolders() {
 
 function handleMediaFolders() {
   return json({
-    Items: [{ Name: "Music", ServerId: SERVER_ID, Id: "music-library", CollectionType: "music", Type: "CollectionFolder", IsFolder: true, ImageTags: {}, BackdropImageTags: [] }],
+    Items: [{ Name: "Music", ServerId: SERVER_ID, Id: "music-library", CollectionType: "music", Type: "CollectionFolder", IsFolder: true, MediaType: "Audio", ChildCount: 4, RecursiveItemCount: 4, ImageTags: {}, BackdropImageTags: [] }],
     TotalRecordCount: 1, StartIndex: 0,
   });
 }
@@ -1038,7 +1154,8 @@ Deno.serve(async (req) => {
     if (apiPath.match(/^\/Users\/Me\/?$/i)) return handleUserMe();
     if (apiPath.match(/^\/Users\/Public/i)) return handleUsers();
     if (apiPath.match(/^\/Users\/?$/i)) return handleUsers();
-    if (apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
+    if (apiPath.match(/^\/UserViews\/GroupingOptions/i) || apiPath.match(/^\/Users\/[^/]+\/GroupingOptions/i)) return handleGroupingOptions();
+    if (apiPath.match(/^\/UserViews/i) || apiPath.match(/^\/Users\/[^/]+\/Views/i)) return handleViews();
     if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleUserMe();
 
     // Playlists/:id/Items
