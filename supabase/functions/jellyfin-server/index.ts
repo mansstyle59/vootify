@@ -226,7 +226,7 @@ async function handleItems(params: URLSearchParams) {
       q = q.ilike("album", `%${albumFilter}%`);
     }
     const { data: songs, count } = await q.order("title").range(startIndex, startIndex + limit - 1);
-    const items = (songs || []).map(toJellyfinItem);
+    const items = (songs || []).map((s: any, i: number) => toJellyfinItem(s, startIndex + i));
     return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
   }
 
