@@ -315,12 +315,63 @@ function handleViews() {
   return json({
     Items: [
       {
-        Name: "Musique",
+        Name: "Music",
+        ServerId: SERVER_ID,
+        Id: "music-library",
+        Etag: "music",
+        CollectionType: "music",
+        Type: "CollectionFolder",
+        IsFolder: true,
+        UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false, UnplayedItemCount: 0 },
+        ImageTags: {},
+        BackdropImageTags: [],
+        LocationType: "FileSystem",
+        MediaType: "",
+      },
+    ],
+    TotalRecordCount: 1,
+    StartIndex: 0,
+  });
+}
+
+/* ── /Library/VirtualFolders ── */
+function handleVirtualFolders() {
+  return json([
+    {
+      Name: "Music",
+      Locations: ["/music"],
+      CollectionType: "music",
+      LibraryOptions: {
+        EnableArchiveMediaFiles: false,
+        EnablePhotos: false,
+        EnableRealtimeMonitor: true,
+        EnableChapterImageExtraction: false,
+        ExtractChapterImagesDuringLibraryScan: false,
+        SaveLocalMetadata: false,
+        EnableInternetProviders: true,
+        AutomaticRefreshIntervalDays: 0,
+        MetadataCountryCode: "FR",
+        PreferredMetadataLanguage: "fr",
+      },
+      ItemId: "music-library",
+      PrimaryImageItemId: null,
+    },
+  ]);
+}
+
+/* ── /Library/MediaFolders ── */
+function handleMediaFolders() {
+  return json({
+    Items: [
+      {
+        Name: "Music",
         ServerId: SERVER_ID,
         Id: "music-library",
         CollectionType: "music",
         Type: "CollectionFolder",
+        IsFolder: true,
         ImageTags: {},
+        BackdropImageTags: [],
       },
     ],
     TotalRecordCount: 1,
@@ -432,6 +483,16 @@ Deno.serve(async (req) => {
       }));
 
       return json({ SearchHints: hints, TotalRecordCount: hints.length });
+    }
+
+    // /Library/VirtualFolders
+    if (apiPath.match(/^\/Library\/VirtualFolders/i)) {
+      return handleVirtualFolders();
+    }
+
+    // /Library/MediaFolders
+    if (apiPath.match(/^\/Library\/MediaFolders/i)) {
+      return handleMediaFolders();
     }
 
     // /Branding/Configuration
