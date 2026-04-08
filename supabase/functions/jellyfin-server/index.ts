@@ -65,58 +65,135 @@ function handleUsers() {
 }
 
 /* ── Map DB → Jellyfin ── */
-function toJellyfinItem(song: any): any {
+function toJellyfinItem(song: any, index?: number): any {
   const ticks = (song.duration || 0) * 10_000_000;
+  const genres = song.genre ? [song.genre] : [];
+  const albumId = song.album ? slugify(song.album) : undefined;
+  const artistId = slugify(song.artist || "");
   return {
-    Name: song.title, ServerId: SERVER_ID, Id: song.id, Type: "Audio", MediaType: "Audio",
+    Name: song.title,
+    ServerId: SERVER_ID,
+    Id: song.id,
+    Type: "Audio",
+    MediaType: "Audio",
     RunTimeTicks: ticks,
-    Album: song.album || "", AlbumId: song.album ? slugify(song.album) : undefined,
-    AlbumArtist: song.artist, Artists: [song.artist],
+    Album: song.album || "",
+    AlbumId: albumId,
+    AlbumArtist: song.artist,
+    AlbumArtists: [{ Name: song.artist, Id: artistId }],
+    ArtistItems: [{ Name: song.artist, Id: artistId }],
+    Artists: [song.artist],
     AlbumPrimaryImageTag: song.cover_url ? "cover" : undefined,
     ImageTags: song.cover_url ? { Primary: "cover" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    Genre: song.genre || undefined,
+    Genres: genres,
+    GenreItems: genres.map((g: string) => ({ Name: g, Id: slugify(g) })),
     ProductionYear: song.year || undefined,
+    PremiereDate: song.year ? `${song.year}-01-01T00:00:00.0000000Z` : undefined,
     SortName: (song.title || "").toLowerCase(),
-    UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false },
+    IndexNumber: index !== undefined ? index + 1 : undefined,
+    ParentIndexNumber: 1,
+    IsFolder: false,
+    CanDownload: true,
+    SupportsMediaProbe: false,
+    Container: "mp3",
+    DateCreated: song.created_at || undefined,
+    UserData: {
+      PlaybackPositionTicks: 0,
+      PlayCount: 0,
+      IsFavorite: false,
+      Played: false,
+      Key: song.id,
+    },
     MediaSources: [{
-      Id: song.id, Protocol: "Http", SupportsDirectPlay: true, SupportsDirectStream: true,
-      SupportsTranscoding: false, Path: song.stream_url || "", Type: "Default", Container: "mp3",
+      Id: song.id,
+      Protocol: "Http",
+      SupportsDirectPlay: true,
+      SupportsDirectStream: true,
+      SupportsTranscoding: false,
+      Path: song.stream_url || "",
+      Type: "Default",
+      Container: "mp3",
+      Size: 0,
       RunTimeTicks: ticks,
+      Bitrate: 320000,
+      MediaStreams: [{
+        Codec: "mp3",
+        Type: "Audio",
+        Index: 0,
+        IsDefault: true,
+        IsForced: false,
+        IsExternal: false,
+        DisplayTitle: "MP3 stereo",
+        Channels: 2,
+        SampleRate: 44100,
+        BitRate: 320000,
+      }],
     }],
   };
 }
 
-function toJellyfinAlbum(album: any, songCount: number): any {
+function toJellyfinAlbum(album: any, songCount: number, genres?: string[]): any {
+  const artistId = slugify(album.artist || "");
   return {
-    Name: album.title, ServerId: SERVER_ID, Id: album.id || slugify(album.title),
-    Type: "MusicAlbum", AlbumArtist: album.artist, Artists: [album.artist],
-    ChildCount: songCount, ProductionYear: album.year || undefined,
+    Name: album.title,
+    ServerId: SERVER_ID,
+    Id: album.id || slugify(album.title),
+    Type: "MusicAlbum",
+    IsFolder: true,
+    AlbumArtist: album.artist,
+    AlbumArtists: [{ Name: album.artist, Id: artistId }],
+    ArtistItems: [{ Name: album.artist, Id: artistId }],
+    Artists: [album.artist],
+    ChildCount: songCount,
+    ProductionYear: album.year || undefined,
+    PremiereDate: album.year ? `${album.year}-01-01T00:00:00.0000000Z` : undefined,
     SortName: (album.title || "").toLowerCase(),
+    DateCreated: album.created_at || undefined,
+    Genres: genres || [],
+    GenreItems: (genres || []).map((g: string) => ({ Name: g, Id: slugify(g) })),
     ImageTags: album.cover_url ? { Primary: "cover" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    UserData: { PlayCount: 0, IsFavorite: false, Played: false },
+    UserData: { PlayCount: 0, IsFavorite: false, Played: false, Key: album.id || slugify(album.title) },
   };
 }
 
-function toJellyfinArtist(name: string, imageUrl?: string | null): any {
+function toJellyfinArtist(name: string, imageUrl?: string | null, songCount?: number, albumCount?: number): any {
+  const id = slugify(name);
   return {
-    Name: name, ServerId: SERVER_ID, Id: slugify(name),
-    Type: "MusicArtist", SortName: name.toLowerCase(),
+    Name: name,
+    ServerId: SERVER_ID,
+    Id: id,
+    Type: "MusicArtist",
+    IsFolder: true,
+    SortName: name.toLowerCase(),
+    ChildCount: albumCount || 0,
+    SongCount: songCount || 0,
     ImageTags: imageUrl ? { Primary: "artist" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    UserData: { PlayCount: 0, IsFavorite: false, Played: false },
+    UserData: { PlayCount: 0, IsFavorite: false, Played: false, Key: id },
+    Overview: "",
   };
 }
 
 function toJellyfinPlaylist(pl: any, songCount: number): any {
   return {
-    Name: pl.name, ServerId: SERVER_ID, Id: pl.id,
-    Type: "Playlist", MediaType: "Audio", IsFolder: true,
+    Name: pl.name,
+    ServerId: SERVER_ID,
+    Id: pl.id,
+    Type: "Playlist",
+    MediaType: "Audio",
+    IsFolder: true,
     ChildCount: songCount,
+    DateCreated: pl.created_at || undefined,
+    DateLastMediaAdded: pl.updated_at || undefined,
     ImageTags: pl.cover_url ? { Primary: "cover" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    UserData: { PlayCount: 0, IsFavorite: false, Played: false },
+    UserData: { PlayCount: 0, IsFavorite: false, Played: false, Key: pl.id },
   };
 }
 
