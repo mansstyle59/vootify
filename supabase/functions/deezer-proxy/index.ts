@@ -77,9 +77,18 @@ Deno.serve(async (req) => {
       headers: { 'User-Agent': 'Vootify/1.0' },
     });
 
-    const data = await res.json();
+    const text = await res.text();
 
-    return new Response(JSON.stringify(data), {
+    // Deezer sometimes returns HTML (rate limit, error pages) instead of JSON
+    if (!res.ok || text.trimStart().startsWith('<')) {
+      console.error(`Deezer returned non-JSON (status ${res.status}):`, text.slice(0, 200));
+      return new Response(
+        JSON.stringify({ error: `Deezer API error (${res.status})`, data: [] }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(text, {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
