@@ -1066,8 +1066,12 @@ Deno.serve(async (req) => {
       if (idMatch) return await handleItemById(idMatch[1]);
     }
 
-    // Root
-    if (apiPath === "/" || apiPath === "") return handleSystemInfoPublic();
+    // Root — serve login page for WebView clients, JSON for API clients
+    if (apiPath === "/" || apiPath === "") {
+      const accept = req.headers.get("accept") || "";
+      if (accept.includes("text/html")) return handleWebLogin(serverBaseUrl);
+      return handleSystemInfoPublic();
+    }
 
     // Fallback
     return json({});
