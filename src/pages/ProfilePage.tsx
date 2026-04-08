@@ -24,6 +24,7 @@ import {
   disableBiometric,
 } from "@/lib/biometricAuth";
 import { isAutoDownloadEnabled, setAutoDownloadEnabled } from "@/lib/autoDownload";
+import { QuickConnectDialog } from "@/components/QuickConnectDialog";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
