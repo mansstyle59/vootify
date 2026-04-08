@@ -1054,9 +1054,6 @@ Deno.serve(async (req) => {
     // Users/:id/Items
     if (apiPath.match(/^\/Users\/[^/]+\/Items/i)) return await handleItems(url.searchParams);
 
-    // Users/:id
-    if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleAuth();
-
     // Items/Filters (must be before Items/Latest and Items/:id)
     if (apiPath.match(/^\/Items\/Filters/i)) return await handleItemsFilters();
 
