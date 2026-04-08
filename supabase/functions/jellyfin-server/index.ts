@@ -65,58 +65,135 @@ function handleUsers() {
 }
 
 /* ── Map DB → Jellyfin ── */
-function toJellyfinItem(song: any): any {
+function toJellyfinItem(song: any, index?: number): any {
   const ticks = (song.duration || 0) * 10_000_000;
+  const genres = song.genre ? [song.genre] : [];
+  const albumId = song.album ? slugify(song.album) : undefined;
+  const artistId = slugify(song.artist || "");
   return {
-    Name: song.title, ServerId: SERVER_ID, Id: song.id, Type: "Audio", MediaType: "Audio",
+    Name: song.title,
+    ServerId: SERVER_ID,
+    Id: song.id,
+    Type: "Audio",
+    MediaType: "Audio",
     RunTimeTicks: ticks,
-    Album: song.album || "", AlbumId: song.album ? slugify(song.album) : undefined,
-    AlbumArtist: song.artist, Artists: [song.artist],
+    Album: song.album || "",
+    AlbumId: albumId,
+    AlbumArtist: song.artist,
+    AlbumArtists: [{ Name: song.artist, Id: artistId }],
+    ArtistItems: [{ Name: song.artist, Id: artistId }],
+    Artists: [song.artist],
     AlbumPrimaryImageTag: song.cover_url ? "cover" : undefined,
     ImageTags: song.cover_url ? { Primary: "cover" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    Genre: song.genre || undefined,
+    Genres: genres,
+    GenreItems: genres.map((g: string) => ({ Name: g, Id: slugify(g) })),
     ProductionYear: song.year || undefined,
+    PremiereDate: song.year ? `${song.year}-01-01T00:00:00.0000000Z` : undefined,
     SortName: (song.title || "").toLowerCase(),
-    UserData: { PlaybackPositionTicks: 0, PlayCount: 0, IsFavorite: false, Played: false },
+    IndexNumber: index !== undefined ? index + 1 : undefined,
+    ParentIndexNumber: 1,
+    IsFolder: false,
+    CanDownload: true,
+    SupportsMediaProbe: false,
+    Container: "mp3",
+    DateCreated: song.created_at || undefined,
+    UserData: {
+      PlaybackPositionTicks: 0,
+      PlayCount: 0,
+      IsFavorite: false,
+      Played: false,
+      Key: song.id,
+    },
     MediaSources: [{
-      Id: song.id, Protocol: "Http", SupportsDirectPlay: true, SupportsDirectStream: true,
-      SupportsTranscoding: false, Path: song.stream_url || "", Type: "Default", Container: "mp3",
+      Id: song.id,
+      Protocol: "Http",
+      SupportsDirectPlay: true,
+      SupportsDirectStream: true,
+      SupportsTranscoding: false,
+      Path: song.stream_url || "",
+      Type: "Default",
+      Container: "mp3",
+      Size: 0,
       RunTimeTicks: ticks,
+      Bitrate: 320000,
+      MediaStreams: [{
+        Codec: "mp3",
+        Type: "Audio",
+        Index: 0,
+        IsDefault: true,
+        IsForced: false,
+        IsExternal: false,
+        DisplayTitle: "MP3 stereo",
+        Channels: 2,
+        SampleRate: 44100,
+        BitRate: 320000,
+      }],
     }],
   };
 }
 
-function toJellyfinAlbum(album: any, songCount: number): any {
+function toJellyfinAlbum(album: any, songCount: number, genres?: string[]): any {
+  const artistId = slugify(album.artist || "");
   return {
-    Name: album.title, ServerId: SERVER_ID, Id: album.id || slugify(album.title),
-    Type: "MusicAlbum", AlbumArtist: album.artist, Artists: [album.artist],
-    ChildCount: songCount, ProductionYear: album.year || undefined,
+    Name: album.title,
+    ServerId: SERVER_ID,
+    Id: album.id || slugify(album.title),
+    Type: "MusicAlbum",
+    IsFolder: true,
+    AlbumArtist: album.artist,
+    AlbumArtists: [{ Name: album.artist, Id: artistId }],
+    ArtistItems: [{ Name: album.artist, Id: artistId }],
+    Artists: [album.artist],
+    ChildCount: songCount,
+    ProductionYear: album.year || undefined,
+    PremiereDate: album.year ? `${album.year}-01-01T00:00:00.0000000Z` : undefined,
     SortName: (album.title || "").toLowerCase(),
+    DateCreated: album.created_at || undefined,
+    Genres: genres || [],
+    GenreItems: (genres || []).map((g: string) => ({ Name: g, Id: slugify(g) })),
     ImageTags: album.cover_url ? { Primary: "cover" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    UserData: { PlayCount: 0, IsFavorite: false, Played: false },
+    UserData: { PlayCount: 0, IsFavorite: false, Played: false, Key: album.id || slugify(album.title) },
   };
 }
 
-function toJellyfinArtist(name: string, imageUrl?: string | null): any {
+function toJellyfinArtist(name: string, imageUrl?: string | null, songCount?: number, albumCount?: number): any {
+  const id = slugify(name);
   return {
-    Name: name, ServerId: SERVER_ID, Id: slugify(name),
-    Type: "MusicArtist", SortName: name.toLowerCase(),
+    Name: name,
+    ServerId: SERVER_ID,
+    Id: id,
+    Type: "MusicArtist",
+    IsFolder: true,
+    SortName: name.toLowerCase(),
+    ChildCount: albumCount || 0,
+    SongCount: songCount || 0,
     ImageTags: imageUrl ? { Primary: "artist" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    UserData: { PlayCount: 0, IsFavorite: false, Played: false },
+    UserData: { PlayCount: 0, IsFavorite: false, Played: false, Key: id },
+    Overview: "",
   };
 }
 
 function toJellyfinPlaylist(pl: any, songCount: number): any {
   return {
-    Name: pl.name, ServerId: SERVER_ID, Id: pl.id,
-    Type: "Playlist", MediaType: "Audio", IsFolder: true,
+    Name: pl.name,
+    ServerId: SERVER_ID,
+    Id: pl.id,
+    Type: "Playlist",
+    MediaType: "Audio",
+    IsFolder: true,
     ChildCount: songCount,
+    DateCreated: pl.created_at || undefined,
+    DateLastMediaAdded: pl.updated_at || undefined,
     ImageTags: pl.cover_url ? { Primary: "cover" } : {},
+    ImageBlurHashes: {},
     BackdropImageTags: [],
-    UserData: { PlayCount: 0, IsFavorite: false, Played: false },
+    UserData: { PlayCount: 0, IsFavorite: false, Played: false, Key: pl.id },
   };
 }
 
@@ -149,7 +226,7 @@ async function handleItems(params: URLSearchParams) {
       q = q.ilike("album", `%${albumFilter}%`);
     }
     const { data: songs, count } = await q.order("title").range(startIndex, startIndex + limit - 1);
-    const items = (songs || []).map(toJellyfinItem);
+    const items = (songs || []).map((s: any, i: number) => toJellyfinItem(s, startIndex + i));
     return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
   }
 
@@ -205,15 +282,22 @@ async function handleAlbumsList(sb: any, startIndex: number, limit: number, sort
   );
 
   if (albums && albums.length > 0) {
-    // Get song counts per album
-    const { data: songs } = await sb.from("custom_songs").select("album");
+    // Get song counts and genres per album
+    const { data: songs } = await sb.from("custom_songs").select("album, genre");
     const countMap = new Map<string, number>();
+    const genreMap = new Map<string, Set<string>>();
     for (const s of songs || []) {
       const key = (s.album || "").toLowerCase();
       countMap.set(key, (countMap.get(key) || 0) + 1);
+      if (s.genre) {
+        if (!genreMap.has(key)) genreMap.set(key, new Set());
+        genreMap.get(key)!.add(s.genre);
+      }
     }
 
-    let items = albums.map((a: any) => toJellyfinAlbum(a, countMap.get(a.title.toLowerCase()) || 0));
+    let items = albums.map((a: any) => toJellyfinAlbum(
+      a, countMap.get(a.title.toLowerCase()) || 0, [...(genreMap.get(a.title.toLowerCase()) || [])]
+    ));
     
     // Filter by genre if requested
     if (genres) {
@@ -247,10 +331,20 @@ async function handleAlbumsList(sb: any, startIndex: number, limit: number, sort
 
 /* ── Artists list (with images) ── */
 async function handleArtistsList(sb: any, startIndex: number, limit: number, sortBy: string, ascending: boolean) {
-  const { data: songs } = await sb.from("custom_songs").select("artist");
-  const artistSet = new Set<string>();
-  for (const s of songs || []) if (s.artist) artistSet.add(s.artist);
-  const artistNames = [...artistSet].sort((a, b) => {
+  const { data: songs } = await sb.from("custom_songs").select("artist, album");
+  
+  // Count songs and albums per artist
+  const artistSongCount = new Map<string, number>();
+  const artistAlbums = new Map<string, Set<string>>();
+  for (const s of songs || []) {
+    if (!s.artist) continue;
+    artistSongCount.set(s.artist, (artistSongCount.get(s.artist) || 0) + 1);
+    if (!artistAlbums.has(s.artist)) artistAlbums.set(s.artist, new Set());
+    if (s.album) artistAlbums.get(s.artist)!.add(s.album);
+  }
+
+  const artistNames = [...artistSongCount.keys()].sort((a, b) => {
+    if (sortBy === "songcount") return ascending ? (artistSongCount.get(a)! - artistSongCount.get(b)!) : (artistSongCount.get(b)! - artistSongCount.get(a)!);
     const cmp = a.toLowerCase().localeCompare(b.toLowerCase());
     return ascending ? cmp : -cmp;
   });
@@ -260,7 +354,9 @@ async function handleArtistsList(sb: any, startIndex: number, limit: number, sor
   const imageMap = new Map<string, string>();
   for (const img of images || []) imageMap.set(img.artist_name.toLowerCase(), img.image_url);
 
-  const items = artistNames.map(name => toJellyfinArtist(name, imageMap.get(name.toLowerCase())));
+  const items = artistNames.map(name => toJellyfinArtist(
+    name, imageMap.get(name.toLowerCase()), artistSongCount.get(name), artistAlbums.get(name)?.size
+  ));
   return json({ Items: items.slice(startIndex, startIndex + limit), TotalRecordCount: items.length, StartIndex: startIndex });
 }
 
