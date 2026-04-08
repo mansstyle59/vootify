@@ -324,10 +324,20 @@ async function handleAlbumsList(sb: any, startIndex: number, limit: number, sort
 
 /* ── Artists list (with images) ── */
 async function handleArtistsList(sb: any, startIndex: number, limit: number, sortBy: string, ascending: boolean) {
-  const { data: songs } = await sb.from("custom_songs").select("artist");
-  const artistSet = new Set<string>();
-  for (const s of songs || []) if (s.artist) artistSet.add(s.artist);
-  const artistNames = [...artistSet].sort((a, b) => {
+  const { data: songs } = await sb.from("custom_songs").select("artist, album");
+  
+  // Count songs and albums per artist
+  const artistSongCount = new Map<string, number>();
+  const artistAlbums = new Map<string, Set<string>>();
+  for (const s of songs || []) {
+    if (!s.artist) continue;
+    artistSongCount.set(s.artist, (artistSongCount.get(s.artist) || 0) + 1);
+    if (!artistAlbums.has(s.artist)) artistAlbums.set(s.artist, new Set());
+    if (s.album) artistAlbums.get(s.artist)!.add(s.album);
+  }
+
+  const artistNames = [...artistSongCount.keys()].sort((a, b) => {
+    if (sortBy === "songcount") return ascending ? (artistSongCount.get(a)! - artistSongCount.get(b)!) : (artistSongCount.get(b)! - artistSongCount.get(a)!);
     const cmp = a.toLowerCase().localeCompare(b.toLowerCase());
     return ascending ? cmp : -cmp;
   });
@@ -337,7 +347,9 @@ async function handleArtistsList(sb: any, startIndex: number, limit: number, sor
   const imageMap = new Map<string, string>();
   for (const img of images || []) imageMap.set(img.artist_name.toLowerCase(), img.image_url);
 
-  const items = artistNames.map(name => toJellyfinArtist(name, imageMap.get(name.toLowerCase())));
+  const items = artistNames.map(name => toJellyfinArtist(
+    name, imageMap.get(name.toLowerCase()), artistSongCount.get(name), artistAlbums.get(name)?.size
+  ));
   return json({ Items: items.slice(startIndex, startIndex + limit), TotalRecordCount: items.length, StartIndex: startIndex });
 }
 
