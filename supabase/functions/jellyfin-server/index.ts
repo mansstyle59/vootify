@@ -242,25 +242,37 @@ async function handleItemsFilters() {
   });
 }
 
+/* ── Helpers: parse Jellyfin params (case-insensitive) ── */
+function p(params: URLSearchParams, key: string): string {
+  return params.get(key) || params.get(key.charAt(0).toLowerCase() + key.slice(1)) || "";
+}
+
 /* ── /Items ── */
 async function handleItems(params: URLSearchParams) {
   const sb = getSupabase();
-  const searchTerm = params.get("SearchTerm") || params.get("searchTerm") || "";
-  const parentId = params.get("ParentId") || params.get("parentId") || "";
-  const includeItemTypes = (params.get("IncludeItemTypes") || params.get("includeItemTypes") || "").split(",").filter(Boolean);
-  const limit = parseInt(params.get("Limit") || params.get("limit") || "50");
-  const startIndex = parseInt(params.get("StartIndex") || params.get("startIndex") || "0");
-  const sortBy = (params.get("SortBy") || params.get("sortBy") || "").toLowerCase();
-  const sortOrder = (params.get("SortOrder") || params.get("sortOrder") || "Ascending").toLowerCase();
-  const albumId = params.get("AlbumIds") || params.get("albumIds") || "";
-  const artistIds = params.get("ArtistIds") || params.get("artistIds") || "";
-  const genres = params.get("Genres") || params.get("genres") || "";
+  const searchTerm = p(params, "SearchTerm");
+  const parentId = p(params, "ParentId");
+  const includeItemTypes = p(params, "IncludeItemTypes").split(",").filter(Boolean);
+  const limit = parseInt(p(params, "Limit") || "50");
+  const startIndex = parseInt(p(params, "StartIndex") || "0");
+  const sortByRaw = p(params, "SortBy").split(",").filter(Boolean);
+  const sortOrderRaw = p(params, "SortOrder").split(",").filter(Boolean);
+  const albumId = p(params, "AlbumIds");
+  const artistIds = p(params, "ArtistIds");
+  const genres = p(params, "Genres");
+  const genreIds = p(params, "GenreIds");
+  const years = p(params, "Years");
+  const filters = p(params, "Filters");
+  const nameStartsWith = p(params, "NameStartsWith");
+  const recursive = p(params, "Recursive").toLowerCase() !== "false";
+
+  const sortBy = (sortByRaw[0] || "").toLowerCase();
+  const sortOrder = (sortOrderRaw[0] || "ascending").toLowerCase();
   const ascending = sortOrder !== "descending";
 
   // Songs for a specific album
   if (albumId || (parentId && parentId !== "root" && parentId !== "music-library")) {
     const targetId = albumId || parentId;
-    // Try custom_albums first
     const { data: albumRow } = await sb.from("custom_albums").select("title").eq("id", targetId).maybeSingle();
     let albumFilter = albumRow ? albumRow.title : targetId.replace(/-/g, " ");
     
@@ -286,12 +298,14 @@ async function handleItems(params: URLSearchParams) {
     return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
   }
 
-  // Search
+  // Search with advanced filters
   if (searchTerm) {
     const q = `%${searchTerm}%`;
-    const { data: songs, count } = await sb.from("custom_songs").select("*", { count: "exact" })
-      .or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`)
-      .order("title").range(startIndex, startIndex + limit - 1);
+    let query = sb.from("custom_songs").select("*", { count: "exact" })
+      .or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`);
+    query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
+    query = applySorting(query, sortBy, ascending);
+    const { data: songs, count } = await query.range(startIndex, startIndex + limit - 1);
     const items = (songs || []).map(toJellyfinItem);
     return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
   }
@@ -302,20 +316,55 @@ async function handleItems(params: URLSearchParams) {
   }
 
   if (includeItemTypes.includes("MusicAlbum")) {
-    return await handleAlbumsList(sb, startIndex, limit, sortBy, ascending, genres);
+    return await handleAlbumsList(sb, startIndex, limit, sortBy, ascending, genres || genreIds);
   }
 
   if (includeItemTypes.includes("MusicArtist") || includeItemTypes.includes("AlbumArtist")) {
     return await handleArtistsList(sb, startIndex, limit, sortBy, ascending);
   }
 
-  // Default: recent songs sorted
-  const orderCol = sortBy === "name" ? "title" : sortBy === "artist" ? "artist" : sortBy === "album" ? "album" : "created_at";
-  const asc = orderCol === "created_at" ? false : ascending;
-  const { data: songs, count } = await sb.from("custom_songs").select("*", { count: "exact" })
-    .order(orderCol, { ascending: asc }).range(startIndex, startIndex + limit - 1);
+  // Default: songs with filters and sorting
+  let query = sb.from("custom_songs").select("*", { count: "exact" });
+  query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
+  query = applySorting(query, sortBy, ascending);
+  const { data: songs, count } = await query.range(startIndex, startIndex + limit - 1);
   const items = (songs || []).map(toJellyfinItem);
   return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
+}
+
+/* ── Filter & Sort helpers ── */
+function applyFilters(query: any, opts: { genres?: string; genreIds?: string; years?: string; nameStartsWith?: string }) {
+  if (opts.genres) {
+    const genreList = opts.genres.split("|").filter(Boolean);
+    if (genreList.length === 1) query = query.ilike("genre", `%${genreList[0]}%`);
+    else if (genreList.length > 1) query = query.or(genreList.map(g => `genre.ilike.%${g}%`).join(","));
+  }
+  if (opts.genreIds && !opts.genres) {
+    const genreName = opts.genreIds.replace(/-/g, " ");
+    query = query.ilike("genre", `%${genreName}%`);
+  }
+  if (opts.years) {
+    const yearList = opts.years.split(",").map(Number).filter(n => !isNaN(n));
+    if (yearList.length === 1) query = query.eq("year", yearList[0]);
+    else if (yearList.length > 1) query = query.in("year", yearList);
+  }
+  if (opts.nameStartsWith) {
+    query = query.ilike("title", `${opts.nameStartsWith}%`);
+  }
+  return query;
+}
+
+function applySorting(query: any, sortBy: string, ascending: boolean) {
+  switch (sortBy) {
+    case "name": case "sortname": return query.order("title", { ascending });
+    case "artist": case "albumartist": return query.order("artist", { ascending }).order("title", { ascending: true });
+    case "album": return query.order("album", { ascending }).order("title", { ascending: true });
+    case "productionyear": return query.order("year", { ascending }).order("title", { ascending: true });
+    case "datecreated": case "dateadded": return query.order("created_at", { ascending });
+    case "random": return query.order("created_at", { ascending: false }); // Supabase can't random, fallback
+    case "duration": case "runtime": return query.order("duration", { ascending });
+    default: return query.order("created_at", { ascending: false });
+  }
 }
 
 /* ── Albums list (uses custom_albums + fallback) ── */
