@@ -1089,8 +1089,64 @@ Deno.serve(async (req) => {
     if (apiPath.match(/^\/Sessions\/Playing\/(Progress)?/i)) return await handlePlaybackStart(req);
     if (apiPath.match(/^\/Sessions\/Playing$/i)) return await handlePlaybackStart(req);
 
+    // Sessions/Capabilities (Finamp posts its capabilities after login)
+    if (apiPath.match(/^\/Sessions\/Capabilities/i)) return json({ ok: true });
+
+    // DisplayPreferences (Finamp reads/writes user display prefs)
+    if (apiPath.match(/^\/DisplayPreferences/i)) {
+      if (req.method === "POST") return new Response(null, { status: 204, headers: corsHeaders });
+      return json({
+        Id: "usersettings",
+        SortBy: "SortName",
+        SortOrder: "Ascending",
+        RememberIndexing: false,
+        RememberSorting: false,
+        ScrollDirection: "Horizontal",
+        ShowBackdrop: true,
+        ShowSidebar: false,
+        Client: url.searchParams.get("client") || "Finamp",
+        CustomPrefs: {},
+      });
+    }
+
+    // Localization/Options (Finamp fetches available cultures)
+    if (apiPath.match(/^\/Localization/i)) {
+      return json([
+        { Name: "French", DisplayName: "Français", ThreeLetterISOLanguageName: "fre", TwoLetterISOLanguageName: "fr" },
+        { Name: "English", DisplayName: "English", ThreeLetterISOLanguageName: "eng", TwoLetterISOLanguageName: "en" },
+      ]);
+    }
+
+    // System/Configuration (Finamp fetches server configuration)
+    if (apiPath.match(/^\/System\/Configuration/i)) {
+      return json({
+        EnableMetrics: false,
+        EnableNormalizedItemByNameIds: true,
+        IsPortAuthorized: true,
+        AutoDiscovery: true,
+        PublicPort: 443,
+        PublicHttpsPort: 443,
+        HttpServerPortNumber: 443,
+        HttpsPortNumber: 443,
+        EnableHttps: true,
+        EnableExternalContentInSuggestions: true,
+        RequireHttps: false,
+        EnableUPnP: false,
+        EnableRemoteAccess: true,
+        ServerName: SERVER_NAME,
+      });
+    }
+
+    // Devices (Finamp may register device)
+    if (apiPath.match(/^\/Devices/i)) return json({ Items: [], TotalRecordCount: 0 });
+
     // Users/:id/PlayedItems/:itemId (mark as played)
     if (apiPath.match(/^\/Users\/[^/]+\/PlayedItems\/([^/]+)/i)) return json({ ok: true });
+
+    // Users/:id/FavoriteItems/:itemId (Finamp toggles favorites)
+    if (apiPath.match(/^\/Users\/[^/]+\/FavoriteItems\/([^/]+)/i)) {
+      return json({ IsFavorite: req.method === "POST" || req.method === "DELETE" ? true : false });
+    }
 
     // Search/Hints
     if (apiPath.match(/^\/Search\/Hints/i)) {
