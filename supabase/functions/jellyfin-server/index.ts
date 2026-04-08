@@ -197,6 +197,23 @@ function toJellyfinPlaylist(pl: any, songCount: number): any {
   };
 }
 
+/* ── /Items/Latest ── */
+async function handleLatestItems(params: URLSearchParams) {
+  const limit = Math.min(parseInt(params.get("Limit") || "20", 10), 100);
+  const parentId = params.get("ParentId") || "";
+  const sb = getSupabase();
+
+  // Fetch latest songs ordered by created_at desc
+  const { data: songs } = await sb
+    .from("custom_songs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  const items = (songs || []).map((s: any, i: number) => toJellyfinSong(s, i));
+  return json(items); // /Items/Latest returns a flat array, not wrapped
+}
+
 /* ── /Items ── */
 async function handleItems(params: URLSearchParams) {
   const sb = getSupabase();
@@ -735,6 +752,10 @@ Deno.serve(async (req) => {
     // Items/:id
     const itemByIdMatch = apiPath.match(/^\/Items\/([^/]+)\/?$/i);
     if (itemByIdMatch) return await handleItemById(itemByIdMatch[1]);
+
+    // Items/Latest
+    if (apiPath.match(/^\/Items\/Latest/i) || apiPath.match(/^\/Users\/[^/]+\/Items\/Latest/i))
+      return await handleLatestItems(url.searchParams);
 
     // Items
     if (apiPath.match(/^\/Items\/?(\?|$)/i)) return await handleItems(url.searchParams);
