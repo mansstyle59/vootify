@@ -964,6 +964,34 @@ Deno.serve(async (req) => {
     const plItemsMatch = apiPath.match(/^\/Playlists\/([^/]+)\/Items/i);
     if (plItemsMatch) return await handlePlaylistSongs(plItemsMatch[1], url.searchParams);
 
+    // QuickConnect
+    if (apiPath.match(/^\/QuickConnect\/Enabled/i)) return json(true);
+    if (apiPath.match(/^\/QuickConnect\/Initiate/i)) {
+      cleanExpiredCodes();
+      const code = generateCode();
+      const secret = generateSecret();
+      const entry: QuickConnectEntry = { Code: code, Secret: secret, DateAdded: new Date().toISOString(), Authenticated: false };
+      quickConnectCodes.set(secret, entry);
+      return json(entry);
+    }
+    if (apiPath.match(/^\/QuickConnect\/Connect/i)) {
+      const secret = url.searchParams.get("Secret") || url.searchParams.get("secret") || "";
+      const entry = quickConnectCodes.get(secret);
+      if (!entry) return json({ error: "Unknown secret" }, 404);
+      return json(entry);
+    }
+    if (apiPath.match(/^\/QuickConnect\/Authorize/i)) {
+      const code = url.searchParams.get("Code") || url.searchParams.get("code") || "";
+      if (!code) return json({ error: "Code required" }, 400);
+      for (const [secret, entry] of quickConnectCodes) {
+        if (entry.Code === code) {
+          entry.Authenticated = true;
+          return json({ ...entry, AccessToken: API_KEY, User: { Name: FAKE_USER_NAME, Id: FAKE_USER_ID, ServerId: SERVER_ID } });
+        }
+      }
+      return json({ error: "Invalid code" }, 404);
+    }
+
     // Users/:id/Items/:itemId
     const userItemMatch = apiPath.match(/^\/Users\/[^/]+\/Items\/([^/?]+)/i);
     if (userItemMatch) return await handleItemById(userItemMatch[1]);
