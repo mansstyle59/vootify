@@ -855,15 +855,54 @@ Deno.serve(async (req) => {
     // Search/Hints
     if (apiPath.match(/^\/Search\/Hints/i)) {
       const searchTerm = url.searchParams.get("SearchTerm") || url.searchParams.get("searchTerm") || "";
+      const searchLimit = parseInt(url.searchParams.get("Limit") || "30");
       const sb = getSupabase();
       const q = `%${searchTerm}%`;
-      const { data: songs } = await sb.from("custom_songs").select("*").or(`title.ilike.${q},artist.ilike.${q}`).limit(20);
-      const hints = (songs || []).map((s: any) => ({
-        ItemId: s.id, Id: s.id, Name: s.title, Album: s.album || "",
-        AlbumArtist: s.artist, Artists: [s.artist], Type: "Audio", MediaType: "Audio",
-        RunTimeTicks: (s.duration || 0) * 10_000_000,
-      }));
-      return json({ SearchHints: hints, TotalRecordCount: hints.length });
+
+      // Search songs, albums, and artists in parallel
+      const [songsRes, albumsRes, artistImgRes] = await Promise.all([
+        sb.from("custom_songs").select("*").or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`).limit(searchLimit),
+        sb.from("custom_albums").select("*").or(`title.ilike.${q},artist.ilike.${q}`).limit(10),
+        sb.from("artist_images").select("artist_name, image_url"),
+      ]);
+
+      const hints: any[] = [];
+
+      // Song hints
+      for (const s of songsRes.data || []) {
+        hints.push({
+          ItemId: s.id, Id: s.id, Name: s.title, Album: s.album || "",
+          AlbumArtist: s.artist, Artists: [s.artist], Type: "Audio", MediaType: "Audio",
+          RunTimeTicks: (s.duration || 0) * 10_000_000,
+          MatchedTerm: searchTerm,
+        });
+      }
+
+      // Album hints
+      for (const a of albumsRes.data || []) {
+        hints.push({
+          ItemId: a.id, Id: a.id, Name: a.title,
+          AlbumArtist: a.artist, Artists: [a.artist], Type: "MusicAlbum",
+          ProductionYear: a.year || undefined,
+          MatchedTerm: searchTerm,
+        });
+      }
+
+      // Artist hints (deduplicated from songs)
+      const matchedArtists = new Set<string>();
+      for (const s of songsRes.data || []) {
+        if (s.artist && s.artist.toLowerCase().includes(searchTerm.toLowerCase())) matchedArtists.add(s.artist);
+      }
+      const imgMap = new Map<string, string>();
+      for (const img of artistImgRes.data || []) imgMap.set(img.artist_name.toLowerCase(), img.image_url);
+      for (const name of matchedArtists) {
+        hints.push({
+          ItemId: slugify(name), Id: slugify(name), Name: name, Type: "MusicArtist",
+          MatchedTerm: searchTerm,
+        });
+      }
+
+      return json({ SearchHints: hints.slice(0, searchLimit), TotalRecordCount: hints.length });
     }
 
     // Genres
