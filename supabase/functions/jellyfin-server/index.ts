@@ -514,6 +514,14 @@ Deno.serve(async (req) => {
     const audioMatch = apiPath.match(/^\/Audio\/([^/]+)\/(universal|stream)/i);
     if (audioMatch) return await handleAudioStream(audioMatch[1]);
 
+    // Playback reporting (scrobbling)
+    if (apiPath.match(/^\/Sessions\/Playing\/Stopped/i)) return await handlePlaybackStopped(req);
+    if (apiPath.match(/^\/Sessions\/Playing\/(Progress)?/i)) return await handlePlaybackStart(req);
+    if (apiPath.match(/^\/Sessions\/Playing$/i)) return await handlePlaybackStart(req);
+
+    // Users/:id/PlayedItems/:itemId (mark as played)
+    if (apiPath.match(/^\/Users\/[^/]+\/PlayedItems\/([^/]+)/i)) return json({ ok: true });
+
     // Search/Hints
     if (apiPath.match(/^\/Search\/Hints/i)) {
       const searchTerm = url.searchParams.get("SearchTerm") || url.searchParams.get("searchTerm") || "";
