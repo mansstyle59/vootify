@@ -1004,6 +1004,9 @@ Deno.serve(async (req) => {
     const fullPath = url.pathname;
     const apiPath = fullPath.replace(/^.*\/jellyfin-server\/?/, "/");
 
+    // Debug logging for troubleshooting client requests
+    console.log(`[jellyfin] ${req.method} ${apiPath}${url.search ? url.search.substring(0, 200) : ""}`);
+
     // Compute server base URL for the web login page (always https)
     const origin = url.origin.replace(/^http:/, "https:");
     const serverBaseUrl = fullPath.includes("/jellyfin-server")
