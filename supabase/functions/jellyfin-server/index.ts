@@ -915,9 +915,18 @@ Deno.serve(async (req) => {
     const fullPath = url.pathname;
     const apiPath = fullPath.replace(/^.*\/jellyfin-server\/?/, "/");
 
+    // Compute server base URL for the web login page
+    const serverBaseUrl = fullPath.includes("/jellyfin-server")
+      ? url.origin + fullPath.substring(0, fullPath.indexOf("/jellyfin-server") + "/jellyfin-server".length)
+      : url.origin;
+
+    // Web UI (login page for Fintunes / Jellyfin clients)
+    if (apiPath.match(/^\/web\//i) || apiPath.match(/^\/web$/i)) return handleWebLogin(serverBaseUrl);
+
     // System
     if (apiPath.match(/^\/System\/Info\/Public/i)) return handleSystemInfoPublic();
     if (apiPath.match(/^\/System\/Info/i)) return handleSystemInfo();
+    if (apiPath.match(/^\/System\/Ping/i)) return json("Jellyfin Server");
 
     // Auth
     if (apiPath.match(/^\/Users\/AuthenticateByName/i)) return handleAuth();
