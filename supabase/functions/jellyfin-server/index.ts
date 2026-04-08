@@ -737,6 +737,10 @@ Deno.serve(async (req) => {
     // Users/:id
     if (apiPath.match(/^\/Users\/[^/]+\/?$/i)) return handleAuth();
 
+    // Items/Latest (must be before Items/:id)
+    if (apiPath.match(/^\/Items\/Latest/i) || apiPath.match(/^\/Users\/[^/]+\/Items\/Latest/i))
+      return await handleLatestItems(url.searchParams);
+
     // Items/:id/InstantMix
     const mixMatch = apiPath.match(/^\/Items\/([^/]+)\/InstantMix/i);
     if (mixMatch) return await handleInstantMix(mixMatch[1], url.searchParams);
@@ -752,10 +756,6 @@ Deno.serve(async (req) => {
     // Items/:id
     const itemByIdMatch = apiPath.match(/^\/Items\/([^/]+)\/?$/i);
     if (itemByIdMatch) return await handleItemById(itemByIdMatch[1]);
-
-    // Items/Latest
-    if (apiPath.match(/^\/Items\/Latest/i) || apiPath.match(/^\/Users\/[^/]+\/Items\/Latest/i))
-      return await handleLatestItems(url.searchParams);
 
     // Items
     if (apiPath.match(/^\/Items\/?(\?|$)/i)) return await handleItems(url.searchParams);
