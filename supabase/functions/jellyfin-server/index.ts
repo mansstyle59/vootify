@@ -1106,9 +1106,18 @@ Deno.serve(async (req) => {
     // Items
     if (apiPath.match(/^\/Items\/?(\?|$)/i)) return await handleItems(url.searchParams);
 
-    // Audio stream
-    const audioMatch = apiPath.match(/^\/Audio\/([^/]+)\/(universal|stream)/i);
+    // Audio stream — match all common patterns used by Jellyfin clients
+    const audioMatch = apiPath.match(/^\/Audio\/([^/]+)\/(universal|stream|main\.mp3|main\.m4a)/i)
+      || apiPath.match(/^\/Audio\/([^/]+)\/?(\?|$)/i);
     if (audioMatch) return await handleAudioStream(audioMatch[1]);
+
+    // Items/:id/Download (some clients use this for playback)
+    const downloadMatch = apiPath.match(/^\/Items\/([^/]+)\/Download/i);
+    if (downloadMatch) return await handleAudioStream(downloadMatch[1]);
+
+    // Items/:id/File (another playback pattern)
+    const fileMatch = apiPath.match(/^\/Items\/([^/]+)\/File/i);
+    if (fileMatch) return await handleAudioStream(fileMatch[1]);
 
     // Playback reporting (scrobbling)
     if (apiPath.match(/^\/Sessions\/Playing\/Stopped/i)) return await handlePlaybackStopped(req);
