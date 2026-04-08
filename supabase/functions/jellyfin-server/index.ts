@@ -640,8 +640,54 @@ async function handleSimilar(itemId: string, params: URLSearchParams) {
   return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
 }
 
+/* ── Instant Mix ── */
+async function handleInstantMix(itemId: string, params: URLSearchParams) {
+  const sb = getSupabase();
+  const limit = parseInt(params.get("Limit") || params.get("limit") || "50");
 
-Deno.serve(async (req) => {
+  // Find seed song
+  const { data: seed } = await sb.from("custom_songs").select("*").eq("id", itemId).maybeSingle();
+  if (!seed) return json({ Items: [], TotalRecordCount: 0, StartIndex: 0 });
+
+  // Gather a broad pool: same genre, same artist, same album
+  const filters: string[] = [];
+  if (seed.genre) filters.push(`genre.eq.${seed.genre}`);
+  if (seed.artist) filters.push(`artist.eq.${seed.artist}`);
+  if (seed.album) filters.push(`album.eq.${seed.album}`);
+
+  let pool: any[] = [];
+  if (filters.length > 0) {
+    const { data } = await sb.from("custom_songs").select("*").or(filters.join(",")).neq("id", itemId).limit(500);
+    pool = data || [];
+  }
+
+  // If pool is too small, pad with random songs
+  if (pool.length < limit) {
+    const existing = new Set([itemId, ...pool.map((s: any) => s.id)]);
+    const { data: extra } = await sb.from("custom_songs").select("*").limit(limit * 2);
+    for (const s of extra || []) {
+      if (!existing.has(s.id)) { pool.push(s); existing.add(s.id); }
+      if (pool.length >= limit * 3) break;
+    }
+  }
+
+  // Score: same artist+genre=5, same genre=3, same artist=2, same album=1, random bonus
+  const scored = pool.map((c: any) => {
+    let score = Math.random() * 0.5; // small random for shuffle
+    if (c.artist === seed.artist) score += 2;
+    if (c.genre && c.genre === seed.genre) score += 3;
+    if (c.album && c.album === seed.album) score += 1;
+    return { song: c, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+
+  // Build mix: seed first, then scored picks
+  const mixSongs = [seed, ...scored.slice(0, limit - 1).map(s => s.song)];
+  const items = mixSongs.map((s, i) => toJellyfinItem(s, i));
+  return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
+}
+
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
