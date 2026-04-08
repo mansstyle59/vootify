@@ -733,32 +733,55 @@ async function handleAudioStream(itemId: string) {
   return new Response(null, { status: 302, headers: { ...corsHeaders, Location: song.stream_url } });
 }
 
-/* ── Images ── */
+/* ── Images — proxy the actual bytes so clients that don't follow 302 still get covers ── */
+async function proxyImage(imageUrl: string): Promise<Response> {
+  try {
+    const res = await fetch(imageUrl, { redirect: "follow" });
+    if (!res.ok) return json({ error: "Image upstream error" }, 502);
+    const contentType = res.headers.get("content-type") || "image/jpeg";
+    const body = await res.arrayBuffer();
+    return new Response(body, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=86400, immutable",
+      },
+    });
+  } catch {
+    // Fallback to redirect if proxy fails
+    return new Response(null, { status: 302, headers: { ...corsHeaders, Location: imageUrl } });
+  }
+}
+
 async function handleImage(itemId: string) {
   const sb = getSupabase();
+
   // Song cover
   const { data: song } = await sb.from("custom_songs").select("cover_url").eq("id", itemId).maybeSingle();
-  if (song?.cover_url) return new Response(null, { status: 302, headers: { ...corsHeaders, Location: song.cover_url } });
+  if (song?.cover_url) return proxyImage(song.cover_url);
 
-  // Album cover
+  // Album cover (by id)
   const { data: album } = await sb.from("custom_albums").select("cover_url").eq("id", itemId).maybeSingle();
-  if (album?.cover_url) return new Response(null, { status: 302, headers: { ...corsHeaders, Location: album.cover_url } });
+  if (album?.cover_url) return proxyImage(album.cover_url);
 
   // Playlist cover
   const { data: pl } = await sb.from("playlists").select("cover_url").eq("id", itemId).maybeSingle();
-  if (pl?.cover_url) return new Response(null, { status: 302, headers: { ...corsHeaders, Location: pl.cover_url } });
+  if (pl?.cover_url) return proxyImage(pl.cover_url);
 
   // Artist image
   const artistName = itemId.replace(/-/g, " ");
   const { data: img } = await sb.from("artist_images").select("image_url").ilike("artist_name", `%${artistName}%`).limit(1).maybeSingle();
-  if (img?.image_url) return new Response(null, { status: 302, headers: { ...corsHeaders, Location: img.image_url } });
+  if (img?.image_url) return proxyImage(img.image_url);
 
-  // Album slug fallback
+  // Album slug fallback — find a song with that album name
   const { data: albumSong } = await sb.from("custom_songs").select("cover_url")
     .ilike("album", `%${artistName}%`).not("cover_url", "is", null).limit(1).maybeSingle();
-  if (albumSong?.cover_url) return new Response(null, { status: 302, headers: { ...corsHeaders, Location: albumSong.cover_url } });
+  if (albumSong?.cover_url) return proxyImage(albumSong.cover_url);
 
-  return json({ error: "Image not found" }, 404);
+  // Transparent 1x1 PNG placeholder (avoids 404 errors in clients)
+  const pixel = new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,6,0,0,0,31,21,196,137,0,0,0,11,73,68,65,84,8,215,99,96,0,2,0,0,1,0,5,24,217,36,0,0,0,0,73,69,78,68,174,66,96,130]);
+  return new Response(pixel, { status: 200, headers: { ...corsHeaders, "Content-Type": "image/png", "Cache-Control": "public, max-age=3600" } });
 }
 
 /* ── Views / Library ── */
