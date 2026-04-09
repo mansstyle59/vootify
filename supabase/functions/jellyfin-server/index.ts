@@ -589,13 +589,43 @@ async function handleItems(params: URLSearchParams) {
   // Search with advanced filters
   if (searchTerm) {
     const q = `%${searchTerm}%`;
-    let query = sb.from("custom_songs").select("*", { count: "exact" })
-      .or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`);
-    query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
-    query = applySorting(query, sortBy, ascending);
-    const { data: songs, count } = await query.range(startIndex, startIndex + limit - 1);
-    const items = (songs || []).map(toJellyfinItem);
-    return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
+    const items: any[] = [];
+
+    // If no specific type, return mixed results (songs + albums + artists)
+    const wantSongs = !includeItemTypes.length || includeItemTypes.includes("Audio");
+    const wantAlbums = !includeItemTypes.length || includeItemTypes.includes("MusicAlbum");
+    const wantArtists = !includeItemTypes.length || includeItemTypes.includes("MusicArtist");
+
+    if (wantSongs) {
+      let query = sb.from("custom_songs").select("*", { count: "exact" })
+        .or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`);
+      query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
+      query = applySorting(query, sortBy, ascending);
+      const { data: songs } = await query.range(startIndex, startIndex + limit - 1);
+      items.push(...(songs || []).map(toJellyfinItem));
+    }
+
+    if (wantAlbums && !includeItemTypes.length) {
+      const { data: albums } = await sb.from("custom_albums").select("*")
+        .or(`title.ilike.${q},artist.ilike.${q}`).limit(10);
+      for (const a of albums || []) {
+        items.push(toJellyfinAlbum(a, 0));
+      }
+    }
+
+    if (wantArtists && !includeItemTypes.length) {
+      const { data: artistSongs } = await sb.from("custom_songs").select("artist")
+        .ilike("artist", q).limit(50);
+      const seen = new Set<string>();
+      for (const s of artistSongs || []) {
+        if (s.artist && !seen.has(s.artist)) {
+          seen.add(s.artist);
+          items.push(toJellyfinArtist(s.artist));
+        }
+      }
+    }
+
+    return json({ Items: items, TotalRecordCount: items.length, StartIndex: startIndex });
   }
 
   // Browse by type
