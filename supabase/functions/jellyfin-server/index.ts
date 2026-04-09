@@ -546,6 +546,17 @@ async function handleItems(params: URLSearchParams) {
     return json({ Items: items, TotalRecordCount: items.length, StartIndex: 0 });
   }
 
+  // Explicit tracks folder handler
+  if (isTracksFolder || (isLibraryRoot && includeItemTypes.includes("Audio"))) {
+    let query = sb.from("custom_songs").select("*", { count: "exact" });
+    query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
+    query = applySorting(query, sortBy, ascending);
+    const { data: songs, count } = await query.range(startIndex, startIndex + limit - 1);
+    const items = (songs || []).map(toJellyfinItem);
+    console.log(`[jellyfin] Returning ${items.length} tracks (total: ${count})`);
+    return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
+  }
+
   if (isAlbumsFolder) {
     return await handleAlbumsList(sb, startIndex, limit, sortBy, ascending, genres || genreIds);
   }
