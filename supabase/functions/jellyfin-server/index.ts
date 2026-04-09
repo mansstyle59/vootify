@@ -589,13 +589,43 @@ async function handleItems(params: URLSearchParams) {
   // Search with advanced filters
   if (searchTerm) {
     const q = `%${searchTerm}%`;
-    let query = sb.from("custom_songs").select("*", { count: "exact" })
-      .or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`);
-    query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
-    query = applySorting(query, sortBy, ascending);
-    const { data: songs, count } = await query.range(startIndex, startIndex + limit - 1);
-    const items = (songs || []).map(toJellyfinItem);
-    return json({ Items: items, TotalRecordCount: count || items.length, StartIndex: startIndex });
+    const items: any[] = [];
+
+    // If no specific type, return mixed results (songs + albums + artists)
+    const wantSongs = !includeItemTypes.length || includeItemTypes.includes("Audio");
+    const wantAlbums = !includeItemTypes.length || includeItemTypes.includes("MusicAlbum");
+    const wantArtists = !includeItemTypes.length || includeItemTypes.includes("MusicArtist");
+
+    if (wantSongs) {
+      let query = sb.from("custom_songs").select("*", { count: "exact" })
+        .or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`);
+      query = applyFilters(query, { genres, genreIds, years, nameStartsWith });
+      query = applySorting(query, sortBy, ascending);
+      const { data: songs } = await query.range(startIndex, startIndex + limit - 1);
+      items.push(...(songs || []).map(toJellyfinItem));
+    }
+
+    if (wantAlbums && !includeItemTypes.length) {
+      const { data: albums } = await sb.from("custom_albums").select("*")
+        .or(`title.ilike.${q},artist.ilike.${q}`).limit(10);
+      for (const a of albums || []) {
+        items.push(toJellyfinAlbum(a, 0));
+      }
+    }
+
+    if (wantArtists && !includeItemTypes.length) {
+      const { data: artistSongs } = await sb.from("custom_songs").select("artist")
+        .ilike("artist", q).limit(50);
+      const seen = new Set<string>();
+      for (const s of artistSongs || []) {
+        if (s.artist && !seen.has(s.artist)) {
+          seen.add(s.artist);
+          items.push(toJellyfinArtist(s.artist));
+        }
+      }
+    }
+
+    return json({ Items: items, TotalRecordCount: items.length, StartIndex: startIndex });
   }
 
   // Browse by type
@@ -1304,50 +1334,75 @@ Deno.serve(async (req) => {
     if (apiPath.match(/^\/Search\/Hints/i)) {
       const searchTerm = url.searchParams.get("SearchTerm") || url.searchParams.get("searchTerm") || "";
       const searchLimit = parseInt(url.searchParams.get("Limit") || "30");
+      const includeTypes = (url.searchParams.get("IncludeItemTypes") || "").split(",").filter(Boolean);
       const sb = getSupabase();
       const q = `%${searchTerm}%`;
 
-      // Search songs, albums, and artists in parallel
       const [songsRes, albumsRes, artistImgRes] = await Promise.all([
         sb.from("custom_songs").select("*").or(`title.ilike.${q},artist.ilike.${q},album.ilike.${q}`).limit(searchLimit),
         sb.from("custom_albums").select("*").or(`title.ilike.${q},artist.ilike.${q}`).limit(10),
         sb.from("artist_images").select("artist_name, image_url"),
       ]);
 
+      const imgMap = new Map<string, string>();
+      for (const img of artistImgRes.data || []) imgMap.set(img.artist_name.toLowerCase(), img.image_url);
+
       const hints: any[] = [];
+      const wantAll = includeTypes.length === 0;
 
       // Song hints
-      for (const s of songsRes.data || []) {
-        hints.push({
-          ItemId: s.id, Id: s.id, Name: s.title, Album: s.album || "",
-          AlbumArtist: s.artist, Artists: [s.artist], Type: "Audio", MediaType: "Audio",
-          RunTimeTicks: (s.duration || 0) * 10_000_000,
-          MatchedTerm: searchTerm,
-        });
+      if (wantAll || includeTypes.includes("Audio")) {
+        for (const s of songsRes.data || []) {
+          hints.push({
+            ItemId: s.id, Id: s.id, Name: s.title, ServerId: SERVER_ID,
+            Album: s.album || "", AlbumId: s.album ? slugify(s.album) : undefined,
+            AlbumArtist: s.artist, Artists: [s.artist],
+            ArtistItems: [{ Name: s.artist, Id: slugify(s.artist) }],
+            Type: "Audio", MediaType: "Audio",
+            RunTimeTicks: (s.duration || 0) * 10_000_000,
+            ImageTags: s.cover_url ? { Primary: "cover" } : {},
+            PrimaryImageAspectRatio: 1,
+            ThumbImageTag: s.cover_url ? "cover" : undefined,
+            BackdropImageTags: [],
+            MatchedTerm: searchTerm,
+          });
+        }
       }
 
       // Album hints
-      for (const a of albumsRes.data || []) {
-        hints.push({
-          ItemId: a.id, Id: a.id, Name: a.title,
-          AlbumArtist: a.artist, Artists: [a.artist], Type: "MusicAlbum",
-          ProductionYear: a.year || undefined,
-          MatchedTerm: searchTerm,
-        });
+      if (wantAll || includeTypes.includes("MusicAlbum")) {
+        for (const a of albumsRes.data || []) {
+          hints.push({
+            ItemId: a.id, Id: a.id, Name: a.title, ServerId: SERVER_ID,
+            AlbumArtist: a.artist, Artists: [a.artist],
+            ArtistItems: [{ Name: a.artist, Id: slugify(a.artist) }],
+            Type: "MusicAlbum", IsFolder: true,
+            ProductionYear: a.year || undefined,
+            ImageTags: a.cover_url ? { Primary: "cover" } : {},
+            PrimaryImageAspectRatio: 1,
+            BackdropImageTags: [],
+            MatchedTerm: searchTerm,
+          });
+        }
       }
 
-      // Artist hints (deduplicated from songs)
-      const matchedArtists = new Set<string>();
-      for (const s of songsRes.data || []) {
-        if (s.artist && s.artist.toLowerCase().includes(searchTerm.toLowerCase())) matchedArtists.add(s.artist);
-      }
-      const imgMap = new Map<string, string>();
-      for (const img of artistImgRes.data || []) imgMap.set(img.artist_name.toLowerCase(), img.image_url);
-      for (const name of matchedArtists) {
-        hints.push({
-          ItemId: slugify(name), Id: slugify(name), Name: name, Type: "MusicArtist",
-          MatchedTerm: searchTerm,
-        });
+      // Artist hints
+      if (wantAll || includeTypes.includes("MusicArtist")) {
+        const matchedArtists = new Set<string>();
+        for (const s of songsRes.data || []) {
+          if (s.artist && s.artist.toLowerCase().includes(searchTerm.toLowerCase())) matchedArtists.add(s.artist);
+        }
+        for (const name of matchedArtists) {
+          const hasImg = imgMap.has(name.toLowerCase());
+          hints.push({
+            ItemId: slugify(name), Id: slugify(name), Name: name, ServerId: SERVER_ID,
+            Type: "MusicArtist", IsFolder: true,
+            ImageTags: hasImg ? { Primary: "artist" } : {},
+            PrimaryImageAspectRatio: 1,
+            BackdropImageTags: [],
+            MatchedTerm: searchTerm,
+          });
+        }
       }
 
       return json({ SearchHints: hints.slice(0, searchLimit), TotalRecordCount: hints.length });
