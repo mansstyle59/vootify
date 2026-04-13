@@ -18,11 +18,6 @@ import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import {
-  isBiometricAvailable,
-  isBiometricEnabled,
-  disableBiometric,
-} from "@/lib/biometricAuth";
 import { isAutoDownloadEnabled, setAutoDownloadEnabled } from "@/lib/autoDownload";
 import { QuickConnectDialog } from "@/components/QuickConnectDialog";
 
