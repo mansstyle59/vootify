@@ -18,6 +18,5 @@ const deferInit = (fn: () => void) => {
 };
 
 deferInit(() => {
-  import("@/lib/prefetchRoutes").then((m) => m.initRoutePrefetch());
   import("@/lib/offlineQueue").then((m) => m.initOfflineSync());
 });
