@@ -65,16 +65,7 @@ export function startCacheWarmup(userId: string) {
   // Run in idle callback to avoid blocking UI
   const run = () => {
     localStorage.setItem(WARMED_KEY, String(Date.now()));
-    Promise.allSettled([warmApiData(userId), warmCovers(userId)])
-      .then(() => {
-        // After API/covers are warmed, auto-cache top played tracks in deep background
-        if ("requestIdleCallback" in window) {
-          requestIdleCallback(() => autoCacheTopTracks(userId), { timeout: 30000 });
-        } else {
-          setTimeout(() => autoCacheTopTracks(userId), 15000);
-        }
-      })
-      .catch(() => {});
+    Promise.allSettled([warmApiData(userId), warmCovers(userId)]).catch(() => {});
   };
 
   if ("requestIdleCallback" in window) {
