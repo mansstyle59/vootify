@@ -1,1 +1,1 @@
-export function notifyUser(_title: string, _body?: string): void {}
+export function notifyUser(_titleOrOpts: string | Record<string, any>, _body?: string): void {}
