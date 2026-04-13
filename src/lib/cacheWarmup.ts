@@ -4,7 +4,6 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { autoCacheTopTracks } from "@/lib/smartPreload";
 import { prefetchCovers, setCachedCover } from "@/lib/coverMemoryCache";
 
 const WARMED_KEY = "cache-warmed-at";
