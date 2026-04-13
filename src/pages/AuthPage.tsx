@@ -1,15 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Music, Lock, User, Loader2, Eye, EyeOff, Send, Fingerprint } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  isBiometricAvailable,
-  isBiometricEnabled,
-  enableBiometric,
-  getBiometricCredential,
-} from "@/lib/biometricAuth";
-import { toast } from "sonner";
+import { Music, Lock, User, Loader2, Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -18,8 +11,6 @@ const AuthPage = () => {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [biometricLoading, setBiometricLoading] = useState(false);
-  const [showBiometric, setShowBiometric] = useState(false);
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,60 +20,16 @@ const AuthPage = () => {
     if (user) navigate(from, { replace: true });
   }, [user, navigate, from]);
 
-  // Check biometric availability on mount
-  useEffect(() => {
-    const canBiometric = isBiometricAvailable() && isBiometricEnabled();
-    setShowBiometric(canBiometric);
-
-    // Auto-trigger biometric on page load if available
-    if (canBiometric) {
-      handleBiometricLogin();
-    }
-  }, []);
-
-  const handleBiometricLogin = async () => {
-    setBiometricLoading(true);
-    setError("");
-    try {
-      const cred = await getBiometricCredential();
-      if (cred) {
-        const loginEmail = cred.email.includes("@") ? cred.email : `${cred.email}@vootify.app`;
-        const result = await signIn(loginEmail, cred.password);
-        if (result.error) {
-          setError("Authentification biométrique échouée");
-        } else {
-          localStorage.setItem("vootify_remember_me", "true");
-          navigate(from);
-        }
-      }
-    } catch (e) {
-      console.warn("[biometric] Login failed:", e);
-    } finally {
-      setBiometricLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     const loginEmail = email.includes("@") ? email : `${email}@vootify.app`;
     const result = await signIn(loginEmail, password);
-
     if (result.error) {
       setError("Identifiant ou mot de passe incorrect");
     } else {
       localStorage.setItem("vootify_remember_me", rememberMe ? "true" : "false");
-
-      // Offer to save biometric if available and not yet enabled
-      if (isBiometricAvailable() && !isBiometricEnabled()) {
-        const saved = await enableBiometric(email, password);
-        if (saved) {
-          toast.success("Face ID / Touch ID activé pour la prochaine connexion");
-        }
-      }
-
       navigate(from);
     }
     setLoading(false);
@@ -94,11 +41,7 @@ const AuthPage = () => {
       <div className="absolute top-1/4 -left-20 w-60 h-60 bg-primary/20 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 -right-20 w-60 h-60 bg-accent/20 rounded-full blur-3xl" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl p-8 w-full max-w-md relative z-10 bg-card border border-border"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl p-8 w-full max-w-md relative z-10 bg-card border border-border">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <Music className="w-8 h-8 text-primary" />
@@ -107,107 +50,28 @@ const AuthPage = () => {
           <p className="text-muted-foreground">Connectez-vous pour continuer</p>
         </div>
 
-        {/* Biometric quick login */}
-        <AnimatePresence>
-          {showBiometric && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-6"
-            >
-              <button
-                type="button"
-                onClick={handleBiometricLogin}
-                disabled={biometricLoading}
-                className="w-full py-4 rounded-2xl bg-primary/10 border border-primary/20 text-foreground font-medium text-sm hover:bg-primary/15 transition-all flex flex-col items-center justify-center gap-2 active:scale-[0.98]"
-              >
-                {biometricLoading ? (
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                ) : (
-                  <Fingerprint className="w-8 h-8 text-primary" />
-                )}
-                <span className="text-xs text-muted-foreground">
-                  {biometricLoading ? "Vérification…" : "Se connecter avec Face ID / Touch ID"}
-                </span>
-              </button>
-
-              <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">ou</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Identifiant"
-              required
-              autoComplete="username"
-              inputMode="text"
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-            />
+            <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Identifiant" required autoComplete="username" inputMode="text" className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm" />
           </div>
-
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mot de passe"
-              required
-              minLength={6}
-              className="w-full pl-10 pr-10 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" required minLength={6} className="w-full pl-10 pr-10 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm" />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-
-          {error && (
-            <p className="text-destructive text-sm text-center">{error}</p>
-          )}
-
+          {error && <p className="text-destructive text-sm text-center">{error}</p>}
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-border bg-secondary text-primary accent-primary"
-            />
+            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded border-border bg-secondary text-primary accent-primary" />
             <span className="text-xs text-muted-foreground">Se souvenir de moi</span>
           </label>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-          >
+          <button type="submit" disabled={loading} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             Se connecter
           </button>
         </form>
-
-        <button
-          type="button"
-          onClick={() => navigate("/request-access")}
-          className="w-full mt-3 py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-colors flex items-center justify-center gap-2"
-        >
-          <Send className="w-4 h-4" />
-          Faire une demande d'abonnement
-        </button>
       </motion.div>
     </div>
   );
