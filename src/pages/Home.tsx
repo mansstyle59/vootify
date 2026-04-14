@@ -443,14 +443,6 @@ const HomePage = () => {
                     <UserIcon className="w-4 h-4 text-primary" />
                     <span className="font-semibold text-[13px]">Mon profil</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
-                    <Headphones className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-semibold text-[13px]">Paramètres audio</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/carplay")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
-                    <Car className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-semibold text-[13px]">Mode CarPlay</span>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
                   <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="w-4 h-4" />
