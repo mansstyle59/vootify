@@ -67,7 +67,8 @@ const HomePage = () => {
         .from("custom_songs")
         .select("artist, cover_url, created_at")
         .not("stream_url", "is", null)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       const artistMap = new Map<string, { cover: string; latestAt: string }>();
       for (const row of data || []) {
