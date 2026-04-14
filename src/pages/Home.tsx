@@ -111,7 +111,9 @@ const HomePage = () => {
         .from("recently_played")
         .select("artist, cover_url")
         .eq("user_id", userId)
-        .neq("album", "Radio en direct");
+        .neq("album", "Radio en direct")
+        .order("played_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       const counts = new Map<string, { count: number; cover: string }>();
       for (const r of data || []) {
