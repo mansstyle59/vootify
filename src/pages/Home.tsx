@@ -236,8 +236,8 @@ const HomePage = () => {
     [currentSong?.id, togglePlay, setQueue, play]
   );
 
-  // Show skeleton while core data is loading
-  const coreLoading = loadingAdded && loadingArtists && loadingTopArtists;
+  // Show skeleton only while home config is loading (critical path)
+  const coreLoading = !homeConfig;
   
   const builtinDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
     recently_added: { songs: recentlyAdded, loading: loadingAdded },
