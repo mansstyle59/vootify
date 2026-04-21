@@ -27,7 +27,7 @@ Créer une application de streaming **simple, élégante et personnalisable**, p
 
 ### 🎧 Interface principale
 ![Banner](./assets/banner.jpg)
-
+https://github.com/user-attachments/assets/b12e5366-3716-451d-bb28-50e96c9a5eae
 ### 🎶 App Icon
 ![Icon](./assets/icon.png)
 
