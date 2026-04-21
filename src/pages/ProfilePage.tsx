@@ -460,6 +460,8 @@ const ProfilePage = () => {
           </div>
           <Divider />
           <MenuRow icon={Smartphone} title="QuickConnect" subtitle="Autoriser un appareil Jellyfin" onClick={() => setQuickConnectOpen(true)} />
+          <Divider />
+          <MenuRow icon={Download} title="Installer l'app iOS" subtitle="Installation directe sur iPhone / iPad" onClick={() => navigate("/install")} />
         </GlassCard>
 
         <QuickConnectDialog open={quickConnectOpen} onOpenChange={setQuickConnectOpen} />
