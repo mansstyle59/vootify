@@ -1,70 +1,22 @@
 /**
- * Capacitor Filesystem storage for iOS offline music files.
+ * Web-native "Save to iPhone Files" utility.
  *
- * Saves audio tracks and cover images to the app's Documents directory
- * under a "Vootify Music" folder.  This folder appears in the iPhone's
- * Files app (Files → On My iPhone → Vootify → Vootify Music) when the app
- * is built with UIFileSharingEnabled in its Info.plist.
+ * Works entirely through standard browser APIs — no Xcode, no native build,
+ * no Capacitor Filesystem plugin required.
  *
- * On non-Capacitor platforms (web/PWA) every method is a no-op so the rest
- * of the codebase works unchanged.
+ * Strategy (iOS Safari / PWA):
+ *   1. Try the Web Share API (navigator.share with files) — available on
+ *      iOS 15 + and Android Chrome. Opens the system share sheet where the
+ *      user can choose "Save to Files".
+ *   2. Fall back to a programmatic <a download> click — iOS Safari shows a
+ *      "Download" prompt that lands in Files → On My iPhone.
+ *   3. If neither works, return a descriptive status so the caller can react.
  */
 
 import type { Song } from "@/data/mockData";
+import { offlineCache } from "@/lib/offlineCache";
 
-const MUSIC_FOLDER = "Vootify Music";
-const AUDIO_SUBFOLDER = `${MUSIC_FOLDER}/Audio`;
-const COVERS_SUBFOLDER = `${MUSIC_FOLDER}/Covers`;
-
-type CapFilesystem = typeof import("@capacitor/filesystem").Filesystem;
-type CapDirectory = typeof import("@capacitor/filesystem").Directory;
-
-let _Filesystem: CapFilesystem | null = null;
-let _Directory: CapDirectory | null = null;
-let _initialized = false;
-
-/**
- * Lazily import the Capacitor Filesystem plugin.
- * Returns null on web/PWA where the plugin is not available.
- */
-async function getFilesystem(): Promise<{ Filesystem: CapFilesystem; Directory: CapDirectory } | null> {
-  if (_initialized) {
-    return _Filesystem && _Directory ? { Filesystem: _Filesystem, Directory: _Directory } : null;
-  }
-  _initialized = true;
-  try {
-    const { Filesystem, Directory } = await import("@capacitor/filesystem");
-    // Verify we are actually on a native Capacitor platform
-    const { Capacitor } = await import("@capacitor/core");
-    if (!Capacitor.isNativePlatform()) return null;
-    _Filesystem = Filesystem;
-    _Directory = Directory;
-    return { Filesystem, Directory };
-  } catch {
-    return null;
-  }
-}
-
-/** Convert a Blob to a base64 string (without the data: prefix) */
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      // Strip "data:<mime>;base64," prefix
-      const commaIdx = result.indexOf(",");
-      if (commaIdx === -1) {
-        reject(new Error("FileReader did not return a valid data URL"));
-        return;
-      }
-      resolve(result.slice(commaIdx + 1));
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-/** Sanitize a string so it's safe to use as a file-system path component */
+/** Sanitize a string so it is safe as a file name */
 function safeName(str: string): string {
   return str
     .replace(/[/\\:*?"<>|]/g, "_")
@@ -72,97 +24,83 @@ function safeName(str: string): string {
     .slice(0, 80);
 }
 
-/** Build the audio file path for a song */
-function audioPath(song: Song): string {
-  const name = safeName(`${song.artist}_-_${song.title}`);
-  return `${AUDIO_SUBFOLDER}/${name}_${song.id.slice(0, 8)}.mp3`;
+/** Build a human-readable audio file name for a song */
+function audioFileName(song: Song): string {
+  return `${safeName(song.artist)}_-_${safeName(song.title)}.mp3`;
 }
 
-/** Build the cover image file path for a song */
-function coverPath(song: Song): string {
-  const name = safeName(`${song.artist}_-_${song.title}`);
-  return `${COVERS_SUBFOLDER}/${name}_${song.id.slice(0, 8)}.jpg`;
-}
+export type SaveToFilesResult = "saved" | "cancelled" | "not_cached" | "error";
 
-/** Ensure the Vootify Music sub-directories exist */
-async function ensureFolders(Filesystem: CapFilesystem, Directory: CapDirectory): Promise<void> {
-  for (const dir of [MUSIC_FOLDER, AUDIO_SUBFOLDER, COVERS_SUBFOLDER]) {
-    try {
-      await Filesystem.mkdir({ path: dir, directory: Directory.Documents, recursive: true });
-    } catch {
-      // Directory probably already exists — ignore
+/**
+ * Save the cached audio for a song to the iPhone Files app using only
+ * web APIs (Web Share API or <a download> fallback).
+ *
+ * Returns:
+ *   "saved"       — the share sheet / download was triggered successfully
+ *   "cancelled"   — the user dismissed the share sheet (AbortError)
+ *   "not_cached"  — the song is not in IndexedDB yet
+ *   "error"       — an unexpected error occurred
+ */
+export async function saveToiPhoneFiles(song: Song): Promise<SaveToFilesResult> {
+  // 1. Read the audio blob from IndexedDB
+  const audioUrl = await offlineCache.getCachedUrl(song.id);
+  if (!audioUrl) return "not_cached";
+
+  try {
+    const audioResp = await fetch(audioUrl);
+    const audioBlob = await audioResp.blob();
+    const audioFile = new File(
+      [audioBlob],
+      audioFileName(song),
+      { type: "audio/mpeg" }
+    );
+
+    // 2. Try Web Share API (iOS 15+, Android Chrome 86+)
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.share === "function" &&
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [audioFile] })
+    ) {
+      await navigator.share({ files: [audioFile], title: `${song.artist} – ${song.title}` });
+      return "saved";
     }
+
+    // 3. Fallback: programmatic <a download> — iOS Safari saves to Files
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(audioBlob);
+    link.download = audioFileName(song);
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    // Clean up after a short delay
+    setTimeout(() => {
+      URL.revokeObjectURL(link.href);
+      document.body.removeChild(link);
+    }, 2000);
+    return "saved";
+  } catch (e: unknown) {
+    // User cancelled the share sheet — not a real error
+    if (e instanceof Error && e.name === "AbortError") return "cancelled";
+    console.warn("[filesystemStorage] saveToiPhoneFiles failed:", e);
+    return "error";
+  } finally {
+    // Revoke the object URL created by getCachedUrl
+    URL.revokeObjectURL(audioUrl);
   }
 }
 
 /**
- * Save an audio blob and optional cover blob to the iOS Files app folder.
- * No-op on web/PWA.
+ * Returns true if the current platform supports saving files
+ * (Web Share API with files, or the <a download> fallback).
+ * Always true in modern browsers; used to conditionally show the UI button.
  */
-export async function saveToFilesystem(
-  song: Song,
-  audioBlob: Blob,
-  coverBlob: Blob | null,
-): Promise<void> {
-  const cap = await getFilesystem();
-  if (!cap) return;
-  const { Filesystem, Directory } = cap;
-
-  try {
-    await ensureFolders(Filesystem, Directory);
-
-    // Save audio file
-    const audioData = await blobToBase64(audioBlob);
-    await Filesystem.writeFile({
-      path: audioPath(song),
-      data: audioData,
-      directory: Directory.Documents,
-    });
-
-    // Save cover image if available
-    if (coverBlob) {
-      const coverData = await blobToBase64(coverBlob);
-      await Filesystem.writeFile({
-        path: coverPath(song),
-        data: coverData,
-        directory: Directory.Documents,
-      });
-    }
-  } catch (e) {
-    console.warn("[filesystemStorage] Failed to save to filesystem:", e);
-  }
+export function canSaveToFiles(): boolean {
+  if (typeof navigator === "undefined") return false;
+  // Web Share API with files supported
+  if (typeof navigator.share === "function") return true;
+  // <a download> works on every desktop and mobile browser
+  return typeof document !== "undefined";
 }
 
-/**
- * Remove a song's audio and cover files from the iOS Files app folder.
- * No-op on web/PWA.
- */
-export async function removeFromFilesystem(song: Song): Promise<void> {
-  const cap = await getFilesystem();
-  if (!cap) return;
-  const { Filesystem, Directory } = cap;
 
-  try {
-    await Filesystem.deleteFile({ path: audioPath(song), directory: Directory.Documents }).catch(() => {});
-    await Filesystem.deleteFile({ path: coverPath(song), directory: Directory.Documents }).catch(() => {});
-  } catch (e) {
-    console.warn("[filesystemStorage] Failed to remove from filesystem:", e);
-  }
-}
-
-/**
- * Check whether the "Vootify Music" folder is accessible.
- * Useful as a health check when the app starts.
- * Returns false on web/PWA.
- */
-export async function isFilesystemAvailable(): Promise<boolean> {
-  const cap = await getFilesystem();
-  if (!cap) return false;
-  const { Filesystem, Directory } = cap;
-  try {
-    await ensureFolders(Filesystem, Directory);
-    return true;
-  } catch {
-    return false;
-  }
-}

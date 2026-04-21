@@ -11,7 +11,7 @@ import {
   Heart, ListMusic, Clock, Plus, Trash2, Play, Pause, Download,
   HardDrive, Trash, Music, Shuffle, LogIn, WifiOff, ArrowUpDown,
   RefreshCw, Loader2, MoreHorizontal, ChevronRight, CheckSquare, X, ListPlus, Sparkles, Check,
-  Disc3, User, Search as SearchIcon
+  Disc3, User, Search as SearchIcon, FolderOpen
 } from "lucide-react";
 import { ActionBar } from "@/components/ActionBar";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import { normalizeTitle, normalizeArtist, normalizeText } from "@/lib/metadataEn
 import { batchSearchCovers, searchArtistImage } from "@/lib/coverArtSearch";
 import { useLibraryTabsConfig } from "@/hooks/useAppSettings";
 import { SafeImage } from "@/components/SafeImage";
+import { saveToiPhoneFiles } from "@/lib/filesystemStorage";
 
 type Tab = "playlists" | "recent" | "downloads" | "custom" | "albums" | "artists" | "songs" | null;
 type SortOption = "recent" | "alpha" | "artist" | "duration";
@@ -2055,6 +2056,24 @@ const LibraryPage = () => {
                           </button>
                           <button
                             onClick={async () => {
+                              const results = await Promise.allSettled(
+                                cachedSongs.map((s) => saveToiPhoneFiles(s))
+                              );
+                              const saved = results.filter(
+                                (r) => r.status === "fulfilled" && r.value === "saved"
+                              ).length;
+                              if (saved > 0) {
+                                toast.success(`${saved} titre${saved > 1 ? "s" : ""} envoyé${saved > 1 ? "s" : ""} vers Fichiers`);
+                              } else {
+                                toast.info("Utilisez le glissement → sur un titre pour l'exporter");
+                              }
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium"
+                          >
+                            <FolderOpen className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={async () => {
                               for (const s of cachedSongs) await offlineCache.removeCached(s.id);
                               setCachedSongs([]);
                               setCacheSize(0);
@@ -2369,6 +2388,11 @@ const LibraryPage = () => {
                                 }
                               }}
                               onSwipeLeft={offlineSelectMode ? undefined : () => removeCached(s.id)}
+                              onSwipeRight={offlineSelectMode ? undefined : async () => {
+                                const result = await saveToiPhoneFiles(s);
+                                if (result === "error") toast.error("Impossible d'enregistrer dans Fichiers");
+                                else if (result === "not_cached") toast.info("Ce titre n'est pas encore téléchargé");
+                              }}
                             />
                           </div>
                         </div>
@@ -2394,25 +2418,48 @@ const LibraryPage = () => {
                           <span className="text-sm font-semibold text-foreground">
                             {offlineSelected.size} titre{offlineSelected.size > 1 ? "s" : ""}
                           </span>
-                          <button
-                            onClick={async () => {
-                              const ids = Array.from(offlineSelected);
-                              for (const id of ids) {
-                                await offlineCache.removeCached(id);
-                              }
-                              setCachedSongs((prev) => prev.filter((s) => !offlineSelected.has(s.id)));
-                              const size = await offlineCache.getCacheSize();
-                              setCacheSize(size);
-                              setOfflineSelected(new Set());
-                              setOfflineSelectMode(false);
-                              toast.success(`${ids.length} titre${ids.length > 1 ? "s" : ""} supprimé${ids.length > 1 ? "s" : ""}`);
-                            }}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
-                            style={{ background: "hsl(var(--destructive) / 0.12)", color: "hsl(var(--destructive))" }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Supprimer
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async () => {
+                                const songs = filteredCached.filter((s) => offlineSelected.has(s.id));
+                                const results = await Promise.allSettled(
+                                  songs.map((s) => saveToiPhoneFiles(s))
+                                );
+                                const saved = results.filter(
+                                  (r) => r.status === "fulfilled" && r.value === "saved"
+                                ).length;
+                                if (saved > 0) {
+                                  toast.success(`${saved} titre${saved > 1 ? "s" : ""} envoyé${saved > 1 ? "s" : ""} vers Fichiers`);
+                                } else {
+                                  toast.error("Impossible d'enregistrer dans Fichiers");
+                                }
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
+                              style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}
+                            >
+                              <FolderOpen className="w-4 h-4" />
+                              Fichiers
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const ids = Array.from(offlineSelected);
+                                for (const id of ids) {
+                                  await offlineCache.removeCached(id);
+                                }
+                                setCachedSongs((prev) => prev.filter((s) => !offlineSelected.has(s.id)));
+                                const size = await offlineCache.getCacheSize();
+                                setCacheSize(size);
+                                setOfflineSelected(new Set());
+                                setOfflineSelectMode(false);
+                                toast.success(`${ids.length} titre${ids.length > 1 ? "s" : ""} supprimé${ids.length > 1 ? "s" : ""}`);
+                              }}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
+                              style={{ background: "hsl(var(--destructive) / 0.12)", color: "hsl(var(--destructive))" }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Supprimer
+                            </button>
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>

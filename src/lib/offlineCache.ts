@@ -4,7 +4,6 @@ import {
   isCryptoAvailable, isEncryptionEnabled,
 } from "@/lib/cryptoCache";
 import { getDeviceId } from "@/lib/deviceId";
-import { saveToFilesystem, removeFromFilesystem } from "@/lib/filesystemStorage";
 
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
@@ -217,10 +216,6 @@ export const offlineCache = {
     const rawAudioBlob: Blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
     const rawCoverBlob = await coverPromise;
 
-    // Mirror unencrypted files to the iOS Files app ("Vootify Music" folder).
-    // Runs in parallel with IndexedDB storage and never throws.
-    saveToFilesystem(song, rawAudioBlob, rawCoverBlob).catch(() => {});
-
     // Encrypt blobs if enabled
     const audioBlob = await maybeEncrypt(rawAudioBlob);
     const coverBlob = rawCoverBlob ? await maybeEncrypt(rawCoverBlob) : null;
@@ -310,7 +305,7 @@ export const offlineCache = {
   /** Get all cached songs metadata, with cover blob URLs resolved */
   async getAllCached(): Promise<(Song & { cachedAt: number })[]> {
     const db = await openDb();
-    const rawMetas: any[] = await new Promise((resolve) => {
+    const rawMetas: unknown[] = await new Promise((resolve) => {
       const tx = db.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const req = store.getAll();
@@ -319,10 +314,10 @@ export const offlineCache = {
     });
 
     // Decrypt metadata if needed
-    const metas = await Promise.all(rawMetas.map((m) => maybeDecryptMeta<any>(m)));
+    const metas = await Promise.all(rawMetas.map((m) => maybeDecryptMeta<CachedMeta>(m)));
 
     const songs = await Promise.all(
-      metas.map(async (m: any) => {
+      metas.map(async (m: CachedMeta) => {
         let coverUrl = m.coverUrl;
         try {
           const cachedCover = await offlineCache.getCachedCoverUrl(m.id);
@@ -348,33 +343,7 @@ export const offlineCache = {
 
   /** Remove a cached song */
   async removeCached(songId: string): Promise<void> {
-    // Retrieve metadata before deleting so we can build the filesystem path
     const db = await openDb();
-    let songMeta: Song | null = null;
-    try {
-      const raw: unknown = await new Promise((resolve) => {
-        const tx = db.transaction(META_STORE, "readonly");
-        const req = tx.objectStore(META_STORE).get(songId);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(null);
-      });
-      if (raw) {
-        const meta = await maybeDecryptMeta<CachedMeta>(raw);
-        if (meta) {
-          songMeta = {
-            id: meta.id,
-            title: meta.title,
-            artist: meta.artist,
-            album: meta.album,
-            duration: meta.duration,
-            coverUrl: meta.coverUrl,
-            streamUrl: meta.streamUrl || "",
-            liked: false,
-          };
-        }
-      }
-    } catch {}
-
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction([AUDIO_STORE, META_STORE, COVER_STORE], "readwrite");
       tx.objectStore(AUDIO_STORE).delete(songId);
@@ -383,11 +352,6 @@ export const offlineCache = {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
-
-    // Remove from iOS Files app folder too (non-blocking)
-    if (songMeta) {
-      removeFromFilesystem(songMeta).catch(() => {});
-    }
   },
 
   /** Get total cache size in bytes (audio + covers) */
