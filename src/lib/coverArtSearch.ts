@@ -56,7 +56,6 @@ export async function searchCoverArt(params: {
     coverUrl:
       albumObj?.cover_xl || albumObj?.cover_big || albumObj?.cover_medium || undefined,
     album: album || albumObj?.title || undefined,
-    genre: first.genre_id ? undefined : undefined, // genre not in basic search results
     year: releaseYear,
   };
 }
