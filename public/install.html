@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installer Vootify</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #13131a;
+      border: 1px solid #2a2a3a;
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(139, 92, 246, 0.15);
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 22px;
+      margin: 0 auto 24px;
+      display: block;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #a78bfa, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .version {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 32px;
+    }
+
+    .install-btn {
+      display: inline-block;
+      width: 100%;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 16px;
+      letter-spacing: 0.2px;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 24px rgba(124, 58, 237, 0.4);
+    }
+
+    .install-btn:active {
+      opacity: 0.85;
+      transform: scale(0.98);
+    }
+
+    .install-btn .icon {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+
+    .warning {
+      margin-top: 24px;
+      background: #1a1a2e;
+      border: 1px solid #2d2d4a;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      color: #9ca3af;
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    .warning strong {
+      color: #a78bfa;
+    }
+
+    .steps {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 14px;
+      color: #9ca3af;
+      line-height: 1.8;
+    }
+
+    .steps li {
+      list-style: none;
+      padding-left: 4px;
+    }
+
+    .steps li::before {
+      content: attr(data-step) ". ";
+      color: #7c3aed;
+      font-weight: 700;
+    }
+
+    .divider {
+      height: 1px;
+      background: #2a2a3a;
+      margin: 24px 0;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="vootify-logo.png" alt="Vootify" class="logo" onerror="this.style.display='none'" />
+    <h1>Vootify</h1>
+    <p class="version">Version 1.0 • iOS 15+</p>
+
+    <a class="install-btn" href="itms-services://?action=download-manifest&url=https://mansstyle59.github.io/vootify/manifest.plist">
+      <span class="icon">⬇️</span>Installer sur iPhone
+    </a>
+
+    <div class="steps">
+      <p style="color:#a78bfa; font-weight:600; margin-bottom:8px;">Comment installer :</p>
+      <ol>
+        <li data-step="1">Ouvrir cette page dans <strong>Safari</strong></li>
+        <li data-step="2">Appuyer sur le bouton ci-dessus</li>
+        <li data-step="3">Confirmer l'installation</li>
+        <li data-step="4">Aller dans <strong>Réglages → VPN et gestion</strong><br/>et faire confiance au profil</li>
+      </ol>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="warning">
+      <strong>⚠️ Prérequis :</strong><br />
+      Cette installation nécessite que l'UDID de votre appareil soit enregistré dans le profil de provisioning. Ouvrez uniquement depuis <strong>Safari</strong> sur iPhone.
+    </div>
+
+    <p class="footer">Vootify © 2025 • Ad Hoc Distribution</p>
+  </div>
+</body>
+</html>
