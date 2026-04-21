@@ -5,7 +5,10 @@ import { useNavigate } from "react-router-dom";
 
 // Edge function serves the plist with Content-Type: application/x-plist
 // (GitHub Pages cannot set custom headers – iOS requires this exact type)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+// verify_jwt = false is set in supabase/config.toml so iOS can fetch without auth headers
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string) ||
+  "https://whjjlqznrwroiwrpmoum.supabase.co";
 const MANIFEST_URL = `${SUPABASE_URL}/functions/v1/ota-manifest`;
 const IPA_DIRECT_URL =
   "https://mansstyle59.github.io/vootify/Vootify_1.0_1776764276.ipa";
