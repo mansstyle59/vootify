@@ -24,7 +24,7 @@ async function invoke(body: Record<string, unknown>): Promise<RadioBrowserStatio
   // Use synchronous local logo matching — no slow Deezer lookups blocking display
   return stations.map((s) => ({
     ...s,
-    coverUrl: getStationLogo(s.name, s.coverUrl),
+    coverUrl: getStationLogo(s.name, s.coverUrl) ?? s.coverUrl,
   }));
 }
 
