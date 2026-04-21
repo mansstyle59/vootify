@@ -4,6 +4,7 @@ import {
   isCryptoAvailable, isEncryptionEnabled,
 } from "@/lib/cryptoCache";
 import { getDeviceId } from "@/lib/deviceId";
+import { saveToFilesystem, removeFromFilesystem } from "@/lib/filesystemStorage";
 
 const DB_NAME = "music-offline-cache";
 const DB_VERSION = 2;
@@ -198,14 +199,16 @@ export const offlineCache = {
       }
     }
 
-    let audioBlob: Blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
-    let coverBlob = await coverPromise;
+    const rawAudioBlob: Blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
+    const rawCoverBlob = await coverPromise;
+
+    // Mirror unencrypted files to the iOS Files app ("Vootify Music" folder).
+    // Runs in parallel with IndexedDB storage and never throws.
+    saveToFilesystem(song, rawAudioBlob, rawCoverBlob).catch(() => {});
 
     // Encrypt blobs if enabled
-    audioBlob = await maybeEncrypt(audioBlob);
-    if (coverBlob) {
-      coverBlob = await maybeEncrypt(coverBlob);
-    }
+    const audioBlob = await maybeEncrypt(rawAudioBlob);
+    const coverBlob = rawCoverBlob ? await maybeEncrypt(rawCoverBlob) : null;
 
     const db = await openDb();
 
@@ -330,7 +333,33 @@ export const offlineCache = {
 
   /** Remove a cached song */
   async removeCached(songId: string): Promise<void> {
+    // Retrieve metadata before deleting so we can build the filesystem path
     const db = await openDb();
+    let songMeta: Song | null = null;
+    try {
+      const raw: any = await new Promise((resolve) => {
+        const tx = db.transaction(META_STORE, "readonly");
+        const req = tx.objectStore(META_STORE).get(songId);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (raw) {
+        const meta = await maybeDecryptMeta<any>(raw);
+        if (meta) {
+          songMeta = {
+            id: meta.id,
+            title: meta.title,
+            artist: meta.artist,
+            album: meta.album,
+            duration: meta.duration,
+            coverUrl: meta.coverUrl,
+            streamUrl: meta.streamUrl || "",
+            liked: false,
+          };
+        }
+      }
+    } catch {}
+
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction([AUDIO_STORE, META_STORE, COVER_STORE], "readwrite");
       tx.objectStore(AUDIO_STORE).delete(songId);
@@ -339,6 +368,11 @@ export const offlineCache = {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
+
+    // Remove from iOS Files app folder too (non-blocking)
+    if (songMeta) {
+      removeFromFilesystem(songMeta).catch(() => {});
+    }
   },
 
   /** Get total cache size in bytes (audio + covers) */
