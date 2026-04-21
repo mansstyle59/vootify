@@ -27,7 +27,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Public routes that don't require auth
-  const publicPaths = ["/auth", "/reset-password", "/request-access"];
+  const publicPaths = ["/auth", "/reset-password", "/request-access", "/install"];
   const isPublicRoute = publicPaths.some((p) => location.pathname.startsWith(p));
 
   // Still loading auth state → render children (splash covers the visual)

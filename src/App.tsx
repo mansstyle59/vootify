@@ -36,6 +36,7 @@ const GenrePage = lazy(() => import("./pages/GenrePage"));
 const SharedPlaylistDetailPage = lazy(() => import("./pages/SharedPlaylistDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Index = lazy(() => import("./pages/Index"));
+const InstallPage = lazy(() => import("./pages/InstallPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +73,7 @@ const AnimatedRoutes = memo(function AnimatedRoutes() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/genre/:name" element={<GenrePage />} />
             <Route path="/shared-playlist/:id" element={<SharedPlaylistDetailPage />} />
+            <Route path="/install" element={<InstallPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </RouteGuard>
