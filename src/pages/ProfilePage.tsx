@@ -12,18 +12,14 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Camera, ArrowLeft, Loader2, Check, LogOut, Trash2, Image as ImageIcon, FileText,
   HardDrive, Database, Crown, Headphones, ChevronRight, Shield, Fingerprint,
-  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi, Lock, LockOpen
+  Clock, Music, Heart, BarChart3, RefreshCw, Download, Settings, Edit3, Layers, Wifi, Lock, LockOpen, Smartphone
 } from "lucide-react";
 import { silentCacheRefresh } from "@/lib/appCache";
 import { getPendingCount, flushQueue } from "@/lib/offlineQueue";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import {
-  isBiometricAvailable,
-  isBiometricEnabled,
-  disableBiometric,
-} from "@/lib/biometricAuth";
 import { isAutoDownloadEnabled, setAutoDownloadEnabled } from "@/lib/autoDownload";
+import { QuickConnectDialog } from "@/components/QuickConnectDialog";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
@@ -107,16 +103,17 @@ const ProfilePage = () => {
   const [coverCacheCount, setCoverCacheCount] = useState(0);
   const [coverCacheSize, setCoverCacheSize] = useState<number | null>(null);
   const [pageCacheCount, setPageCacheCount] = useState({ albums: 0, artists: 0, playlists: 0 });
-  const [biometricOn, setBiometricOn] = useState(isBiometricEnabled());
+  const [biometricOn, setBiometricOn] = useState(false);
   const [isCachingCovers, setIsCachingCovers] = useState(false);
   const [isCachingPages, setIsCachingPages] = useState(false);
   const [isCachingAll, setIsCachingAll] = useState(false);
   const [coverProgress, setCoverProgress] = useState<{ done: number; total: number } | null>(null);
   const [pagesProgress, setPagesProgress] = useState<{ done: number; total: number } | null>(null);
-  const biometricSupported = isBiometricAvailable();
+  const biometricSupported = false;
   const [autoDownloadOn, setAutoDownloadOn] = useState(isAutoDownloadEnabled());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pendingActions, setPendingActions] = useState(getPendingCount());
+  const [quickConnectOpen, setQuickConnectOpen] = useState(false);
   const storageRefreshKey = useRef(0);
 
   const [totalListeningSeconds, setTotalListeningSeconds] = useState(0);
@@ -434,34 +431,6 @@ const ProfilePage = () => {
               <MenuRow icon={Shield} title="Administration" subtitle="Utilisateurs et contenus" onClick={() => navigate("/admin")} />
             </>
           )}
-          {biometricSupported && (
-            <>
-              <Divider />
-              <div className="px-4 py-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--primary) / 0.1)" }}>
-                  <Fingerprint className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground">Face ID / Touch ID</p>
-                  <p className="text-[10px] text-muted-foreground/50 font-medium">Connexion biométrique</p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (biometricOn) { disableBiometric(); setBiometricOn(false); toast.success("Biométrique désactivé"); }
-                    else toast("Connectez-vous avec votre mot de passe pour activer");
-                  }}
-                  className="relative w-11 h-6 rounded-full transition-colors"
-                  style={{ background: biometricOn ? "hsl(var(--primary))" : "hsl(var(--muted))" }}
-                >
-                  <motion.div
-                    animate={{ x: biometricOn ? 20 : 3 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
-                  />
-                </button>
-              </div>
-            </>
-          )}
           {/* Auto-download Wi-Fi toggle */}
           <Divider />
           <div className="px-4 py-3 flex items-center gap-3">
@@ -489,9 +458,13 @@ const ProfilePage = () => {
               />
             </button>
           </div>
+          <Divider />
+          <MenuRow icon={Smartphone} title="QuickConnect" subtitle="Autoriser un appareil Jellyfin" onClick={() => setQuickConnectOpen(true)} />
+          <Divider />
+          <MenuRow icon={Download} title="Installer l'app iOS" subtitle="Installation directe sur iPhone / iPad" onClick={() => navigate("/install")} />
         </GlassCard>
 
-        {/* ─── STOCKAGE COMPACT ─── */}
+        <QuickConnectDialog open={quickConnectOpen} onOpenChange={setQuickConnectOpen} />
         <GlassCard className="p-4 space-y-3" delay={0.12}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">

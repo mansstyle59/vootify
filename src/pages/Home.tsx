@@ -15,7 +15,7 @@ import {
   useRecommended,
 } from "@/hooks/useLocalSections";
 import { useHomeConfig } from "@/hooks/useHomeConfig";
-import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut, Headphones, Play, WifiOff, Download, Car } from "lucide-react";
+import { Music, RefreshCw, Loader2, User as UserIcon, LogIn, LogOut } from "lucide-react";
 import { getPendingCount } from "@/lib/offlineQueue";
 import { searchArtistImage } from "@/lib/coverArtSearch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -67,7 +67,8 @@ const HomePage = () => {
         .from("custom_songs")
         .select("artist, cover_url, created_at")
         .not("stream_url", "is", null)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       const artistMap = new Map<string, { cover: string; latestAt: string }>();
       for (const row of data || []) {
@@ -110,7 +111,9 @@ const HomePage = () => {
         .from("recently_played")
         .select("artist, cover_url")
         .eq("user_id", userId)
-        .neq("album", "Radio en direct");
+        .neq("album", "Radio en direct")
+        .order("played_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       const counts = new Map<string, { count: number; cover: string }>();
       for (const r of data || []) {
@@ -236,8 +239,8 @@ const HomePage = () => {
     [currentSong?.id, togglePlay, setQueue, play]
   );
 
-  // Show skeleton while core data is loading
-  const coreLoading = loadingAdded && loadingArtists && loadingTopArtists;
+  // Show skeleton only while home config is loading (critical path)
+  const coreLoading = !homeConfig;
   
   const builtinDataMap: Record<string, { songs: Song[] | undefined; loading: boolean }> = useMemo(() => ({
     recently_added: { songs: recentlyAdded, loading: loadingAdded },
@@ -442,14 +445,6 @@ const HomePage = () => {
                   <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
                     <UserIcon className="w-4 h-4 text-primary" />
                     <span className="font-semibold text-[13px]">Mon profil</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/audio-settings")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
-                    <Headphones className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-semibold text-[13px]">Paramètres audio</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/carplay")} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer">
-                    <Car className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-semibold text-[13px]">Mode CarPlay</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1" style={{ background: "hsl(var(--border) / 0.06)" }} />
                   <DropdownMenuItem onClick={() => signOut()} className="rounded-xl gap-3 py-2.5 px-3 cursor-pointer text-destructive focus:text-destructive">

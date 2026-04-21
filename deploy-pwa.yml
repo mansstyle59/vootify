@@ -40,6 +40,7 @@ jobs:
       - name: Build PWA
         run: npm run build
         env:
+          VITE_APP_BASE_PATH: /vootify/
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 

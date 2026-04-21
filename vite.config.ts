@@ -3,9 +3,11 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 
+const configuredBase = process.env.VITE_APP_BASE_PATH || "/";
+const base = configuredBase.endsWith("/") ? configuredBase : `${configuredBase}/`;
+
 export default defineConfig({
-  // ⚠️ Obligatoire pour GitHub Pages
-  base: "/vootify/",
+  base,
 
   plugins: [
     react(),
@@ -25,8 +27,8 @@ export default defineConfig({
         background_color: "#0b0e14",
         display: "standalone",
         orientation: "portrait",
-        scope: "/vootify/",
-        start_url: "/vootify/",
+        scope: base,
+        start_url: base,
         icons: [
           {
             src: "pwa-icon-192.png",
@@ -43,7 +45,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        navigateFallback: "/vootify/index.html",
+        navigateFallback: `${base}index.html`,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,

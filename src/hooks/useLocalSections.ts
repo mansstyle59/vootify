@@ -66,14 +66,14 @@ export function useMostPlayed(limit = 20) {
     queryKey: ["local-most-played", userId, limit],
     queryFn: async () => {
       if (!userId) return [];
-      // Fetch all recently_played and count by song_id
+      // Fetch recent plays (capped at 500 for performance)
       const { data, error } = await supabase
         .from("recently_played")
-        .select("*")
+        .select("song_id, title, artist, album, duration, cover_url, stream_url")
         .eq("user_id", userId)
         .neq("album", "Radio en direct")
         .order("played_at", { ascending: false })
-        .limit(1000);
+        .limit(500);
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
@@ -91,7 +91,7 @@ export function useMostPlayed(limit = 20) {
       return Array.from(countMap.values())
         .sort((a, b) => b.count - a.count)
         .slice(0, limit)
-        .filter((e) => e.count >= 2) // at least 2 plays
+        .filter((e) => e.count >= 2)
         .map((e) => rowToSong(e.row));
     },
     enabled: !!userId,

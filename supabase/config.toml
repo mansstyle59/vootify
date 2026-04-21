@@ -1,1 +1,4 @@
 project_id = "whjjlqznrwroiwrpmoum"
+
+[functions.ota-manifest]
+verify_jwt = false

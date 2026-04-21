@@ -62,8 +62,8 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   }, [isLoading]);
 
   // Allow auth-related routes to bypass the gate
-  const publicPaths = ["/auth", "/reset-password", "/request-access"];
-  if (publicPaths.includes(location.pathname)) return <>{children}</>;
+  const publicPaths = ["/auth", "/reset-password", "/request-access", "/install"];
+  if (publicPaths.some((p) => location.pathname.startsWith(p))) return <>{children}</>;
 
   // Still loading → show elegant skeleton
   if (isLoading) return <GateLoader />;
