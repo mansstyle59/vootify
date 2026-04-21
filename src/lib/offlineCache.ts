@@ -15,6 +15,21 @@ const AUDIO_STORE = "audio";
 const META_STORE = "meta";
 const COVER_STORE = "covers";
 
+/** Shape of the metadata record stored in META_STORE */
+interface CachedMeta {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: number;
+  coverUrl: string;
+  streamUrl: string;
+  genre: string | null;
+  year: number | null;
+  cachedAt: number;
+  hasCover: boolean;
+}
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -198,14 +213,12 @@ export const offlineCache = {
       }
     }
 
-    let audioBlob: Blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
-    let coverBlob = await coverPromise;
+    const rawAudioBlob: Blob = new Blob(chunks as unknown as BlobPart[], { type: "audio/mpeg" });
+    const rawCoverBlob = await coverPromise;
 
     // Encrypt blobs if enabled
-    audioBlob = await maybeEncrypt(audioBlob);
-    if (coverBlob) {
-      coverBlob = await maybeEncrypt(coverBlob);
-    }
+    const audioBlob = await maybeEncrypt(rawAudioBlob);
+    const coverBlob = rawCoverBlob ? await maybeEncrypt(rawCoverBlob) : null;
 
     const db = await openDb();
 
@@ -292,7 +305,7 @@ export const offlineCache = {
   /** Get all cached songs metadata, with cover blob URLs resolved */
   async getAllCached(): Promise<(Song & { cachedAt: number })[]> {
     const db = await openDb();
-    const rawMetas: any[] = await new Promise((resolve) => {
+    const rawMetas: unknown[] = await new Promise((resolve) => {
       const tx = db.transaction(META_STORE, "readonly");
       const store = tx.objectStore(META_STORE);
       const req = store.getAll();
@@ -301,10 +314,10 @@ export const offlineCache = {
     });
 
     // Decrypt metadata if needed
-    const metas = await Promise.all(rawMetas.map((m) => maybeDecryptMeta<any>(m)));
+    const metas = await Promise.all(rawMetas.map((m) => maybeDecryptMeta<CachedMeta>(m)));
 
     const songs = await Promise.all(
-      metas.map(async (m: any) => {
+      metas.map(async (m: CachedMeta) => {
         let coverUrl = m.coverUrl;
         try {
           const cachedCover = await offlineCache.getCachedCoverUrl(m.id);
