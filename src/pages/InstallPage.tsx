@@ -3,7 +3,12 @@ import { motion } from "framer-motion";
 import { Download, Smartphone, CheckCircle, AlertCircle, ArrowLeft, Apple } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const MANIFEST_URL = "https://mansstyle59.github.io/vootify/manifest.plist";
+// Edge function serves the plist with Content-Type: application/x-plist
+// (GitHub Pages cannot set custom headers – iOS requires this exact type)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const MANIFEST_URL = `${SUPABASE_URL}/functions/v1/ota-manifest`;
+const IPA_DIRECT_URL =
+  "https://mansstyle59.github.io/vootify/Vootify_1.0_1776764276.ipa";
 const INSTALL_URL = `itms-services://?action=download-manifest&url=${encodeURIComponent(MANIFEST_URL)}`;
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -90,34 +95,46 @@ const InstallPage = () => {
 
         {/* Install button or non-iOS message */}
         {isIOS ? (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleInstall}
-            disabled={installing || done}
-            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2.5 shadow-lg shadow-primary/30 disabled:opacity-60 transition-all"
-          >
-            {done ? (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                Installation lancée
-              </>
-            ) : installing ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
+          <>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleInstall}
+              disabled={installing || done}
+              className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2.5 shadow-lg shadow-primary/30 disabled:opacity-60 transition-all"
+            >
+              {done ? (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  Installation lancée
+                </>
+              ) : installing ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Download className="w-5 h-5" />
+                  </motion.div>
+                  Ouverture…
+                </>
+              ) : (
+                <>
                   <Download className="w-5 h-5" />
-                </motion.div>
-                Ouverture…
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                Installer sur cet iPhone
-              </>
-            )}
-          </motion.button>
+                  Installer sur cet iPhone
+                </>
+              )}
+            </motion.button>
+
+            {/* Direct IPA download (AltStore / Sideloadly) */}
+            <a
+              href={IPA_DIRECT_URL}
+              download
+              className="mt-3 w-full py-3.5 rounded-2xl border border-border/60 bg-card/60 text-foreground font-semibold text-sm flex items-center justify-center gap-2 active:opacity-70 transition-opacity"
+            >
+              <Download className="w-4 h-4 text-muted-foreground" />
+              Télécharger le fichier .ipa
+            </a>
+          </>
         ) : (
           <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-4 flex gap-3 items-start">
             <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5 shrink-0" />
@@ -135,9 +152,10 @@ const InstallPage = () => {
           <div className="mt-5 space-y-2.5">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Instructions</p>
             {[
+              "Ouvre cette page dans Safari (pas Chrome)",
               "Appuie sur « Installer sur cet iPhone »",
-              "Confirme l'installation dans la popup iOS",
-              "Va dans Réglages → Général → VPN et gestion → fais confiance à l'app",
+              "Appuie sur « Installer » dans la popup iOS",
+              "Va dans Réglages → Général → VPN et gestion → appuie sur le profil → Faire confiance",
               "Ouvre Vootify depuis l'écran d'accueil",
             ].map((step, i) => (
               <div key={i} className="flex gap-3 items-start">
@@ -147,19 +165,16 @@ const InstallPage = () => {
                 <p className="text-xs text-muted-foreground leading-relaxed">{step}</p>
               </div>
             ))}
+
+            {/* Warning: Safari only */}
+            <div className="mt-3 rounded-xl border border-yellow-400/30 bg-yellow-400/5 p-3 flex gap-2.5 items-start">
+              <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-semibold text-foreground">Obligatoire :</span> utilise Safari (pas Chrome ni Firefox). L'installation OTA ne fonctionne que depuis Safari.
+              </p>
+            </div>
           </div>
         )}
-
-        {/* Direct link fallback */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Lien direct :{" "}
-          <a
-            href={INSTALL_URL}
-            className="text-primary underline underline-offset-2 break-all"
-          >
-            Installer via itms-services
-          </a>
-        </p>
       </motion.div>
     </div>
   );

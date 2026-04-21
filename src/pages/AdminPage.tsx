@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff, ChevronRight, Disc3 } from "lucide-react";
+import { ArrowLeft, Users, Music, Radio, ListMusic, Shield, Loader2, Trash2, Crown, ShieldOff, UserX, ScrollText, Pencil, Check, X, Activity, LayoutDashboard, GripVertical, Eye, EyeOff, Save, Plus, Search, UserPlus, Lock, Mail, User, CreditCard, Clock, Calendar, TrendingUp, BarChart3, Inbox, CheckCircle, XCircle, Send, Upload, ImageIcon, Sparkles, Palette, Share2, Bell, BellOff, ChevronRight, Disc3, Smartphone } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { SafeImage } from "@/components/SafeImage";
 
-type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | "search_config" | "library_config" | null;
+type Tab = "users" | "songs" | "radios" | "stats" | "logs" | "home" | "subscriptions" | "requests" | "theme" | "shared" | "notifs" | "music_requests" | "search_config" | "library_config" | "ios" | null;
 
 interface UserProfile {
   user_id: string;
@@ -58,6 +58,7 @@ const AdminPage = () => {
     { key: "search_config", label: "Recherche", icon: Search },
     { key: "library_config", label: "Bibliothèque", icon: ListMusic },
     { key: "theme", label: "Thème", icon: Palette },
+    { key: "ios", label: "iOS Install", icon: Smartphone },
     { key: "shared", label: "Partages", icon: Share2 },
     { key: "notifs", label: "Notifs", icon: Bell },
     { key: "stats", label: "Stats", icon: Shield },
@@ -129,6 +130,7 @@ const AdminPage = () => {
         {tab === "notifs" && <NotificationsTab />}
         {tab === "search_config" && <SearchConfigTab />}
         {tab === "library_config" && <LibraryConfigTab />}
+        {tab === "ios" && <IOSInstallTab />}
       </div>
       )}
     </div>
@@ -4965,6 +4967,134 @@ function MusicRequestsTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function IOSInstallTab() {
+  const { user } = useAdminAuth();
+  const saveMutation = useSaveAppSetting();
+  const [ipaUrl, setIpaUrl] = useState("https://mansstyle59.github.io/vootify/Vootify_1.0_1776764276.ipa");
+  const [version, setVersion] = useState("1.0");
+  const [bundleId, setBundleId] = useState("app.lovable.vootify");
+  const [loaded, setLoaded] = useState(false);
+
+  const MANIFEST_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ota-manifest`;
+  const INSTALL_URL = `itms-services://?action=download-manifest&url=${encodeURIComponent(MANIFEST_URL)}`;
+  const INSTALL_PAGE_URL = "https://mansstyle59.github.io/vootify/install";
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "ios_install")
+        .maybeSingle();
+      if (data?.value) {
+        const s = data.value as any;
+        if (s.ipa_url) setIpaUrl(s.ipa_url);
+        if (s.version) setVersion(s.version);
+        if (s.bundle_id) setBundleId(s.bundle_id);
+      }
+      setLoaded(true);
+    })();
+  }, []);
+
+  const handleSave = () => {
+    if (!user) return;
+    saveMutation.mutate(
+      { key: "ios_install", value: { ipa_url: ipaUrl, version, bundle_id: bundleId, title: "Vootify" }, userId: user.id },
+      {
+        onSuccess: () => toast.success("Paramètres iOS sauvegardés ✅"),
+        onError: () => toast.error("Erreur lors de la sauvegarde"),
+      }
+    );
+  };
+
+  if (!loaded) return <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mt-12" />;
+
+  return (
+    <div className="space-y-6 py-4">
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 space-y-4">
+        <h3 className="text-sm font-bold text-foreground">Fichier .ipa</h3>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">URL du fichier .ipa</label>
+          <input
+            value={ipaUrl}
+            onChange={(e) => setIpaUrl(e.target.value)}
+            placeholder="https://…/Vootify.ipa"
+            className="w-full px-3 py-2.5 rounded-xl bg-background border border-border/60 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50"
+          />
+          <p className="text-[10px] text-muted-foreground/60">Héberge le fichier sur Supabase Storage, GitHub Pages ou un CDN HTTPS.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Version</label>
+            <input
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+              placeholder="1.0"
+              className="w-full px-3 py-2.5 rounded-xl bg-background border border-border/60 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bundle ID</label>
+            <input
+              value={bundleId}
+              onChange={(e) => setBundleId(e.target.value)}
+              placeholder="app.lovable.vootify"
+              className="w-full px-3 py-2.5 rounded-xl bg-background border border-border/60 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saveMutation.isPending}
+          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
+        >
+          {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Sauvegarder
+        </button>
+      </div>
+
+      {/* Links */}
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 space-y-3">
+        <h3 className="text-sm font-bold text-foreground">Liens utiles</h3>
+
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Page d'installation</p>
+          <a href={INSTALL_PAGE_URL} target="_blank" rel="noopener noreferrer"
+            className="block text-xs text-primary underline underline-offset-2 break-all">
+            {INSTALL_PAGE_URL}
+          </a>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">URL d'installation directe</p>
+          <p className="text-[11px] text-muted-foreground break-all font-mono bg-muted/20 px-2 py-1.5 rounded-lg">{INSTALL_URL}</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Manifeste OTA (Edge Function)</p>
+          <a href={MANIFEST_URL} target="_blank" rel="noopener noreferrer"
+            className="block text-xs text-primary underline underline-offset-2 break-all">
+            {MANIFEST_URL}
+          </a>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-4 space-y-2">
+        <p className="text-xs font-bold text-foreground">⚠️ Prérequis installation iOS</p>
+        <ul className="space-y-1 text-xs text-muted-foreground">
+          <li>• Le fichier .ipa doit être signé avec un certificat Enterprise Apple</li>
+          <li>• L'utilisateur doit ouvrir la page depuis <strong>Safari</strong> sur iOS</li>
+          <li>• Après installation : Réglages → Général → VPN et gestion → Faire confiance</li>
+        </ul>
+      </div>
     </div>
   );
 }
