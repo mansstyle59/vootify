@@ -6,6 +6,8 @@ on:
 jobs:
   build-ipa:
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,3 +82,12 @@ jobs:
         with:
           name: Vootify-unsigned
           path: ${{ runner.temp }}/Vootify-unsigned.ipa
+
+      - name: Commit updated .ipa to repository
+        run: |
+          cp $RUNNER_TEMP/Vootify-unsigned.ipa Vootify_1.0_1776764276.ipa
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Vootify_1.0_1776764276.ipa
+          git diff --cached --quiet || git commit -m "ci: update .ipa with all latest features [skip ci]"
+          git push
