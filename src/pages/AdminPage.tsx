@@ -5087,10 +5087,9 @@ function IOSInstallTab() {
       </div>
 
       {/* Info */}
-      <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-4 space-y-2">
-        <p className="text-xs font-bold text-foreground">⚠️ Prérequis installation iOS</p>
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 space-y-2">
+        <p className="text-xs font-bold text-foreground">ℹ️ Infos installation iOS</p>
         <ul className="space-y-1 text-xs text-muted-foreground">
-          <li>• Le fichier .ipa doit être signé avec un certificat Enterprise Apple</li>
           <li>• L'utilisateur doit ouvrir la page depuis <strong>Safari</strong> sur iOS</li>
           <li>• Après installation : Réglages → Général → VPN et gestion → Faire confiance</li>
         </ul>
