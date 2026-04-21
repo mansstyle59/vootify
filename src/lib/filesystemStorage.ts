@@ -52,7 +52,12 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onloadend = () => {
       const result = reader.result as string;
       // Strip "data:<mime>;base64," prefix
-      resolve(result.split(",")[1] ?? "");
+      const commaIdx = result.indexOf(",");
+      if (commaIdx === -1) {
+        reject(new Error("FileReader did not return a valid data URL"));
+        return;
+      }
+      resolve(result.slice(commaIdx + 1));
     };
     reader.onerror = reject;
     reader.readAsDataURL(blob);

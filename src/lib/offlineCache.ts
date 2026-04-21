@@ -16,6 +16,21 @@ const AUDIO_STORE = "audio";
 const META_STORE = "meta";
 const COVER_STORE = "covers";
 
+/** Shape of the metadata record stored in META_STORE */
+interface CachedMeta {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: number;
+  coverUrl: string;
+  streamUrl: string;
+  genre: string | null;
+  year: number | null;
+  cachedAt: number;
+  hasCover: boolean;
+}
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -337,14 +352,14 @@ export const offlineCache = {
     const db = await openDb();
     let songMeta: Song | null = null;
     try {
-      const raw: any = await new Promise((resolve) => {
+      const raw: unknown = await new Promise((resolve) => {
         const tx = db.transaction(META_STORE, "readonly");
         const req = tx.objectStore(META_STORE).get(songId);
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => resolve(null);
       });
       if (raw) {
-        const meta = await maybeDecryptMeta<any>(raw);
+        const meta = await maybeDecryptMeta<CachedMeta>(raw);
         if (meta) {
           songMeta = {
             id: meta.id,
