@@ -6,6 +6,18 @@
 
 ---
 
+## 📲 Installer sur iPhone (OTA)
+
+> ⚠️ **Ouvrir ce lien depuis Safari sur votre iPhone.**
+
+[![Installer Vootify](https://img.shields.io/badge/📲_Installer_Vootify_sur_iPhone-blue?style=for-the-badge)](itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/mansstyle59/vootify/main/manifest.plist)
+
+**[👉 Appuyez ici pour installer Vootify v1.0 sur votre iPhone](itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/mansstyle59/vootify/main/manifest.plist)**
+
+> L'application doit être signée avec un certificat Enterprise ou Ad-Hoc (UDID enregistré) pour que l'installation fonctionne.
+
+---
+
 ## 🚀 Vision
 
 Créer une application de streaming **simple, élégante et personnalisable**, permettant à chacun d’écouter ses flux audio préférés sans friction.
