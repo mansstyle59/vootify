@@ -15,17 +15,30 @@
 
 ## 📲 Installer l'application
 
-### Sur iPhone (via Safari)
+### Sur iPhone (installation directe via Safari)
 
-> ⚠️ **Ce lien doit être ouvert depuis Safari sur votre iPhone.**
+> ⚠️ **Ce lien doit être ouvert depuis Safari sur votre iPhone — il ne fonctionnera pas depuis un autre navigateur.**
 
-[![Installer Vootify](https://img.shields.io/badge/📲_Installer_Vootify_sur_iPhone-blue?style=for-the-badge)](itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/mansstyle59/vootify/main/manifest.plist)
+[![Installer Vootify](https://img.shields.io/badge/📲_Installer_Vootify_sur_iPhone-blue?style=for-the-badge)](itms-services://?action=download-manifest&url=https://mansstyle59.github.io/vootify/manifest.plist)
 
-> L'application doit être signée avec un certificat Enterprise ou Ad-Hoc (UDID enregistré) pour que l'installation fonctionne.
+**Lien d'installation direct :**
+
+```
+itms-services://?action=download-manifest&url=https://mansstyle59.github.io/vootify/manifest.plist
+```
+
+**Comment installer :**
+
+1. Ouvrez **Safari** sur votre iPhone (indispensable — Chrome et Firefox ne supportent pas ce protocole).
+2. Copiez-collez le lien ci-dessus dans la barre d'adresse, ou appuyez sur le bouton bleu depuis cette page.
+3. Safari vous propose d'**installer Vootify** — appuyez sur **Installer**.
+4. Allez dans **Réglages → Général → Gestion des appareils (VPN et gestion des appareils)**, puis faites confiance au profil de développeur pour autoriser l'application.
+
+> ℹ️ L'application est distribuée en mode **Ad-Hoc** : votre UDID doit avoir été enregistré dans le profil de provisionnement pour que l'installation aboutisse.
 
 ### Progressive Web App (PWA)
 
-Vootify est également disponible en tant que PWA : rendez-vous sur le site, puis utilisez l'option **"Ajouter à l'écran d'accueil"** depuis votre navigateur mobile.
+Vootify est également disponible en tant que PWA : rendez-vous sur [https://mansstyle59.github.io/vootify/](https://mansstyle59.github.io/vootify/), puis utilisez l'option **"Ajouter à l'écran d'accueil"** depuis votre navigateur mobile.
 
 ---
 
