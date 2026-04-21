@@ -6,10 +6,29 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com)
 [![Capacitor](https://img.shields.io/badge/Capacitor-iOS-119EFF?style=flat-square&logo=capacitor)](https://capacitorjs.com)
 [![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=flat-square&logo=pwa)](https://web.dev/progressive-web-apps/)
+[![Licence MIT](https://img.shields.io/badge/Licence-MIT-yellow?style=flat-square)](LICENSE)
 
 > **The next-generation music & radio streaming experience.**
 
 **Vootify** est une plateforme moderne de **streaming musical et radio live**, conçue pour offrir une expérience fluide, rapide et immersive sur mobile et web.
+
+[![Ouvrir la PWA](https://img.shields.io/badge/🌐_Ouvrir_Vootify_en_ligne-5A0FC8?style=for-the-badge)](https://mansstyle59.github.io/vootify/)
+
+---
+
+## 📋 Table des matières
+
+- [📲 Installer l'application](#-installer-lapplication)
+- [🚀 Vision](#-vision)
+- [✨ Fonctionnalités](#-fonctionnalités)
+- [🧱 Architecture](#-architecture)
+- [🗂️ Structure du projet](#️-structure-du-projet)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [⚙️ Getting Started](#️-getting-started)
+- [📦 Scripts disponibles](#-scripts-disponibles)
+- [📱 Build iOS (Capacitor)](#-build-ios-capacitor)
+- [🤝 Contribuer](#-contribuer)
+- [📄 Licence](#-licence)
 
 ---
 
@@ -57,11 +76,13 @@ Créer une application de streaming **simple, élégante et personnalisable**, p
 | 🔍 Recherche | Recherche de titres, artistes, albums et genres |
 | 📚 Bibliothèque | Playlists, albums, artistes, favoris |
 | 👤 Profil | Compte utilisateur, préférences personnalisées |
+| 💳 Abonnement | Contrôle d'accès par abonnement (SubscriptionGate) |
 | 🛡️ Admin | Interface d'administration du contenu |
 | 🎨 UI/UX | Dark mode, animations fluides (Framer Motion) |
 | 📱 Mobile-first | Interface optimisée iOS & Android via Capacitor |
 | 🔌 PWA | Installation en tant qu'application web progressive |
 | 🔗 Partage | Partage de playlists via lien unique |
+| 🔄 Offline | Mise en cache des données (mode hors-ligne partiel) |
 
 ---
 
@@ -79,6 +100,23 @@ Vootify
 
 ---
 
+## 🗂️ Structure du projet
+
+```
+src/
+├── assets/          Ressources statiques (images, icônes…)
+├── components/      Composants réutilisables (Player, Sidebar, UI…)
+├── data/            Données statiques / fixtures
+├── hooks/           Hooks personnalisés (useAuth, useTheme, useAdminAuth…)
+├── integrations/    Clients tiers (Supabase…)
+├── lib/             Utilitaires et helpers
+├── pages/           Pages de l'application (routes)
+├── stores/          Stores Zustand (playerStore…)
+└── test/            Tests unitaires (Vitest + Testing Library)
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 | Couche | Technologie |
@@ -92,7 +130,8 @@ Vootify
 | Routing | [React Router v6](https://reactrouter.com) |
 | Mobile | [Capacitor](https://capacitorjs.com) (iOS) |
 | PWA | [vite-plugin-pwa](https://vite-pwa-org.netlify.app) |
-| Tests | [Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com) |
+| Tests unitaires | [Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com) |
+| Tests E2E | [Playwright](https://playwright.dev) |
 
 ---
 
@@ -144,10 +183,11 @@ L'application est accessible sur [http://localhost:8080](http://localhost:8080).
 |----------|-------------|
 | `npm run dev` | Démarre le serveur de développement |
 | `npm run build` | Build de production |
+| `npm run build:dev` | Build en mode développement |
 | `npm run preview` | Prévisualise le build de production |
 | `npm run lint` | Analyse du code avec ESLint |
 | `npm run test` | Lance les tests unitaires (Vitest) |
-| `npm run test:watch` | Lance les tests en mode watch |
+| `npm run test:watch` | Lance les tests unitaires en mode watch |
 
 ---
 
@@ -159,7 +199,7 @@ npx cap sync ios
 npx cap open ios
 ```
 
-> Ouvrez le projet dans Xcode, sélectionnez votre cible et lancez l'app sur votre appareil.
+> Ouvrez le projet dans Xcode, sélectionnez votre cible et lancez l'app sur votre appareil ou simulateur.
 
 ---
 
